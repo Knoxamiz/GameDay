@@ -173,3 +173,9 @@ export const registrations: Registration[] = [
 export function getRegistrationById(registrationId: string) {
   return registrations.find((registration) => registration.id === registrationId);
 }
+
+export function getMissingRegistrationRequirements(registration?: Registration) {
+  return registration?.requirements.filter(
+    (requirement) => requirement.status === "Missing",
+  ) ?? [];
+}

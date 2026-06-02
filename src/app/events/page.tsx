@@ -1,8 +1,13 @@
+import Link from "next/link";
 import MvpNav from "../components/MvpNav";
+import { getAthleteById } from "../data/athletes";
 import { getEventById } from "../data/events";
 import { eventAnnouncementsByEventId, eventChatByEventId } from "../data/messages";
 import { getTeamById } from "../data/teams";
-import { getTransportationSummaryByEventId } from "../data/transportation";
+import {
+  getTransportationEntriesByEventId,
+  getTransportationSummaryByEventId,
+} from "../data/transportation";
 
 const eventDetails = getEventById("practice-jun-2");
 const team = eventDetails?.teamId ? getTeamById(eventDetails.teamId) : undefined;
@@ -13,6 +18,14 @@ const eventAnnouncements = eventDetails
   ? eventAnnouncementsByEventId[eventDetails.id] ?? []
   : [];
 const eventChat = eventDetails ? eventChatByEventId[eventDetails.id] ?? [] : [];
+const attendanceRecords =
+  eventDetails?.attendance.records.map((record) => ({
+    ...record,
+    athlete: getAthleteById(record.athleteId),
+  })) ?? [];
+const transportationEntries = eventDetails
+  ? getTransportationEntriesByEventId(eventDetails.id)
+  : [];
 
 export default function EventsHome() {
   return (
@@ -21,7 +34,9 @@ export default function EventsHome() {
         <MvpNav />
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-          <h1 className="text-3xl font-bold">{eventDetails?.type}</h1>
+          <Link href="/teams" className="text-2xl font-bold">
+            &larr; {eventDetails?.type}
+          </Link>
           <p className="mt-5 text-sm font-semibold text-slate-200">
             {team?.name}
           </p>
@@ -33,17 +48,21 @@ export default function EventsHome() {
           <p className="mt-4 text-sm text-slate-300">
             {eventDetails?.location}
           </p>
-          <button
-            type="button"
-            className="mt-4 w-full rounded-xl bg-blue-500 py-3 font-semibold text-white"
-          >
-            Directions
-          </button>
+          {eventDetails?.directionsUrl && (
+            <a
+              href={eventDetails.directionsUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-4 block w-full rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
+            >
+              Directions
+            </a>
+          )}
         </div>
 
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Status</h2>
-          <p className="mt-3 text-sm font-semibold text-blue-300">
+          <p className="mt-3 text-sm font-semibold text-green-300">
             {eventDetails?.status}
           </p>
           <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-400">
@@ -79,12 +98,22 @@ export default function EventsHome() {
               {eventDetails?.attendance.notAttending} Not Attending
             </p>
           </div>
-          <button
-            type="button"
-            className="mt-4 w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
-          >
-            View Players
-          </button>
+          <details className="mt-4 rounded-xl border border-slate-700 bg-slate-900 text-sm text-slate-300">
+            <summary className="cursor-pointer px-4 py-3 text-center font-semibold text-white">
+              View Players
+            </summary>
+            <div className="space-y-2 border-t border-slate-800 px-4 py-3">
+              {attendanceRecords.length > 0 ? (
+                attendanceRecords.map((record) => (
+                  <p key={record.athleteId}>
+                    {record.athlete?.name ?? record.athleteId}: {record.status}
+                  </p>
+                ))
+              ) : (
+                <p>No player responses yet.</p>
+              )}
+            </div>
+          </details>
         </div>
 
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
@@ -95,12 +124,25 @@ export default function EventsHome() {
               {transportation.canOfferRide} Can Offer Ride
             </p>
           </div>
-          <button
-            type="button"
-            className="mt-4 w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
-          >
-            View Transportation
-          </button>
+          <details className="mt-4 rounded-xl border border-slate-700 bg-slate-900 text-sm text-slate-300">
+            <summary className="cursor-pointer px-4 py-3 text-center font-semibold text-white">
+              View Transportation
+            </summary>
+            <div className="space-y-2 border-t border-slate-800 px-4 py-3">
+              {transportationEntries.length > 0 ? (
+                transportationEntries.map((entry) => (
+                  <p key={entry.id}>
+                    {entry.name}: {entry.status}
+                    {entry.seatsAvailable
+                      ? `, ${entry.seatsAvailable} seats available`
+                      : ""}
+                  </p>
+                ))
+              ) : (
+                <p>No transportation updates yet.</p>
+              )}
+            </div>
+          </details>
         </div>
 
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">

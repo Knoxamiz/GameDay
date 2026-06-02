@@ -1,13 +1,20 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import MvpNav from "../../components/MvpNav";
+import TransportationStatusPicker from "../../components/TransportationStatusPicker";
 import { athletes, getAthleteById } from "../../data/athletes";
 import { getCoachesByIds } from "../../data/coaches";
 import { getEventById, getEventsByIds } from "../../data/events";
 import { teamUpdatesByAthleteId } from "../../data/messages";
-import { getRegistrationById } from "../../data/registrations";
+import {
+  getMissingRegistrationRequirements,
+  getRegistrationById,
+} from "../../data/registrations";
 import { getTeamById } from "../../data/teams";
-import { transportationOptions } from "../../data/transportation";
+import {
+  getTransportationEntryByAthleteAndEventId,
+  transportationOptions,
+} from "../../data/transportation";
 
 type AthleteDetailsPageProps = {
   params: Promise<{
@@ -37,9 +44,17 @@ export default async function AthleteDetailsPage({
     : undefined;
   const upcomingEvents = getEventsByIds(athlete.upcomingEventIds);
   const registration = getRegistrationById(athlete.registrationId);
+  const missingRequirements = getMissingRegistrationRequirements(registration);
   const coaches = team ? getCoachesByIds(team.coachIds) : [];
   const teamUpdates = teamUpdatesByAthleteId[athlete.id] ?? [];
   const primaryCoach = coaches[0];
+  const transportation = nextEvent
+    ? getTransportationEntryByAthleteAndEventId(athlete.id, nextEvent.id)
+    : undefined;
+  const transportationStatus = transportation?.status ?? "Unknown";
+  const missingRequirementLabels = missingRequirements.map(
+    (requirement) => requirement.label,
+  );
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -53,6 +68,15 @@ export default async function AthleteDetailsPage({
         </div>
 
         <p className="mt-5 text-slate-300">{team?.name}</p>
+        {nextEvent && (
+          <TransportationStatusPicker
+            athleteId={athlete.id}
+            eventId={nextEvent.id}
+            initialStatus={transportationStatus}
+            missingRequirementLabels={missingRequirementLabels}
+            options={transportationOptions}
+          />
+        )}
 
         <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
@@ -83,18 +107,6 @@ export default async function AthleteDetailsPage({
               Directions
             </a>
           )}
-        </div>
-
-        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <h2 className="text-lg font-bold">Transportation</h2>
-          <div className="mt-3 space-y-3">
-            {transportationOptions.map((option) => (
-              <div key={option} className="flex items-center gap-3">
-                <span className="h-4 w-4 rounded-full border border-slate-500" />
-                <span className="text-sm text-slate-300">{option}</span>
-              </div>
-            ))}
-          </div>
         </div>
 
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
@@ -132,24 +144,37 @@ export default async function AthleteDetailsPage({
 
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Registration Status</h2>
+          <p
+            className={`mt-3 text-sm font-semibold ${
+              missingRequirements.length === 0 ? "text-blue-300" : "text-red-300"
+            }`}
+          >
+            {missingRequirements.length === 0
+              ? "Ready"
+              : `${missingRequirements.length} Missing`}
+          </p>
           <div className="mt-3 space-y-2 text-sm text-slate-300">
-            {registration?.requirements.map((requirement) => (
-              <div
-                key={requirement.label}
-                className="flex items-center justify-between gap-3"
-              >
-                <span>{requirement.label}</span>
-                <span
-                  className={
-                    requirement.status === "Complete"
-                      ? "font-semibold text-blue-300"
-                      : "font-semibold text-red-300"
-                  }
+            {registration && registration.requirements.length > 0 ? (
+              registration.requirements.map((requirement) => (
+                <div
+                  key={requirement.label}
+                  className="flex items-center justify-between gap-3"
                 >
-                  {requirement.status}
-                </span>
-              </div>
-            ))}
+                  <span>{requirement.label}</span>
+                  <span
+                    className={
+                      requirement.status === "Complete"
+                        ? "font-semibold text-blue-300"
+                        : "font-semibold text-red-300"
+                    }
+                  >
+                    {requirement.status}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p>No registration requirements listed.</p>
+            )}
           </div>
         </div>
 
@@ -162,12 +187,18 @@ export default async function AthleteDetailsPage({
           </div>
         </div>
 
-        <a
-          href={`mailto:${primaryCoach?.email ?? ""}`}
-          className="mt-4 block w-full rounded-xl border border-slate-700 bg-slate-900 py-3 text-center font-semibold text-white"
-        >
-          Contact Coach
-        </a>
+        {primaryCoach ? (
+          <a
+            href={`mailto:${primaryCoach.email}`}
+            className="mt-4 block w-full rounded-xl border border-slate-700 bg-slate-900 py-3 text-center font-semibold text-white"
+          >
+            Contact Coach
+          </a>
+        ) : (
+          <p className="mt-4 rounded-xl border border-slate-700 bg-slate-900 py-3 text-center font-semibold text-slate-400">
+            Coach Not Assigned
+          </p>
+        )}
       </section>
     </main>
   );

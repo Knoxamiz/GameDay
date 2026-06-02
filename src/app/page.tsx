@@ -1,4 +1,4 @@
-import Link from "next/link";
+import ParentAthleteCard from "./components/ParentAthleteCard";
 import MvpNav from "./components/MvpNav";
 import {
   getAthletesByIds,
@@ -6,7 +6,12 @@ import {
 } from "./data/athletes";
 import { getEventById } from "./data/events";
 import { parentHomeAnnouncements } from "./data/messages";
+import {
+  getMissingRegistrationRequirements,
+  getRegistrationById,
+} from "./data/registrations";
 import { getTeamById } from "./data/teams";
+import { getTransportationEntryByAthleteAndEventId } from "./data/transportation";
 
 const bottomNavItems = ["Home", "Messages", "Registration", "More"];
 const parentAthletes = getAthletesByIds(parentHomeAthleteIds);
@@ -33,47 +38,31 @@ export default function Home() {
             const nextEvent = athlete.nextEventId
               ? getEventById(athlete.nextEventId)
               : undefined;
+            const registration = getRegistrationById(athlete.registrationId);
+            const missingRequirements =
+              getMissingRegistrationRequirements(registration);
+            const transportation = nextEvent
+              ? getTransportationEntryByAthleteAndEventId(
+                  athlete.id,
+                  nextEvent.id,
+                )
+              : undefined;
 
             return (
               <div
                 key={athlete.name}
                 className="border-t border-slate-800 pt-5 first:border-t-0 first:pt-0"
               >
-                <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-                  <h3 className="text-xl font-bold">{athlete.name}</h3>
-                  {nextEvent ? (
-                    <p className="mt-1 text-sm text-slate-400">
-                      {team?.name}
-                    </p>
-                  ) : (
-                    <p className="mt-1 text-sm text-slate-400">
-                      No Upcoming Events
-                    </p>
-                  )}
-
-                  {nextEvent && (
-                    <div className="mt-4 rounded-xl bg-slate-800 p-4">
-                      <p className="font-semibold">{nextEvent.title}</p>
-                      {nextEvent.time && (
-                        <p className="mt-2 text-sm text-slate-300">
-                          {nextEvent.time}
-                        </p>
-                      )}
-                      {nextEvent.location && (
-                        <p className="mt-1 text-sm text-slate-300">
-                          {nextEvent.location}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  <Link
-                    href={`/athletes/${athlete.id}`}
-                    className="mt-4 block w-full rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
-                  >
-                    View Details
-                  </Link>
-                </div>
+                <ParentAthleteCard
+                  athleteId={athlete.id}
+                  athleteName={athlete.name}
+                  teamName={team?.name}
+                  nextEvent={nextEvent}
+                  initialTransportationStatus={
+                    transportation?.status ?? "Unknown"
+                  }
+                  missingRegistrationCount={missingRequirements.length}
+                />
               </div>
             );
           })}
