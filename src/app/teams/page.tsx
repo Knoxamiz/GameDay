@@ -1,31 +1,26 @@
 import Link from "next/link";
 import MvpNav from "../components/MvpNav";
+import { getAthletesByIds } from "../data/athletes";
+import { getCoachesByIds } from "../data/coaches";
+import { getEventById, getEventsByIds } from "../data/events";
+import {
+  teamAnnouncementsByTeamId,
+  teamCommunicationItems,
+} from "../data/messages";
+import { getTeamById } from "../data/teams";
 
-const teamDetails = {
-  name: "Black Diamonds 12U",
-  players: 22,
-  coaches: ["Coach Mick", "Assistant Coach Jen"],
-  nextEvent: {
-    type: "Practice",
-    date: "Tuesday, June 2",
-    time: "6:00 PM",
-    location: "Winslow Township Park",
-  },
-  rosterPreview: ["Emma Smith", "Olivia Brown", "Sarah Jones"],
-  announcements: [
-    "Tournament schedule posted",
-    "Uniform pickup Friday",
-    "Field change for Tuesday",
-  ],
-  status: [
-    "22 Registered",
-    "18 Confirmed For Practice",
-    "2 Need Ride",
-    "2 Missing Physical",
-  ],
-  upcomingEvents: ["Jun 2 Practice", "Jun 5 Practice", "Jun 7 Tournament"],
-  communication: ["Team Messages", "Contact Coaches"],
-};
+const teamDetails = getTeamById("black-diamonds-12u");
+const teamCoaches = teamDetails ? getCoachesByIds(teamDetails.coachIds) : [];
+const nextEvent = teamDetails?.nextEventId
+  ? getEventById(teamDetails.nextEventId)
+  : undefined;
+const rosterPreview = teamDetails
+  ? getAthletesByIds(teamDetails.rosterPreviewIds)
+  : [];
+const teamAnnouncements = teamDetails
+  ? teamAnnouncementsByTeamId[teamDetails.id] ?? []
+  : [];
+const upcomingEvents = teamDetails ? getEventsByIds(teamDetails.eventIds) : [];
 
 export default function TeamsHome() {
   return (
@@ -35,18 +30,18 @@ export default function TeamsHome() {
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <Link href="/coach" className="text-2xl font-bold">
-            Back {teamDetails.name}
+            Back {teamDetails?.name}
           </Link>
         </div>
 
         <div className="mt-5 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-          <h1 className="text-3xl font-bold">{teamDetails.name}</h1>
+          <h1 className="text-3xl font-bold">{teamDetails?.name}</h1>
           <p className="mt-3 text-sm text-slate-300">
-            {teamDetails.players} Players
+            {teamDetails?.playerCount} Players
           </p>
           <div className="mt-4 space-y-2 text-sm text-slate-300">
-            {teamDetails.coaches.map((coach) => (
-              <p key={coach}>{coach}</p>
+            {teamCoaches.map((coach) => (
+              <p key={coach.id}>{coach.name}</p>
             ))}
           </div>
         </div>
@@ -56,15 +51,11 @@ export default function TeamsHome() {
             Next Event
           </h2>
           <div className="mt-4 rounded-xl bg-slate-800 p-4">
-            <p className="font-semibold">{teamDetails.nextEvent.type}</p>
+            <p className="font-semibold">{nextEvent?.type}</p>
+            <p className="mt-3 text-sm text-slate-300">{nextEvent?.date}</p>
+            <p className="mt-1 text-sm text-slate-300">{nextEvent?.time}</p>
             <p className="mt-3 text-sm text-slate-300">
-              {teamDetails.nextEvent.date}
-            </p>
-            <p className="mt-1 text-sm text-slate-300">
-              {teamDetails.nextEvent.time}
-            </p>
-            <p className="mt-3 text-sm text-slate-300">
-              {teamDetails.nextEvent.location}
+              {nextEvent?.location}
             </p>
           </div>
           <Link
@@ -78,11 +69,11 @@ export default function TeamsHome() {
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Roster</h2>
           <p className="mt-3 text-sm text-slate-300">
-            {teamDetails.players} Players
+            {teamDetails?.playerCount} Players
           </p>
           <div className="mt-4 space-y-2 text-sm text-slate-300">
-            {teamDetails.rosterPreview.map((player) => (
-              <p key={player}>{player}</p>
+            {rosterPreview.map((player) => (
+              <p key={player.id}>{player.name}</p>
             ))}
             <p>...</p>
           </div>
@@ -97,7 +88,7 @@ export default function TeamsHome() {
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Team Announcements</h2>
           <div className="mt-3 space-y-3 text-sm text-slate-300">
-            {teamDetails.announcements.map((announcement) => (
+            {teamAnnouncements.map((announcement) => (
               <p key={announcement}>{announcement}</p>
             ))}
           </div>
@@ -106,7 +97,7 @@ export default function TeamsHome() {
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Team Status</h2>
           <div className="mt-3 space-y-3 text-sm text-slate-300">
-            {teamDetails.status.map((status) => (
+            {teamDetails?.status.map((status) => (
               <p key={status}>{status}</p>
             ))}
           </div>
@@ -115,8 +106,10 @@ export default function TeamsHome() {
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Upcoming Events</h2>
           <div className="mt-3 space-y-3 text-sm text-slate-300">
-            {teamDetails.upcomingEvents.map((event) => (
-              <p key={event}>{event}</p>
+            {upcomingEvents.map((event) => (
+              <p key={event.id}>
+                {event.shortDate} {event.type}
+              </p>
             ))}
           </div>
           <Link
@@ -130,7 +123,7 @@ export default function TeamsHome() {
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Communication</h2>
           <div className="mt-3 space-y-3 text-sm text-slate-300">
-            {teamDetails.communication.map((item) => (
+            {teamCommunicationItems.map((item) => (
               <p key={item}>{item}</p>
             ))}
           </div>

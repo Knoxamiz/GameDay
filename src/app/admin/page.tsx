@@ -1,53 +1,40 @@
 import Link from "next/link";
 import MvpNav from "../components/MvpNav";
-
-const adminHome = {
-  organizationName: "Black Diamonds Girls Flag Football",
-  organizationStatus: [
-    {
-      label: "Registered Players",
-      value: "127",
-    },
-    {
-      label: "Active Teams",
-      value: "5",
-    },
-    {
-      label: "Coaches",
-      value: "12",
-    },
-    {
-      label: "Upcoming Events",
-      value: "18",
-    },
-  ],
-  actionItems: [
-    "8 Pending Registrations",
-    "3 Missing Physicals",
-    "2 Teams Need Coaches",
-    "1 Transportation Issue",
-  ],
-  upcomingEvents: [
-    {
-      title: "Practice Tonight",
-      team: "12U Girls",
-    },
-    {
-      title: "Tournament Saturday",
-      team: "14U Girls",
-    },
-    {
-      title: "Board Meeting Monday",
-      team: "",
-    },
-  ],
-  communications: [
-    "2 Unread Coach Messages",
-    "1 Organization Announcement Draft",
-  ],
-};
+import { adminUpcomingEventIds, getEventsByIds } from "../data/events";
+import { adminCommunications } from "../data/messages";
+import { blackDiamondsOrganization } from "../data/organizations";
+import { registrationSummary } from "../data/registrations";
+import { getTeamById, teamsNeedingCoachesCount } from "../data/teams";
+import { transportationIssueCount } from "../data/transportation";
 
 const bottomNavItems = ["Home", "Teams", "Registrations", "Schedule", "More"];
+const adminUpcomingEvents = getEventsByIds(adminUpcomingEventIds);
+
+const organizationStatus = [
+  {
+    label: "Registered Players",
+    value: blackDiamondsOrganization.status.registeredPlayers,
+  },
+  {
+    label: "Active Teams",
+    value: blackDiamondsOrganization.status.activeTeams,
+  },
+  {
+    label: "Coaches",
+    value: blackDiamondsOrganization.status.coaches,
+  },
+  {
+    label: "Upcoming Events",
+    value: blackDiamondsOrganization.status.upcomingEvents,
+  },
+];
+
+const actionItems = [
+  `${registrationSummary.pendingRegistrations} Pending Registrations`,
+  `${registrationSummary.missingPhysicals} Missing Physicals`,
+  `${teamsNeedingCoachesCount} Teams Need Coaches`,
+  `${transportationIssueCount} Transportation Issue`,
+];
 
 export default function AdminHome() {
   return (
@@ -59,14 +46,14 @@ export default function AdminHome() {
           <h1 className="text-3xl font-bold">GameDay - Admin</h1>
         </div>
 
-        <p className="mt-5 text-slate-300">{adminHome.organizationName}</p>
+        <p className="mt-5 text-slate-300">{blackDiamondsOrganization.name}</p>
 
         <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
             Organization Status
           </h2>
           <div className="mt-4 space-y-3">
-            {adminHome.organizationStatus.map((status) => (
+            {organizationStatus.map((status) => (
               <div key={status.label} className="rounded-xl bg-slate-800 p-4">
                 <p className="text-xl font-bold">
                   {status.value} {status.label}
@@ -79,7 +66,7 @@ export default function AdminHome() {
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Action Items</h2>
           <div className="mt-3 space-y-3 text-sm text-slate-300">
-            {adminHome.actionItems.map((item) => (
+            {actionItems.map((item) => (
               <p key={item}>{item}</p>
             ))}
           </div>
@@ -88,14 +75,20 @@ export default function AdminHome() {
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Upcoming Events</h2>
           <div className="mt-3 space-y-3">
-            {adminHome.upcomingEvents.map((event) => (
-              <div key={event.title} className="rounded-xl bg-slate-800 p-4">
-                <p className="font-semibold">{event.title}</p>
-                {event.team && (
-                  <p className="mt-1 text-sm text-slate-300">{event.team}</p>
-                )}
-              </div>
-            ))}
+            {adminUpcomingEvents.map((event) => {
+              const team = event.teamId ? getTeamById(event.teamId) : undefined;
+
+              return (
+                <div key={event.id} className="rounded-xl bg-slate-800 p-4">
+                  <p className="font-semibold">{event.title}</p>
+                  {team && (
+                    <p className="mt-1 text-sm text-slate-300">
+                      {team.label}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
           <Link
             href="/events"
@@ -108,7 +101,7 @@ export default function AdminHome() {
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Communications</h2>
           <div className="mt-3 space-y-3 text-sm text-slate-300">
-            {adminHome.communications.map((item) => (
+            {adminCommunications.map((item) => (
               <p key={item}>{item}</p>
             ))}
           </div>

@@ -1,31 +1,18 @@
 import Link from "next/link";
 import MvpNav from "../components/MvpNav";
-
-const coachHome = {
-  teamName: "Black Diamonds 12U",
-  todayEvent: {
-    title: "Practice Tonight",
-    time: "6:00 PM - 7:30 PM",
-    location: "Winslow Township Park",
-  },
-  teamStatus: {
-    players: 22,
-    attending: 18,
-    unknown: 2,
-    notAttending: 2,
-  },
-  transportation: {
-    needsRide: 2,
-    canOfferRide: 3,
-  },
-  actionItems: [
-    "2 Players Missing Physical",
-    "1 Parent Message Unread",
-    "Tournament Roster Due Friday",
-  ],
-};
+import { getEventById } from "../data/events";
+import { coachActionItems } from "../data/messages";
+import { getTeamById } from "../data/teams";
+import { getTransportationSummaryByEventId } from "../data/transportation";
 
 const bottomNavItems = ["Home", "Schedule", "Team", "Messages", "More"];
+const coachTeam = getTeamById("black-diamonds-12u");
+const todayEvent = coachTeam?.nextEventId
+  ? getEventById(coachTeam.nextEventId)
+  : undefined;
+const transportation = todayEvent
+  ? getTransportationSummaryByEventId(todayEvent.id)
+  : { needsRide: 0, canOfferRide: 0 };
 
 export default function CoachHome() {
   return (
@@ -37,19 +24,17 @@ export default function CoachHome() {
           <h1 className="text-3xl font-bold">GameDay - Coach</h1>
         </div>
 
-        <p className="mt-5 text-slate-300">{coachHome.teamName}</p>
+        <p className="mt-5 text-slate-300">{coachTeam?.name}</p>
 
         <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
             Today
           </h2>
           <div className="mt-4 rounded-xl bg-slate-800 p-4">
-            <p className="font-semibold">{coachHome.todayEvent.title}</p>
-            <p className="mt-2 text-sm text-slate-300">
-              {coachHome.todayEvent.time}
-            </p>
+            <p className="font-semibold">{todayEvent?.title}</p>
+            <p className="mt-2 text-sm text-slate-300">{todayEvent?.time}</p>
             <p className="mt-1 text-sm text-slate-300">
-              {coachHome.todayEvent.location}
+              {todayEvent?.location}
             </p>
           </div>
           <Link
@@ -63,15 +48,15 @@ export default function CoachHome() {
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Team Status</h2>
           <p className="mt-3 text-2xl font-bold">
-            {coachHome.teamStatus.players} Players
+            {todayEvent?.attendance.total} Players
           </p>
           <div className="mt-4 space-y-2 text-sm text-slate-300">
             <p className="text-blue-300">
-              {coachHome.teamStatus.attending} Attending
+              {todayEvent?.attendance.attending} Attending
             </p>
-            <p>{coachHome.teamStatus.unknown} Unknown</p>
+            <p>{todayEvent?.attendance.unknown} Unknown</p>
             <p className="text-red-300">
-              {coachHome.teamStatus.notAttending} Not Attending
+              {todayEvent?.attendance.notAttending} Not Attending
             </p>
           </div>
         </div>
@@ -79,11 +64,9 @@ export default function CoachHome() {
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Transportation</h2>
           <div className="mt-3 space-y-2 text-sm">
-            <p className="text-red-300">
-              {coachHome.transportation.needsRide} Need Ride
-            </p>
+            <p className="text-red-300">{transportation.needsRide} Need Ride</p>
             <p className="text-blue-300">
-              {coachHome.transportation.canOfferRide} Can Offer Ride
+              {transportation.canOfferRide} Can Offer Ride
             </p>
           </div>
           <button
@@ -97,7 +80,7 @@ export default function CoachHome() {
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Action Items</h2>
           <ul className="mt-3 space-y-2 text-sm text-slate-300">
-            {coachHome.actionItems.map((item) => (
+            {coachActionItems.map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ul>
