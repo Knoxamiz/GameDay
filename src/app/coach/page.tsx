@@ -1,3 +1,4 @@
+import Link from "next/link";
 import MvpNav from "../components/MvpNav";
 
 const coachHome = {
@@ -6,25 +7,25 @@ const coachHome = {
     title: "Practice Tonight",
     time: "6:00 PM - 7:30 PM",
     location: "Winslow Township Park",
-    note: "Helmets, cleats, and water required.",
   },
-  teamStatus: "Ready for practice",
-  attendance: {
-    confirmed: 14,
-    missing: 3,
-    total: 17,
+  teamStatus: {
+    players: 22,
+    attending: 18,
+    unknown: 2,
+    notAttending: 2,
   },
   transportation: {
-    confirmed: 12,
     needsRide: 2,
-    unknown: 3,
+    canOfferRide: 3,
   },
   actionItems: [
-    "Confirm rides for 2 athletes",
-    "Post reminder about uniform pickup",
-    "Take attendance before warmups",
+    "2 Players Missing Physical",
+    "1 Parent Message Unread",
+    "Tournament Roster Due Friday",
   ],
 };
+
+const bottomNavItems = ["Home", "Schedule", "Team", "Messages", "More"];
 
 export default function CoachHome() {
   return (
@@ -32,67 +33,65 @@ export default function CoachHome() {
       <section className="mx-auto max-w-md px-5 py-6">
         <MvpNav />
 
-        <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">
-          Coach Home
-        </p>
-        <h1 className="mt-2 text-3xl font-bold">GameDay</h1>
-        <p className="mt-2 text-slate-300">{coachHome.teamName}</p>
+        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
+          <h1 className="text-3xl font-bold">GameDay - Coach</h1>
+        </div>
+
+        <p className="mt-5 text-slate-300">{coachHome.teamName}</p>
 
         <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-          <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">
-            Today&apos;s Event
-          </p>
-          <h2 className="mt-2 text-xl font-bold">
-            {coachHome.todayEvent.title}
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+            Today
           </h2>
-          <p className="mt-2 text-sm text-slate-300">
-            {coachHome.todayEvent.time}
-          </p>
-          <p className="mt-1 text-sm text-slate-300">
-            {coachHome.todayEvent.location}
-          </p>
-          <p className="mt-3 rounded-xl bg-slate-800 p-4 text-sm text-slate-300">
-            {coachHome.todayEvent.note}
-          </p>
+          <div className="mt-4 rounded-xl bg-slate-800 p-4">
+            <p className="font-semibold">{coachHome.todayEvent.title}</p>
+            <p className="mt-2 text-sm text-slate-300">
+              {coachHome.todayEvent.time}
+            </p>
+            <p className="mt-1 text-sm text-slate-300">
+              {coachHome.todayEvent.location}
+            </p>
+          </div>
+          <Link
+            href="/events"
+            className="mt-4 block w-full rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
+          >
+            View Event
+          </Link>
         </div>
 
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Team Status</h2>
-          <p className="mt-3 font-semibold text-blue-300">
-            {coachHome.teamStatus}
+          <p className="mt-3 text-2xl font-bold">
+            {coachHome.teamStatus.players} Players
           </p>
-          <p className="mt-1 text-sm text-slate-300">
-            Roster, event details, and coach action items are ready for today.
-          </p>
+          <div className="mt-4 space-y-2 text-sm text-slate-300">
+            <p className="text-blue-300">
+              {coachHome.teamStatus.attending} Attending
+            </p>
+            <p>{coachHome.teamStatus.unknown} Unknown</p>
+            <p className="text-red-300">
+              {coachHome.teamStatus.notAttending} Not Attending
+            </p>
+          </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
-              Attendance
-            </h2>
-            <p className="mt-3 text-2xl font-bold">
-              {coachHome.attendance.confirmed}/{coachHome.attendance.total}
+        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <h2 className="text-lg font-bold">Transportation</h2>
+          <div className="mt-3 space-y-2 text-sm">
+            <p className="text-red-300">
+              {coachHome.transportation.needsRide} Need Ride
             </p>
-            <p className="mt-1 text-sm text-slate-300">
-              {coachHome.attendance.missing} not confirmed
+            <p className="text-blue-300">
+              {coachHome.transportation.canOfferRide} Can Offer Ride
             </p>
           </div>
-
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
-              Transportation
-            </h2>
-            <p className="mt-3 text-2xl font-bold">
-              {coachHome.transportation.confirmed} set
-            </p>
-            <p className="mt-1 text-sm text-slate-300">
-              {coachHome.transportation.needsRide} need rides
-            </p>
-            <p className="mt-1 text-sm text-slate-400">
-              {coachHome.transportation.unknown} unknown
-            </p>
-          </div>
+          <button
+            type="button"
+            className="mt-4 w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
+          >
+            View Transportation
+          </button>
         </div>
 
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
@@ -104,26 +103,35 @@ export default function CoachHome() {
           </ul>
         </div>
 
-        <div className="mt-4 grid gap-3">
-          <button
-            type="button"
-            className="w-full rounded-xl bg-blue-500 py-3 font-semibold text-white"
-          >
-            Send Announcement
-          </button>
-          <button
-            type="button"
-            className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
-          >
-            Message Team
-          </button>
-          <button
-            type="button"
-            className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
-          >
-            Take Attendance
-          </button>
+        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <h2 className="text-lg font-bold">Quick Actions</h2>
+          <div className="mt-4 grid gap-3">
+            <button
+              type="button"
+              className="w-full rounded-xl bg-blue-500 py-3 font-semibold text-white"
+            >
+              Send Announcement
+            </button>
+            <button
+              type="button"
+              className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
+            >
+              Message Team
+            </button>
+            <button
+              type="button"
+              className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
+            >
+              Take Attendance
+            </button>
+          </div>
         </div>
+
+        <nav className="mt-8 grid grid-cols-5 gap-2 text-center text-xs text-slate-400">
+          {bottomNavItems.map((item) => (
+            <span key={item}>{item}</span>
+          ))}
+        </nav>
       </section>
     </main>
   );

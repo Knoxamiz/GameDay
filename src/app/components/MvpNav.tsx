@@ -14,6 +14,18 @@ const navItems = [
     label: "Admin Home",
   },
   {
+    href: "/events",
+    label: "Events",
+  },
+  {
+    href: "/teams",
+    label: "Teams",
+  },
+  {
+    href: "/registration",
+    label: "Registration",
+  },
+  {
     href: "/athletes/emma-smith",
     label: "Athlete Details",
   },

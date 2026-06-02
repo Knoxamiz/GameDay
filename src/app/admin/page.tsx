@@ -1,3 +1,4 @@
+import Link from "next/link";
 import MvpNav from "../components/MvpNav";
 
 const adminHome = {
@@ -28,27 +29,25 @@ const adminHome = {
   ],
   upcomingEvents: [
     {
-      title: "12U Practice",
-      time: "Today, 6:00 PM",
-      location: "Winslow Township Park",
+      title: "Practice Tonight",
+      team: "12U Girls",
     },
     {
-      title: "10U Tournament",
-      time: "Saturday, 8:00 AM",
-      location: "Williamstown Sports Complex",
+      title: "Tournament Saturday",
+      team: "14U Girls",
     },
     {
-      title: "Coach Meeting",
-      time: "Monday, 7:00 PM",
-      location: "Clubhouse",
+      title: "Board Meeting Monday",
+      team: "",
     },
   ],
-  communications: {
-    sentToday: 4,
-    unreadReplies: 9,
-    scheduled: 2,
-  },
+  communications: [
+    "2 Unread Coach Messages",
+    "1 Organization Announcement Draft",
+  ],
 };
+
+const bottomNavItems = ["Home", "Teams", "Registrations", "Schedule", "More"];
 
 export default function AdminHome() {
   return (
@@ -56,19 +55,22 @@ export default function AdminHome() {
       <section className="mx-auto max-w-md px-5 py-6">
         <MvpNav />
 
-        <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">
-          Admin Home
-        </p>
-        <h1 className="mt-2 text-3xl font-bold">GameDay</h1>
-        <p className="mt-2 text-slate-300">{adminHome.organizationName}</p>
+        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
+          <h1 className="text-3xl font-bold">GameDay - Admin</h1>
+        </div>
+
+        <p className="mt-5 text-slate-300">{adminHome.organizationName}</p>
 
         <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-          <h2 className="text-lg font-bold">Organization Status</h2>
-          <div className="mt-4 grid grid-cols-2 gap-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+            Organization Status
+          </h2>
+          <div className="mt-4 space-y-3">
             {adminHome.organizationStatus.map((status) => (
               <div key={status.label} className="rounded-xl bg-slate-800 p-4">
-                <p className="text-2xl font-bold">{status.value}</p>
-                <p className="mt-1 text-sm text-slate-300">{status.label}</p>
+                <p className="text-xl font-bold">
+                  {status.value} {status.label}
+                </p>
               </div>
             ))}
           </div>
@@ -76,11 +78,11 @@ export default function AdminHome() {
 
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Action Items</h2>
-          <ul className="mt-3 space-y-2 text-sm text-slate-300">
+          <div className="mt-3 space-y-3 text-sm text-slate-300">
             {adminHome.actionItems.map((item) => (
-              <li key={item}>{item}</li>
+              <p key={item}>{item}</p>
             ))}
-          </ul>
+          </div>
         </div>
 
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
@@ -89,63 +91,70 @@ export default function AdminHome() {
             {adminHome.upcomingEvents.map((event) => (
               <div key={event.title} className="rounded-xl bg-slate-800 p-4">
                 <p className="font-semibold">{event.title}</p>
-                <p className="mt-1 text-sm text-slate-300">{event.time}</p>
-                <p className="mt-1 text-sm text-slate-300">{event.location}</p>
+                {event.team && (
+                  <p className="mt-1 text-sm text-slate-300">{event.team}</p>
+                )}
               </div>
             ))}
           </div>
+          <Link
+            href="/events"
+            className="mt-4 block w-full rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
+          >
+            View Schedule
+          </Link>
         </div>
 
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <h2 className="text-lg font-bold">Communications Summary</h2>
-          <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-            <div className="rounded-xl bg-slate-800 p-3">
-              <p className="text-xl font-bold">
-                {adminHome.communications.sentToday}
-              </p>
-              <p className="mt-1 text-xs text-slate-300">Sent Today</p>
-            </div>
-            <div className="rounded-xl bg-slate-800 p-3">
-              <p className="text-xl font-bold">
-                {adminHome.communications.unreadReplies}
-              </p>
-              <p className="mt-1 text-xs text-slate-300">Unread Replies</p>
-            </div>
-            <div className="rounded-xl bg-slate-800 p-3">
-              <p className="text-xl font-bold">
-                {adminHome.communications.scheduled}
-              </p>
-              <p className="mt-1 text-xs text-slate-300">Scheduled</p>
-            </div>
+          <h2 className="text-lg font-bold">Communications</h2>
+          <div className="mt-3 space-y-3 text-sm text-slate-300">
+            {adminHome.communications.map((item) => (
+              <p key={item}>{item}</p>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="mt-4 w-full rounded-xl bg-blue-500 py-3 font-semibold text-white"
+          >
+            Send Organization Message
+          </button>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <h2 className="text-lg font-bold">Quick Actions</h2>
+          <div className="mt-4 grid gap-3">
+            <button
+              type="button"
+              className="w-full rounded-xl bg-blue-500 py-3 font-semibold text-white"
+            >
+              Approve Registrations
+            </button>
+            <button
+              type="button"
+              className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
+            >
+              Create Event
+            </button>
+            <button
+              type="button"
+              className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
+            >
+              Create Team
+            </button>
+            <button
+              type="button"
+              className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
+            >
+              Add Coach
+            </button>
           </div>
         </div>
 
-        <div className="mt-4 grid gap-3">
-          <button
-            type="button"
-            className="w-full rounded-xl bg-blue-500 py-3 font-semibold text-white"
-          >
-            Approve Registrations
-          </button>
-          <button
-            type="button"
-            className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
-          >
-            Create Event
-          </button>
-          <button
-            type="button"
-            className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
-          >
-            Create Team
-          </button>
-          <button
-            type="button"
-            className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
-          >
-            Add Coach
-          </button>
-        </div>
+        <nav className="mt-8 grid grid-cols-5 gap-2 text-center text-xs text-slate-400">
+          {bottomNavItems.map((item) => (
+            <span key={item}>{item}</span>
+          ))}
+        </nav>
       </section>
     </main>
   );
