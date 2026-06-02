@@ -10,6 +10,10 @@ const navItems = [
     label: "Coach Home",
   },
   {
+    href: "/admin",
+    label: "Admin Home",
+  },
+  {
     href: "/athletes/emma-smith",
     label: "Athlete Details",
   },
@@ -21,7 +25,7 @@ export default function MvpNav() {
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
         MVP Navigation
       </p>
-      <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs font-semibold">
+      <div className="mt-3 grid grid-cols-2 gap-2 text-center text-xs font-semibold">
         {navItems.map((item) => (
           <Link
             key={item.href}
