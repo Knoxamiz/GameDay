@@ -13,6 +13,8 @@ export type GameDayEvent = {
   date: string;
   shortDate: string;
   time: string;
+  startDateTime?: string;
+  endDateTime?: string;
   location: string;
   directionsUrl: string;
   status?: string;
@@ -42,6 +44,8 @@ export const events: GameDayEvent[] = [
     date: "Tuesday, June 2",
     shortDate: "Jun 2",
     time: practiceTimeRange,
+    startDateTime: "2026-06-02T18:00:00-04:00",
+    endDateTime: "2026-06-02T19:30:00-04:00",
     ...winslowTownshipPark,
     status: "Event Active",
     lastUpdated: "Today 3:42 PM",
@@ -79,6 +83,8 @@ export const events: GameDayEvent[] = [
     date: "Friday, June 5",
     shortDate: "Jun 5",
     time: practiceTimeRange,
+    startDateTime: "2026-06-05T18:00:00-04:00",
+    endDateTime: "2026-06-05T19:30:00-04:00",
     ...winslowTownshipPark,
     notes: [],
     attendance: {
@@ -97,6 +103,8 @@ export const events: GameDayEvent[] = [
     date: "Sunday, June 7",
     shortDate: "Jun 7",
     time: "8:00 AM",
+    startDateTime: "2026-06-07T08:00:00-04:00",
+    endDateTime: "2026-06-07T12:00:00-04:00",
     location: "Williamstown Sports Complex",
     directionsUrl:
       "https://maps.google.com/?q=Williamstown%20Sports%20Complex",
@@ -114,9 +122,11 @@ export const events: GameDayEvent[] = [
     teamId: "black-diamonds-10u",
     type: "Tournament",
     title: "Tournament Saturday",
-    date: "Saturday",
-    shortDate: "Saturday",
+    date: "Saturday, June 6",
+    shortDate: "Jun 6",
     time: "8:00 AM",
+    startDateTime: "2026-06-06T08:00:00-04:00",
+    endDateTime: "2026-06-06T12:00:00-04:00",
     location: "",
     directionsUrl:
       "https://maps.google.com/?q=Williamstown%20Sports%20Complex",
@@ -134,9 +144,11 @@ export const events: GameDayEvent[] = [
     teamId: "black-diamonds-10u",
     type: "Meeting",
     title: "Team Meeting",
-    date: "Monday",
-    shortDate: "Monday",
+    date: "Monday, June 8",
+    shortDate: "Jun 8",
     time: "6:30 PM",
+    startDateTime: "2026-06-08T18:30:00-04:00",
+    endDateTime: "2026-06-08T19:15:00-04:00",
     location: "Clubhouse",
     directionsUrl: "https://maps.google.com/?q=Clubhouse",
     notes: [],
@@ -172,9 +184,11 @@ export const events: GameDayEvent[] = [
     teamId: "black-diamonds-14u",
     type: "Tournament",
     title: "Tournament Saturday",
-    date: "Saturday",
-    shortDate: "Saturday",
+    date: "Saturday, June 6",
+    shortDate: "Jun 6",
     time: "8:00 AM",
+    startDateTime: "2026-06-06T08:00:00-04:00",
+    endDateTime: "2026-06-06T12:00:00-04:00",
     location: "Williamstown Sports Complex",
     directionsUrl:
       "https://maps.google.com/?q=Williamstown%20Sports%20Complex",
@@ -191,9 +205,11 @@ export const events: GameDayEvent[] = [
     id: "board-meeting-monday",
     type: "Meeting",
     title: "Board Meeting Monday",
-    date: "Monday",
-    shortDate: "Monday",
+    date: "Monday, June 8",
+    shortDate: "Jun 8",
     time: "7:00 PM",
+    startDateTime: "2026-06-08T19:00:00-04:00",
+    endDateTime: "2026-06-08T20:00:00-04:00",
     location: "Clubhouse",
     directionsUrl: "https://maps.google.com/?q=Clubhouse",
     notes: [],

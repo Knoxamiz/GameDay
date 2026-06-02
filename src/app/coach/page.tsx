@@ -1,5 +1,6 @@
 import Link from "next/link";
-import MvpNav from "../components/MvpNav";
+import BottomNav from "../components/BottomNav";
+import MvpNav, { getRoleHref } from "../components/MvpNav";
 import { getEventById } from "../data/events";
 import { coachActionItems } from "../data/messages";
 import { getTeamById } from "../data/teams";
@@ -17,7 +18,7 @@ export default function CoachHome() {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav />
+        <MvpNav role="coach" />
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <h1 className="text-3xl font-bold">GameDay - Coach</h1>
@@ -38,7 +39,7 @@ export default function CoachHome() {
           </div>
           {todayEvent && (
             <Link
-              href={`/events/${todayEvent.id}`}
+              href={getRoleHref(`/events/${todayEvent.id}`, "coach")}
               className="mt-4 block w-full rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
             >
               View Event
@@ -71,7 +72,11 @@ export default function CoachHome() {
             </p>
           </div>
           <Link
-            href={todayEvent ? `/events/${todayEvent.id}` : "/events"}
+            href={
+              todayEvent
+                ? getRoleHref(`/events/${todayEvent.id}`, "coach")
+                : getRoleHref("/events", "coach")
+            }
             className="mt-4 block w-full rounded-xl border border-slate-700 bg-slate-900 py-3 text-center font-semibold text-white"
           >
             View Transportation
@@ -87,41 +92,18 @@ export default function CoachHome() {
           </ul>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <h2 className="text-lg font-bold">Quick Actions</h2>
-          <div className="mt-4 grid gap-3">
-            <button
-              type="button"
-              className="w-full rounded-xl bg-blue-500 py-3 font-semibold text-white"
-            >
-              Send Announcement
-            </button>
-            <button
-              type="button"
-              className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
-            >
-              Message Team
-            </button>
-            <button
-              type="button"
-              className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
-            >
-              Take Attendance
-            </button>
-          </div>
-        </div>
-
-        <nav className="mt-8 grid grid-cols-5 gap-2 text-center text-xs text-slate-400">
-          <Link href="/coach">Home</Link>
-          <Link href={todayEvent ? `/events/${todayEvent.id}` : "/events"}>
-            Schedule
-          </Link>
-          <Link href={coachTeam ? `/teams/${coachTeam.id}` : "/teams"}>
-            Team
-          </Link>
-          <span>Messages</span>
-          <span>More</span>
-        </nav>
+        <BottomNav
+          items={[
+            { href: "/coach", label: "Home" },
+            { href: getRoleHref("/events", "coach"), label: "Schedule" },
+            {
+              href: coachTeam
+                ? getRoleHref(`/teams/${coachTeam.id}`, "coach")
+                : getRoleHref("/teams", "coach"),
+              label: "Team",
+            },
+          ]}
+        />
       </section>
     </main>
   );

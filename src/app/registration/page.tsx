@@ -57,7 +57,7 @@ export default function RegistrationHome() {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav />
+        <MvpNav role="parent" />
 
         {isFormStep(step) && <RegistrationHeader step={step} />}
 
@@ -112,13 +112,18 @@ export default function RegistrationHome() {
             <div className="mt-4 space-y-4 text-sm text-slate-300">
               {registrationForm.documents.map((document) => (
                 <div key={document.label} className="rounded-xl bg-slate-800 p-4">
-                  <p className="font-semibold text-white">{document.label}</p>
-                  <button
-                    type="button"
-                    className="mt-3 rounded-xl border border-slate-700 bg-slate-900 px-4 py-2 font-semibold text-white"
-                  >
-                    {document.actionLabel}
-                  </button>
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="font-semibold text-white">{document.label}</p>
+                    <span
+                      className={
+                        document.tone === "complete"
+                          ? "rounded-full bg-blue-500/20 px-3 py-1 text-xs font-semibold text-blue-300"
+                          : "rounded-full bg-red-500/20 px-3 py-1 text-xs font-semibold text-red-300"
+                      }
+                    >
+                      {document.status}
+                    </span>
+                  </div>
                   <p
                     className={
                       document.tone === "complete"
@@ -126,7 +131,7 @@ export default function RegistrationHome() {
                         : "mt-3 text-red-300"
                     }
                   >
-                    {document.status}
+                    {document.helperText}
                   </p>
                 </div>
               ))}
@@ -231,7 +236,7 @@ export default function RegistrationHome() {
             </div>
 
             <Link
-              href="/"
+              href="/parent"
               className="mt-4 block w-full rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
             >
               Return Home

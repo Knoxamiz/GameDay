@@ -35,15 +35,15 @@ export const registrationForm = {
   documents: [
     {
       label: "Birth Certificate",
-      actionLabel: "Upload File",
       status: "Uploaded",
       tone: "complete",
+      helperText: "On file.",
     },
     {
       label: "Physical Form",
-      actionLabel: "Upload File",
       status: "Missing",
       tone: "missing",
+      helperText: "Needed before approval.",
     },
   ],
   waiverLabel: "Waiver - I Agree",
@@ -52,9 +52,9 @@ export const registrationForm = {
     athleteName: "Emma Smith",
     teamLabel: "12U Girls",
     requirements: [
-      "Birth Certificate Complete",
-      "Physical Complete",
-      "Waiver Complete",
+      "Birth Certificate Uploaded",
+      "Physical Needed Before Approval",
+      "Waiver Accepted",
     ],
   },
   submitted: {

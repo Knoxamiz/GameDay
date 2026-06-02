@@ -1,5 +1,6 @@
 import Link from "next/link";
-import MvpNav from "../components/MvpNav";
+import BottomNav from "../components/BottomNav";
+import MvpNav, { getRoleHref } from "../components/MvpNav";
 import { adminUpcomingEventIds, getEventsByIds } from "../data/events";
 import { adminCommunications } from "../data/messages";
 import { blackDiamondsOrganization } from "../data/organizations";
@@ -29,8 +30,6 @@ const organizationStatus = [
 ];
 
 const actionItems = [
-  `${registrationSummary.pendingRegistrations} Pending Registrations`,
-  `${registrationSummary.missingPhysicals} Missing Physicals`,
   `${teamsNeedingCoachesCount} Teams Need Coaches`,
   `${transportationIssueCount} Transportation Issue`,
 ];
@@ -39,7 +38,7 @@ export default function AdminHome() {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav />
+        <MvpNav role="admin" />
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <h1 className="text-3xl font-bold">GameDay - Admin</h1>
@@ -64,9 +63,23 @@ export default function AdminHome() {
 
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Action Items</h2>
-          <div className="mt-3 space-y-3 text-sm text-slate-300">
+          <div className="mt-3 space-y-3 text-sm">
+            <Link
+              href="/admin/registrations"
+              className="block rounded-xl bg-slate-800 p-4 text-slate-300"
+            >
+              {registrationSummary.pendingRegistrations} Pending Registrations
+            </Link>
+            <Link
+              href="/admin/registrations"
+              className="block rounded-xl bg-slate-800 p-4 text-red-300"
+            >
+              {registrationSummary.missingPhysicals} Missing Physicals
+            </Link>
             {actionItems.map((item) => (
-              <p key={item}>{item}</p>
+              <p key={item} className="rounded-xl bg-slate-800 p-4 text-slate-300">
+                {item}
+              </p>
             ))}
           </div>
         </div>
@@ -80,7 +93,7 @@ export default function AdminHome() {
               return (
                 <Link
                   key={event.id}
-                  href={`/events/${event.id}`}
+                  href={getRoleHref(`/events/${event.id}`, "admin")}
                   className="block rounded-xl bg-slate-800 p-4"
                 >
                   <p className="font-semibold">{event.title}</p>
@@ -94,7 +107,7 @@ export default function AdminHome() {
             })}
           </div>
           <Link
-            href="/events"
+            href={getRoleHref("/events", "admin")}
             className="mt-4 block w-full rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
           >
             View Schedule
@@ -108,51 +121,16 @@ export default function AdminHome() {
               <p key={item}>{item}</p>
             ))}
           </div>
-          <button
-            type="button"
-            className="mt-4 w-full rounded-xl bg-blue-500 py-3 font-semibold text-white"
-          >
-            Send Organization Message
-          </button>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <h2 className="text-lg font-bold">Quick Actions</h2>
-          <div className="mt-4 grid gap-3">
-            <button
-              type="button"
-              className="w-full rounded-xl bg-blue-500 py-3 font-semibold text-white"
-            >
-              Approve Registrations
-            </button>
-            <button
-              type="button"
-              className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
-            >
-              Create Event
-            </button>
-            <button
-              type="button"
-              className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
-            >
-              Create Team
-            </button>
-            <button
-              type="button"
-              className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
-            >
-              Add Coach
-            </button>
-          </div>
-        </div>
-
-        <nav className="mt-8 grid grid-cols-5 gap-2 text-center text-xs text-slate-400">
-          <Link href="/admin">Home</Link>
-          <Link href="/teams">Teams</Link>
-          <Link href="/registration">Registrations</Link>
-          <Link href="/events">Schedule</Link>
-          <span>More</span>
-        </nav>
+        <BottomNav
+          items={[
+            { href: "/admin", label: "Home" },
+            { href: getRoleHref("/teams", "admin"), label: "Teams" },
+            { href: "/admin/registrations", label: "Registration" },
+            { href: getRoleHref("/events", "admin"), label: "Schedule" },
+          ]}
+        />
       </section>
     </main>
   );

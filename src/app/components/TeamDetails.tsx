@@ -9,13 +9,17 @@ import {
 } from "../data/messages";
 import { getTeamById } from "../data/teams";
 import { getTransportationSummaryByEventId } from "../data/transportation";
-import MvpNav from "./MvpNav";
+import MvpNav, { getRoleHref, type MvpNavRole } from "./MvpNav";
 
 type TeamDetailsProps = {
   teamId: string;
+  role?: MvpNavRole;
 };
 
-export default function TeamDetails({ teamId }: TeamDetailsProps) {
+export default function TeamDetails({
+  teamId,
+  role = "shared",
+}: TeamDetailsProps) {
   const teamDetails = getTeamById(teamId);
 
   if (!teamDetails) {
@@ -37,10 +41,10 @@ export default function TeamDetails({ teamId }: TeamDetailsProps) {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav />
+        <MvpNav role={role} />
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-          <Link href="/coach" className="text-2xl font-bold">
+          <Link href={getRoleHref("/teams", role)} className="text-2xl font-bold">
             &larr; {teamDetails.name}
           </Link>
         </div>
@@ -76,7 +80,7 @@ export default function TeamDetails({ teamId }: TeamDetailsProps) {
                 )}
               </div>
               <Link
-                href={`/events/${nextEvent.id}`}
+                href={getRoleHref(`/events/${nextEvent.id}`, role)}
                 className="mt-4 block w-full rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
               >
                 View Event
@@ -150,7 +154,7 @@ export default function TeamDetails({ teamId }: TeamDetailsProps) {
             {upcomingEvents.map((event) => (
               <Link
                 key={event.id}
-                href={`/events/${event.id}`}
+                href={getRoleHref(`/events/${event.id}`, role)}
                 className="block rounded-xl bg-slate-800 p-4"
               >
                 {event.shortDate} {event.type}

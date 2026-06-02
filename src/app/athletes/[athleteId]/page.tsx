@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import MvpNav from "../../components/MvpNav";
+import MvpNav, { getRoleHref } from "../../components/MvpNav";
 import RegistrationRequirementsChecklist from "../../components/RegistrationRequirementsChecklist";
 import TransportationStatusPicker from "../../components/TransportationStatusPicker";
 import { athletes, getAthleteById } from "../../data/athletes";
@@ -55,10 +55,10 @@ export default async function AthleteDetailsPage({
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav />
+        <MvpNav role="parent" />
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-          <Link href="/" className="text-2xl font-bold">
+          <Link href="/parent" className="text-2xl font-bold">
             Back {athlete.name}
           </Link>
         </div>
@@ -105,7 +105,7 @@ export default async function AthleteDetailsPage({
                 Directions
               </a>
               <Link
-                href={`/events/${nextEvent.id}`}
+                href={getRoleHref(`/events/${nextEvent.id}`, "parent")}
                 className="block rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
               >
                 Event Details
@@ -129,7 +129,7 @@ export default async function AthleteDetailsPage({
             {upcomingEvents.map((event) => (
               <Link
                 key={`${event.title}-${event.shortDate}`}
-                href={`/events/${event.id}`}
+                href={getRoleHref(`/events/${event.id}`, "parent")}
                 className="rounded-xl bg-slate-800 p-4"
               >
                 <p className="font-semibold">
@@ -162,7 +162,7 @@ export default async function AthleteDetailsPage({
           </div>
           {team && (
             <Link
-              href={`/teams/${team.id}`}
+              href={getRoleHref(`/teams/${team.id}`, "parent")}
               className="mt-4 block w-full rounded-xl border border-slate-700 bg-slate-900 py-3 text-center font-semibold text-white"
             >
               Team Details

@@ -11,13 +11,17 @@ import {
   getTransportationEntriesByEventId,
   getTransportationSummaryByEventId,
 } from "../data/transportation";
-import MvpNav from "./MvpNav";
+import MvpNav, { getRoleHref, type MvpNavRole } from "./MvpNav";
 
 type EventDetailsProps = {
   eventId: string;
+  role?: MvpNavRole;
 };
 
-export default function EventDetails({ eventId }: EventDetailsProps) {
+export default function EventDetails({
+  eventId,
+  role = "shared",
+}: EventDetailsProps) {
   const eventDetails = getEventById(eventId);
 
   if (!eventDetails) {
@@ -42,11 +46,15 @@ export default function EventDetails({ eventId }: EventDetailsProps) {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav />
+        <MvpNav role={role} />
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <Link
-            href={team ? `/teams/${team.id}` : "/teams"}
+            href={
+              team
+                ? getRoleHref(`/teams/${team.id}`, role)
+                : getRoleHref("/events", role)
+            }
             className="text-2xl font-bold"
           >
             &larr; {eventDetails.type}
