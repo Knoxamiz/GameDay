@@ -1,19 +1,16 @@
 import ParentAthleteCard from "./components/ParentAthleteCard";
 import MvpNav from "./components/MvpNav";
+import Link from "next/link";
 import {
   getAthletesByIds,
   parentHomeAthleteIds,
 } from "./data/athletes";
 import { getEventById } from "./data/events";
 import { parentHomeAnnouncements } from "./data/messages";
-import {
-  getMissingRegistrationRequirements,
-  getRegistrationById,
-} from "./data/registrations";
+import { getRegistrationById } from "./data/registrations";
 import { getTeamById } from "./data/teams";
 import { getTransportationEntryByAthleteAndEventId } from "./data/transportation";
 
-const bottomNavItems = ["Home", "Messages", "Registration", "More"];
 const parentAthletes = getAthletesByIds(parentHomeAthleteIds);
 
 export default function Home() {
@@ -39,8 +36,6 @@ export default function Home() {
               ? getEventById(athlete.nextEventId)
               : undefined;
             const registration = getRegistrationById(athlete.registrationId);
-            const missingRequirements =
-              getMissingRegistrationRequirements(registration);
             const transportation = nextEvent
               ? getTransportationEntryByAthleteAndEventId(
                   athlete.id,
@@ -61,7 +56,8 @@ export default function Home() {
                   initialTransportationStatus={
                     transportation?.status ?? "Unknown"
                   }
-                  missingRegistrationCount={missingRequirements.length}
+                  registrationId={registration?.id ?? athlete.registrationId}
+                  registrationRequirements={registration?.requirements ?? []}
                 />
               </div>
             );
@@ -78,9 +74,10 @@ export default function Home() {
         </div>
 
         <nav className="mt-8 grid grid-cols-4 gap-2 text-center text-xs text-slate-400">
-          {bottomNavItems.map((item) => (
-            <span key={item}>{item}</span>
-          ))}
+          <Link href="/">Home</Link>
+          <span>Messages</span>
+          <Link href="/registration">Registration</Link>
+          <span>More</span>
         </nav>
       </section>
     </main>

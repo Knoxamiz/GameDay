@@ -1,17 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import type { RegistrationRequirement } from "../data/registrations";
 import type { TransportationStatus } from "../data/transportation";
+import { useRegistrationRequirements } from "./registrationRequirementState";
 import {
-  getSavedTransportationStatus,
   saveTransportationStatus,
+  useTransportationStatus,
 } from "./transportationStatusState";
 
 type TransportationStatusPickerProps = {
   athleteId: string;
   eventId: string;
   initialStatus: TransportationStatus;
-  missingRequirementLabels: string[];
+  registrationId: string;
+  registrationRequirements: RegistrationRequirement[];
   options: TransportationStatus[];
 };
 
@@ -19,12 +21,22 @@ export default function TransportationStatusPicker({
   athleteId,
   eventId,
   initialStatus,
-  missingRequirementLabels,
+  registrationId,
+  registrationRequirements,
   options,
 }: TransportationStatusPickerProps) {
-  const [selectedStatus, setSelectedStatus] = useState<TransportationStatus>(
-    () => getSavedTransportationStatus(athleteId, eventId) ?? initialStatus,
+  const selectedStatus = useTransportationStatus(
+    athleteId,
+    eventId,
+    initialStatus,
   );
+  const requirements = useRegistrationRequirements(
+    registrationId,
+    registrationRequirements,
+  );
+  const missingRequirementLabels = requirements
+    .filter((requirement) => requirement.status === "Missing")
+    .map((requirement) => requirement.label);
   const hasTransportationReady = selectedStatus !== "Unknown";
   const isReady =
     hasTransportationReady && missingRequirementLabels.length === 0;
@@ -67,7 +79,6 @@ export default function TransportationStatusPicker({
                 key={option}
                 type="button"
                 onClick={() => {
-                  setSelectedStatus(option);
                   saveTransportationStatus(athleteId, eventId, option);
                 }}
                 className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm font-semibold ${

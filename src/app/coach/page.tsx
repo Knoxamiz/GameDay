@@ -5,7 +5,6 @@ import { coachActionItems } from "../data/messages";
 import { getTeamById } from "../data/teams";
 import { getTransportationSummaryByEventId } from "../data/transportation";
 
-const bottomNavItems = ["Home", "Schedule", "Team", "Messages", "More"];
 const coachTeam = getTeamById("black-diamonds-12u");
 const todayEvent = coachTeam?.nextEventId
   ? getEventById(coachTeam.nextEventId)
@@ -37,12 +36,14 @@ export default function CoachHome() {
               {todayEvent?.location}
             </p>
           </div>
-          <Link
-            href="/events"
-            className="mt-4 block w-full rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
-          >
-            View Event
-          </Link>
+          {todayEvent && (
+            <Link
+              href={`/events/${todayEvent.id}`}
+              className="mt-4 block w-full rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
+            >
+              View Event
+            </Link>
+          )}
         </div>
 
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
@@ -69,12 +70,12 @@ export default function CoachHome() {
               {transportation.canOfferRide} Can Offer Ride
             </p>
           </div>
-          <button
-            type="button"
-            className="mt-4 w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
+          <Link
+            href={todayEvent ? `/events/${todayEvent.id}` : "/events"}
+            className="mt-4 block w-full rounded-xl border border-slate-700 bg-slate-900 py-3 text-center font-semibold text-white"
           >
             View Transportation
-          </button>
+          </Link>
         </div>
 
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
@@ -111,9 +112,15 @@ export default function CoachHome() {
         </div>
 
         <nav className="mt-8 grid grid-cols-5 gap-2 text-center text-xs text-slate-400">
-          {bottomNavItems.map((item) => (
-            <span key={item}>{item}</span>
-          ))}
+          <Link href="/coach">Home</Link>
+          <Link href={todayEvent ? `/events/${todayEvent.id}` : "/events"}>
+            Schedule
+          </Link>
+          <Link href={coachTeam ? `/teams/${coachTeam.id}` : "/teams"}>
+            Team
+          </Link>
+          <span>Messages</span>
+          <span>More</span>
         </nav>
       </section>
     </main>

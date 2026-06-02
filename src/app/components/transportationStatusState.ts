@@ -1,5 +1,6 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import {
   transportationStatusValues,
   type TransportationStatus,
@@ -49,5 +50,55 @@ export function saveTransportationStatus(
         status,
       },
     }),
+  );
+}
+
+function subscribeTransportationStatus(
+  athleteId: string,
+  eventId: string,
+  onStoreChange: () => void,
+) {
+  function handleStatusChange(event: Event) {
+    const statusEvent = event as CustomEvent<{
+      athleteId: string;
+      eventId: string;
+    }>;
+
+    if (
+      statusEvent.detail?.athleteId === athleteId &&
+      statusEvent.detail.eventId === eventId
+    ) {
+      onStoreChange();
+    }
+  }
+
+  function handleStorageChange(event: StorageEvent) {
+    if (event.key === getStorageKey(athleteId, eventId)) {
+      onStoreChange();
+    }
+  }
+
+  window.addEventListener(transportationStatusChangedEvent, handleStatusChange);
+  window.addEventListener("storage", handleStorageChange);
+
+  return () => {
+    window.removeEventListener(
+      transportationStatusChangedEvent,
+      handleStatusChange,
+    );
+    window.removeEventListener("storage", handleStorageChange);
+  };
+}
+
+export function useTransportationStatus(
+  athleteId: string,
+  eventId: string,
+  initialStatus: TransportationStatus,
+) {
+  return useSyncExternalStore(
+    (onStoreChange) =>
+      subscribeTransportationStatus(athleteId, eventId, onStoreChange),
+    () => getSavedTransportationStatus(athleteId, eventId) ?? initialStatus,
+    () => initialStatus,
   );
 }

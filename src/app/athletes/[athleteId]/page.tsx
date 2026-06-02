@@ -1,15 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import MvpNav from "../../components/MvpNav";
+import RegistrationRequirementsChecklist from "../../components/RegistrationRequirementsChecklist";
 import TransportationStatusPicker from "../../components/TransportationStatusPicker";
 import { athletes, getAthleteById } from "../../data/athletes";
 import { getCoachesByIds } from "../../data/coaches";
 import { getEventById, getEventsByIds } from "../../data/events";
 import { teamUpdatesByAthleteId } from "../../data/messages";
-import {
-  getMissingRegistrationRequirements,
-  getRegistrationById,
-} from "../../data/registrations";
+import { getRegistrationById } from "../../data/registrations";
 import { getTeamById } from "../../data/teams";
 import {
   getTransportationEntryByAthleteAndEventId,
@@ -44,7 +42,8 @@ export default async function AthleteDetailsPage({
     : undefined;
   const upcomingEvents = getEventsByIds(athlete.upcomingEventIds);
   const registration = getRegistrationById(athlete.registrationId);
-  const missingRequirements = getMissingRegistrationRequirements(registration);
+  const registrationRequirements = registration?.requirements ?? [];
+  const registrationId = registration?.id ?? athlete.registrationId;
   const coaches = team ? getCoachesByIds(team.coachIds) : [];
   const teamUpdates = teamUpdatesByAthleteId[athlete.id] ?? [];
   const primaryCoach = coaches[0];
@@ -52,9 +51,6 @@ export default async function AthleteDetailsPage({
     ? getTransportationEntryByAthleteAndEventId(athlete.id, nextEvent.id)
     : undefined;
   const transportationStatus = transportation?.status ?? "Unknown";
-  const missingRequirementLabels = missingRequirements.map(
-    (requirement) => requirement.label,
-  );
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -73,7 +69,8 @@ export default async function AthleteDetailsPage({
             athleteId={athlete.id}
             eventId={nextEvent.id}
             initialStatus={transportationStatus}
-            missingRequirementLabels={missingRequirementLabels}
+            registrationId={registrationId}
+            registrationRequirements={registrationRequirements}
             options={transportationOptions}
           />
         )}
@@ -98,14 +95,22 @@ export default async function AthleteDetailsPage({
           </div>
 
           {nextEvent?.directionsUrl && (
-            <a
-              href={nextEvent.directionsUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-4 block w-full rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
-            >
-              Directions
-            </a>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <a
+                href={nextEvent.directionsUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="block rounded-xl border border-slate-700 bg-slate-900 py-3 text-center font-semibold text-white"
+              >
+                Directions
+              </a>
+              <Link
+                href={`/events/${nextEvent.id}`}
+                className="block rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
+              >
+                Event Details
+              </Link>
+            </div>
           )}
         </div>
 
@@ -122,8 +127,9 @@ export default async function AthleteDetailsPage({
           <h2 className="text-lg font-bold">Upcoming Events</h2>
           <div className="mt-3 space-y-3">
             {upcomingEvents.map((event) => (
-              <div
+              <Link
                 key={`${event.title}-${event.shortDate}`}
+                href={`/events/${event.id}`}
                 className="rounded-xl bg-slate-800 p-4"
               >
                 <p className="font-semibold">
@@ -137,46 +143,15 @@ export default async function AthleteDetailsPage({
                     {event.location}
                   </p>
                 )}
-              </div>
+              </Link>
             ))}
           </div>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <h2 className="text-lg font-bold">Registration Status</h2>
-          <p
-            className={`mt-3 text-sm font-semibold ${
-              missingRequirements.length === 0 ? "text-blue-300" : "text-red-300"
-            }`}
-          >
-            {missingRequirements.length === 0
-              ? "Ready"
-              : `${missingRequirements.length} Missing`}
-          </p>
-          <div className="mt-3 space-y-2 text-sm text-slate-300">
-            {registration && registration.requirements.length > 0 ? (
-              registration.requirements.map((requirement) => (
-                <div
-                  key={requirement.label}
-                  className="flex items-center justify-between gap-3"
-                >
-                  <span>{requirement.label}</span>
-                  <span
-                    className={
-                      requirement.status === "Complete"
-                        ? "font-semibold text-blue-300"
-                        : "font-semibold text-red-300"
-                    }
-                  >
-                    {requirement.status}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <p>No registration requirements listed.</p>
-            )}
-          </div>
-        </div>
+        <RegistrationRequirementsChecklist
+          registrationId={registrationId}
+          requirements={registrationRequirements}
+        />
 
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Team</h2>
@@ -185,6 +160,14 @@ export default async function AthleteDetailsPage({
               <p key={coach.id}>{coach.name}</p>
             ))}
           </div>
+          {team && (
+            <Link
+              href={`/teams/${team.id}`}
+              className="mt-4 block w-full rounded-xl border border-slate-700 bg-slate-900 py-3 text-center font-semibold text-white"
+            >
+              Team Details
+            </Link>
+          )}
         </div>
 
         {primaryCoach ? (

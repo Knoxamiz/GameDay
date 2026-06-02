@@ -1,0 +1,173 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { getAthletesByIds } from "../data/athletes";
+import { getCoachesByIds } from "../data/coaches";
+import { getEventById, getEventsByIds } from "../data/events";
+import {
+  teamAnnouncementsByTeamId,
+  teamCommunicationItems,
+} from "../data/messages";
+import { getTeamById } from "../data/teams";
+import { getTransportationSummaryByEventId } from "../data/transportation";
+import MvpNav from "./MvpNav";
+
+type TeamDetailsProps = {
+  teamId: string;
+};
+
+export default function TeamDetails({ teamId }: TeamDetailsProps) {
+  const teamDetails = getTeamById(teamId);
+
+  if (!teamDetails) {
+    notFound();
+  }
+
+  const teamCoaches = getCoachesByIds(teamDetails.coachIds);
+  const nextEvent = teamDetails.nextEventId
+    ? getEventById(teamDetails.nextEventId)
+    : undefined;
+  const rosterPreview = getAthletesByIds(teamDetails.rosterPreviewIds);
+  const roster = getAthletesByIds(teamDetails.athleteIds);
+  const teamAnnouncements = teamAnnouncementsByTeamId[teamDetails.id] ?? [];
+  const upcomingEvents = getEventsByIds(teamDetails.eventIds);
+  const transportation = nextEvent
+    ? getTransportationSummaryByEventId(nextEvent.id)
+    : { needsRide: 0, canOfferRide: 0 };
+
+  return (
+    <main className="min-h-screen bg-slate-950 text-white">
+      <section className="mx-auto max-w-md px-5 py-6">
+        <MvpNav />
+
+        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
+          <Link href="/coach" className="text-2xl font-bold">
+            &larr; {teamDetails.name}
+          </Link>
+        </div>
+
+        <div className="mt-5 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
+          <h1 className="text-3xl font-bold">{teamDetails.name}</h1>
+          <p className="mt-3 text-sm text-slate-300">
+            {teamDetails.playerCount} Players
+          </p>
+          <div className="mt-4 space-y-2 text-sm text-slate-300">
+            {teamCoaches.length > 0 ? (
+              teamCoaches.map((coach) => <p key={coach.id}>{coach.name}</p>)
+            ) : (
+              <p>No coaches assigned.</p>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+            Next Event
+          </h2>
+          {nextEvent ? (
+            <>
+              <div className="mt-4 rounded-xl bg-slate-800 p-4">
+                <p className="font-semibold">{nextEvent.type}</p>
+                <p className="mt-3 text-sm text-slate-300">{nextEvent.date}</p>
+                <p className="mt-1 text-sm text-slate-300">{nextEvent.time}</p>
+                {nextEvent.location && (
+                  <p className="mt-3 text-sm text-slate-300">
+                    {nextEvent.location}
+                  </p>
+                )}
+              </div>
+              <Link
+                href={`/events/${nextEvent.id}`}
+                className="mt-4 block w-full rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
+              >
+                View Event
+              </Link>
+            </>
+          ) : (
+            <p className="mt-4 text-sm text-slate-300">No upcoming event.</p>
+          )}
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <h2 className="text-lg font-bold">Roster</h2>
+          <p className="mt-3 text-sm text-slate-300">
+            {teamDetails.playerCount} Players
+          </p>
+          <div className="mt-4 space-y-2 text-sm text-slate-300">
+            {rosterPreview.map((player) => (
+              <p key={player.id}>{player.name}</p>
+            ))}
+            {roster.length > rosterPreview.length && <p>...</p>}
+          </div>
+          <details className="mt-4 rounded-xl border border-slate-700 bg-slate-900 text-sm text-slate-300">
+            <summary className="cursor-pointer px-4 py-3 text-center font-semibold text-white">
+              View Full Roster
+            </summary>
+            <div className="space-y-2 border-t border-slate-800 px-4 py-3">
+              {roster.length > 0 ? (
+                roster.map((player) => <p key={player.id}>{player.name}</p>)
+              ) : (
+                <p>No roster listed.</p>
+              )}
+            </div>
+          </details>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <h2 className="text-lg font-bold">Transportation</h2>
+          <div className="mt-3 space-y-2 text-sm">
+            <p className="text-red-300">{transportation.needsRide} Need Ride</p>
+            <p className="text-blue-300">
+              {transportation.canOfferRide} Can Offer Ride
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <h2 className="text-lg font-bold">Team Announcements</h2>
+          <div className="mt-3 space-y-3 text-sm text-slate-300">
+            {teamAnnouncements.length > 0 ? (
+              teamAnnouncements.map((announcement) => (
+                <p key={announcement}>{announcement}</p>
+              ))
+            ) : (
+              <p>No team announcements yet.</p>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <h2 className="text-lg font-bold">Team Status</h2>
+          <div className="mt-3 space-y-3 text-sm text-slate-300">
+            {teamDetails.status.map((status) => (
+              <p key={status}>{status}</p>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <h2 className="text-lg font-bold">Upcoming Events</h2>
+          <div className="mt-3 space-y-3 text-sm text-slate-300">
+            {upcomingEvents.map((event) => (
+              <Link
+                key={event.id}
+                href={`/events/${event.id}`}
+                className="block rounded-xl bg-slate-800 p-4"
+              >
+                {event.shortDate} {event.type}
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <h2 className="text-lg font-bold">Communication</h2>
+          <div className="mt-3 space-y-3 text-sm text-slate-300">
+            {teamCommunicationItems.map((item) => (
+              <p key={item}>{item}</p>
+            ))}
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}

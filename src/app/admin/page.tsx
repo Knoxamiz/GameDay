@@ -7,7 +7,6 @@ import { registrationSummary } from "../data/registrations";
 import { getTeamById, teamsNeedingCoachesCount } from "../data/teams";
 import { transportationIssueCount } from "../data/transportation";
 
-const bottomNavItems = ["Home", "Teams", "Registrations", "Schedule", "More"];
 const adminUpcomingEvents = getEventsByIds(adminUpcomingEventIds);
 
 const organizationStatus = [
@@ -79,14 +78,18 @@ export default function AdminHome() {
               const team = event.teamId ? getTeamById(event.teamId) : undefined;
 
               return (
-                <div key={event.id} className="rounded-xl bg-slate-800 p-4">
+                <Link
+                  key={event.id}
+                  href={`/events/${event.id}`}
+                  className="block rounded-xl bg-slate-800 p-4"
+                >
                   <p className="font-semibold">{event.title}</p>
                   {team && (
                     <p className="mt-1 text-sm text-slate-300">
                       {team.label}
                     </p>
                   )}
-                </div>
+                </Link>
               );
             })}
           </div>
@@ -144,9 +147,11 @@ export default function AdminHome() {
         </div>
 
         <nav className="mt-8 grid grid-cols-5 gap-2 text-center text-xs text-slate-400">
-          {bottomNavItems.map((item) => (
-            <span key={item}>{item}</span>
-          ))}
+          <Link href="/admin">Home</Link>
+          <Link href="/teams">Teams</Link>
+          <Link href="/registration">Registrations</Link>
+          <Link href="/events">Schedule</Link>
+          <span>More</span>
         </nav>
       </section>
     </main>

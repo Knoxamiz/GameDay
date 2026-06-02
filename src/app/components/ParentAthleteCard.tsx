@@ -1,12 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import type { RegistrationRequirement } from "../data/registrations";
 import type { TransportationStatus } from "../data/transportation";
-import {
-  getSavedTransportationStatus,
-  transportationStatusChangedEvent,
-} from "./transportationStatusState";
+import { useRegistrationRequirements } from "./registrationRequirementState";
+import { useTransportationStatus } from "./transportationStatusState";
 
 type ParentAthleteCardProps = {
   athleteId: string;
@@ -21,7 +19,8 @@ type ParentAthleteCardProps = {
     directionsUrl: string;
   };
   initialTransportationStatus: TransportationStatus;
-  missingRegistrationCount: number;
+  registrationId: string;
+  registrationRequirements: RegistrationRequirement[];
 };
 
 export default function ParentAthleteCard({
@@ -30,54 +29,27 @@ export default function ParentAthleteCard({
   teamName,
   nextEvent,
   initialTransportationStatus,
-  missingRegistrationCount,
+  registrationId,
+  registrationRequirements,
 }: ParentAthleteCardProps) {
   const nextEventId = nextEvent?.id;
-  const [transportationStatus, setTransportationStatus] =
-    useState<TransportationStatus>(() =>
-      nextEventId
-        ? getSavedTransportationStatus(athleteId, nextEventId) ??
-          initialTransportationStatus
-        : initialTransportationStatus,
-    );
+  const transportationStatus = useTransportationStatus(
+    athleteId,
+    nextEventId ?? "",
+    initialTransportationStatus,
+  );
+  const requirements = useRegistrationRequirements(
+    registrationId,
+    registrationRequirements,
+  );
+  const missingRegistrationCount = requirements.filter(
+    (requirement) => requirement.status === "Missing",
+  ).length;
   const hasTransportationReady = transportationStatus !== "Unknown";
   const isReady =
     Boolean(nextEvent) &&
     hasTransportationReady &&
     missingRegistrationCount === 0;
-
-  useEffect(() => {
-    if (!nextEventId) {
-      return;
-    }
-
-    function handleStatusChange(event: Event) {
-      const statusEvent = event as CustomEvent<{
-        athleteId: string;
-        eventId: string;
-        status: TransportationStatus;
-      }>;
-
-      if (
-        statusEvent.detail?.athleteId === athleteId &&
-        statusEvent.detail.eventId === nextEventId
-      ) {
-        setTransportationStatus(statusEvent.detail.status);
-      }
-    }
-
-    window.addEventListener(
-      transportationStatusChangedEvent,
-      handleStatusChange,
-    );
-
-    return () => {
-      window.removeEventListener(
-        transportationStatusChangedEvent,
-        handleStatusChange,
-      );
-    };
-  }, [athleteId, nextEventId]);
 
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
@@ -164,7 +136,7 @@ export default function ParentAthleteCard({
           href={`/athletes/${athleteId}`}
           className="block rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
         >
-          View Details
+          Athlete Details
         </Link>
       </div>
     </div>

@@ -14,12 +14,12 @@ const navItems = [
     label: "Admin Home",
   },
   {
-    href: "/events",
-    label: "Events",
+    href: "/events/practice-jun-2",
+    label: "Event Detail",
   },
   {
-    href: "/teams",
-    label: "Teams",
+    href: "/teams/black-diamonds-12u",
+    label: "Team Detail",
   },
   {
     href: "/registration",
