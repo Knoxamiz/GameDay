@@ -1,31 +1,13 @@
-const athletes = [
-  {
-    name: "Emma Smith",
-    team: "Black Diamonds 12U",
-    event: "Practice Tonight",
-    time: "6:00 PM - 7:30 PM",
-    location: "Winslow Township Park",
-  },
-  {
-    name: "Olivia Smith",
-    team: "Black Diamonds 10U",
-    event: "Tournament Saturday",
-    time: "8:00 AM",
-    location: "Williamstown Sports Complex",
-  },
-  {
-    name: "Mason Smith",
-    team: "Black Diamonds HS",
-    event: "No Upcoming Events",
-    time: "",
-    location: "",
-  },
-];
+import Link from "next/link";
+import MvpNav from "./components/MvpNav";
+import { athletes } from "./data/athletes";
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
+        <MvpNav />
+
         <h1 className="text-3xl font-bold">GameDay</h1>
         <p className="mt-2 text-slate-300">Welcome Jennifer</p>
 
@@ -43,20 +25,25 @@ export default function Home() {
               <p className="mt-1 text-sm text-slate-400">{athlete.team}</p>
 
               <div className="mt-4 rounded-xl bg-slate-800 p-4">
-                <p className="font-semibold">{athlete.event}</p>
-                {athlete.time && (
-                  <p className="mt-1 text-sm text-slate-300">{athlete.time}</p>
-                )}
-                {athlete.location && (
+                <p className="font-semibold">{athlete.nextEvent.title}</p>
+                {athlete.nextEvent.time && (
                   <p className="mt-1 text-sm text-slate-300">
-                    {athlete.location}
+                    {athlete.nextEvent.time}
+                  </p>
+                )}
+                {athlete.nextEvent.location && (
+                  <p className="mt-1 text-sm text-slate-300">
+                    {athlete.nextEvent.location}
                   </p>
                 )}
               </div>
 
-              <button className="mt-4 w-full rounded-xl bg-blue-500 py-3 font-semibold text-white">
+              <Link
+                href={`/athletes/${athlete.id}`}
+                className="mt-4 block w-full rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
+              >
                 View Details
-              </button>
+              </Link>
             </div>
           ))}
         </div>
