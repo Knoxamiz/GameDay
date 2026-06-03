@@ -3,6 +3,7 @@ import AttendanceSummaryCard from "../components/AttendanceSummaryCard";
 import BottomNav from "../components/BottomNav";
 import MvpNav, { getRoleHref } from "../components/MvpNav";
 import RegistrationConcernAction from "../components/RegistrationConcernAction";
+import TeamReadinessSummary from "../components/TeamReadinessSummary";
 import TransportationSummaryCard from "../components/TransportationSummaryCard";
 import { getAttendanceEntriesByEventId } from "../data/attendance";
 import { getEventById } from "../data/events";
@@ -57,6 +58,16 @@ export default function CoachHome() {
             </Link>
           )}
         </div>
+
+        {todayEvent && (
+          <TeamReadinessSummary
+            actionHref={getRoleHref(`/events/${todayEvent.id}`, "coach")}
+            attendanceEntries={attendanceEntries}
+            eventId={todayEvent.id}
+            registrations={coachTeamRegistrations}
+            transportationEntries={transportationEntries}
+          />
+        )}
 
         {todayEvent && (
           <AttendanceSummaryCard

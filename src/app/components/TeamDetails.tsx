@@ -21,6 +21,7 @@ import AttendanceRosterCard from "./AttendanceRosterCard";
 import AttendanceSummaryCard from "./AttendanceSummaryCard";
 import MvpNav, { getRoleHref, type MvpNavRole } from "./MvpNav";
 import RegistrationRosterCard from "./RegistrationRosterCard";
+import TeamReadinessSummary from "./TeamReadinessSummary";
 import TransportationSummaryCard from "./TransportationSummaryCard";
 
 type TeamDetailsProps = {
@@ -121,6 +122,16 @@ export default function TeamDetails({
             <p className="mt-4 text-sm text-slate-300">No upcoming event.</p>
           )}
         </div>
+
+        {nextEvent && (
+          <TeamReadinessSummary
+            actionHref={getRoleHref(`/events/${nextEvent.id}`, role)}
+            attendanceEntries={attendanceEntries}
+            eventId={nextEvent.id}
+            registrations={teamRegistrations}
+            transportationEntries={transportationEntries}
+          />
+        )}
 
         {nextEvent ? (
           <AttendanceRosterCard

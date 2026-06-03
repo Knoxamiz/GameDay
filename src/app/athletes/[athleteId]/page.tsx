@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import AttendanceStatusPicker from "../../components/AttendanceStatusPicker";
+import AthleteReadinessCard from "../../components/AthleteReadinessCard";
 import MvpNav, { getRoleHref } from "../../components/MvpNav";
-import RegistrationReadinessCard from "../../components/RegistrationReadinessCard";
 import RegistrationRequirementsChecklist from "../../components/RegistrationRequirementsChecklist";
 import TransportationStatusPicker from "../../components/TransportationStatusPicker";
 import { athletes, getAthleteById } from "../../data/athletes";
@@ -71,6 +71,15 @@ export default async function AthleteDetailsPage({
         </div>
 
         <p className="mt-5 text-slate-300">{team?.name}</p>
+        <AthleteReadinessCard
+          athleteId={athlete.id}
+          eventId={nextEvent?.id}
+          initialAttendanceStatus={attendanceStatus}
+          initialTransportationStatus={transportationStatus}
+          registrationId={registrationId}
+          registrationRequirements={registrationRequirements}
+          registrationStatus={registration?.status ?? "Pending"}
+        />
         {nextEvent && (
           <>
             <AttendanceStatusPicker
@@ -161,15 +170,6 @@ export default async function AthleteDetailsPage({
             ))}
           </div>
         </div>
-
-        {registration && (
-          <RegistrationReadinessCard
-            details={registration.details}
-            registrationId={registrationId}
-            requirements={registrationRequirements}
-            status={registration.status}
-          />
-        )}
 
         <RegistrationRequirementsChecklist
           registrationId={registrationId}

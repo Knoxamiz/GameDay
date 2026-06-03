@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AdminReadinessBoard from "../components/AdminReadinessBoard";
 import AttendanceConcernAction from "../components/AttendanceConcernAction";
 import BottomNav from "../components/BottomNav";
 import MvpNav, { getRoleHref } from "../components/MvpNav";
@@ -9,7 +10,7 @@ import { adminUpcomingEventIds, getEventsByIds } from "../data/events";
 import { adminCommunications } from "../data/messages";
 import { blackDiamondsOrganization } from "../data/organizations";
 import { registrations } from "../data/registrations";
-import { getTeamById, teamsNeedingCoachesCount } from "../data/teams";
+import { getTeamById, teams, teamsNeedingCoachesCount } from "../data/teams";
 import { transportationEntries } from "../data/transportation";
 
 const adminUpcomingEvents = getEventsByIds(adminUpcomingEventIds);
@@ -88,6 +89,14 @@ export default function AdminHome() {
             />
           </div>
         </div>
+
+        <AdminReadinessBoard
+          attendanceEntries={attendanceEntries}
+          events={adminUpcomingEvents}
+          registrations={registrations}
+          teams={teams}
+          transportationEntries={transportationEntries}
+        />
 
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Upcoming Events</h2>

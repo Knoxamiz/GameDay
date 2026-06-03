@@ -186,6 +186,16 @@ export function useAttendanceEntries(
   return applyAttendanceSnapshot(entries, snapshotKey);
 }
 
+export function useAllAttendanceEntries(entries: AttendanceEntry[]) {
+  const snapshotKey = useSyncExternalStore(
+    (onStoreChange) => subscribeAttendanceStatusChanges(onStoreChange),
+    () => getAttendanceSnapshotKey(entries, true),
+    () => getAttendanceSnapshotKey(entries, false),
+  );
+
+  return applyAttendanceSnapshot(entries, snapshotKey);
+}
+
 export function useAttendanceSummary(
   eventId: string,
   entries: AttendanceEntry[],

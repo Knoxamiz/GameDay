@@ -6,8 +6,10 @@ import type {
   RegistrationRequirement,
   RegistrationStatus,
 } from "../data/registrations";
+import { buildAthleteReadiness } from "../data/readiness";
 import type { TransportationStatus } from "../data/transportation";
 import AttendanceStatusPicker from "./AttendanceStatusPicker";
+import ReadinessBadge from "./ReadinessBadge";
 import { useAttendanceStatus } from "./attendanceStatusState";
 import { useRegistrationRequirements } from "./registrationRequirementState";
 import { useRegistrationStatus } from "./registrationStatusState";
@@ -65,31 +67,22 @@ export default function ParentAthleteCard({
   const missingRegistrationCount = requirements.filter(
     (requirement) => requirement.status === "Missing",
   ).length;
-  const hasAttendanceReady = attendanceStatus === "Attending";
   const hasTransportationReady = transportationStatus !== "Unknown";
   const hasRegistrationReady =
     currentRegistrationStatus === "Approved" && missingRegistrationCount === 0;
-  const isReady =
-    Boolean(nextEvent) &&
-    hasAttendanceReady &&
-    hasTransportationReady &&
-    hasRegistrationReady;
+  const readiness = buildAthleteReadiness({
+    attendanceStatus,
+    hasUpcomingEvent: Boolean(nextEvent),
+    registrationStatus: currentRegistrationStatus,
+    requirements,
+    transportationStatus,
+  });
 
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
       <div className="flex items-start justify-between gap-3">
         <h3 className="text-xl font-bold">{athleteName}</h3>
-        {nextEvent && (
-          <span
-            className={`rounded-full px-3 py-1 text-xs font-semibold ${
-              isReady
-                ? "bg-blue-500/20 text-blue-300"
-                : "bg-red-500/20 text-red-300"
-            }`}
-          >
-            {isReady ? "Ready" : "Action Needed"}
-          </span>
-        )}
+        {nextEvent && <ReadinessBadge category={readiness.category} />}
       </div>
 
       {nextEvent ? (
@@ -115,7 +108,7 @@ export default function ParentAthleteCard({
               <span className="text-slate-400">Attendance</span>
               <span
                 className={
-                  hasAttendanceReady
+                  attendanceStatus === "Attending"
                     ? "font-semibold text-blue-300"
                     : attendanceStatus === "Not Attending"
                       ? "font-semibold text-red-300"

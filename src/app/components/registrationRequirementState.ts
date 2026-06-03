@@ -120,7 +120,7 @@ function subscribeRegistrationRequirements(
 export function useRegistrationRequirements(
   registrationId: string,
   requirements: RegistrationRequirement[],
-) {
+): RegistrationRequirement[] {
   const snapshot = useSyncExternalStore(
     (onStoreChange) =>
       subscribeRegistrationRequirements(registrationId, onStoreChange),
@@ -129,10 +129,14 @@ export function useRegistrationRequirements(
   );
   const statuses = snapshot ? snapshot.split(statusSeparator) : [];
 
-  return requirements.map((requirement, index) => ({
-    ...requirement,
-    status: isRegistrationRequirementStatus(statuses[index] ?? "")
-      ? statuses[index]
-      : requirement.status,
-  }));
+  return requirements.map<RegistrationRequirement>((requirement, index) => {
+    const status = statuses[index] ?? "";
+
+    return {
+      ...requirement,
+      status: isRegistrationRequirementStatus(status)
+        ? status
+        : requirement.status,
+    };
+  });
 }

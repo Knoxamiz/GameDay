@@ -7,11 +7,13 @@ import {
   eventAnnouncementsByEventId,
   eventChatByEventId,
 } from "../data/messages";
+import { getRegistrationsByTeamId } from "../data/registrations";
 import { getTeamById } from "../data/teams";
 import {
   getTransportationEntriesByEventId,
 } from "../data/transportation";
 import AttendanceSummaryCard from "./AttendanceSummaryCard";
+import EventReadinessSummary from "./EventReadinessSummary";
 import GameAlertPanel from "./GameAlertPanel";
 import MvpNav, { getRoleHref, type MvpNavRole } from "./MvpNav";
 import TransportationSummaryCard from "./TransportationSummaryCard";
@@ -39,6 +41,9 @@ export default function EventDetails({
     eventAnnouncementsByEventId[eventDetails.id] ?? [];
   const eventChat = eventChatByEventId[eventDetails.id] ?? [];
   const attendanceEntries = getAttendanceEntriesByEventId(eventDetails.id);
+  const registrations = eventDetails.teamId
+    ? getRegistrationsByTeamId(eventDetails.teamId)
+    : [];
   const transportationEntries = getTransportationEntriesByEventId(
     eventDetails.id,
   );
@@ -115,6 +120,13 @@ export default function EventDetails({
             )}
           </ul>
         </div>
+
+        <EventReadinessSummary
+          attendanceEntries={attendanceEntries}
+          eventId={eventDetails.id}
+          registrations={registrations}
+          transportationEntries={transportationEntries}
+        />
 
         <AttendanceSummaryCard
           eventId={eventDetails.id}

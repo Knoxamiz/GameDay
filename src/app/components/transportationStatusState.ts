@@ -195,6 +195,16 @@ export function useTransportationEntries(
   return applyTransportationSnapshot(entries, snapshotKey);
 }
 
+export function useAllTransportationEntries(entries: TransportationEntry[]) {
+  const snapshotKey = useSyncExternalStore(
+    (onStoreChange) => subscribeTransportationStatusChanges(onStoreChange),
+    () => getTransportationSnapshotKey(entries, true),
+    () => getTransportationSnapshotKey(entries, false),
+  );
+
+  return applyTransportationSnapshot(entries, snapshotKey);
+}
+
 export function useTransportationSummary(
   eventId: string,
   entries: TransportationEntry[],
