@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAthleteById } from "../data/athletes";
 import { getEventById } from "../data/events";
+import { getGameAlertByEventId } from "../data/gameAlerts";
 import {
   eventAnnouncementsByEventId,
   eventChatByEventId,
@@ -11,6 +12,7 @@ import {
   getTransportationEntriesByEventId,
   getTransportationSummaryByEventId,
 } from "../data/transportation";
+import GameAlertPanel from "./GameAlertPanel";
 import MvpNav, { getRoleHref, type MvpNavRole } from "./MvpNav";
 
 type EventDetailsProps = {
@@ -32,6 +34,7 @@ export default function EventDetails({
     ? getTeamById(eventDetails.teamId)
     : undefined;
   const transportation = getTransportationSummaryByEventId(eventDetails.id);
+  const gameAlert = getGameAlertByEventId(eventDetails.id);
   const eventAnnouncements =
     eventAnnouncementsByEventId[eventDetails.id] ?? [];
   const eventChat = eventChatByEventId[eventDetails.id] ?? [];
@@ -83,6 +86,8 @@ export default function EventDetails({
             </a>
           )}
         </div>
+
+        {gameAlert && <GameAlertPanel gameAlert={gameAlert} role={role} />}
 
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Status</h2>

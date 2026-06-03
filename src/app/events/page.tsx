@@ -4,6 +4,7 @@ import MvpNav, {
   getRoleHref,
 } from "../components/MvpNav";
 import { events } from "../data/events";
+import { getGameAlertByEventId } from "../data/gameAlerts";
 import { getTeamById } from "../data/teams";
 import { getTransportationSummaryByEventId } from "../data/transportation";
 
@@ -37,6 +38,7 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
         <div className="mt-6 space-y-4">
           {events.map((event) => {
             const team = event.teamId ? getTeamById(event.teamId) : undefined;
+            const gameAlert = getGameAlertByEventId(event.id);
             const transportation = getTransportationSummaryByEventId(event.id);
             const hasTransportationIssue = transportation.needsRide > 0;
 
@@ -63,6 +65,31 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
                     {hasTransportationIssue ? "Ride Help" : "On Track"}
                   </span>
                 </div>
+
+                {gameAlert && (
+                  <div className="mt-4 rounded-xl bg-slate-800 p-4 text-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="font-semibold text-white">Game Alert</p>
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                          gameAlert.status === "Live"
+                            ? "bg-red-500/20 text-red-300"
+                            : gameAlert.status === "Final"
+                              ? "bg-blue-500/20 text-blue-300"
+                              : "bg-slate-700 text-slate-300"
+                        }`}
+                      >
+                        {gameAlert.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <p className="mt-3 font-semibold text-blue-300">
+                      {gameAlert.homeScore} - {gameAlert.awayScore}
+                    </p>
+                    <p className="mt-1 text-slate-400">
+                      {gameAlert.homeTeamName} vs {gameAlert.awayTeamName}
+                    </p>
+                  </div>
+                )}
 
                 <p className="mt-3 text-sm text-slate-400">
                   {team?.name ?? "Organization"}
