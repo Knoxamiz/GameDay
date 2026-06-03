@@ -48,8 +48,8 @@ const utilityItemsByRole: Record<
 > = {
   parent: [
     {
-      href: "/athletes/emma-smith",
-      label: "Emma",
+      href: "/parent",
+      label: "Athletes",
     },
     {
       href: "/events",

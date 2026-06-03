@@ -8,8 +8,12 @@ import {
   teamCommunicationItems,
 } from "../data/messages";
 import { getTeamById } from "../data/teams";
-import { getTransportationSummaryByEventId } from "../data/transportation";
+import {
+  getTransportationEntriesByEventId,
+  getTransportationSummaryByEventId,
+} from "../data/transportation";
 import MvpNav, { getRoleHref, type MvpNavRole } from "./MvpNav";
+import TransportationSummaryCard from "./TransportationSummaryCard";
 
 type TeamDetailsProps = {
   teamId: string;
@@ -36,7 +40,18 @@ export default function TeamDetails({
   const upcomingEvents = getEventsByIds(teamDetails.eventIds);
   const transportation = nextEvent
     ? getTransportationSummaryByEventId(nextEvent.id)
-    : { needsRide: 0, canOfferRide: 0 };
+    : undefined;
+  const transportationEntries = nextEvent
+    ? getTransportationEntriesByEventId(nextEvent.id)
+    : [];
+  const teamStatusItems = nextEvent
+    ? [
+        `${teamDetails.playerCount} Registered`,
+        `${nextEvent.attendance.attending} Confirmed For ${nextEvent.type}`,
+        `${transportation?.needsRide ?? 0} Need Ride`,
+        ...teamDetails.status.filter((status) => status.includes("Missing")),
+      ]
+    : teamDetails.status;
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -116,15 +131,14 @@ export default function TeamDetails({
           </details>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <h2 className="text-lg font-bold">Transportation</h2>
-          <div className="mt-3 space-y-2 text-sm">
-            <p className="text-red-300">{transportation.needsRide} Need Ride</p>
-            <p className="text-blue-300">
-              {transportation.canOfferRide} Can Offer Ride
-            </p>
-          </div>
-        </div>
+        {nextEvent && (
+          <TransportationSummaryCard
+            eventId={nextEvent.id}
+            entries={transportationEntries}
+            actionHref={getRoleHref(`/events/${nextEvent.id}`, role)}
+            showDetails={false}
+          />
+        )}
 
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Team Announcements</h2>
@@ -142,7 +156,7 @@ export default function TeamDetails({
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Team Status</h2>
           <div className="mt-3 space-y-3 text-sm text-slate-300">
-            {teamDetails.status.map((status) => (
+            {teamStatusItems.map((status) => (
               <p key={status}>{status}</p>
             ))}
           </div>

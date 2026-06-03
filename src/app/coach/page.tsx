@@ -1,18 +1,19 @@
 import Link from "next/link";
 import BottomNav from "../components/BottomNav";
 import MvpNav, { getRoleHref } from "../components/MvpNav";
+import TransportationSummaryCard from "../components/TransportationSummaryCard";
 import { getEventById } from "../data/events";
 import { coachActionItems } from "../data/messages";
 import { getTeamById } from "../data/teams";
-import { getTransportationSummaryByEventId } from "../data/transportation";
+import { getTransportationEntriesByEventId } from "../data/transportation";
 
 const coachTeam = getTeamById("black-diamonds-12u");
 const todayEvent = coachTeam?.nextEventId
   ? getEventById(coachTeam.nextEventId)
   : undefined;
-const transportation = todayEvent
-  ? getTransportationSummaryByEventId(todayEvent.id)
-  : { needsRide: 0, canOfferRide: 0 };
+const transportationEntries = todayEvent
+  ? getTransportationEntriesByEventId(todayEvent.id)
+  : [];
 
 export default function CoachHome() {
   return (
@@ -63,25 +64,14 @@ export default function CoachHome() {
           </div>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <h2 className="text-lg font-bold">Transportation</h2>
-          <div className="mt-3 space-y-2 text-sm">
-            <p className="text-red-300">{transportation.needsRide} Need Ride</p>
-            <p className="text-blue-300">
-              {transportation.canOfferRide} Can Offer Ride
-            </p>
-          </div>
-          <Link
-            href={
-              todayEvent
-                ? getRoleHref(`/events/${todayEvent.id}`, "coach")
-                : getRoleHref("/events", "coach")
-            }
-            className="mt-4 block w-full rounded-xl border border-slate-700 bg-slate-900 py-3 text-center font-semibold text-white"
-          >
-            View Transportation
-          </Link>
-        </div>
+        {todayEvent && (
+          <TransportationSummaryCard
+            eventId={todayEvent.id}
+            entries={transportationEntries}
+            actionHref={getRoleHref(`/events/${todayEvent.id}`, "coach")}
+            showDetails={false}
+          />
+        )}
 
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Action Items</h2>

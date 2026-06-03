@@ -10,10 +10,10 @@ import {
 import { getTeamById } from "../data/teams";
 import {
   getTransportationEntriesByEventId,
-  getTransportationSummaryByEventId,
 } from "../data/transportation";
 import GameAlertPanel from "./GameAlertPanel";
 import MvpNav, { getRoleHref, type MvpNavRole } from "./MvpNav";
+import TransportationSummaryCard from "./TransportationSummaryCard";
 
 type EventDetailsProps = {
   eventId: string;
@@ -33,7 +33,6 @@ export default function EventDetails({
   const team = eventDetails.teamId
     ? getTeamById(eventDetails.teamId)
     : undefined;
-  const transportation = getTransportationSummaryByEventId(eventDetails.id);
   const gameAlert = getGameAlertByEventId(eventDetails.id);
   const eventAnnouncements =
     eventAnnouncementsByEventId[eventDetails.id] ?? [];
@@ -153,34 +152,10 @@ export default function EventDetails({
           </details>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <h2 className="text-lg font-bold">Transportation</h2>
-          <div className="mt-3 space-y-2 text-sm">
-            <p className="text-red-300">{transportation.needsRide} Need Ride</p>
-            <p className="text-blue-300">
-              {transportation.canOfferRide} Can Offer Ride
-            </p>
-          </div>
-          <details className="mt-4 rounded-xl border border-slate-700 bg-slate-900 text-sm text-slate-300">
-            <summary className="cursor-pointer px-4 py-3 text-center font-semibold text-white">
-              View Transportation
-            </summary>
-            <div className="space-y-2 border-t border-slate-800 px-4 py-3">
-              {transportationEntries.length > 0 ? (
-                transportationEntries.map((entry) => (
-                  <p key={entry.id}>
-                    {entry.name}: {entry.status}
-                    {entry.seatsAvailable
-                      ? `, ${entry.seatsAvailable} seats available`
-                      : ""}
-                  </p>
-                ))
-              ) : (
-                <p>No transportation updates yet.</p>
-              )}
-            </div>
-          </details>
-        </div>
+        <TransportationSummaryCard
+          eventId={eventDetails.id}
+          entries={transportationEntries}
+        />
 
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Event Notes</h2>

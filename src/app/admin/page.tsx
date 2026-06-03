@@ -1,12 +1,13 @@
 import Link from "next/link";
 import BottomNav from "../components/BottomNav";
 import MvpNav, { getRoleHref } from "../components/MvpNav";
+import TransportationIssueAction from "../components/TransportationIssueAction";
 import { adminUpcomingEventIds, getEventsByIds } from "../data/events";
 import { adminCommunications } from "../data/messages";
 import { blackDiamondsOrganization } from "../data/organizations";
 import { registrationSummary } from "../data/registrations";
 import { getTeamById, teamsNeedingCoachesCount } from "../data/teams";
-import { transportationIssueCount } from "../data/transportation";
+import { transportationEntries } from "../data/transportation";
 
 const adminUpcomingEvents = getEventsByIds(adminUpcomingEventIds);
 
@@ -29,10 +30,7 @@ const organizationStatus = [
   },
 ];
 
-const actionItems = [
-  `${teamsNeedingCoachesCount} Teams Need Coaches`,
-  `${transportationIssueCount} Transportation Issue`,
-];
+const actionItems = [`${teamsNeedingCoachesCount} Teams Need Coaches`];
 
 export default function AdminHome() {
   return (
@@ -81,6 +79,10 @@ export default function AdminHome() {
                 {item}
               </p>
             ))}
+            <TransportationIssueAction
+              entries={transportationEntries}
+              href={getRoleHref("/events", "admin")}
+            />
           </div>
         </div>
 
