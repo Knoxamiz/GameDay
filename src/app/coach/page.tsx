@@ -2,10 +2,12 @@ import Link from "next/link";
 import AttendanceSummaryCard from "../components/AttendanceSummaryCard";
 import BottomNav from "../components/BottomNav";
 import MvpNav, { getRoleHref } from "../components/MvpNav";
+import RegistrationConcernAction from "../components/RegistrationConcernAction";
 import TransportationSummaryCard from "../components/TransportationSummaryCard";
 import { getAttendanceEntriesByEventId } from "../data/attendance";
 import { getEventById } from "../data/events";
 import { coachActionItems } from "../data/messages";
+import { getRegistrationsByTeamId } from "../data/registrations";
 import { getTeamById } from "../data/teams";
 import { getTransportationEntriesByEventId } from "../data/transportation";
 
@@ -18,6 +20,9 @@ const transportationEntries = todayEvent
   : [];
 const attendanceEntries = todayEvent
   ? getAttendanceEntriesByEventId(todayEvent.id)
+  : [];
+const coachTeamRegistrations = coachTeam
+  ? getRegistrationsByTeamId(coachTeam.id)
   : [];
 
 export default function CoachHome() {
@@ -75,6 +80,14 @@ export default function CoachHome() {
 
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Action Items</h2>
+          <div className="mt-3 space-y-3 text-sm">
+            {coachTeam && (
+              <RegistrationConcernAction
+                href={getRoleHref(`/teams/${coachTeam.id}`, "coach")}
+                registrations={coachTeamRegistrations}
+              />
+            )}
+          </div>
           <ul className="mt-3 space-y-2 text-sm text-slate-300">
             {coachActionItems.map((item) => (
               <li key={item}>{item}</li>

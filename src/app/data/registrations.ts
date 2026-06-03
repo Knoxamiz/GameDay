@@ -1,4 +1,10 @@
 export type RegistrationRequirementStatus = "Complete" | "Missing";
+export type RegistrationStatus =
+  | "Approved"
+  | "Rejected"
+  | "Incomplete"
+  | "Pending"
+  | "Pending Review";
 
 export type RegistrationRequirement = {
   label: string;
@@ -10,16 +16,34 @@ export type Registration = {
   athleteId: string;
   parentName: string;
   teamId: string;
-  status: string;
+  status: RegistrationStatus;
   details: string;
   submittedDate?: string;
   requirements: RegistrationRequirement[];
 };
 
-export const registrationSummary = {
-  pendingRegistrations: 8,
-  missingPhysicals: 3,
+export type RegistrationSummary = {
+  pendingRegistrations: number;
+  incompleteRegistrations: number;
+  rejectedRegistrations: number;
+  approvedRegistrations: number;
+  missingPhysicals: number;
+  concernCount: number;
 };
+
+export const registrationStatusValues: RegistrationStatus[] = [
+  "Approved",
+  "Rejected",
+  "Incomplete",
+  "Pending",
+  "Pending Review",
+];
+
+export const registrationAdminDecisionOptions: RegistrationStatus[] = [
+  "Approved",
+  "Incomplete",
+  "Rejected",
+];
 
 export const registrationForm = {
   organizationId: "black-diamonds",
@@ -76,7 +100,7 @@ export const registrations: Registration[] = [
     athleteId: "emma-smith",
     parentName: "Jennifer Smith",
     teamId: "black-diamonds-12u",
-    status: "Missing Physical",
+    status: "Incomplete",
     details: "One required document still needs to be submitted.",
     submittedDate: "May 31, 2026",
     requirements: [
@@ -103,7 +127,7 @@ export const registrations: Registration[] = [
     athleteId: "olivia-smith",
     parentName: "Jennifer Smith",
     teamId: "black-diamonds-10u",
-    status: "Action needed",
+    status: "Incomplete",
     details: "Emergency contact form still needs parent signature.",
     requirements: [
       {
@@ -173,6 +197,76 @@ export const registrations: Registration[] = [
 export function getRegistrationById(registrationId: string) {
   return registrations.find((registration) => registration.id === registrationId);
 }
+
+export function getRegistrationsByTeamId(teamId: string) {
+  return registrations.filter((registration) => registration.teamId === teamId);
+}
+
+export function isRegistrationPending(status: RegistrationStatus) {
+  return status === "Pending" || status === "Pending Review";
+}
+
+export function isRegistrationIncomplete(status: RegistrationStatus) {
+  return status === "Incomplete";
+}
+
+export function isRegistrationConcern(status: RegistrationStatus) {
+  return (
+    isRegistrationPending(status) ||
+    isRegistrationIncomplete(status) ||
+    status === "Rejected"
+  );
+}
+
+export function summarizeRegistrations(
+  registrationList: Registration[],
+): RegistrationSummary {
+  return registrationList.reduce<RegistrationSummary>(
+    (summary, registration) => {
+      if (isRegistrationPending(registration.status)) {
+        summary.pendingRegistrations += 1;
+      }
+
+      if (isRegistrationIncomplete(registration.status)) {
+        summary.incompleteRegistrations += 1;
+      }
+
+      if (registration.status === "Rejected") {
+        summary.rejectedRegistrations += 1;
+      }
+
+      if (registration.status === "Approved") {
+        summary.approvedRegistrations += 1;
+      }
+
+      if (
+        registration.requirements.some(
+          (requirement) =>
+            requirement.label === "Physical" &&
+            requirement.status === "Missing",
+        )
+      ) {
+        summary.missingPhysicals += 1;
+      }
+
+      if (isRegistrationConcern(registration.status)) {
+        summary.concernCount += 1;
+      }
+
+      return summary;
+    },
+    {
+      pendingRegistrations: 0,
+      incompleteRegistrations: 0,
+      rejectedRegistrations: 0,
+      approvedRegistrations: 0,
+      missingPhysicals: 0,
+      concernCount: 0,
+    },
+  );
+}
+
+export const registrationSummary = summarizeRegistrations(registrations);
 
 export function getMissingRegistrationRequirements(registration?: Registration) {
   return registration?.requirements.filter(

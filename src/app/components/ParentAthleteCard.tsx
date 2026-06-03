@@ -2,11 +2,15 @@
 
 import Link from "next/link";
 import type { AttendanceStatus } from "../data/attendance";
-import type { RegistrationRequirement } from "../data/registrations";
+import type {
+  RegistrationRequirement,
+  RegistrationStatus,
+} from "../data/registrations";
 import type { TransportationStatus } from "../data/transportation";
 import AttendanceStatusPicker from "./AttendanceStatusPicker";
 import { useAttendanceStatus } from "./attendanceStatusState";
 import { useRegistrationRequirements } from "./registrationRequirementState";
+import { useRegistrationStatus } from "./registrationStatusState";
 import { useTransportationStatus } from "./transportationStatusState";
 
 type ParentAthleteCardProps = {
@@ -25,6 +29,7 @@ type ParentAthleteCardProps = {
   initialTransportationStatus: TransportationStatus;
   registrationId: string;
   registrationRequirements: RegistrationRequirement[];
+  registrationStatus: RegistrationStatus;
 };
 
 export default function ParentAthleteCard({
@@ -36,6 +41,7 @@ export default function ParentAthleteCard({
   initialTransportationStatus,
   registrationId,
   registrationRequirements,
+  registrationStatus,
 }: ParentAthleteCardProps) {
   const nextEventId = nextEvent?.id;
   const attendanceStatus = useAttendanceStatus(
@@ -52,16 +58,22 @@ export default function ParentAthleteCard({
     registrationId,
     registrationRequirements,
   );
+  const currentRegistrationStatus = useRegistrationStatus(
+    registrationId,
+    registrationStatus,
+  );
   const missingRegistrationCount = requirements.filter(
     (requirement) => requirement.status === "Missing",
   ).length;
   const hasAttendanceReady = attendanceStatus === "Attending";
   const hasTransportationReady = transportationStatus !== "Unknown";
+  const hasRegistrationReady =
+    currentRegistrationStatus === "Approved" && missingRegistrationCount === 0;
   const isReady =
     Boolean(nextEvent) &&
     hasAttendanceReady &&
     hasTransportationReady &&
-    missingRegistrationCount === 0;
+    hasRegistrationReady;
 
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
@@ -129,14 +141,15 @@ export default function ParentAthleteCard({
               <span className="text-slate-400">Registration</span>
               <span
                 className={
-                  missingRegistrationCount === 0
+                  hasRegistrationReady
                     ? "font-semibold text-blue-300"
                     : "font-semibold text-red-300"
                 }
               >
-                {missingRegistrationCount === 0
-                  ? "Ready"
-                  : `${missingRegistrationCount} Missing`}
+                {currentRegistrationStatus}
+                {missingRegistrationCount > 0
+                  ? `, ${missingRegistrationCount} Missing`
+                  : ""}
               </span>
             </p>
           </div>

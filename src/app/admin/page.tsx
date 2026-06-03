@@ -2,12 +2,13 @@ import Link from "next/link";
 import AttendanceConcernAction from "../components/AttendanceConcernAction";
 import BottomNav from "../components/BottomNav";
 import MvpNav, { getRoleHref } from "../components/MvpNav";
+import RegistrationAdminActionLinks from "../components/RegistrationAdminActionLinks";
 import TransportationIssueAction from "../components/TransportationIssueAction";
 import { attendanceEntries } from "../data/attendance";
 import { adminUpcomingEventIds, getEventsByIds } from "../data/events";
 import { adminCommunications } from "../data/messages";
 import { blackDiamondsOrganization } from "../data/organizations";
-import { registrationSummary } from "../data/registrations";
+import { registrations } from "../data/registrations";
 import { getTeamById, teamsNeedingCoachesCount } from "../data/teams";
 import { transportationEntries } from "../data/transportation";
 
@@ -68,18 +69,10 @@ export default function AdminHome() {
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Action Items</h2>
           <div className="mt-3 space-y-3 text-sm">
-            <Link
+            <RegistrationAdminActionLinks
               href="/admin/registrations"
-              className="block rounded-xl bg-slate-800 p-4 text-slate-300"
-            >
-              {registrationSummary.pendingRegistrations} Pending Registrations
-            </Link>
-            <Link
-              href="/admin/registrations"
-              className="block rounded-xl bg-slate-800 p-4 text-red-300"
-            >
-              {registrationSummary.missingPhysicals} Missing Physicals
-            </Link>
+              registrations={registrations}
+            />
             {actionItems.map((item) => (
               <p key={item} className="rounded-xl bg-slate-800 p-4 text-slate-300">
                 {item}

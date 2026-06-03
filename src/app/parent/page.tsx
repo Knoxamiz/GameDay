@@ -60,6 +60,7 @@ export default function ParentHome() {
                   initialAttendanceStatus={attendance?.status ?? "Unknown"}
                   registrationId={registration?.id ?? athlete.registrationId}
                   registrationRequirements={registration?.requirements ?? []}
+                  registrationStatus={registration?.status ?? "Pending"}
                 />
               </div>
             );

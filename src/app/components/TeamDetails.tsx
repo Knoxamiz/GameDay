@@ -11,6 +11,7 @@ import {
   teamAnnouncementsByTeamId,
   teamCommunicationItems,
 } from "../data/messages";
+import { getRegistrationsByTeamId } from "../data/registrations";
 import { getTeamById } from "../data/teams";
 import {
   getTransportationEntriesByEventId,
@@ -19,6 +20,7 @@ import {
 import AttendanceRosterCard from "./AttendanceRosterCard";
 import AttendanceSummaryCard from "./AttendanceSummaryCard";
 import MvpNav, { getRoleHref, type MvpNavRole } from "./MvpNav";
+import RegistrationRosterCard from "./RegistrationRosterCard";
 import TransportationSummaryCard from "./TransportationSummaryCard";
 
 type TeamDetailsProps = {
@@ -42,6 +44,7 @@ export default function TeamDetails({
     : undefined;
   const rosterPreview = getAthletesByIds(teamDetails.rosterPreviewIds);
   const roster = getAthletesByIds(teamDetails.athleteIds);
+  const teamRegistrations = getRegistrationsByTeamId(teamDetails.id);
   const teamAnnouncements = teamAnnouncementsByTeamId[teamDetails.id] ?? [];
   const upcomingEvents = getEventsByIds(teamDetails.eventIds);
   const attendance = nextEvent
@@ -149,6 +152,11 @@ export default function TeamDetails({
             showDetails={false}
           />
         )}
+
+        <RegistrationRosterCard
+          registrations={teamRegistrations}
+          roster={roster}
+        />
 
         {nextEvent && (
           <TransportationSummaryCard

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import AttendanceStatusPicker from "../../components/AttendanceStatusPicker";
 import MvpNav, { getRoleHref } from "../../components/MvpNav";
+import RegistrationReadinessCard from "../../components/RegistrationReadinessCard";
 import RegistrationRequirementsChecklist from "../../components/RegistrationRequirementsChecklist";
 import TransportationStatusPicker from "../../components/TransportationStatusPicker";
 import { athletes, getAthleteById } from "../../data/athletes";
@@ -160,6 +161,15 @@ export default async function AthleteDetailsPage({
             ))}
           </div>
         </div>
+
+        {registration && (
+          <RegistrationReadinessCard
+            details={registration.details}
+            registrationId={registrationId}
+            requirements={registrationRequirements}
+            status={registration.status}
+          />
+        )}
 
         <RegistrationRequirementsChecklist
           registrationId={registrationId}
