@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import AttendanceStatusPicker from "../../components/AttendanceStatusPicker";
 import MvpNav, { getRoleHref } from "../../components/MvpNav";
 import RegistrationRequirementsChecklist from "../../components/RegistrationRequirementsChecklist";
 import TransportationStatusPicker from "../../components/TransportationStatusPicker";
 import { athletes, getAthleteById } from "../../data/athletes";
+import { getAttendanceEntryByAthleteAndEventId } from "../../data/attendance";
 import { getCoachesByIds } from "../../data/coaches";
 import { getEventById, getEventsByIds } from "../../data/events";
 import { teamUpdatesByAthleteId } from "../../data/messages";
@@ -51,6 +53,10 @@ export default async function AthleteDetailsPage({
     ? getTransportationEntryByAthleteAndEventId(athlete.id, nextEvent.id)
     : undefined;
   const transportationStatus = transportation?.status ?? "Unknown";
+  const attendance = nextEvent
+    ? getAttendanceEntryByAthleteAndEventId(athlete.id, nextEvent.id)
+    : undefined;
+  const attendanceStatus = attendance?.status ?? "Unknown";
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -65,14 +71,21 @@ export default async function AthleteDetailsPage({
 
         <p className="mt-5 text-slate-300">{team?.name}</p>
         {nextEvent && (
-          <TransportationStatusPicker
-            athleteId={athlete.id}
-            eventId={nextEvent.id}
-            initialStatus={transportationStatus}
-            registrationId={registrationId}
-            registrationRequirements={registrationRequirements}
-            options={transportationOptions}
-          />
+          <>
+            <AttendanceStatusPicker
+              athleteId={athlete.id}
+              eventId={nextEvent.id}
+              initialStatus={attendanceStatus}
+            />
+            <TransportationStatusPicker
+              athleteId={athlete.id}
+              eventId={nextEvent.id}
+              initialStatus={transportationStatus}
+              registrationId={registrationId}
+              registrationRequirements={registrationRequirements}
+              options={transportationOptions}
+            />
+          </>
         )}
 
         <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">

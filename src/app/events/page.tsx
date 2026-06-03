@@ -3,6 +3,7 @@ import MvpNav, {
   getMvpNavRole,
   getRoleHref,
 } from "../components/MvpNav";
+import { getAttendanceSummaryByEventId } from "../data/attendance";
 import { events } from "../data/events";
 import { getGameAlertByEventId } from "../data/gameAlerts";
 import { getTeamById } from "../data/teams";
@@ -39,6 +40,7 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
           {events.map((event) => {
             const team = event.teamId ? getTeamById(event.teamId) : undefined;
             const gameAlert = getGameAlertByEventId(event.id);
+            const attendance = getAttendanceSummaryByEventId(event.id);
             const transportation = getTransportationSummaryByEventId(event.id);
             const hasTransportationIssue = transportation.needsRide > 0;
 
@@ -104,7 +106,7 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
                   <div className="rounded-xl bg-slate-800 p-3">
                     <p className="text-slate-400">Attendance</p>
                     <p className="mt-1 font-semibold text-blue-300">
-                      {event.attendance.attending} Attending
+                      {attendance.attending} Attending
                     </p>
                   </div>
                   <div className="rounded-xl bg-slate-800 p-3">

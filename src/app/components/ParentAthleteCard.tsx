@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import type { AttendanceStatus } from "../data/attendance";
 import type { RegistrationRequirement } from "../data/registrations";
 import type { TransportationStatus } from "../data/transportation";
+import AttendanceStatusPicker from "./AttendanceStatusPicker";
+import { useAttendanceStatus } from "./attendanceStatusState";
 import { useRegistrationRequirements } from "./registrationRequirementState";
 import { useTransportationStatus } from "./transportationStatusState";
 
@@ -18,6 +21,7 @@ type ParentAthleteCardProps = {
     location: string;
     directionsUrl: string;
   };
+  initialAttendanceStatus: AttendanceStatus;
   initialTransportationStatus: TransportationStatus;
   registrationId: string;
   registrationRequirements: RegistrationRequirement[];
@@ -28,11 +32,17 @@ export default function ParentAthleteCard({
   athleteName,
   teamName,
   nextEvent,
+  initialAttendanceStatus,
   initialTransportationStatus,
   registrationId,
   registrationRequirements,
 }: ParentAthleteCardProps) {
   const nextEventId = nextEvent?.id;
+  const attendanceStatus = useAttendanceStatus(
+    athleteId,
+    nextEventId ?? "",
+    initialAttendanceStatus,
+  );
   const transportationStatus = useTransportationStatus(
     athleteId,
     nextEventId ?? "",
@@ -45,9 +55,11 @@ export default function ParentAthleteCard({
   const missingRegistrationCount = requirements.filter(
     (requirement) => requirement.status === "Missing",
   ).length;
+  const hasAttendanceReady = attendanceStatus === "Attending";
   const hasTransportationReady = transportationStatus !== "Unknown";
   const isReady =
     Boolean(nextEvent) &&
+    hasAttendanceReady &&
     hasTransportationReady &&
     missingRegistrationCount === 0;
 
@@ -88,6 +100,20 @@ export default function ParentAthleteCard({
           )}
           <div className="mt-4 space-y-2 border-t border-slate-700 pt-4 text-sm">
             <p className="flex justify-between gap-3 text-slate-300">
+              <span className="text-slate-400">Attendance</span>
+              <span
+                className={
+                  hasAttendanceReady
+                    ? "font-semibold text-blue-300"
+                    : attendanceStatus === "Not Attending"
+                      ? "font-semibold text-red-300"
+                      : "font-semibold text-slate-300"
+                }
+              >
+                {attendanceStatus}
+              </span>
+            </p>
+            <p className="flex justify-between gap-3 text-slate-300">
               <span className="text-slate-400">Transportation</span>
               <span
                 className={
@@ -114,6 +140,12 @@ export default function ParentAthleteCard({
               </span>
             </p>
           </div>
+          <AttendanceStatusPicker
+            athleteId={athleteId}
+            eventId={nextEvent.id}
+            initialStatus={initialAttendanceStatus}
+            compact
+          />
         </div>
       )}
 

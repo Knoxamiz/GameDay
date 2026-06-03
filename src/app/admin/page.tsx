@@ -1,7 +1,9 @@
 import Link from "next/link";
+import AttendanceConcernAction from "../components/AttendanceConcernAction";
 import BottomNav from "../components/BottomNav";
 import MvpNav, { getRoleHref } from "../components/MvpNav";
 import TransportationIssueAction from "../components/TransportationIssueAction";
+import { attendanceEntries } from "../data/attendance";
 import { adminUpcomingEventIds, getEventsByIds } from "../data/events";
 import { adminCommunications } from "../data/messages";
 import { blackDiamondsOrganization } from "../data/organizations";
@@ -10,6 +12,10 @@ import { getTeamById, teamsNeedingCoachesCount } from "../data/teams";
 import { transportationEntries } from "../data/transportation";
 
 const adminUpcomingEvents = getEventsByIds(adminUpcomingEventIds);
+const adminUpcomingEventIdSet = new Set(adminUpcomingEventIds);
+const adminAttendanceEntries = attendanceEntries.filter((entry) =>
+  adminUpcomingEventIdSet.has(entry.eventId),
+);
 
 const organizationStatus = [
   {
@@ -79,6 +85,10 @@ export default function AdminHome() {
                 {item}
               </p>
             ))}
+            <AttendanceConcernAction
+              entries={adminAttendanceEntries}
+              href={getRoleHref("/events", "admin")}
+            />
             <TransportationIssueAction
               entries={transportationEntries}
               href={getRoleHref("/events", "admin")}

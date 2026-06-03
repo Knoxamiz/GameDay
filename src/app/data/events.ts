@@ -1,10 +1,3 @@
-export type AttendanceStatus = "Attending" | "Unknown" | "Not Attending";
-
-export type AttendanceRecord = {
-  athleteId: string;
-  status: AttendanceStatus;
-};
-
 export type GameDayEvent = {
   id: string;
   teamId?: string;
@@ -20,13 +13,6 @@ export type GameDayEvent = {
   status?: string;
   lastUpdated?: string;
   notes: string[];
-  attendance: {
-    total: number;
-    attending: number;
-    unknown: number;
-    notAttending: number;
-    records: AttendanceRecord[];
-  };
 };
 
 const practiceTimeRange = "6:00 PM - 7:30 PM";
@@ -50,30 +36,6 @@ export const events: GameDayEvent[] = [
     status: "Event Active",
     lastUpdated: "Today 3:42 PM",
     notes: ["Grass field", "Bathrooms available", "Parking lot entrance open"],
-    attendance: {
-      total: 22,
-      attending: 18,
-      unknown: 2,
-      notAttending: 2,
-      records: [
-        {
-          athleteId: "emma-smith",
-          status: "Attending",
-        },
-        {
-          athleteId: "olivia-smith",
-          status: "Attending",
-        },
-        {
-          athleteId: "sarah-jones",
-          status: "Unknown",
-        },
-        {
-          athleteId: "katie-brown",
-          status: "Not Attending",
-        },
-      ],
-    },
   },
   {
     id: "practice-jun-5",
@@ -87,13 +49,6 @@ export const events: GameDayEvent[] = [
     endDateTime: "2026-06-05T19:30:00-04:00",
     ...winslowTownshipPark,
     notes: [],
-    attendance: {
-      total: 22,
-      attending: 0,
-      unknown: 22,
-      notAttending: 0,
-      records: [],
-    },
   },
   {
     id: "tournament-jun-7",
@@ -109,13 +64,6 @@ export const events: GameDayEvent[] = [
     directionsUrl:
       "https://maps.google.com/?q=Williamstown%20Sports%20Complex",
     notes: [],
-    attendance: {
-      total: 22,
-      attending: 0,
-      unknown: 22,
-      notAttending: 0,
-      records: [],
-    },
   },
   {
     id: "tournament-saturday-10u",
@@ -131,13 +79,6 @@ export const events: GameDayEvent[] = [
     directionsUrl:
       "https://maps.google.com/?q=Williamstown%20Sports%20Complex",
     notes: [],
-    attendance: {
-      total: 18,
-      attending: 0,
-      unknown: 18,
-      notAttending: 0,
-      records: [],
-    },
   },
   {
     id: "team-meeting-10u",
@@ -152,13 +93,6 @@ export const events: GameDayEvent[] = [
     location: "Clubhouse",
     directionsUrl: "https://maps.google.com/?q=Clubhouse",
     notes: [],
-    attendance: {
-      total: 18,
-      attending: 0,
-      unknown: 18,
-      notAttending: 0,
-      records: [],
-    },
   },
   {
     id: "offseason-training-hs",
@@ -171,13 +105,6 @@ export const events: GameDayEvent[] = [
     location: "TBD",
     directionsUrl: "https://maps.google.com/?q=Black%20Diamonds%20Football",
     notes: [],
-    attendance: {
-      total: 31,
-      attending: 0,
-      unknown: 31,
-      notAttending: 0,
-      records: [],
-    },
   },
   {
     id: "tournament-saturday-14u",
@@ -193,13 +120,6 @@ export const events: GameDayEvent[] = [
     directionsUrl:
       "https://maps.google.com/?q=Williamstown%20Sports%20Complex",
     notes: [],
-    attendance: {
-      total: 20,
-      attending: 0,
-      unknown: 20,
-      notAttending: 0,
-      records: [],
-    },
   },
   {
     id: "board-meeting-monday",
@@ -213,13 +133,6 @@ export const events: GameDayEvent[] = [
     location: "Clubhouse",
     directionsUrl: "https://maps.google.com/?q=Clubhouse",
     notes: [],
-    attendance: {
-      total: 0,
-      attending: 0,
-      unknown: 0,
-      notAttending: 0,
-      records: [],
-    },
   },
 ];
 

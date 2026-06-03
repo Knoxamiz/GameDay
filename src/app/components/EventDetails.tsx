@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getAthleteById } from "../data/athletes";
+import { getAttendanceEntriesByEventId } from "../data/attendance";
 import { getEventById } from "../data/events";
 import { getGameAlertByEventId } from "../data/gameAlerts";
 import {
@@ -11,6 +11,7 @@ import { getTeamById } from "../data/teams";
 import {
   getTransportationEntriesByEventId,
 } from "../data/transportation";
+import AttendanceSummaryCard from "./AttendanceSummaryCard";
 import GameAlertPanel from "./GameAlertPanel";
 import MvpNav, { getRoleHref, type MvpNavRole } from "./MvpNav";
 import TransportationSummaryCard from "./TransportationSummaryCard";
@@ -37,10 +38,7 @@ export default function EventDetails({
   const eventAnnouncements =
     eventAnnouncementsByEventId[eventDetails.id] ?? [];
   const eventChat = eventChatByEventId[eventDetails.id] ?? [];
-  const attendanceRecords = eventDetails.attendance.records.map((record) => ({
-    ...record,
-    athlete: getAthleteById(record.athleteId),
-  }));
+  const attendanceEntries = getAttendanceEntriesByEventId(eventDetails.id);
   const transportationEntries = getTransportationEntriesByEventId(
     eventDetails.id,
   );
@@ -118,39 +116,10 @@ export default function EventDetails({
           </ul>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <h2 className="text-lg font-bold">Attendance</h2>
-          <p className="mt-3 text-sm text-slate-300">
-            {eventDetails.attendance.total} Players
-          </p>
-          <div className="mt-4 space-y-2 text-sm">
-            <p className="text-blue-300">
-              {eventDetails.attendance.attending} Attending
-            </p>
-            <p className="text-slate-300">
-              {eventDetails.attendance.unknown} Unknown
-            </p>
-            <p className="text-red-300">
-              {eventDetails.attendance.notAttending} Not Attending
-            </p>
-          </div>
-          <details className="mt-4 rounded-xl border border-slate-700 bg-slate-900 text-sm text-slate-300">
-            <summary className="cursor-pointer px-4 py-3 text-center font-semibold text-white">
-              View Players
-            </summary>
-            <div className="space-y-2 border-t border-slate-800 px-4 py-3">
-              {attendanceRecords.length > 0 ? (
-                attendanceRecords.map((record) => (
-                  <p key={record.athleteId}>
-                    {record.athlete?.name ?? record.athleteId}: {record.status}
-                  </p>
-                ))
-              ) : (
-                <p>No player responses yet.</p>
-              )}
-            </div>
-          </details>
-        </div>
+        <AttendanceSummaryCard
+          eventId={eventDetails.id}
+          entries={attendanceEntries}
+        />
 
         <TransportationSummaryCard
           eventId={eventDetails.id}

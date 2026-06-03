@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAthletesByIds } from "../data/athletes";
+import {
+  getAttendanceEntriesByEventId,
+  getAttendanceSummaryByEventId,
+} from "../data/attendance";
 import { getCoachesByIds } from "../data/coaches";
 import { getEventById, getEventsByIds } from "../data/events";
 import {
@@ -12,6 +16,8 @@ import {
   getTransportationEntriesByEventId,
   getTransportationSummaryByEventId,
 } from "../data/transportation";
+import AttendanceRosterCard from "./AttendanceRosterCard";
+import AttendanceSummaryCard from "./AttendanceSummaryCard";
 import MvpNav, { getRoleHref, type MvpNavRole } from "./MvpNav";
 import TransportationSummaryCard from "./TransportationSummaryCard";
 
@@ -38,6 +44,12 @@ export default function TeamDetails({
   const roster = getAthletesByIds(teamDetails.athleteIds);
   const teamAnnouncements = teamAnnouncementsByTeamId[teamDetails.id] ?? [];
   const upcomingEvents = getEventsByIds(teamDetails.eventIds);
+  const attendance = nextEvent
+    ? getAttendanceSummaryByEventId(nextEvent.id)
+    : undefined;
+  const attendanceEntries = nextEvent
+    ? getAttendanceEntriesByEventId(nextEvent.id)
+    : [];
   const transportation = nextEvent
     ? getTransportationSummaryByEventId(nextEvent.id)
     : undefined;
@@ -47,7 +59,8 @@ export default function TeamDetails({
   const teamStatusItems = nextEvent
     ? [
         `${teamDetails.playerCount} Registered`,
-        `${nextEvent.attendance.attending} Confirmed For ${nextEvent.type}`,
+        `${attendance?.attending ?? 0} Confirmed For ${nextEvent.type}`,
+        `${attendance?.unknown ?? 0} Unknown Attendance`,
         `${transportation?.needsRide ?? 0} Need Ride`,
         ...teamDetails.status.filter((status) => status.includes("Missing")),
       ]
@@ -106,30 +119,36 @@ export default function TeamDetails({
           )}
         </div>
 
-        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <h2 className="text-lg font-bold">Roster</h2>
-          <p className="mt-3 text-sm text-slate-300">
-            {teamDetails.playerCount} Players
-          </p>
-          <div className="mt-4 space-y-2 text-sm text-slate-300">
-            {rosterPreview.map((player) => (
-              <p key={player.id}>{player.name}</p>
-            ))}
-            {roster.length > rosterPreview.length && <p>...</p>}
-          </div>
-          <details className="mt-4 rounded-xl border border-slate-700 bg-slate-900 text-sm text-slate-300">
-            <summary className="cursor-pointer px-4 py-3 text-center font-semibold text-white">
-              View Full Roster
-            </summary>
-            <div className="space-y-2 border-t border-slate-800 px-4 py-3">
-              {roster.length > 0 ? (
-                roster.map((player) => <p key={player.id}>{player.name}</p>)
-              ) : (
-                <p>No roster listed.</p>
-              )}
+        {nextEvent ? (
+          <AttendanceRosterCard
+            eventId={nextEvent.id}
+            roster={roster}
+            rosterPreview={rosterPreview}
+            entries={attendanceEntries}
+          />
+        ) : (
+          <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+            <h2 className="text-lg font-bold">Roster</h2>
+            <p className="mt-3 text-sm text-slate-300">
+              {teamDetails.playerCount} Players
+            </p>
+            <div className="mt-4 space-y-2 text-sm text-slate-300">
+              {rosterPreview.map((player) => (
+                <p key={player.id}>{player.name}</p>
+              ))}
+              {roster.length > rosterPreview.length && <p>...</p>}
             </div>
-          </details>
-        </div>
+          </div>
+        )}
+
+        {nextEvent && (
+          <AttendanceSummaryCard
+            eventId={nextEvent.id}
+            entries={attendanceEntries}
+            actionHref={getRoleHref(`/events/${nextEvent.id}`, role)}
+            showDetails={false}
+          />
+        )}
 
         {nextEvent && (
           <TransportationSummaryCard

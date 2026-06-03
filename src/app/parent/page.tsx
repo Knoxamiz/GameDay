@@ -2,6 +2,7 @@ import ParentAthleteCard from "../components/ParentAthleteCard";
 import BottomNav from "../components/BottomNav";
 import MvpNav, { getRoleHref } from "../components/MvpNav";
 import { getAthletesByIds, parentHomeAthleteIds } from "../data/athletes";
+import { getAttendanceEntryByAthleteAndEventId } from "../data/attendance";
 import { getEventById } from "../data/events";
 import { parentHomeAnnouncements } from "../data/messages";
 import { getRegistrationById } from "../data/registrations";
@@ -39,6 +40,9 @@ export default function ParentHome() {
                   nextEvent.id,
                 )
               : undefined;
+            const attendance = nextEvent
+              ? getAttendanceEntryByAthleteAndEventId(athlete.id, nextEvent.id)
+              : undefined;
 
             return (
               <div
@@ -53,6 +57,7 @@ export default function ParentHome() {
                   initialTransportationStatus={
                     transportation?.status ?? "Unknown"
                   }
+                  initialAttendanceStatus={attendance?.status ?? "Unknown"}
                   registrationId={registration?.id ?? athlete.registrationId}
                   registrationRequirements={registration?.requirements ?? []}
                 />

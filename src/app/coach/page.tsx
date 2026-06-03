@@ -1,7 +1,9 @@
 import Link from "next/link";
+import AttendanceSummaryCard from "../components/AttendanceSummaryCard";
 import BottomNav from "../components/BottomNav";
 import MvpNav, { getRoleHref } from "../components/MvpNav";
 import TransportationSummaryCard from "../components/TransportationSummaryCard";
+import { getAttendanceEntriesByEventId } from "../data/attendance";
 import { getEventById } from "../data/events";
 import { coachActionItems } from "../data/messages";
 import { getTeamById } from "../data/teams";
@@ -13,6 +15,9 @@ const todayEvent = coachTeam?.nextEventId
   : undefined;
 const transportationEntries = todayEvent
   ? getTransportationEntriesByEventId(todayEvent.id)
+  : [];
+const attendanceEntries = todayEvent
+  ? getAttendanceEntriesByEventId(todayEvent.id)
   : [];
 
 export default function CoachHome() {
@@ -48,21 +53,16 @@ export default function CoachHome() {
           )}
         </div>
 
-        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <h2 className="text-lg font-bold">Team Status</h2>
-          <p className="mt-3 text-2xl font-bold">
-            {todayEvent?.attendance.total} Players
-          </p>
-          <div className="mt-4 space-y-2 text-sm text-slate-300">
-            <p className="text-blue-300">
-              {todayEvent?.attendance.attending} Attending
-            </p>
-            <p>{todayEvent?.attendance.unknown} Unknown</p>
-            <p className="text-red-300">
-              {todayEvent?.attendance.notAttending} Not Attending
-            </p>
-          </div>
-        </div>
+        {todayEvent && (
+          <AttendanceSummaryCard
+            eventId={todayEvent.id}
+            entries={attendanceEntries}
+            actionHref={getRoleHref(`/events/${todayEvent.id}`, "coach")}
+            actionLabel="Take Attendance"
+            showDetails={false}
+            title="Team Status"
+          />
+        )}
 
         {todayEvent && (
           <TransportationSummaryCard
