@@ -8,6 +8,7 @@ type EventDetailsPageProps = {
   }>;
   searchParams?: Promise<{
     role?: string | string[];
+    view?: string | string[];
   }>;
 };
 
@@ -22,7 +23,12 @@ export default async function EventDetailsPage({
   searchParams,
 }: EventDetailsPageProps) {
   const { eventId } = await params;
-  const role = getMvpNavRole((await searchParams)?.role);
+  const resolvedSearchParams = await searchParams;
+  const role = getMvpNavRole(resolvedSearchParams?.role);
+  const view = Array.isArray(resolvedSearchParams?.view)
+    ? resolvedSearchParams?.view[0]
+    : resolvedSearchParams?.view;
+  const mode = view === "ride-share" ? "ride-share" : "full";
 
-  return <EventDetails eventId={eventId} role={role} />;
+  return <EventDetails eventId={eventId} mode={mode} role={role} />;
 }

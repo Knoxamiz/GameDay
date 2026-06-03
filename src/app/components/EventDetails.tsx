@@ -16,15 +16,18 @@ import AttendanceSummaryCard from "./AttendanceSummaryCard";
 import EventReadinessSummary from "./EventReadinessSummary";
 import GameAlertPanel from "./GameAlertPanel";
 import MvpNav, { getRoleHref, type MvpNavRole } from "./MvpNav";
+import RideShareBoard from "./RideShareBoard";
 import TransportationSummaryCard from "./TransportationSummaryCard";
 
 type EventDetailsProps = {
   eventId: string;
+  mode?: "full" | "ride-share";
   role?: MvpNavRole;
 };
 
 export default function EventDetails({
   eventId,
+  mode = "full",
   role = "shared",
 }: EventDetailsProps) {
   const eventDetails = getEventById(eventId);
@@ -47,6 +50,56 @@ export default function EventDetails({
   const transportationEntries = getTransportationEntriesByEventId(
     eventDetails.id,
   );
+  const eventActionHref = getRoleHref(`/events/${eventDetails.id}`, role);
+  const rideShareHref = getRoleHref(
+    `/events/${eventDetails.id}?view=ride-share`,
+    role,
+  );
+  const registrationActionHref =
+    role === "admin"
+      ? "/admin/registrations"
+      : role === "parent"
+        ? "/registration"
+        : team
+          ? getRoleHref(`/teams/${team.id}`, role)
+          : eventActionHref;
+  const eventBackHref =
+    role === "parent"
+      ? "/parent"
+      : team
+        ? getRoleHref(`/teams/${team.id}`, role)
+        : getRoleHref("/events", role);
+
+  if (mode === "ride-share") {
+    return (
+      <main className="min-h-screen bg-slate-950 text-white">
+        <section className="mx-auto max-w-md px-5 py-6">
+          <MvpNav role={role} />
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
+            <Link href={eventBackHref} className="text-2xl font-bold">
+              &larr; Ride Share
+            </Link>
+            <p className="mt-4 text-sm font-semibold text-slate-200">
+              {eventDetails.title}
+            </p>
+            <p className="mt-2 text-sm text-slate-300">
+              {team?.name ?? "Organization Event"}
+            </p>
+            <p className="mt-2 text-sm text-slate-300">
+              {eventDetails.date} {eventDetails.time}
+            </p>
+          </div>
+
+          <RideShareBoard
+            entries={transportationEntries}
+            eventId={eventDetails.id}
+            role={role}
+          />
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -55,11 +108,7 @@ export default function EventDetails({
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <Link
-            href={
-              team
-                ? getRoleHref(`/teams/${team.id}`, role)
-                : getRoleHref("/events", role)
-            }
+            href={eventBackHref}
             className="text-2xl font-bold"
           >
             &larr; {eventDetails.type}
@@ -122,9 +171,12 @@ export default function EventDetails({
         </div>
 
         <EventReadinessSummary
+          actionHref={eventActionHref}
           attendanceEntries={attendanceEntries}
           eventId={eventDetails.id}
+          registrationHref={registrationActionHref}
           registrations={registrations}
+          transportationHref={rideShareHref}
           transportationEntries={transportationEntries}
         />
 
@@ -136,6 +188,12 @@ export default function EventDetails({
         <TransportationSummaryCard
           eventId={eventDetails.id}
           entries={transportationEntries}
+        />
+
+        <RideShareBoard
+          entries={transportationEntries}
+          eventId={eventDetails.id}
+          role={role}
         />
 
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">

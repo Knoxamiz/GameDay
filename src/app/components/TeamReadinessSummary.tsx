@@ -3,8 +3,10 @@
 import Link from "next/link";
 import type { AttendanceEntry } from "../data/attendance";
 import { buildTeamReadiness } from "../data/readiness";
+import { buildReadinessActions } from "../data/readinessActions";
 import type { Registration } from "../data/registrations";
 import type { TransportationEntry } from "../data/transportation";
+import ReadinessActionList from "./ReadinessActionList";
 import ReadinessBadge from "./ReadinessBadge";
 import { useAttendanceEntries } from "./attendanceStatusState";
 import { useRegistrations } from "./registrationStatusState";
@@ -39,6 +41,11 @@ export default function TeamReadinessSummary({
     eventId,
     registrations: currentRegistrations,
     transportationEntries: currentTransportationEntries,
+  });
+  const readinessActions = buildReadinessActions(readiness, {
+    attendanceHref: actionHref,
+    registrationHref: actionHref,
+    transportationHref: actionHref,
   });
 
   return (
@@ -76,6 +83,11 @@ export default function TeamReadinessSummary({
           Review Details
         </Link>
       )}
+      <ReadinessActionList
+        actions={readinessActions}
+        emptyText="Team is ready for the next event."
+        limit={3}
+      />
     </div>
   );
 }

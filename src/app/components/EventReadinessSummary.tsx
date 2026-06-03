@@ -5,18 +5,23 @@ import {
   buildEventReadiness,
   type ReadinessResult,
 } from "../data/readiness";
+import { buildReadinessActions } from "../data/readinessActions";
 import type { Registration } from "../data/registrations";
 import type { TransportationEntry } from "../data/transportation";
+import ReadinessActionList from "./ReadinessActionList";
 import ReadinessBadge from "./ReadinessBadge";
 import { useAttendanceEntries } from "./attendanceStatusState";
 import { useRegistrations } from "./registrationStatusState";
 import { useTransportationEntries } from "./transportationStatusState";
 
 type EventReadinessSummaryProps = {
+  actionHref?: string;
   attendanceEntries: AttendanceEntry[];
   eventId: string;
+  registrationHref?: string;
   registrations?: Registration[];
   title?: string;
+  transportationHref?: string;
   transportationEntries: TransportationEntry[];
 };
 
@@ -31,10 +36,13 @@ function getSummaryLine(readiness: ReadinessResult) {
 }
 
 export default function EventReadinessSummary({
+  actionHref,
   attendanceEntries,
   eventId,
+  registrationHref,
   registrations = [],
   title = "Event Readiness",
+  transportationHref,
   transportationEntries,
 }: EventReadinessSummaryProps) {
   const currentAttendanceEntries = useAttendanceEntries(
@@ -51,6 +59,11 @@ export default function EventReadinessSummary({
     eventId,
     registrations: currentRegistrations,
     transportationEntries: currentTransportationEntries,
+  });
+  const readinessActions = buildReadinessActions(readiness, {
+    attendanceHref: actionHref,
+    registrationHref,
+    transportationHref: transportationHref ?? actionHref,
   });
 
   return (
@@ -75,6 +88,12 @@ export default function EventReadinessSummary({
           ))}
         </div>
       )}
+
+      <ReadinessActionList
+        actions={readinessActions}
+        emptyText="Event is ready."
+        limit={3}
+      />
     </div>
   );
 }

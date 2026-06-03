@@ -9,7 +9,7 @@ export function getRegistrationStatusTone(status: RegistrationStatus) {
     return "bg-blue-500/20 text-blue-300";
   }
 
-  if (status === "Rejected" || status === "Incomplete") {
+  if (status === "Rejected") {
     return "bg-red-500/20 text-red-300";
   }
 

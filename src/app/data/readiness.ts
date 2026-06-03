@@ -191,7 +191,7 @@ export function buildAthleteReadiness({
     });
   } else if (isRegistrationIncomplete(registrationStatus)) {
     concerns.push({
-      category: "Blocked",
+      category: "Needs Attention",
       label: "Registration is incomplete.",
       source: "Registration",
     });
@@ -205,7 +205,7 @@ export function buildAthleteReadiness({
 
   if (missingRequirements.length > 0) {
     concerns.push({
-      category: "Blocked",
+      category: "Needs Attention",
       label: `Missing ${missingRequirements
         .map((requirement) => requirement.label)
         .join(", ")}.`,
@@ -275,7 +275,7 @@ export function buildEventReadiness({
 
   if (registration.incompleteRegistrations > 0) {
     concerns.push({
-      category: "Blocked",
+      category: "Needs Attention",
       label: `${registration.incompleteRegistrations} incomplete registrations.`,
       source: "Registration",
     });

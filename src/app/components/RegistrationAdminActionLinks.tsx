@@ -23,7 +23,9 @@ export default function RegistrationAdminActionLinks({
       <Link
         href={href}
         className={`block rounded-xl bg-slate-800 p-4 ${
-          summary.incompleteRegistrations > 0 ? "text-red-300" : "text-blue-300"
+          summary.incompleteRegistrations > 0
+            ? "text-yellow-200"
+            : "text-blue-300"
         }`}
       >
         {summary.incompleteRegistrations} Incomplete Registrations

@@ -4,6 +4,7 @@ import AttendanceStatusPicker from "../../components/AttendanceStatusPicker";
 import AthleteReadinessCard from "../../components/AthleteReadinessCard";
 import MvpNav, { getRoleHref } from "../../components/MvpNav";
 import RegistrationRequirementsChecklist from "../../components/RegistrationRequirementsChecklist";
+import RideShareBoard from "../../components/RideShareBoard";
 import TransportationStatusPicker from "../../components/TransportationStatusPicker";
 import { athletes, getAthleteById } from "../../data/athletes";
 import { getAttendanceEntryByAthleteAndEventId } from "../../data/attendance";
@@ -13,6 +14,7 @@ import { teamUpdatesByAthleteId } from "../../data/messages";
 import { getRegistrationById } from "../../data/registrations";
 import { getTeamById } from "../../data/teams";
 import {
+  getTransportationEntriesByEventId,
   getTransportationEntryByAthleteAndEventId,
   transportationOptions,
 } from "../../data/transportation";
@@ -53,6 +55,9 @@ export default async function AthleteDetailsPage({
   const transportation = nextEvent
     ? getTransportationEntryByAthleteAndEventId(athlete.id, nextEvent.id)
     : undefined;
+  const transportationEntries = nextEvent
+    ? getTransportationEntriesByEventId(nextEvent.id)
+    : [];
   const transportationStatus = transportation?.status ?? "Unknown";
   const attendance = nextEvent
     ? getAttendanceEntryByAthleteAndEventId(athlete.id, nextEvent.id)
@@ -94,6 +99,11 @@ export default async function AthleteDetailsPage({
               registrationId={registrationId}
               registrationRequirements={registrationRequirements}
               options={transportationOptions}
+            />
+            <RideShareBoard
+              entries={transportationEntries}
+              eventId={nextEvent.id}
+              role="parent"
             />
           </>
         )}

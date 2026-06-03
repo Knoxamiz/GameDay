@@ -27,7 +27,7 @@ export default function ParentHome() {
           My Athletes
         </h2>
 
-        <div className="mt-4 space-y-4">
+        <div className="mt-4 space-y-3">
           {parentAthletes.map((athlete) => {
             const team = getTeamById(athlete.teamId);
             const nextEvent = athlete.nextEventId
@@ -45,24 +45,18 @@ export default function ParentHome() {
               : undefined;
 
             return (
-              <div
+              <ParentAthleteCard
                 key={athlete.name}
-                className="border-t border-slate-800 pt-5 first:border-t-0 first:pt-0"
-              >
-                <ParentAthleteCard
-                  athleteId={athlete.id}
-                  athleteName={athlete.name}
-                  teamName={team?.name}
-                  nextEvent={nextEvent}
-                  initialTransportationStatus={
-                    transportation?.status ?? "Unknown"
-                  }
-                  initialAttendanceStatus={attendance?.status ?? "Unknown"}
-                  registrationId={registration?.id ?? athlete.registrationId}
-                  registrationRequirements={registration?.requirements ?? []}
-                  registrationStatus={registration?.status ?? "Pending"}
-                />
-              </div>
+                athleteId={athlete.id}
+                athleteName={athlete.name}
+                teamName={team?.name}
+                nextEvent={nextEvent}
+                initialTransportationStatus={transportation?.status ?? "Unknown"}
+                initialAttendanceStatus={attendance?.status ?? "Unknown"}
+                registrationId={registration?.id ?? athlete.registrationId}
+                registrationRequirements={registration?.requirements ?? []}
+                registrationStatus={registration?.status ?? "Pending"}
+              />
             );
           })}
         </div>

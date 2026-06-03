@@ -5,11 +5,13 @@ import {
   buildAthleteReadiness,
   type ReadinessResult,
 } from "../data/readiness";
+import { buildReadinessActions } from "../data/readinessActions";
 import type {
   RegistrationRequirement,
   RegistrationStatus,
 } from "../data/registrations";
 import type { TransportationStatus } from "../data/transportation";
+import ReadinessActionList from "./ReadinessActionList";
 import ReadinessBadge from "./ReadinessBadge";
 import { useAttendanceStatus } from "./attendanceStatusState";
 import { useRegistrationRequirements } from "./registrationRequirementState";
@@ -70,6 +72,14 @@ export default function AthleteReadinessCard({
     requirements,
     transportationStatus,
   });
+  const readinessActions = buildReadinessActions(readiness, {
+    attendanceHref: eventId ? `/events/${eventId}?role=parent` : undefined,
+    registrationHref: "/registration",
+    scheduleHref: "/parent",
+    transportationHref: eventId
+      ? `/events/${eventId}?role=parent&view=ride-share`
+      : undefined,
+  });
 
   return (
     <div className="mt-4 rounded-xl bg-slate-800 p-4">
@@ -93,6 +103,12 @@ export default function AthleteReadinessCard({
           ))}
         </div>
       )}
+
+      <ReadinessActionList
+        actions={readinessActions}
+        emptyText="Ready for the next event."
+        limit={3}
+      />
     </div>
   );
 }
