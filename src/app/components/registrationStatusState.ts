@@ -5,9 +5,14 @@ import {
   registrationStatusValues,
   summarizeRegistrations,
   type Registration,
+  type RegistrationRequirementStatus,
   type RegistrationStatus,
   type RegistrationSummary,
 } from "../data/registrations";
+import {
+  getSavedRegistrationRequirementStatus,
+  registrationRequirementChangedEvent,
+} from "./registrationRequirementState";
 
 export const registrationStatusChangedEvent =
   "gameday:registration-status-changed";
@@ -55,17 +60,28 @@ function subscribeRegistrationStatusChanges(onStoreChange: () => void) {
   }
 
   function handleStorageChange(event: StorageEvent) {
-    if (event.key?.startsWith(`${storagePrefix}.`)) {
+    if (
+      event.key?.startsWith(`${storagePrefix}.`) ||
+      event.key?.startsWith("gameday.registrationRequirement.")
+    ) {
       onStoreChange();
     }
   }
 
   window.addEventListener(registrationStatusChangedEvent, handleStatusChange);
+  window.addEventListener(
+    registrationRequirementChangedEvent,
+    handleStatusChange,
+  );
   window.addEventListener("storage", handleStorageChange);
 
   return () => {
     window.removeEventListener(
       registrationStatusChangedEvent,
+      handleStatusChange,
+    );
+    window.removeEventListener(
+      registrationRequirementChangedEvent,
       handleStatusChange,
     );
     window.removeEventListener("storage", handleStorageChange);
@@ -113,8 +129,18 @@ function getRegistrationSnapshotKey(
       const status = includeSavedStatuses
         ? getSavedRegistrationStatus(registration.id) ?? registration.status
         : registration.status;
+      const requirementStatuses = registration.requirements
+        .map((requirement) =>
+          includeSavedStatuses
+            ? getSavedRegistrationRequirementStatus(
+                registration.id,
+                requirement.label,
+              ) ?? requirement.status
+            : requirement.status,
+        )
+        .join(",");
 
-      return `${registration.id}:${status}`;
+      return `${registration.id}:${status}:${requirementStatuses}`;
     })
     .join("|");
 }
@@ -123,26 +149,46 @@ function applyRegistrationSnapshot(
   registrations: Registration[],
   snapshotKey: string,
 ) {
-  const statusesByRegistrationId = new Map<
+  const stateByRegistrationId = new Map<
     string,
-    RegistrationStatus | undefined
+    {
+      requirementStatuses: RegistrationRequirementStatus[];
+      status?: RegistrationStatus;
+    }
   >(
     snapshotKey.split("|").map((registrationSnapshot) => {
-      const [registrationId = "", status = ""] =
+      const [registrationId = "", status = "", requirementSnapshot = ""] =
         registrationSnapshot.split(":");
+      const requirementStatuses = requirementSnapshot
+        .split(",")
+        .filter(
+          (requirementStatus): requirementStatus is RegistrationRequirementStatus =>
+            Boolean(requirementStatus),
+        );
 
       return [
         registrationId,
-        isRegistrationStatus(status) ? status : undefined,
+        {
+          requirementStatuses,
+          status: isRegistrationStatus(status) ? status : undefined,
+        },
       ];
     }),
   );
 
-  return registrations.map<Registration>((registration) => ({
-    ...registration,
-    status:
-      statusesByRegistrationId.get(registration.id) ?? registration.status,
-  }));
+  return registrations.map<Registration>((registration) => {
+    const registrationState = stateByRegistrationId.get(registration.id);
+
+    return {
+      ...registration,
+      requirements: registration.requirements.map((requirement, index) => ({
+        ...requirement,
+        status:
+          registrationState?.requirementStatuses[index] ?? requirement.status,
+      })),
+      status: registrationState?.status ?? registration.status,
+    };
+  });
 }
 
 export function useRegistrationStatus(

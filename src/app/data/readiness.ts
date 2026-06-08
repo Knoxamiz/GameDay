@@ -4,8 +4,26 @@ import {
   type AttendanceStatus,
 } from "./attendance";
 import {
+  isDocumentBlocked,
+  isDocumentMissing,
+  isDocumentNeedsReview,
+  summarizeDocumentRequirements,
+  type DocumentRequirement,
+} from "./documents";
+import {
+  isPaymentBlocked,
+  isPaymentMissing,
+  isPaymentNeedsReview,
+  summarizePaymentRequirements,
+  type PaymentRequirement,
+} from "./payments";
+import {
   isRegistrationIncomplete,
   isRegistrationPending,
+  isRequirementBlocked,
+  isRequirementMissing,
+  isRequirementNeedsReview,
+  isRequirementOpen,
   summarizeRegistrations,
   type Registration,
   type RegistrationRequirement,
@@ -26,7 +44,13 @@ export type ReadinessCategory =
 export type ReadinessConcern = {
   category: ReadinessCategory;
   label: string;
-  source: "Attendance" | "Transportation" | "Registration" | "Schedule";
+  source:
+    | "Attendance"
+    | "Documents"
+    | "Payments"
+    | "Transportation"
+    | "Registration"
+    | "Schedule";
 };
 
 export type ReadinessResult = {
@@ -44,7 +68,9 @@ export type ReadinessCountSummary = {
 
 export type AthleteReadinessInput = {
   attendanceStatus?: AttendanceStatus;
+  documentRequirements?: DocumentRequirement[];
   hasUpcomingEvent: boolean;
+  paymentRequirements?: PaymentRequirement[];
   registrationStatus: RegistrationStatus;
   requirements: RegistrationRequirement[];
   transportationStatus?: TransportationStatus;
@@ -52,7 +78,9 @@ export type AthleteReadinessInput = {
 
 export type EventReadinessInput = {
   attendanceEntries: AttendanceEntry[];
+  documentRequirements?: DocumentRequirement[];
   eventId: string;
+  paymentRequirements?: PaymentRequirement[];
   registrations?: Registration[];
   transportationEntries: TransportationEntry[];
 };
@@ -137,15 +165,24 @@ export function countReadinessResults(
 
 export function buildAthleteReadiness({
   attendanceStatus,
+  documentRequirements = [],
   hasUpcomingEvent,
+  paymentRequirements = [],
   registrationStatus,
   requirements,
   transportationStatus,
 }: AthleteReadinessInput): ReadinessResult {
   const concerns: ReadinessConcern[] = [];
-  const missingRequirements = requirements.filter(
-    (requirement) => requirement.status === "Missing",
-  );
+  const openRequirements = requirements.filter(isRequirementOpen);
+  const blockedRequirements = requirements.filter(isRequirementBlocked);
+  const missingRequirements = requirements.filter(isRequirementMissing);
+  const reviewRequirements = requirements.filter(isRequirementNeedsReview);
+  const blockedDocuments = documentRequirements.filter(isDocumentBlocked);
+  const missingDocuments = documentRequirements.filter(isDocumentMissing);
+  const reviewDocuments = documentRequirements.filter(isDocumentNeedsReview);
+  const blockedPayments = paymentRequirements.filter(isPaymentBlocked);
+  const missingPayments = paymentRequirements.filter(isPaymentMissing);
+  const reviewPayments = paymentRequirements.filter(isPaymentNeedsReview);
 
   if (!hasUpcomingEvent) {
     concerns.push({
@@ -203,12 +240,105 @@ export function buildAthleteReadiness({
     });
   }
 
+  if (blockedRequirements.length > 0) {
+    concerns.push({
+      category: "Blocked",
+      label: `Rejected ${blockedRequirements
+        .map((requirement) => requirement.label)
+        .join(", ")}.`,
+      source: "Registration",
+    });
+  }
+
+  if (blockedDocuments.length > 0) {
+    concerns.push({
+      category: "Blocked",
+      label: `Rejected documents: ${blockedDocuments
+        .map((requirement) => requirement.label)
+        .join(", ")}.`,
+      source: "Documents",
+    });
+  }
+
+  if (missingDocuments.length > 0) {
+    concerns.push({
+      category: "Needs Attention",
+      label: `Missing documents: ${missingDocuments
+        .map((requirement) => requirement.label)
+        .join(", ")}.`,
+      source: "Documents",
+    });
+  }
+
+  if (reviewDocuments.length > 0) {
+    concerns.push({
+      category: "Needs Attention",
+      label: `Documents need review: ${reviewDocuments
+        .map((requirement) => requirement.label)
+        .join(", ")}.`,
+      source: "Documents",
+    });
+  }
+
+  if (blockedPayments.length > 0) {
+    concerns.push({
+      category: "Blocked",
+      label: `Rejected payment: ${blockedPayments
+        .map((requirement) => requirement.label)
+        .join(", ")}.`,
+      source: "Payments",
+    });
+  }
+
+  if (missingPayments.length > 0) {
+    concerns.push({
+      category: "Needs Attention",
+      label: `Missing payment: ${missingPayments
+        .map((requirement) => requirement.label)
+        .join(", ")}.`,
+      source: "Payments",
+    });
+  }
+
+  if (reviewPayments.length > 0) {
+    concerns.push({
+      category: "Needs Attention",
+      label: `Payment needs review: ${reviewPayments
+        .map((requirement) => requirement.label)
+        .join(", ")}.`,
+      source: "Payments",
+    });
+  }
+
   if (missingRequirements.length > 0) {
     concerns.push({
       category: "Needs Attention",
       label: `Missing ${missingRequirements
         .map((requirement) => requirement.label)
         .join(", ")}.`,
+      source: "Registration",
+    });
+  }
+
+  if (reviewRequirements.length > 0) {
+    concerns.push({
+      category: "Needs Attention",
+      label: `Waiting for review: ${reviewRequirements
+        .map((requirement) => requirement.label)
+        .join(", ")}.`,
+      source: "Registration",
+    });
+  }
+
+  if (
+    openRequirements.length === 0 &&
+    registrationStatus !== "Approved" &&
+    !isRegistrationPending(registrationStatus) &&
+    !isRegistrationIncomplete(registrationStatus)
+  ) {
+    concerns.push({
+      category: "Unknown",
+      label: "Registration needs admin status.",
       source: "Registration",
     });
   }
@@ -221,7 +351,9 @@ export function buildAthleteReadiness({
 
 export function buildEventReadiness({
   attendanceEntries,
+  documentRequirements = [],
   eventId,
+  paymentRequirements = [],
   registrations = [],
   transportationEntries,
 }: EventReadinessInput): ReadinessResult {
@@ -232,6 +364,8 @@ export function buildEventReadiness({
     transportationEntries,
   );
   const registration = summarizeRegistrations(registrations);
+  const documents = summarizeDocumentRequirements(documentRequirements);
+  const payments = summarizePaymentRequirements(paymentRequirements);
 
   if (attendance.totalPlayers === 0) {
     concerns.push({
@@ -294,6 +428,70 @@ export function buildEventReadiness({
       category: "Needs Attention",
       label: `${registration.pendingRegistrations} registrations pending review.`,
       source: "Registration",
+    });
+  }
+
+  if (registration.missingRequirements > 0) {
+    concerns.push({
+      category: "Needs Attention",
+      label: `${registration.missingRequirements} missing registration items.`,
+      source: "Registration",
+    });
+  }
+
+  if (registration.submittedRequirements > 0) {
+    concerns.push({
+      category: "Needs Attention",
+      label: `${registration.submittedRequirements} registration items need review.`,
+      source: "Registration",
+    });
+  }
+
+  if (documents.missing > 0) {
+    concerns.push({
+      category: "Needs Attention",
+      label: `${documents.missing} missing documents.`,
+      source: "Documents",
+    });
+  }
+
+  if (documents.needsReview > 0) {
+    concerns.push({
+      category: "Needs Attention",
+      label: `${documents.needsReview} documents need review.`,
+      source: "Documents",
+    });
+  }
+
+  if (documents.blocked > 0) {
+    concerns.push({
+      category: "Blocked",
+      label: `${documents.blocked} rejected documents.`,
+      source: "Documents",
+    });
+  }
+
+  if (payments.missing > 0) {
+    concerns.push({
+      category: "Needs Attention",
+      label: `${payments.missing} missing payments.`,
+      source: "Payments",
+    });
+  }
+
+  if (payments.needsReview > 0) {
+    concerns.push({
+      category: "Needs Attention",
+      label: `${payments.needsReview} payments need review.`,
+      source: "Payments",
+    });
+  }
+
+  if (payments.blocked > 0) {
+    concerns.push({
+      category: "Blocked",
+      label: `${payments.blocked} rejected payments.`,
+      source: "Payments",
     });
   }
 

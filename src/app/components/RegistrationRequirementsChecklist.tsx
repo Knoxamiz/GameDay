@@ -1,6 +1,40 @@
 "use client";
 
-import type { RegistrationRequirement } from "../data/registrations";
+import {
+  getDocumentRequirementsByRegistrationId,
+  isDocumentBlocked,
+  isDocumentCleared,
+  isDocumentMissing,
+  isDocumentNeedsReview,
+  summarizeDocumentRequirements,
+  type DocumentRequirementStatus,
+} from "../data/documents";
+import {
+  getPaymentRequirementsByRegistrationId,
+  isPaymentBlocked,
+  isPaymentCleared,
+  isPaymentMissing,
+  isPaymentNeedsReview,
+  summarizePaymentRequirements,
+  type PaymentRequirementStatus,
+} from "../data/payments";
+import {
+  isRequirementBlocked,
+  isRequirementCleared,
+  isRequirementMissing,
+  isRequirementNeedsReview,
+  summarizeRegistrationRequirements,
+  type RegistrationRequirement,
+  type RegistrationRequirementStatus,
+} from "../data/registrations";
+import {
+  saveDocumentRequirementStatus,
+  useDocumentRequirements,
+} from "./documentRequirementState";
+import {
+  savePaymentRequirementStatus,
+  usePaymentRequirements,
+} from "./paymentRequirementState";
 import {
   saveRegistrationRequirementStatus,
   useRegistrationRequirements,
@@ -11,6 +45,54 @@ type RegistrationRequirementsChecklistProps = {
   requirements: RegistrationRequirement[];
 };
 
+function getRequirementTone(status: RegistrationRequirementStatus) {
+  if (status === "Approved" || status === "Waived") {
+    return "bg-blue-500/20 text-blue-300";
+  }
+
+  if (status === "Submitted" || status === "Uploaded") {
+    return "bg-yellow-500/20 text-yellow-200";
+  }
+
+  if (status === "Rejected") {
+    return "bg-red-500/20 text-red-300";
+  }
+
+  return "bg-slate-700 text-slate-300";
+}
+
+function getDocumentTone(status: DocumentRequirementStatus) {
+  if (status === "Approved" || status === "Waived") {
+    return "bg-blue-500/20 text-blue-300";
+  }
+
+  if (status === "Submitted" || status === "Uploaded") {
+    return "bg-yellow-500/20 text-yellow-200";
+  }
+
+  if (status === "Rejected") {
+    return "bg-red-500/20 text-red-300";
+  }
+
+  return "bg-slate-700 text-slate-300";
+}
+
+function getPaymentTone(status: PaymentRequirementStatus) {
+  if (status === "Paid" || status === "Waived") {
+    return "bg-blue-500/20 text-blue-300";
+  }
+
+  if (status === "Submitted") {
+    return "bg-yellow-500/20 text-yellow-200";
+  }
+
+  if (status === "Rejected") {
+    return "bg-red-500/20 text-red-300";
+  }
+
+  return "bg-slate-700 text-slate-300";
+}
+
 export default function RegistrationRequirementsChecklist({
   registrationId,
   requirements,
@@ -19,22 +101,166 @@ export default function RegistrationRequirementsChecklist({
     registrationId,
     requirements,
   );
-  const missingCount = currentRequirements.filter(
-    (requirement) => requirement.status === "Missing",
-  ).length;
+  const documentRequirements = useDocumentRequirements(
+    getDocumentRequirementsByRegistrationId(registrationId),
+  );
+  const paymentRequirements = usePaymentRequirements(
+    getPaymentRequirementsByRegistrationId(registrationId),
+  );
+  const summary = summarizeRegistrationRequirements(currentRequirements);
+  const documentSummary = summarizeDocumentRequirements(documentRequirements);
+  const paymentSummary = summarizePaymentRequirements(paymentRequirements);
+  const totalOpenItems =
+    summary.open + documentSummary.open + paymentSummary.open;
+  const totalNeedsReview =
+    summary.needsReview + documentSummary.needsReview + paymentSummary.needsReview;
+  const totalBlocked =
+    summary.blocked + documentSummary.blocked + paymentSummary.blocked;
+  const totalMissing =
+    summary.missing + documentSummary.missing + paymentSummary.missing;
+  const summaryLabel =
+    totalBlocked > 0
+      ? `${totalBlocked} Needs Fix`
+      : totalMissing > 0
+        ? `${totalMissing} Missing`
+        : totalNeedsReview > 0
+          ? `${totalNeedsReview} Waiting Review`
+          : "Ready";
+  const summaryTone =
+    totalBlocked > 0 || totalMissing > 0
+      ? "text-red-300"
+      : totalNeedsReview > 0
+        ? "text-yellow-200"
+        : "text-blue-300";
 
   return (
     <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
       <h2 className="text-lg font-bold">Registration Status</h2>
-      <p
-        className={`mt-3 text-sm font-semibold ${
-          missingCount === 0 ? "text-blue-300" : "text-red-300"
-        }`}
-      >
-        {missingCount === 0 ? "Ready" : `${missingCount} Missing`}
+      <p className={`mt-3 text-sm font-semibold ${summaryTone}`}>
+        {summaryLabel}
       </p>
-      <div className="mt-3 space-y-3 text-sm text-slate-300">
+      <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs font-semibold">
+        <div className="rounded-xl bg-slate-800 p-3">
+          <p className="text-slate-400">Documents</p>
+          <p className="mt-1 text-white">{documentSummary.open} Open</p>
+        </div>
+        <div className="rounded-xl bg-slate-800 p-3">
+          <p className="text-slate-400">Payment</p>
+          <p className="mt-1 text-white">{paymentSummary.open} Open</p>
+        </div>
+        <div className="rounded-xl bg-slate-800 p-3">
+          <p className="text-slate-400">Total</p>
+          <p className="mt-1 text-white">{totalOpenItems} Open</p>
+        </div>
+      </div>
+
+      <div className="mt-4 space-y-3 text-sm text-slate-300">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+          Documents
+        </h3>
+        {documentRequirements.length > 0 ? (
+          documentRequirements.map((requirement) => (
+            <div key={requirement.id} className="rounded-xl bg-slate-800 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <span>{requirement.label}</span>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${getDocumentTone(
+                    requirement.status,
+                  )}`}
+                >
+                  {requirement.status}
+                </span>
+              </div>
+              <p className="mt-2 text-xs text-slate-400">
+                {requirement.description}
+              </p>
+              {isDocumentNeedsReview(requirement) && (
+                <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-yellow-200">
+                  Waiting for admin review
+                </p>
+              )}
+              {isDocumentCleared(requirement) && (
+                <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-blue-300">
+                  Cleared
+                </p>
+              )}
+              {(isDocumentMissing(requirement) ||
+                isDocumentBlocked(requirement)) && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    saveDocumentRequirementStatus(requirement.id, "Uploaded")
+                  }
+                  className="mt-3 w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
+                >
+                  {isDocumentBlocked(requirement)
+                    ? "Resubmit Document"
+                    : "Upload / Submit Document"}
+                </button>
+              )}
+            </div>
+          ))
+        ) : (
+          <p>No document requirements listed.</p>
+        )}
+
+        <h3 className="pt-2 text-sm font-semibold uppercase tracking-wide text-slate-400">
+          Payment
+        </h3>
+        {paymentRequirements.length > 0 ? (
+          paymentRequirements.map((requirement) => (
+            <div key={requirement.id} className="rounded-xl bg-slate-800 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <span>{requirement.label}</span>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${getPaymentTone(
+                    requirement.status,
+                  )}`}
+                >
+                  {requirement.status}
+                </span>
+              </div>
+              <p className="mt-2 text-xs text-slate-400">
+                ${requirement.amountDue} due. {requirement.description}
+              </p>
+              {isPaymentNeedsReview(requirement) && (
+                <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-yellow-200">
+                  Waiting for admin review
+                </p>
+              )}
+              {isPaymentCleared(requirement) && (
+                <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-blue-300">
+                  Cleared
+                </p>
+              )}
+              {(isPaymentMissing(requirement) ||
+                isPaymentBlocked(requirement)) && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    savePaymentRequirementStatus(requirement.id, "Submitted")
+                  }
+                  className="mt-3 w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
+                >
+                  {isPaymentBlocked(requirement)
+                    ? "Resubmit Payment"
+                    : "Record Payment"}
+                </button>
+              )}
+            </div>
+          ))
+        ) : (
+          <p>No payment requirements listed.</p>
+        )}
+
+        {documentRequirements.length === 0 && paymentRequirements.length === 0 && (
+          <h3 className="pt-2 text-sm font-semibold uppercase tracking-wide text-slate-400">
+            Registration Items
+          </h3>
+        )}
         {currentRequirements.length > 0 ? (
+          documentRequirements.length === 0 &&
+          paymentRequirements.length === 0 &&
           currentRequirements.map((requirement) => (
             <div
               key={requirement.label}
@@ -43,34 +269,53 @@ export default function RegistrationRequirementsChecklist({
               <div className="flex items-center justify-between gap-3">
                 <span>{requirement.label}</span>
                 <span
-                  className={
-                    requirement.status === "Complete"
-                      ? "font-semibold text-blue-300"
-                      : "font-semibold text-red-300"
-                  }
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${getRequirementTone(
+                    requirement.status,
+                  )}`}
                 >
                   {requirement.status}
                 </span>
               </div>
-              {requirement.status === "Missing" && (
+              {requirement.description && (
+                <p className="mt-2 text-xs text-slate-400">
+                  {requirement.description}
+                </p>
+              )}
+              {isRequirementNeedsReview(requirement) && (
+                <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-yellow-200">
+                  Waiting for admin review
+                </p>
+              )}
+              {isRequirementCleared(requirement) && (
+                <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-blue-300">
+                  Cleared
+                </p>
+              )}
+              {(isRequirementMissing(requirement) ||
+                isRequirementBlocked(requirement)) && (
                 <button
                   type="button"
                   onClick={() =>
                     saveRegistrationRequirementStatus(
                       registrationId,
                       requirement.label,
-                      "Complete",
+                      "Uploaded",
                     )
                   }
                   className="mt-3 w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
                 >
-                  Mark Complete
+                  {isRequirementBlocked(requirement)
+                    ? "Resubmit Item"
+                    : "Upload / Submit Item"}
                 </button>
               )}
             </div>
           ))
         ) : (
-          <p>No registration requirements listed.</p>
+          documentRequirements.length === 0 &&
+          paymentRequirements.length === 0 && (
+            <p>No registration requirements listed.</p>
+          )
         )}
       </div>
     </div>

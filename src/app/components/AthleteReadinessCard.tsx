@@ -6,6 +6,8 @@ import {
   type ReadinessResult,
 } from "../data/readiness";
 import { buildReadinessActions } from "../data/readinessActions";
+import { getDocumentRequirementsByRegistrationId } from "../data/documents";
+import { getPaymentRequirementsByRegistrationId } from "../data/payments";
 import type {
   RegistrationRequirement,
   RegistrationStatus,
@@ -14,6 +16,8 @@ import type { TransportationStatus } from "../data/transportation";
 import ReadinessActionList from "./ReadinessActionList";
 import ReadinessBadge from "./ReadinessBadge";
 import { useAttendanceStatus } from "./attendanceStatusState";
+import { useDocumentRequirements } from "./documentRequirementState";
+import { usePaymentRequirements } from "./paymentRequirementState";
 import { useRegistrationRequirements } from "./registrationRequirementState";
 import { useRegistrationStatus } from "./registrationStatusState";
 import { useTransportationStatus } from "./transportationStatusState";
@@ -65,15 +69,25 @@ export default function AthleteReadinessCard({
     registrationId,
     registrationStatus,
   );
+  const documentRequirements = useDocumentRequirements(
+    getDocumentRequirementsByRegistrationId(registrationId),
+  );
+  const paymentRequirements = usePaymentRequirements(
+    getPaymentRequirementsByRegistrationId(registrationId),
+  );
   const readiness = buildAthleteReadiness({
     attendanceStatus,
+    documentRequirements,
     hasUpcomingEvent: Boolean(eventId),
+    paymentRequirements,
     registrationStatus: currentRegistrationStatus,
     requirements,
     transportationStatus,
   });
   const readinessActions = buildReadinessActions(readiness, {
     attendanceHref: eventId ? `/events/${eventId}?role=parent` : undefined,
+    documentsHref: `/athletes/${athleteId}`,
+    paymentsHref: `/athletes/${athleteId}`,
     registrationHref: "/registration",
     scheduleHref: "/parent",
     transportationHref: eventId

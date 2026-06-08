@@ -1,7 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import {
+  getDocumentRequirementsByRegistrationIds,
+  summarizeDocumentRequirements,
+} from "../data/documents";
+import {
+  getPaymentRequirementsByRegistrationIds,
+  summarizePaymentRequirements,
+} from "../data/payments";
 import type { Registration } from "../data/registrations";
+import { useDocumentRequirements } from "./documentRequirementState";
+import { usePaymentRequirements } from "./paymentRequirementState";
 import { useRegistrationSummary } from "./registrationStatusState";
 
 type RegistrationAdminActionLinksProps = {
@@ -14,6 +24,15 @@ export default function RegistrationAdminActionLinks({
   registrations,
 }: RegistrationAdminActionLinksProps) {
   const summary = useRegistrationSummary(registrations);
+  const registrationIds = registrations.map((registration) => registration.id);
+  const documents = useDocumentRequirements(
+    getDocumentRequirementsByRegistrationIds(registrationIds),
+  );
+  const payments = usePaymentRequirements(
+    getPaymentRequirementsByRegistrationIds(registrationIds),
+  );
+  const documentSummary = summarizeDocumentRequirements(documents);
+  const paymentSummary = summarizePaymentRequirements(payments);
 
   return (
     <>
@@ -23,12 +42,31 @@ export default function RegistrationAdminActionLinks({
       <Link
         href={href}
         className={`block rounded-xl bg-slate-800 p-4 ${
-          summary.incompleteRegistrations > 0
+          summary.incompleteRegistrations > 0 || documentSummary.missing > 0
             ? "text-yellow-200"
             : "text-blue-300"
         }`}
       >
-        {summary.incompleteRegistrations} Incomplete Registrations
+        {summary.incompleteRegistrations} Incomplete,{" "}
+        {documentSummary.missing} Missing Docs
+      </Link>
+      <Link
+        href={href}
+        className={`block rounded-xl bg-slate-800 p-4 ${
+          documentSummary.needsReview > 0
+            ? "text-yellow-200"
+            : "text-blue-300"
+        }`}
+      >
+        {documentSummary.needsReview} Documents Need Review
+      </Link>
+      <Link
+        href={href}
+        className={`block rounded-xl bg-slate-800 p-4 ${
+          paymentSummary.open > 0 ? "text-yellow-200" : "text-blue-300"
+        }`}
+      >
+        {paymentSummary.open} Payments Open
       </Link>
     </>
   );

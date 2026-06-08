@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import MvpNav from "../components/MvpNav";
+import { registrationInvites } from "../data/invites";
 import { blackDiamondsOrganization } from "../data/organizations";
 import { registrationForm } from "../data/registrations";
 
@@ -53,6 +54,7 @@ function TextField({ label }: { label: string }) {
 
 export default function RegistrationHome() {
   const [step, setStep] = useState<RegistrationStep>(1);
+  const primaryInvite = registrationInvites[0];
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -60,6 +62,22 @@ export default function RegistrationHome() {
         <MvpNav role="parent" />
 
         {isFormStep(step) && <RegistrationHeader step={step} />}
+
+        {step === 1 && primaryInvite && (
+          <Link
+            href={primaryInvite.inviteUrl}
+            className="mt-5 block rounded-2xl border border-blue-500/30 bg-blue-500/10 p-5 shadow-lg"
+          >
+            <p className="text-xs font-semibold uppercase tracking-wide text-blue-300">
+              QR / Team Invite
+            </p>
+            <h3 className="mt-2 text-lg font-bold">{primaryInvite.title}</h3>
+            <p className="mt-2 text-sm text-slate-300">
+              Add an athlete through the team invite and see what is still
+              missing before admin review.
+            </p>
+          </Link>
+        )}
 
         {step === 1 && (
           <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">

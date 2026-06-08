@@ -1,7 +1,17 @@
 "use client";
 
+import {
+  getDocumentRequirementsByRegistrationId,
+  isDocumentOpen,
+} from "../data/documents";
+import {
+  getPaymentRequirementsByRegistrationId,
+  isPaymentOpen,
+} from "../data/payments";
 import type { RegistrationRequirement } from "../data/registrations";
 import type { TransportationStatus } from "../data/transportation";
+import { useDocumentRequirements } from "./documentRequirementState";
+import { usePaymentRequirements } from "./paymentRequirementState";
 import { useRegistrationRequirements } from "./registrationRequirementState";
 import {
   saveTransportationStatus,
@@ -34,12 +44,27 @@ export default function TransportationStatusPicker({
     registrationId,
     registrationRequirements,
   );
+  const documents = useDocumentRequirements(
+    getDocumentRequirementsByRegistrationId(registrationId),
+  );
+  const payments = usePaymentRequirements(
+    getPaymentRequirementsByRegistrationId(registrationId),
+  );
   const missingRequirementLabels = requirements
     .filter((requirement) => requirement.status === "Missing")
     .map((requirement) => requirement.label);
+  const openDocumentLabels = documents
+    .filter(isDocumentOpen)
+    .map((requirement) => requirement.label);
+  const openPaymentLabels = payments
+    .filter(isPaymentOpen)
+    .map((requirement) => requirement.label);
   const hasTransportationReady = selectedStatus !== "Unknown";
   const isReady =
-    hasTransportationReady && missingRequirementLabels.length === 0;
+    hasTransportationReady &&
+    missingRequirementLabels.length === 0 &&
+    openDocumentLabels.length === 0 &&
+    openPaymentLabels.length === 0;
 
   return (
     <>
@@ -58,6 +83,12 @@ export default function TransportationStatusPicker({
         )}
         {missingRequirementLabels.length > 0 && (
           <p className="mt-2">Missing: {missingRequirementLabels.join(", ")}</p>
+        )}
+        {openDocumentLabels.length > 0 && (
+          <p className="mt-2">Documents: {openDocumentLabels.join(", ")}</p>
+        )}
+        {openPaymentLabels.length > 0 && (
+          <p className="mt-2">Payments: {openPaymentLabels.join(", ")}</p>
         )}
       </div>
 

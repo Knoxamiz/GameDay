@@ -2,6 +2,8 @@ import type { ReadinessConcern, ReadinessResult } from "./readiness";
 
 export type ReadinessActionLinks = {
   attendanceHref?: string;
+  documentsHref?: string;
+  paymentsHref?: string;
   registrationHref?: string;
   scheduleHref?: string;
   transportationHref?: string;
@@ -46,6 +48,28 @@ function getActionForConcern(
       label: concern.label.includes("rejected")
         ? "Review registration decision"
         : "Review registration",
+      priority: concern.category === "Blocked" ? 4 : 3,
+      source: concern.source,
+    };
+  }
+
+  if (concern.source === "Documents") {
+    return {
+      href: links.documentsHref ?? links.registrationHref,
+      label: concern.label.includes("Rejected")
+        ? "Review document decision"
+        : "Review documents",
+      priority: concern.category === "Blocked" ? 4 : 3,
+      source: concern.source,
+    };
+  }
+
+  if (concern.source === "Payments") {
+    return {
+      href: links.paymentsHref ?? links.registrationHref,
+      label: concern.label.includes("Rejected")
+        ? "Review payment decision"
+        : "Review payment",
       priority: concern.category === "Blocked" ? 4 : 3,
       source: concern.source,
     };

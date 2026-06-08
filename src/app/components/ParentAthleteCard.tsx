@@ -2,10 +2,19 @@
 
 import Link from "next/link";
 import type { AttendanceStatus } from "../data/attendance";
+import {
+  getDocumentRequirementsByRegistrationId,
+  summarizeDocumentRequirements,
+} from "../data/documents";
+import {
+  getPaymentRequirementsByRegistrationId,
+  summarizePaymentRequirements,
+} from "../data/payments";
 import type {
   RegistrationRequirement,
   RegistrationStatus,
 } from "../data/registrations";
+import { summarizeRegistrationRequirements } from "../data/registrations";
 import { buildAthleteReadiness } from "../data/readiness";
 import { buildReadinessActions } from "../data/readinessActions";
 import type { TransportationStatus } from "../data/transportation";
@@ -13,6 +22,8 @@ import AttendanceStatusPicker from "./AttendanceStatusPicker";
 import ReadinessActionList from "./ReadinessActionList";
 import ReadinessBadge from "./ReadinessBadge";
 import { useAttendanceStatus } from "./attendanceStatusState";
+import { useDocumentRequirements } from "./documentRequirementState";
+import { usePaymentRequirements } from "./paymentRequirementState";
 import { useRegistrationRequirements } from "./registrationRequirementState";
 import { useRegistrationStatus } from "./registrationStatusState";
 import { useTransportationStatus } from "./transportationStatusState";
@@ -66,21 +77,47 @@ export default function ParentAthleteCard({
     registrationId,
     registrationStatus,
   );
-  const missingRegistrationCount = requirements.filter(
-    (requirement) => requirement.status === "Missing",
-  ).length;
+  const documentRequirements = useDocumentRequirements(
+    getDocumentRequirementsByRegistrationId(registrationId),
+  );
+  const paymentRequirements = usePaymentRequirements(
+    getPaymentRequirementsByRegistrationId(registrationId),
+  );
+  const registrationRequirementSummary =
+    summarizeRegistrationRequirements(requirements);
+  const documentSummary = summarizeDocumentRequirements(documentRequirements);
+  const paymentSummary = summarizePaymentRequirements(paymentRequirements);
   const hasTransportationReady = transportationStatus !== "Unknown";
   const hasRegistrationReady =
-    currentRegistrationStatus === "Approved" && missingRegistrationCount === 0;
+    currentRegistrationStatus === "Approved" &&
+    registrationRequirementSummary.open === 0 &&
+    documentSummary.open === 0 &&
+    paymentSummary.open === 0;
+  const registrationLabel =
+    registrationRequirementSummary.open > 0
+      ? `${currentRegistrationStatus}, ${registrationRequirementSummary.open} Open`
+      : currentRegistrationStatus;
+  const registrationTone =
+    hasRegistrationReady
+      ? "font-semibold text-blue-300"
+      : registrationRequirementSummary.needsReview > 0 &&
+          registrationRequirementSummary.missing === 0 &&
+          registrationRequirementSummary.blocked === 0
+        ? "font-semibold text-yellow-200"
+        : "font-semibold text-red-300";
   const readiness = buildAthleteReadiness({
     attendanceStatus,
+    documentRequirements,
     hasUpcomingEvent: Boolean(nextEvent),
+    paymentRequirements,
     registrationStatus: currentRegistrationStatus,
     requirements,
     transportationStatus,
   });
   const readinessActions = buildReadinessActions(readiness, {
     attendanceHref: `/athletes/${athleteId}`,
+    documentsHref: `/athletes/${athleteId}`,
+    paymentsHref: `/athletes/${athleteId}`,
     registrationHref: `/athletes/${athleteId}`,
     scheduleHref: "/parent",
     transportationHref: `/athletes/${athleteId}`,
@@ -152,17 +189,42 @@ export default function ParentAthleteCard({
               </p>
               <p className="flex justify-between gap-3 text-slate-300">
                 <span className="text-slate-400">Registration</span>
+                <span className={registrationTone}>{registrationLabel}</span>
+              </p>
+              <p className="flex justify-between gap-3 text-slate-300">
+                <span className="text-slate-400">Documents</span>
                 <span
                   className={
-                    hasRegistrationReady
+                    documentSummary.open === 0
                       ? "font-semibold text-blue-300"
-                      : "font-semibold text-red-300"
+                      : documentSummary.needsReview > 0 &&
+                          documentSummary.missing === 0 &&
+                          documentSummary.blocked === 0
+                        ? "font-semibold text-yellow-200"
+                        : "font-semibold text-red-300"
                   }
                 >
-                  {currentRegistrationStatus}
-                  {missingRegistrationCount > 0
-                    ? `, ${missingRegistrationCount} Missing`
-                    : ""}
+                  {documentSummary.open === 0
+                    ? "Ready"
+                    : `${documentSummary.open} Open`}
+                </span>
+              </p>
+              <p className="flex justify-between gap-3 text-slate-300">
+                <span className="text-slate-400">Payment</span>
+                <span
+                  className={
+                    paymentSummary.open === 0
+                      ? "font-semibold text-blue-300"
+                      : paymentSummary.needsReview > 0 &&
+                          paymentSummary.missing === 0 &&
+                          paymentSummary.blocked === 0
+                        ? "font-semibold text-yellow-200"
+                        : "font-semibold text-red-300"
+                  }
+                >
+                  {paymentSummary.open === 0
+                    ? "Ready"
+                    : `${paymentSummary.open} Open`}
                 </span>
               </p>
             </div>

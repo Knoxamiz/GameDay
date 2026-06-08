@@ -1,6 +1,8 @@
 "use client";
 
 import type { AttendanceEntry } from "../data/attendance";
+import { getDocumentRequirementsByRegistrationIds } from "../data/documents";
+import { getPaymentRequirementsByRegistrationIds } from "../data/payments";
 import {
   buildEventReadiness,
   type ReadinessResult,
@@ -11,6 +13,8 @@ import type { TransportationEntry } from "../data/transportation";
 import ReadinessActionList from "./ReadinessActionList";
 import ReadinessBadge from "./ReadinessBadge";
 import { useAttendanceEntries } from "./attendanceStatusState";
+import { useDocumentRequirements } from "./documentRequirementState";
+import { usePaymentRequirements } from "./paymentRequirementState";
 import { useRegistrations } from "./registrationStatusState";
 import { useTransportationEntries } from "./transportationStatusState";
 
@@ -54,14 +58,27 @@ export default function EventReadinessSummary({
     transportationEntries,
   );
   const currentRegistrations = useRegistrations(registrations);
+  const registrationIds = currentRegistrations.map(
+    (registration) => registration.id,
+  );
+  const currentDocumentRequirements = useDocumentRequirements(
+    getDocumentRequirementsByRegistrationIds(registrationIds),
+  );
+  const currentPaymentRequirements = usePaymentRequirements(
+    getPaymentRequirementsByRegistrationIds(registrationIds),
+  );
   const readiness = buildEventReadiness({
     attendanceEntries: currentAttendanceEntries,
+    documentRequirements: currentDocumentRequirements,
     eventId,
+    paymentRequirements: currentPaymentRequirements,
     registrations: currentRegistrations,
     transportationEntries: currentTransportationEntries,
   });
   const readinessActions = buildReadinessActions(readiness, {
     attendanceHref: actionHref,
+    documentsHref: registrationHref,
+    paymentsHref: registrationHref,
     registrationHref,
     transportationHref: transportationHref ?? actionHref,
   });
@@ -80,7 +97,7 @@ export default function EventReadinessSummary({
 
       {readiness.concerns.length > 0 && (
         <div className="mt-4 space-y-2 text-sm text-slate-300">
-          {readiness.concerns.slice(0, 4).map((concern) => (
+          {readiness.concerns.slice(0, 6).map((concern) => (
             <p key={`${concern.source}-${concern.label}`}>
               <span className="text-slate-400">{concern.source}:</span>{" "}
               {concern.label}

@@ -5,6 +5,7 @@ import type {
   RegistrationRequirement,
   RegistrationRequirementStatus,
 } from "../data/registrations";
+import { registrationRequirementStatusValues } from "../data/registrations";
 
 export const registrationRequirementChangedEvent =
   "gameday:registration-requirement-changed";
@@ -21,7 +22,9 @@ function getStorageKey(registrationId: string, requirementLabel: string) {
 function isRegistrationRequirementStatus(
   value: string,
 ): value is RegistrationRequirementStatus {
-  return value === "Complete" || value === "Missing";
+  return registrationRequirementStatusValues.includes(
+    value as RegistrationRequirementStatus,
+  );
 }
 
 export function getSavedRegistrationRequirementStatus(

@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import type { AttendanceEntry } from "../data/attendance";
+import { getDocumentRequirementsByRegistrationIds } from "../data/documents";
+import { getPaymentRequirementsByRegistrationIds } from "../data/payments";
 import { buildTeamReadiness } from "../data/readiness";
 import { buildReadinessActions } from "../data/readinessActions";
 import type { Registration } from "../data/registrations";
@@ -9,6 +11,8 @@ import type { TransportationEntry } from "../data/transportation";
 import ReadinessActionList from "./ReadinessActionList";
 import ReadinessBadge from "./ReadinessBadge";
 import { useAttendanceEntries } from "./attendanceStatusState";
+import { useDocumentRequirements } from "./documentRequirementState";
+import { usePaymentRequirements } from "./paymentRequirementState";
 import { useRegistrations } from "./registrationStatusState";
 import { useTransportationEntries } from "./transportationStatusState";
 
@@ -36,14 +40,27 @@ export default function TeamReadinessSummary({
     transportationEntries,
   );
   const currentRegistrations = useRegistrations(registrations);
+  const registrationIds = currentRegistrations.map(
+    (registration) => registration.id,
+  );
+  const currentDocumentRequirements = useDocumentRequirements(
+    getDocumentRequirementsByRegistrationIds(registrationIds),
+  );
+  const currentPaymentRequirements = usePaymentRequirements(
+    getPaymentRequirementsByRegistrationIds(registrationIds),
+  );
   const readiness = buildTeamReadiness({
     attendanceEntries: currentAttendanceEntries,
+    documentRequirements: currentDocumentRequirements,
     eventId,
+    paymentRequirements: currentPaymentRequirements,
     registrations: currentRegistrations,
     transportationEntries: currentTransportationEntries,
   });
   const readinessActions = buildReadinessActions(readiness, {
     attendanceHref: actionHref,
+    documentsHref: actionHref,
+    paymentsHref: actionHref,
     registrationHref: actionHref,
     transportationHref: actionHref,
   });

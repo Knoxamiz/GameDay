@@ -1,7 +1,9 @@
 "use client";
 
 import type { AttendanceEntry } from "../data/attendance";
+import { getDocumentRequirementsByRegistrationIds } from "../data/documents";
 import type { GameDayEvent } from "../data/events";
+import { getPaymentRequirementsByRegistrationIds } from "../data/payments";
 import {
   buildEventReadiness,
   buildTeamReadiness,
@@ -13,6 +15,8 @@ import type { Team } from "../data/teams";
 import type { TransportationEntry } from "../data/transportation";
 import ReadinessBadge from "./ReadinessBadge";
 import { useAllAttendanceEntries } from "./attendanceStatusState";
+import { useDocumentRequirements } from "./documentRequirementState";
+import { usePaymentRequirements } from "./paymentRequirementState";
 import { useRegistrations } from "./registrationStatusState";
 import { useAllTransportationEntries } from "./transportationStatusState";
 
@@ -79,12 +83,24 @@ export default function AdminReadinessBoard({
   const currentTransportationEntries =
     useAllTransportationEntries(transportationEntries);
   const currentRegistrations = useRegistrations(registrations);
+  const currentRegistrationIds = currentRegistrations.map(
+    (registration) => registration.id,
+  );
+  const currentDocumentRequirements = useDocumentRequirements(
+    getDocumentRequirementsByRegistrationIds(currentRegistrationIds),
+  );
+  const currentPaymentRequirements = usePaymentRequirements(
+    getPaymentRequirementsByRegistrationIds(currentRegistrationIds),
+  );
   const eventItems: ReadinessBoardItem[] = events.map((event) => {
     const eventRegistrations = event.teamId
       ? currentRegistrations.filter(
           (registration) => registration.teamId === event.teamId,
         )
       : [];
+    const eventRegistrationIdSet = new Set(
+      eventRegistrations.map((registration) => registration.id),
+    );
 
     return {
       id: event.id,
@@ -93,7 +109,13 @@ export default function AdminReadinessBoard({
         attendanceEntries: currentAttendanceEntries.filter(
           (entry) => entry.eventId === event.id,
         ),
+        documentRequirements: currentDocumentRequirements.filter(
+          (requirement) => eventRegistrationIdSet.has(requirement.registrationId),
+        ),
         eventId: event.id,
+        paymentRequirements: currentPaymentRequirements.filter((requirement) =>
+          eventRegistrationIdSet.has(requirement.registrationId),
+        ),
         registrations: eventRegistrations,
         transportationEntries: currentTransportationEntries.filter(
           (entry) => entry.eventId === event.id,
@@ -105,6 +127,12 @@ export default function AdminReadinessBoard({
     .filter((team) => team.nextEventId)
     .map((team) => {
       const eventId = team.nextEventId ?? team.id;
+      const teamRegistrations = currentRegistrations.filter(
+        (registration) => registration.teamId === team.id,
+      );
+      const teamRegistrationIdSet = new Set(
+        teamRegistrations.map((registration) => registration.id),
+      );
 
       return {
         id: team.id,
@@ -113,10 +141,16 @@ export default function AdminReadinessBoard({
           attendanceEntries: currentAttendanceEntries.filter(
             (entry) => entry.eventId === eventId,
           ),
-          eventId,
-          registrations: currentRegistrations.filter(
-            (registration) => registration.teamId === team.id,
+          documentRequirements: currentDocumentRequirements.filter(
+            (requirement) =>
+              teamRegistrationIdSet.has(requirement.registrationId),
           ),
+          eventId,
+          paymentRequirements: currentPaymentRequirements.filter(
+            (requirement) =>
+              teamRegistrationIdSet.has(requirement.registrationId),
+          ),
+          registrations: teamRegistrations,
           transportationEntries: currentTransportationEntries.filter(
             (entry) => entry.eventId === eventId,
           ),

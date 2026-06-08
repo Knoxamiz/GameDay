@@ -1,7 +1,20 @@
 "use client";
 
 import type { Athlete } from "../data/athletes";
-import type { Registration } from "../data/registrations";
+import {
+  getDocumentRequirementsByRegistrationIds,
+  summarizeDocumentRequirements,
+} from "../data/documents";
+import {
+  getPaymentRequirementsByRegistrationIds,
+  summarizePaymentRequirements,
+} from "../data/payments";
+import {
+  summarizeRegistrationRequirements,
+  type Registration,
+} from "../data/registrations";
+import { useDocumentRequirements } from "./documentRequirementState";
+import { usePaymentRequirements } from "./paymentRequirementState";
 import RegistrationStatusBadge from "./RegistrationStatusBadge";
 import { useRegistrations } from "./registrationStatusState";
 
@@ -21,6 +34,15 @@ export default function RegistrationRosterCard({
       registration,
     ]),
   );
+  const registrationIds = currentRegistrations.map(
+    (registration) => registration.id,
+  );
+  const documents = useDocumentRequirements(
+    getDocumentRequirementsByRegistrationIds(registrationIds),
+  );
+  const payments = usePaymentRequirements(
+    getPaymentRequirementsByRegistrationIds(registrationIds),
+  );
 
   return (
     <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
@@ -29,13 +51,44 @@ export default function RegistrationRosterCard({
         {roster.length > 0 ? (
           roster.map((player) => {
             const registration = registrationByAthleteId.get(player.id);
+            const requirementSummary = registration
+              ? summarizeRegistrationRequirements(registration.requirements)
+              : undefined;
+            const documentSummary = registration
+              ? summarizeDocumentRequirements(
+                  documents.filter(
+                    (requirement) =>
+                      requirement.registrationId === registration.id,
+                  ),
+                )
+              : undefined;
+            const paymentSummary = registration
+              ? summarizePaymentRequirements(
+                  payments.filter(
+                    (requirement) =>
+                      requirement.registrationId === registration.id,
+                  ),
+                )
+              : undefined;
+            const openItems =
+              (requirementSummary?.open ?? 0) +
+              (documentSummary?.open ?? 0) +
+              (paymentSummary?.open ?? 0);
 
             return (
-              <p
+              <div
                 key={player.id}
-                className="flex items-center justify-between gap-3"
+                className="flex items-center justify-between gap-3 rounded-xl bg-slate-800 p-3"
               >
-                <span>{player.name}</span>
+                <div>
+                  <p className="font-semibold text-white">{player.name}</p>
+                  {registration && openItems > 0 && (
+                    <p className="mt-1 text-xs text-yellow-200">
+                      {documentSummary?.open ?? 0} docs,{" "}
+                      {paymentSummary?.open ?? 0} payments open
+                    </p>
+                  )}
+                </div>
                 {registration ? (
                   <RegistrationStatusBadge status={registration.status} />
                 ) : (
@@ -43,7 +96,7 @@ export default function RegistrationRosterCard({
                     No Registration
                   </span>
                 )}
-              </p>
+              </div>
             );
           })
         ) : (

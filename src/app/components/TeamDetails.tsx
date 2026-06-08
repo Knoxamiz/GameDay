@@ -6,8 +6,16 @@ import {
   getAttendanceSummaryByEventId,
 } from "../data/attendance";
 import { getCoachesByIds } from "../data/coaches";
+import {
+  getDocumentRequirementsByTeamId,
+  summarizeDocumentRequirements,
+} from "../data/documents";
 import { getEventById, getEventsByIds } from "../data/events";
 import { getMessagesByTeamId, teamCommunicationItems } from "../data/messages";
+import {
+  getPaymentRequirementsByTeamId,
+  summarizePaymentRequirements,
+} from "../data/payments";
 import { getRegistrationsByTeamId } from "../data/registrations";
 import { getTeamById } from "../data/teams";
 import {
@@ -43,6 +51,12 @@ export default function TeamDetails({
   const rosterPreview = getAthletesByIds(teamDetails.rosterPreviewIds);
   const roster = getAthletesByIds(teamDetails.athleteIds);
   const teamRegistrations = getRegistrationsByTeamId(teamDetails.id);
+  const documentSummary = summarizeDocumentRequirements(
+    getDocumentRequirementsByTeamId(teamDetails.id),
+  );
+  const paymentSummary = summarizePaymentRequirements(
+    getPaymentRequirementsByTeamId(teamDetails.id),
+  );
   const teamAnnouncements = getMessagesByTeamId(teamDetails.id).filter(
     (message) => message.type === "Team Announcement",
   );
@@ -65,7 +79,21 @@ export default function TeamDetails({
         `${attendance?.attending ?? 0} Confirmed For ${nextEvent.type}`,
         `${attendance?.unknown ?? 0} Unknown Attendance`,
         `${transportation?.needsRide ?? 0} Need Ride`,
-        ...teamDetails.status.filter((status) => status.includes("Missing")),
+        ...(documentSummary.missing > 0
+          ? [
+              `${documentSummary.missing} Missing Documents`,
+            ]
+          : []),
+        ...(documentSummary.needsReview > 0
+          ? [
+              `${documentSummary.needsReview} Documents Need Review`,
+            ]
+          : []),
+        ...(paymentSummary.open > 0
+          ? [
+              `${paymentSummary.open} Payments Open`,
+            ]
+          : []),
       ]
     : teamDetails.status;
 

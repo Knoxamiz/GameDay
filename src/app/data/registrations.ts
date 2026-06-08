@@ -1,4 +1,10 @@
-export type RegistrationRequirementStatus = "Complete" | "Missing";
+export type RegistrationRequirementStatus =
+  | "Missing"
+  | "Submitted"
+  | "Uploaded"
+  | "Approved"
+  | "Waived"
+  | "Rejected";
 export type RegistrationStatus =
   | "Approved"
   | "Rejected"
@@ -7,8 +13,19 @@ export type RegistrationStatus =
   | "Pending Review";
 
 export type RegistrationRequirement = {
+  description?: string;
   label: string;
+  required?: boolean;
   status: RegistrationRequirementStatus;
+};
+
+export type RegistrationRequirementSummary = {
+  approved: number;
+  blocked: number;
+  missing: number;
+  needsReview: number;
+  open: number;
+  waived: number;
 };
 
 export type Registration = {
@@ -29,9 +46,14 @@ export type RegistrationSummary = {
   incompleteRegistrations: number;
   rejectedRegistrations: number;
   approvedRegistrations: number;
+  missingRequirements: number;
   missingPhysicals: number;
+  submittedRequirements: number;
   concernCount: number;
 };
+
+export const registrationRequirementStatusValues: RegistrationRequirementStatus[] =
+  ["Missing", "Submitted", "Uploaded", "Approved", "Waived", "Rejected"];
 
 export const registrationStatusValues: RegistrationStatus[] = [
   "Approved",
@@ -73,6 +95,28 @@ export const registrationForm = {
     },
   ],
   waiverLabel: "Waiver - I Agree",
+  requirements: [
+    {
+      description: "Proof of age for team eligibility.",
+      label: "Birth Certificate",
+      required: true,
+    },
+    {
+      description: "Parent/guardian participation waiver.",
+      label: "Waiver",
+      required: true,
+    },
+    {
+      description: "Player photo for roster verification.",
+      label: "Photo",
+      required: true,
+    },
+    {
+      description: "Current physical or health clearance.",
+      label: "Physical",
+      required: true,
+    },
+  ],
   review: {
     parentName: "Jennifer Smith",
     athleteName: "Emma Smith",
@@ -110,18 +154,22 @@ export const registrations: Registration[] = [
     requirements: [
       {
         label: "Birth Certificate",
-        status: "Complete",
+        required: true,
+        status: "Approved",
       },
       {
         label: "Waiver",
-        status: "Complete",
+        required: true,
+        status: "Approved",
       },
       {
         label: "Photo",
-        status: "Complete",
+        required: true,
+        status: "Uploaded",
       },
       {
         label: "Physical",
+        required: true,
         status: "Missing",
       },
     ],
@@ -138,19 +186,23 @@ export const registrations: Registration[] = [
     requirements: [
       {
         label: "Birth Certificate",
-        status: "Complete",
+        required: true,
+        status: "Approved",
       },
       {
         label: "Waiver",
+        required: true,
         status: "Missing",
       },
       {
         label: "Photo",
-        status: "Complete",
+        required: true,
+        status: "Uploaded",
       },
       {
         label: "Physical",
-        status: "Complete",
+        required: true,
+        status: "Approved",
       },
     ],
   },
@@ -166,18 +218,22 @@ export const registrations: Registration[] = [
     requirements: [
       {
         label: "Birth Certificate",
+        required: true,
         status: "Missing",
       },
       {
         label: "Waiver",
+        required: true,
         status: "Missing",
       },
       {
         label: "Photo",
+        required: true,
         status: "Missing",
       },
       {
         label: "Physical",
+        required: true,
         status: "Missing",
       },
     ],
@@ -191,7 +247,23 @@ export const registrations: Registration[] = [
     teamId: "black-diamonds-12u",
     status: "Pending Review",
     details: "Registration is waiting for admin review.",
-    requirements: [],
+    requirements: [
+      {
+        label: "Birth Certificate",
+        required: true,
+        status: "Uploaded",
+      },
+      {
+        label: "Waiver",
+        required: true,
+        status: "Submitted",
+      },
+      {
+        label: "Physical",
+        required: true,
+        status: "Missing",
+      },
+    ],
   },
   {
     id: "registration-katie-brown",
@@ -202,7 +274,23 @@ export const registrations: Registration[] = [
     teamId: "black-diamonds-12u",
     status: "Approved",
     details: "Registration is complete.",
-    requirements: [],
+    requirements: [
+      {
+        label: "Birth Certificate",
+        required: true,
+        status: "Approved",
+      },
+      {
+        label: "Waiver",
+        required: true,
+        status: "Approved",
+      },
+      {
+        label: "Physical",
+        required: true,
+        status: "Waived",
+      },
+    ],
   },
 ];
 
@@ -242,6 +330,80 @@ export function isRegistrationConcern(status: RegistrationStatus) {
   );
 }
 
+export function isRequirementMissing(requirement: RegistrationRequirement) {
+  return requirement.status === "Missing";
+}
+
+export function isRequirementNeedsReview(requirement: RegistrationRequirement) {
+  return requirement.status === "Submitted" || requirement.status === "Uploaded";
+}
+
+export function isRequirementCleared(requirement: RegistrationRequirement) {
+  return requirement.status === "Approved" || requirement.status === "Waived";
+}
+
+export function isRequirementBlocked(requirement: RegistrationRequirement) {
+  return requirement.status === "Rejected";
+}
+
+export function isRequirementOpen(requirement: RegistrationRequirement) {
+  return (
+    isRequirementMissing(requirement) ||
+    isRequirementNeedsReview(requirement) ||
+    isRequirementBlocked(requirement)
+  );
+}
+
+export function getOpenRegistrationRequirements(
+  registration?: Registration,
+) {
+  return (
+    registration?.requirements.filter(isRequirementOpen) ?? []
+  );
+}
+
+export function summarizeRegistrationRequirements(
+  requirements: RegistrationRequirement[],
+): RegistrationRequirementSummary {
+  return requirements.reduce<RegistrationRequirementSummary>(
+    (summary, requirement) => {
+      if (isRequirementMissing(requirement)) {
+        summary.missing += 1;
+      }
+
+      if (isRequirementNeedsReview(requirement)) {
+        summary.needsReview += 1;
+      }
+
+      if (requirement.status === "Approved") {
+        summary.approved += 1;
+      }
+
+      if (requirement.status === "Waived") {
+        summary.waived += 1;
+      }
+
+      if (isRequirementBlocked(requirement)) {
+        summary.blocked += 1;
+      }
+
+      if (isRequirementOpen(requirement)) {
+        summary.open += 1;
+      }
+
+      return summary;
+    },
+    {
+      approved: 0,
+      blocked: 0,
+      missing: 0,
+      needsReview: 0,
+      open: 0,
+      waived: 0,
+    },
+  );
+}
+
 export function summarizeRegistrations(
   registrationList: Registration[],
 ): RegistrationSummary {
@@ -267,13 +429,26 @@ export function summarizeRegistrations(
         registration.requirements.some(
           (requirement) =>
             requirement.label === "Physical" &&
-            requirement.status === "Missing",
+            isRequirementMissing(requirement),
         )
       ) {
         summary.missingPhysicals += 1;
       }
 
-      if (isRegistrationConcern(registration.status)) {
+      summary.missingRequirements += registration.requirements.filter(
+        isRequirementMissing,
+      ).length;
+      summary.submittedRequirements += registration.requirements.filter(
+        isRequirementNeedsReview,
+      ).length;
+
+      if (
+        isRegistrationConcern(registration.status) ||
+        registration.requirements.some(
+          (requirement) =>
+            isRequirementOpen(requirement),
+        )
+      ) {
         summary.concernCount += 1;
       }
 
@@ -284,7 +459,9 @@ export function summarizeRegistrations(
       incompleteRegistrations: 0,
       rejectedRegistrations: 0,
       approvedRegistrations: 0,
+      missingRequirements: 0,
       missingPhysicals: 0,
+      submittedRequirements: 0,
       concernCount: 0,
     },
   );
@@ -293,7 +470,5 @@ export function summarizeRegistrations(
 export const registrationSummary = summarizeRegistrations(registrations);
 
 export function getMissingRegistrationRequirements(registration?: Registration) {
-  return registration?.requirements.filter(
-    (requirement) => requirement.status === "Missing",
-  ) ?? [];
+  return registration?.requirements.filter(isRequirementMissing) ?? [];
 }
