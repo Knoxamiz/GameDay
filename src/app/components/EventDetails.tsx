@@ -3,10 +3,7 @@ import { notFound } from "next/navigation";
 import { getAttendanceEntriesByEventId } from "../data/attendance";
 import { getEventById } from "../data/events";
 import { getGameAlertByEventId } from "../data/gameAlerts";
-import {
-  eventAnnouncementsByEventId,
-  eventChatByEventId,
-} from "../data/messages";
+import { getMessagesByEventId } from "../data/messages";
 import { getRegistrationsByTeamId } from "../data/registrations";
 import { getTeamById } from "../data/teams";
 import {
@@ -40,9 +37,9 @@ export default function EventDetails({
     ? getTeamById(eventDetails.teamId)
     : undefined;
   const gameAlert = getGameAlertByEventId(eventDetails.id);
-  const eventAnnouncements =
-    eventAnnouncementsByEventId[eventDetails.id] ?? [];
-  const eventChat = eventChatByEventId[eventDetails.id] ?? [];
+  const eventMessages = getMessagesByEventId(eventDetails.id);
+  const eventAnnouncements = eventMessages.map((message) => message.content);
+  const eventChat = eventMessages.map((message) => message.subject);
   const attendanceEntries = getAttendanceEntriesByEventId(eventDetails.id);
   const registrations = eventDetails.teamId
     ? getRegistrationsByTeamId(eventDetails.teamId)

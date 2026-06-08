@@ -6,39 +6,61 @@ import MvpNav, { getRoleHref } from "../components/MvpNav";
 import RegistrationAdminActionLinks from "../components/RegistrationAdminActionLinks";
 import TransportationIssueAction from "../components/TransportationIssueAction";
 import { attendanceEntries } from "../data/attendance";
-import { adminUpcomingEventIds, getEventsByIds } from "../data/events";
-import { adminCommunications } from "../data/messages";
+import { getCoachesByOrganizationId } from "../data/coaches";
+import { getEventsByOrganizationId } from "../data/events";
+import { getMessagesByAudience } from "../data/messages";
 import { blackDiamondsOrganization } from "../data/organizations";
-import { registrations } from "../data/registrations";
-import { getTeamById, teams, teamsNeedingCoachesCount } from "../data/teams";
+import { getRegistrationsByOrganizationId } from "../data/registrations";
+import {
+  getTeamById,
+  getTeamsByOrganizationId,
+  getTeamsNeedingCoaches,
+} from "../data/teams";
 import { transportationEntries } from "../data/transportation";
 
-const adminUpcomingEvents = getEventsByIds(adminUpcomingEventIds);
-const adminUpcomingEventIdSet = new Set(adminUpcomingEventIds);
+const adminUpcomingEvents = getEventsByOrganizationId(
+  blackDiamondsOrganization.id,
+);
+const adminUpcomingEventIdSet = new Set(
+  adminUpcomingEvents.map((event) => event.id),
+);
 const adminAttendanceEntries = attendanceEntries.filter((entry) =>
   adminUpcomingEventIdSet.has(entry.eventId),
+);
+const organizationTeams = getTeamsByOrganizationId(blackDiamondsOrganization.id);
+const organizationCoaches = getCoachesByOrganizationId(
+  blackDiamondsOrganization.id,
+);
+const organizationRegistrations = getRegistrationsByOrganizationId(
+  blackDiamondsOrganization.id,
+);
+const teamsNeedingCoaches = getTeamsNeedingCoaches(organizationTeams);
+const adminCommunications = getMessagesByAudience(
+  "admin",
+  blackDiamondsOrganization.id,
 );
 
 const organizationStatus = [
   {
     label: "Registered Players",
-    value: blackDiamondsOrganization.status.registeredPlayers,
+    value: organizationTeams.reduce(
+      (playerCount, team) => playerCount + team.playerCount,
+      0,
+    ),
   },
   {
     label: "Active Teams",
-    value: blackDiamondsOrganization.status.activeTeams,
+    value: organizationTeams.length,
   },
   {
     label: "Coaches",
-    value: blackDiamondsOrganization.status.coaches,
+    value: organizationCoaches.length,
   },
   {
     label: "Upcoming Events",
-    value: blackDiamondsOrganization.status.upcomingEvents,
+    value: adminUpcomingEvents.length,
   },
 ];
-
-const actionItems = [`${teamsNeedingCoachesCount} Teams Need Coaches`];
 
 export default function AdminHome() {
   return (
@@ -72,12 +94,16 @@ export default function AdminHome() {
           <div className="mt-3 space-y-3 text-sm">
             <RegistrationAdminActionLinks
               href="/admin/registrations"
-              registrations={registrations}
+              registrations={organizationRegistrations}
             />
-            {actionItems.map((item) => (
-              <p key={item} className="rounded-xl bg-slate-800 p-4 text-slate-300">
-                {item}
-              </p>
+            {teamsNeedingCoaches.map((team) => (
+              <Link
+                key={team.id}
+                href={getRoleHref(`/teams/${team.id}`, "admin")}
+                className="block rounded-xl bg-slate-800 p-4 font-semibold text-white"
+              >
+                {team.name} Needs Coach
+              </Link>
             ))}
             <AttendanceConcernAction
               entries={adminAttendanceEntries}
@@ -93,8 +119,8 @@ export default function AdminHome() {
         <AdminReadinessBoard
           attendanceEntries={attendanceEntries}
           events={adminUpcomingEvents}
-          registrations={registrations}
-          teams={teams}
+          registrations={organizationRegistrations}
+          teams={organizationTeams}
           transportationEntries={transportationEntries}
         />
 
@@ -132,7 +158,7 @@ export default function AdminHome() {
           <h2 className="text-lg font-bold">Communications</h2>
           <div className="mt-3 space-y-3 text-sm text-slate-300">
             {adminCommunications.map((item) => (
-              <p key={item}>{item}</p>
+              <p key={item.id}>{item.content}</p>
             ))}
           </div>
         </div>

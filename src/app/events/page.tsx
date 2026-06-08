@@ -4,8 +4,8 @@ import MvpNav, {
   getRoleHref,
 } from "../components/MvpNav";
 import { getAttendanceSummaryByEventId } from "../data/attendance";
-import { events } from "../data/events";
 import { getGameAlertByEventId } from "../data/gameAlerts";
+import { getVisibleScheduleEvents } from "../data/schedule";
 import { getTeamById } from "../data/teams";
 import { getTransportationSummaryByEventId } from "../data/transportation";
 
@@ -17,6 +17,7 @@ type EventsHomeProps = {
 
 export default async function EventsHome({ searchParams }: EventsHomeProps) {
   const role = getMvpNavRole((await searchParams)?.role);
+  const visibleEvents = getVisibleScheduleEvents(role);
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -29,7 +30,7 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
             Upcoming practices, tournaments, and meetings.
           </p>
           <a
-            href="/calendar.ics"
+            href={getRoleHref("/calendar.ics", role)}
             className="mt-4 block w-full rounded-xl bg-blue-500 py-3 text-center text-sm font-semibold text-white"
           >
             Subscribe Calendar
@@ -37,7 +38,7 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
         </div>
 
         <div className="mt-6 space-y-4">
-          {events.map((event) => {
+          {visibleEvents.map((event) => {
             const team = event.teamId ? getTeamById(event.teamId) : undefined;
             const gameAlert = getGameAlertByEventId(event.id);
             const attendance = getAttendanceSummaryByEventId(event.id);

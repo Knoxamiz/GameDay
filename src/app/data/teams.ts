@@ -51,8 +51,8 @@ export const teams: Team[] = [
     label: "14U Girls",
     playerCount: 20,
     coachIds: [],
-    athleteIds: ["sarah-jones"],
-    rosterPreviewIds: ["sarah-jones"],
+    athleteIds: [],
+    rosterPreviewIds: [],
     eventIds: ["tournament-saturday-14u"],
     nextEventId: "tournament-saturday-14u",
     status: ["20 Registered"],
@@ -71,8 +71,18 @@ export const teams: Team[] = [
   },
 ];
 
-export const teamsNeedingCoachesCount = 2;
-
 export function getTeamById(teamId: string) {
   return teams.find((team) => team.id === teamId);
+}
+
+export function getTeamsByOrganizationId(organizationId: string) {
+  return teams.filter((team) => team.organizationId === organizationId);
+}
+
+export function getTeamsByCoachId(coachId: string) {
+  return teams.filter((team) => team.coachIds.includes(coachId));
+}
+
+export function getTeamsNeedingCoaches(teamList: Team[] = teams) {
+  return teamList.filter((team) => team.coachIds.length === 0);
 }

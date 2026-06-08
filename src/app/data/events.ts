@@ -1,5 +1,6 @@
 export type GameDayEvent = {
   id: string;
+  organizationId: string;
   teamId?: string;
   type: string;
   title: string;
@@ -24,6 +25,7 @@ const winslowTownshipPark = {
 export const events: GameDayEvent[] = [
   {
     id: "practice-jun-2",
+    organizationId: "black-diamonds",
     teamId: "black-diamonds-12u",
     type: "Practice",
     title: "Practice Tonight",
@@ -39,6 +41,7 @@ export const events: GameDayEvent[] = [
   },
   {
     id: "practice-jun-5",
+    organizationId: "black-diamonds",
     teamId: "black-diamonds-12u",
     type: "Practice",
     title: "Practice",
@@ -52,6 +55,7 @@ export const events: GameDayEvent[] = [
   },
   {
     id: "tournament-jun-7",
+    organizationId: "black-diamonds",
     teamId: "black-diamonds-12u",
     type: "Tournament",
     title: "Tournament",
@@ -67,6 +71,7 @@ export const events: GameDayEvent[] = [
   },
   {
     id: "tournament-saturday-10u",
+    organizationId: "black-diamonds",
     teamId: "black-diamonds-10u",
     type: "Tournament",
     title: "Tournament Saturday",
@@ -82,6 +87,7 @@ export const events: GameDayEvent[] = [
   },
   {
     id: "team-meeting-10u",
+    organizationId: "black-diamonds",
     teamId: "black-diamonds-10u",
     type: "Meeting",
     title: "Team Meeting",
@@ -96,6 +102,7 @@ export const events: GameDayEvent[] = [
   },
   {
     id: "offseason-training-hs",
+    organizationId: "black-diamonds",
     teamId: "black-diamonds-hs",
     type: "Training",
     title: "Offseason Training",
@@ -108,6 +115,7 @@ export const events: GameDayEvent[] = [
   },
   {
     id: "tournament-saturday-14u",
+    organizationId: "black-diamonds",
     teamId: "black-diamonds-14u",
     type: "Tournament",
     title: "Tournament Saturday",
@@ -123,6 +131,7 @@ export const events: GameDayEvent[] = [
   },
   {
     id: "board-meeting-monday",
+    organizationId: "black-diamonds",
     type: "Meeting",
     title: "Board Meeting Monday",
     date: "Monday, June 8",
@@ -136,12 +145,6 @@ export const events: GameDayEvent[] = [
   },
 ];
 
-export const adminUpcomingEventIds = [
-  "practice-jun-2",
-  "tournament-saturday-14u",
-  "board-meeting-monday",
-];
-
 export function getEventById(eventId: string) {
   return events.find((event) => event.id === eventId);
 }
@@ -150,4 +153,16 @@ export function getEventsByIds(eventIds: string[]) {
   return eventIds
     .map((eventId) => getEventById(eventId))
     .filter((event): event is GameDayEvent => Boolean(event));
+}
+
+export function getEventsByOrganizationId(organizationId: string) {
+  return events.filter((event) => event.organizationId === organizationId);
+}
+
+export function getEventsByTeamIds(teamIds: string[]) {
+  const teamIdSet = new Set(teamIds);
+
+  return events.filter(
+    (event) => event.teamId && teamIdSet.has(event.teamId),
+  );
 }

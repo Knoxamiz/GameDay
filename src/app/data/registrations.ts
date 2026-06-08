@@ -14,7 +14,9 @@ export type RegistrationRequirement = {
 export type Registration = {
   id: string;
   athleteId: string;
+  parentId: string;
   parentName: string;
+  organizationId: string;
   teamId: string;
   status: RegistrationStatus;
   details: string;
@@ -98,7 +100,9 @@ export const registrations: Registration[] = [
   {
     id: "registration-emma-smith",
     athleteId: "emma-smith",
+    parentId: "jennifer-smith",
     parentName: "Jennifer Smith",
+    organizationId: "black-diamonds",
     teamId: "black-diamonds-12u",
     status: "Incomplete",
     details: "One required document still needs to be submitted.",
@@ -125,7 +129,9 @@ export const registrations: Registration[] = [
   {
     id: "registration-olivia-smith",
     athleteId: "olivia-smith",
+    parentId: "jennifer-smith",
     parentName: "Jennifer Smith",
+    organizationId: "black-diamonds",
     teamId: "black-diamonds-10u",
     status: "Incomplete",
     details: "Emergency contact form still needs parent signature.",
@@ -151,7 +157,9 @@ export const registrations: Registration[] = [
   {
     id: "registration-mason-smith",
     athleteId: "mason-smith",
+    parentId: "jennifer-smith",
     parentName: "Jennifer Smith",
+    organizationId: "black-diamonds",
     teamId: "black-diamonds-hs",
     status: "Pending",
     details: "Season registration has not opened yet.",
@@ -177,8 +185,10 @@ export const registrations: Registration[] = [
   {
     id: "registration-sarah-jones",
     athleteId: "sarah-jones",
-    parentName: "Avery Jones",
-    teamId: "black-diamonds-14u",
+    parentId: "sarah-jones-parent",
+    parentName: "Sarah's Parent",
+    organizationId: "black-diamonds",
+    teamId: "black-diamonds-12u",
     status: "Pending Review",
     details: "Registration is waiting for admin review.",
     requirements: [],
@@ -186,7 +196,9 @@ export const registrations: Registration[] = [
   {
     id: "registration-katie-brown",
     athleteId: "katie-brown",
-    parentName: "Morgan Brown",
+    parentId: "katie-brown-parent",
+    parentName: "Katie's Parent",
+    organizationId: "black-diamonds",
     teamId: "black-diamonds-12u",
     status: "Approved",
     details: "Registration is complete.",
@@ -200,6 +212,18 @@ export function getRegistrationById(registrationId: string) {
 
 export function getRegistrationsByTeamId(teamId: string) {
   return registrations.filter((registration) => registration.teamId === teamId);
+}
+
+export function getRegistrationsByParentId(parentId: string) {
+  return registrations.filter(
+    (registration) => registration.parentId === parentId,
+  );
+}
+
+export function getRegistrationsByOrganizationId(organizationId: string) {
+  return registrations.filter(
+    (registration) => registration.organizationId === organizationId,
+  );
 }
 
 export function isRegistrationPending(status: RegistrationStatus) {

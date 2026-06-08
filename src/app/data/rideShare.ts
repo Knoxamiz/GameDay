@@ -1,3 +1,4 @@
+import { getParentById } from "./parents";
 import type { TransportationEntry } from "./transportation";
 
 export type RideShareLocationPreference =
@@ -33,9 +34,7 @@ export type RideShareMatch = {
 };
 
 type RideShareParticipantDetails = {
-  contactHref?: string;
   dropoffPreference: RideShareLocationPreference;
-  guardianName: string;
   pickupPreference: RideShareLocationPreference;
   publicNote: string;
 };
@@ -58,16 +57,12 @@ const rideShareParticipantDetailsByEntryId: Record<
   RideShareParticipantDetails
 > = {
   "transport-sarah-jones": {
-    contactHref: "mailto:sarah-family@example.com",
     dropoffPreference: "Field meetup",
-    guardianName: "Sarah's Parent",
     pickupPreference: "School meetup",
     publicNote: "Needs a safe pickup near school.",
   },
   "transport-jennifer-smith": {
-    contactHref: "mailto:jennifer-smith@example.com",
     dropoffPreference: "Field meetup",
-    guardianName: "Jennifer Smith",
     pickupPreference: "Approved meetup spot",
     publicNote: "Can offer seats from an approved meetup spot.",
   },
@@ -89,7 +84,6 @@ function getDefaultParticipantDetails(
 
   return {
     dropoffPreference: "Field meetup",
-    guardianName: `${entry.name} Family`,
     pickupPreference: needsRide ? "Custom pickup needed" : "Field meetup",
     publicNote: needsRide
       ? "Pickup details stay private until a ride is confirmed."
@@ -123,10 +117,14 @@ function getSeededMatchStatus(
 export function enrichRideShareParticipant(
   entry: TransportationEntry,
 ): RideShareParticipant {
+  const parent = entry.parentId ? getParentById(entry.parentId) : undefined;
+
   return {
     ...entry,
     ...getDefaultParticipantDetails(entry),
     ...rideShareParticipantDetailsByEntryId[entry.id],
+    contactHref: parent ? `mailto:${parent.email}` : undefined,
+    guardianName: parent?.name ?? `${entry.name} Family`,
   };
 }
 

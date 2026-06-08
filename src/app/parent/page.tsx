@@ -1,15 +1,18 @@
 import ParentAthleteCard from "../components/ParentAthleteCard";
 import BottomNav from "../components/BottomNav";
 import MvpNav, { getRoleHref } from "../components/MvpNav";
-import { getAthletesByIds, parentHomeAthleteIds } from "../data/athletes";
+import { getAthletesByParentId } from "../data/athletes";
 import { getAttendanceEntryByAthleteAndEventId } from "../data/attendance";
 import { getEventById } from "../data/events";
-import { parentHomeAnnouncements } from "../data/messages";
+import { getMessagesByParentId } from "../data/messages";
+import { getCurrentParent } from "../data/parents";
 import { getRegistrationById } from "../data/registrations";
 import { getTeamById } from "../data/teams";
 import { getTransportationEntryByAthleteAndEventId } from "../data/transportation";
 
-const parentAthletes = getAthletesByIds(parentHomeAthleteIds);
+const currentParent = getCurrentParent();
+const parentAthletes = getAthletesByParentId(currentParent.id);
+const parentAnnouncements = getMessagesByParentId(currentParent.id);
 
 export default function ParentHome() {
   return (
@@ -21,7 +24,9 @@ export default function ParentHome() {
           <h1 className="text-3xl font-bold">GameDay</h1>
         </div>
 
-        <p className="mt-5 text-lg text-slate-300">Good Evening Jennifer</p>
+        <p className="mt-5 text-lg text-slate-300">
+          Good Evening {currentParent.firstName}
+        </p>
 
         <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-slate-400">
           My Athletes
@@ -64,8 +69,8 @@ export default function ParentHome() {
         <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Important Announcements</h2>
           <ul className="mt-3 space-y-2 text-sm text-slate-300">
-            {parentHomeAnnouncements.map((announcement) => (
-              <li key={announcement}>{announcement}</li>
+            {parentAnnouncements.map((announcement) => (
+              <li key={announcement.id}>{announcement.content}</li>
             ))}
           </ul>
         </div>

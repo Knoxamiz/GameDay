@@ -1,7 +1,12 @@
 import BottomNav from "../../components/BottomNav";
 import MvpNav, { getRoleHref } from "../../components/MvpNav";
 import RegistrationReviewBoard from "../../components/RegistrationReviewBoard";
-import { registrations } from "../../data/registrations";
+import { blackDiamondsOrganization } from "../../data/organizations";
+import { getRegistrationsByOrganizationId } from "../../data/registrations";
+
+const organizationRegistrations = getRegistrationsByOrganizationId(
+  blackDiamondsOrganization.id,
+);
 
 export default function AdminRegistrationsPage() {
   return (
@@ -16,7 +21,7 @@ export default function AdminRegistrationsPage() {
           </p>
         </div>
 
-        <RegistrationReviewBoard registrations={registrations} />
+        <RegistrationReviewBoard registrations={organizationRegistrations} />
 
         <BottomNav
           items={[

@@ -3,8 +3,9 @@ import MvpNav, {
   getMvpNavRole,
   getRoleHref,
 } from "../components/MvpNav";
+import { getCurrentCoach } from "../data/coaches";
 import { getEventById } from "../data/events";
-import { teams } from "../data/teams";
+import { getTeamsByCoachId, teams } from "../data/teams";
 import { getTransportationSummaryByEventId } from "../data/transportation";
 
 type TeamsHomeProps = {
@@ -15,6 +16,9 @@ type TeamsHomeProps = {
 
 export default async function TeamsHome({ searchParams }: TeamsHomeProps) {
   const role = getMvpNavRole((await searchParams)?.role);
+  const currentCoach = getCurrentCoach();
+  const visibleTeams =
+    role === "coach" ? getTeamsByCoachId(currentCoach.id) : teams;
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -29,7 +33,7 @@ export default async function TeamsHome({ searchParams }: TeamsHomeProps) {
         </div>
 
         <div className="mt-6 space-y-4">
-          {teams.map((team) => {
+          {visibleTeams.map((team) => {
             const nextEvent = team.nextEventId
               ? getEventById(team.nextEventId)
               : undefined;

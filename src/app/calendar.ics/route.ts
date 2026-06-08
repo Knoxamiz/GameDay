@@ -1,7 +1,11 @@
-import { events, type GameDayEvent } from "../data/events";
+import type { GameDayEvent } from "../data/events";
+import {
+  getScheduleRole,
+  getVisibleScheduleEvents,
+} from "../data/schedule";
 import { getTeamById } from "../data/teams";
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 const calendarTimestamp = "20260602T000000Z";
 
@@ -61,15 +65,21 @@ function getCalendarEvent(event: ScheduledCalendarEvent) {
     .join("\r\n");
 }
 
-export function GET() {
-  const scheduledEvents = events.filter(hasCalendarTime);
+export function GET(request: Request) {
+  const role = getScheduleRole(
+    new URL(request.url).searchParams.get("role") ?? undefined,
+  );
+  const scheduledEvents = getVisibleScheduleEvents(role).filter(hasCalendarTime);
+  const calendarName = `GameDay ${
+    role === "shared" ? "" : `${role} `
+  }Schedule`;
   const calendar = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     "PRODID:-//GameDay//Schedule MVP//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
-    "X-WR-CALNAME:GameDay Schedule",
+    `X-WR-CALNAME:${calendarName}`,
     "X-WR-TIMEZONE:America/New_York",
     ...scheduledEvents.map((event) => getCalendarEvent(event)),
     "END:VCALENDAR",

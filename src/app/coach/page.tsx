@@ -6,13 +6,16 @@ import RegistrationConcernAction from "../components/RegistrationConcernAction";
 import TeamReadinessSummary from "../components/TeamReadinessSummary";
 import TransportationSummaryCard from "../components/TransportationSummaryCard";
 import { getAttendanceEntriesByEventId } from "../data/attendance";
+import { getCurrentCoach } from "../data/coaches";
 import { getEventById } from "../data/events";
-import { coachActionItems } from "../data/messages";
+import { getMessagesByAudience } from "../data/messages";
 import { getRegistrationsByTeamId } from "../data/registrations";
-import { getTeamById } from "../data/teams";
+import { getTeamsByCoachId } from "../data/teams";
 import { getTransportationEntriesByEventId } from "../data/transportation";
 
-const coachTeam = getTeamById("black-diamonds-12u");
+const currentCoach = getCurrentCoach();
+const coachTeams = getTeamsByCoachId(currentCoach.id);
+const coachTeam = coachTeams[0];
 const todayEvent = coachTeam?.nextEventId
   ? getEventById(coachTeam.nextEventId)
   : undefined;
@@ -25,6 +28,12 @@ const attendanceEntries = todayEvent
 const coachTeamRegistrations = coachTeam
   ? getRegistrationsByTeamId(coachTeam.id)
   : [];
+const coachMessages = getMessagesByAudience(
+  "coach",
+  currentCoach.organizationId,
+).filter((message) =>
+  coachTeam ? !message.teamId || message.teamId === coachTeam.id : true,
+);
 
 export default function CoachHome() {
   return (
@@ -36,7 +45,27 @@ export default function CoachHome() {
           <h1 className="text-3xl font-bold">GameDay - Coach</h1>
         </div>
 
-        <p className="mt-5 text-slate-300">{coachTeam?.name}</p>
+        <p className="mt-5 text-slate-300">
+          {currentCoach.name} · {coachTeams.length} Team
+          {coachTeams.length === 1 ? "" : "s"}
+        </p>
+
+        {coachTeams.length > 1 && (
+          <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+            <h2 className="text-lg font-bold">My Teams</h2>
+            <div className="mt-3 space-y-2 text-sm text-slate-300">
+              {coachTeams.map((team) => (
+                <Link
+                  key={team.id}
+                  href={getRoleHref(`/teams/${team.id}`, "coach")}
+                  className="block rounded-xl bg-slate-800 p-3 font-semibold text-white"
+                >
+                  {team.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
@@ -100,8 +129,8 @@ export default function CoachHome() {
             )}
           </div>
           <ul className="mt-3 space-y-2 text-sm text-slate-300">
-            {coachActionItems.map((item) => (
-              <li key={item}>{item}</li>
+            {coachMessages.map((item) => (
+              <li key={item.id}>{item.content}</li>
             ))}
           </ul>
         </div>

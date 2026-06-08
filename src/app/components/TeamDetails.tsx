@@ -7,10 +7,7 @@ import {
 } from "../data/attendance";
 import { getCoachesByIds } from "../data/coaches";
 import { getEventById, getEventsByIds } from "../data/events";
-import {
-  teamAnnouncementsByTeamId,
-  teamCommunicationItems,
-} from "../data/messages";
+import { getMessagesByTeamId, teamCommunicationItems } from "../data/messages";
 import { getRegistrationsByTeamId } from "../data/registrations";
 import { getTeamById } from "../data/teams";
 import {
@@ -46,7 +43,9 @@ export default function TeamDetails({
   const rosterPreview = getAthletesByIds(teamDetails.rosterPreviewIds);
   const roster = getAthletesByIds(teamDetails.athleteIds);
   const teamRegistrations = getRegistrationsByTeamId(teamDetails.id);
-  const teamAnnouncements = teamAnnouncementsByTeamId[teamDetails.id] ?? [];
+  const teamAnnouncements = getMessagesByTeamId(teamDetails.id).filter(
+    (message) => message.type === "Team Announcement",
+  );
   const upcomingEvents = getEventsByIds(teamDetails.eventIds);
   const attendance = nextEvent
     ? getAttendanceSummaryByEventId(nextEvent.id)
@@ -183,7 +182,7 @@ export default function TeamDetails({
           <div className="mt-3 space-y-3 text-sm text-slate-300">
             {teamAnnouncements.length > 0 ? (
               teamAnnouncements.map((announcement) => (
-                <p key={announcement}>{announcement}</p>
+                <p key={announcement.id}>{announcement.content}</p>
               ))
             ) : (
               <p>No team announcements yet.</p>

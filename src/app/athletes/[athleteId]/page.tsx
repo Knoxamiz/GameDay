@@ -10,7 +10,7 @@ import { athletes, getAthleteById } from "../../data/athletes";
 import { getAttendanceEntryByAthleteAndEventId } from "../../data/attendance";
 import { getCoachesByIds } from "../../data/coaches";
 import { getEventById, getEventsByIds } from "../../data/events";
-import { teamUpdatesByAthleteId } from "../../data/messages";
+import { getMessagesByAthleteId } from "../../data/messages";
 import { getRegistrationById } from "../../data/registrations";
 import { getTeamById } from "../../data/teams";
 import {
@@ -50,7 +50,7 @@ export default async function AthleteDetailsPage({
   const registrationRequirements = registration?.requirements ?? [];
   const registrationId = registration?.id ?? athlete.registrationId;
   const coaches = team ? getCoachesByIds(team.coachIds) : [];
-  const teamUpdates = teamUpdatesByAthleteId[athlete.id] ?? [];
+  const teamUpdates = getMessagesByAthleteId(athlete.id);
   const primaryCoach = coaches[0];
   const transportation = nextEvent
     ? getTransportationEntryByAthleteAndEventId(athlete.id, nextEvent.id)
@@ -85,6 +85,26 @@ export default async function AthleteDetailsPage({
           registrationRequirements={registrationRequirements}
           registrationStatus={registration?.status ?? "Pending"}
         />
+
+        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <h2 className="text-lg font-bold">Player Info</h2>
+          <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+            <div className="rounded-xl bg-slate-800 p-3">
+              <p className="text-slate-400">Grade</p>
+              <p className="mt-1 font-semibold text-white">{athlete.grade}</p>
+            </div>
+            <div className="rounded-xl bg-slate-800 p-3">
+              <p className="text-slate-400">Jersey</p>
+              <p className="mt-1 font-semibold text-white">
+                {athlete.jerseySize}
+              </p>
+            </div>
+          </div>
+          <p className="mt-3 rounded-xl bg-slate-800 p-3 text-sm text-slate-300">
+            {athlete.school}
+          </p>
+        </div>
+
         {nextEvent && (
           <>
             <AttendanceStatusPicker
@@ -151,7 +171,7 @@ export default async function AthleteDetailsPage({
           <h2 className="text-lg font-bold">Team Updates</h2>
           <ul className="mt-3 space-y-2 text-sm text-slate-300">
             {teamUpdates.map((update) => (
-              <li key={update}>{update}</li>
+              <li key={update.id}>{update.content}</li>
             ))}
           </ul>
         </div>

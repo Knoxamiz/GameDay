@@ -18,6 +18,7 @@ export type TransportationEntry = {
   eventId: string;
   athleteId?: string;
   name: string;
+  parentId?: string;
   status: TransportationStatus;
   seatsAvailable?: number;
 };
@@ -45,6 +46,7 @@ export const transportationEntries: TransportationEntry[] = [
     eventId: "practice-jun-2",
     athleteId: "emma-smith",
     name: "Emma Smith",
+    parentId: "jennifer-smith",
     status: "Driving Self",
   },
   {
@@ -52,6 +54,7 @@ export const transportationEntries: TransportationEntry[] = [
     eventId: "tournament-saturday-10u",
     athleteId: "olivia-smith",
     name: "Olivia Smith",
+    parentId: "jennifer-smith",
     status: "Unknown",
   },
   {
@@ -59,12 +62,14 @@ export const transportationEntries: TransportationEntry[] = [
     eventId: "practice-jun-2",
     athleteId: "sarah-jones",
     name: "Sarah Jones",
+    parentId: "sarah-jones-parent",
     status: "Needs Ride",
   },
   {
     id: "transport-jennifer-smith",
     eventId: "practice-jun-2",
     name: "Jennifer Smith",
+    parentId: "jennifer-smith",
     status: "Can Offer Ride",
     seatsAvailable: 2,
   },

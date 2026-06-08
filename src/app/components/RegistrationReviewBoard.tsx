@@ -1,6 +1,7 @@
 "use client";
 
 import { getAthleteById } from "../data/athletes";
+import { getParentById } from "../data/parents";
 import {
   registrationAdminDecisionOptions,
   type Registration,
@@ -37,6 +38,7 @@ function getStatusDetails(status: RegistrationStatus, details: string) {
 
 function RegistrationReviewCard({ registration }: RegistrationReviewCardProps) {
   const athlete = getAthleteById(registration.athleteId);
+  const parent = getParentById(registration.parentId);
   const team = getTeamById(registration.teamId);
   const status = useRegistrationStatus(registration.id, registration.status);
   const requirements = useRegistrationRequirements(
@@ -58,7 +60,7 @@ function RegistrationReviewCard({ registration }: RegistrationReviewCardProps) {
             {athlete?.name ?? registration.athleteId}
           </h2>
           <p className="mt-1 text-sm text-slate-400">
-            Parent: {registration.parentName}
+            Parent: {parent?.name ?? registration.parentName}
           </p>
         </div>
         <RegistrationStatusBadge status={status} />
