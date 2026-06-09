@@ -104,13 +104,13 @@ export default function MvpNav({ role = "shared" }: MvpNavProps = {}) {
   const utilityItems = utilityItemsByRole[role];
 
   return (
-    <nav className="mb-4 space-y-2 text-xs font-semibold">
+    <nav className="mb-4 space-y-2 text-sm font-semibold">
       <div className="grid grid-cols-3 gap-2 text-center">
         {roleItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
-            className={`rounded-full border px-3 py-2 ${
+            className={`min-h-11 rounded-full border px-3 py-3 ${
               item.role === role
                 ? "border-blue-500 bg-blue-500/20 text-blue-200"
                 : "border-slate-800 bg-slate-900 text-slate-200"
@@ -125,7 +125,7 @@ export default function MvpNav({ role = "shared" }: MvpNavProps = {}) {
           <Link
             key={item.href}
             href={getRoleHref(item.href, role)}
-            className="shrink-0 rounded-full bg-slate-900 px-3 py-2 text-slate-400"
+            className="min-h-11 shrink-0 rounded-full bg-slate-900 px-4 py-3 text-slate-400"
           >
             {item.label}
           </Link>
