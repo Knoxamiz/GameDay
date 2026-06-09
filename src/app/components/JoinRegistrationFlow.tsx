@@ -12,6 +12,8 @@ import {
   summarizePaymentRequirements,
   type PaymentRequirementStatus,
 } from "../data/payments";
+import type { RegistrationRequirementStatus } from "../data/registrations";
+import type { RegistrationSubmissionPayload } from "../data/registrationSubmission";
 import type { Team } from "../data/teams";
 
 type JoinRegistrationFlowProps = {
@@ -70,6 +72,7 @@ export default function JoinRegistrationFlow({
   team,
 }: JoinRegistrationFlowProps) {
   const [form, setForm] = useState(emptyForm);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [documentStatusByRequirement, setDocumentStatusByRequirement] = useState<
     Record<string, DocumentRequirementStatus>
@@ -147,6 +150,45 @@ export default function JoinRegistrationFlow({
       ...currentStatuses,
       [requirementLabel]: status,
     }));
+  }
+
+  async function submitRegistration() {
+    const requirementStatuses = Object.fromEntries(
+      documentRequirements.map((requirement) => [
+        requirement.label,
+        requirement.status as RegistrationRequirementStatus,
+      ]),
+    );
+    const payload: RegistrationSubmissionPayload = {
+      athlete: {
+        firstName: form.athleteFirstName,
+        grade: form.grade,
+        lastName: form.athleteLastName,
+        school: form.school,
+      },
+      inviteCode: invite.code,
+      parent: {
+        email: form.parentEmail,
+        name: form.parentName,
+        phone: form.parentPhone,
+      },
+      requirementStatuses,
+    };
+
+    setIsSubmitting(true);
+
+    try {
+      await fetch("/api/registrations", {
+        body: JSON.stringify(payload),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      });
+    } finally {
+      setIsSubmitting(false);
+      setSubmitted(true);
+    }
   }
 
   if (submitted) {
@@ -425,12 +467,15 @@ export default function JoinRegistrationFlow({
 
       <button
         type="button"
-        onClick={() => setSubmitted(true)}
-        className="mt-4 w-full rounded-xl bg-blue-500 py-3 font-semibold text-white"
+        disabled={isSubmitting}
+        onClick={submitRegistration}
+        className="mt-4 w-full rounded-xl bg-blue-500 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {missingTotal > 0
-          ? "Submit With Missing Items"
-          : "Submit Registration"}
+        {isSubmitting
+          ? "Submitting..."
+          : missingTotal > 0
+            ? "Submit With Missing Items"
+            : "Submit Registration"}
       </button>
     </>
   );

@@ -230,9 +230,10 @@ class FirestoreCollectionRepository<TRecord extends object>
     }
 
     const recordId = (record as Record<string, unknown>)[this.idKey];
+    const documentId = normalizeFirestoreDocumentId(recordId);
 
-    if (typeof recordId === "string" && recordId.length > 0) {
-      await collection.doc(recordId).set(record as Record<string, unknown>, {
+    if (documentId) {
+      await collection.doc(documentId).set(record as Record<string, unknown>, {
         merge: false,
       });
       return record;
@@ -248,29 +249,41 @@ class FirestoreCollectionRepository<TRecord extends object>
 
   async delete(id: string, options: WriteOptions) {
     void options;
+    const documentId = normalizeFirestoreDocumentId(id);
+
+    if (!documentId) {
+      throw new Error("A valid Firestore document id is required.");
+    }
+
     const collection = await this.getCollection();
 
     if (!collection) {
       throw new FirebaseSdkNotInstalledError("firebase-admin");
     }
 
-    await collection.doc(id).delete();
+    await collection.doc(documentId).delete();
   }
 
   async update(id: string, patch: Partial<TRecord>, options: WriteOptions) {
     void options;
+    const documentId = normalizeFirestoreDocumentId(id);
+
+    if (!documentId) {
+      throw new Error("A valid Firestore document id is required.");
+    }
+
     const collection = await this.getCollection();
 
     if (!collection) {
       throw new FirebaseSdkNotInstalledError("firebase-admin");
     }
 
-    await collection.doc(id).update(patch as Record<string, unknown>);
+    await collection.doc(documentId).update(patch as Record<string, unknown>);
 
     return {
-      ...(await this.getById(id)),
+      ...(await this.getById(documentId)),
       ...patch,
-      [this.idKey]: id,
+      [this.idKey]: documentId,
     } as TRecord;
   }
 }
