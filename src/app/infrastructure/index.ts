@@ -3,6 +3,7 @@ export * from "./env";
 export * from "./firebase";
 export * from "./firebaseAdmin";
 export * from "./firebaseAuth";
+export * from "./firebaseClientAuth";
 export * from "./firebaseClient";
 export * from "./firebaseReadiness";
 export * from "./firebaseRepositories";
