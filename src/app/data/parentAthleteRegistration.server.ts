@@ -33,6 +33,10 @@ export type AthleteRegistrationReadModel = {
   source: ParentAthleteRegistrationSource;
 };
 
+export type AthleteRegistrationReadOptions = {
+  parentId?: string;
+};
+
 function shouldUseFirestore() {
   return Boolean(getFirebaseAdminConfig());
 }
@@ -113,6 +117,7 @@ export async function getParentAthleteRegistrationReadModel(
 
 export async function getAthleteRegistrationReadModel(
   athleteId: string,
+  options: AthleteRegistrationReadOptions = {},
 ): Promise<AthleteRegistrationReadModel | null> {
   if (!shouldUseFirestore()) {
     return buildMockAthleteReadModel(athleteId);
@@ -128,6 +133,13 @@ export async function getAthleteRegistrationReadModel(
 
     const registration =
       (await repositories.registrations.getById(athlete.registrationId)) ??
+      (options.parentId
+        ? (await repositories.registrations.listByParentId(options.parentId)).find(
+            (parentRegistration) =>
+              parentRegistration.athleteId === athlete.id ||
+              parentRegistration.id === athlete.registrationId,
+          )
+        : undefined) ??
       (await repositories.registrations.listByAthleteId(athlete.id))[0];
 
     return {

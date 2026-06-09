@@ -2,6 +2,7 @@ import ParentAthleteCard from "../components/ParentAthleteCard";
 import BottomNav from "../components/BottomNav";
 import MvpNav, { getRoleHref } from "../components/MvpNav";
 import { getAttendanceEntryByAthleteAndEventId } from "../data/attendance";
+import { getCurrentParentUser } from "../data/currentUser.server";
 import { getEventById } from "../data/events";
 import { getMessagesByParentId } from "../data/messages";
 import {
@@ -12,11 +13,12 @@ import { getTeamById } from "../data/teams";
 import { getTransportationEntryByAthleteAndEventId } from "../data/transportation";
 
 export default async function ParentHome() {
+  const currentUser = await getCurrentParentUser();
   const {
     athletes: parentAthletes,
     parent: currentParent,
     registrations,
-  } = await getParentAthleteRegistrationReadModel();
+  } = await getParentAthleteRegistrationReadModel(currentUser.parentId);
   const parentAnnouncements = getMessagesByParentId(currentParent.id);
 
   return (

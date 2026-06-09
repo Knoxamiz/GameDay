@@ -8,6 +8,7 @@ import RideShareBoard from "../../components/RideShareBoard";
 import TransportationStatusPicker from "../../components/TransportationStatusPicker";
 import { getAttendanceEntryByAthleteAndEventId } from "../../data/attendance";
 import { getCoachesByIds } from "../../data/coaches";
+import { getCurrentParentUser } from "../../data/currentUser.server";
 import { getEventById, getEventsByIds } from "../../data/events";
 import { getMessagesByAthleteId } from "../../data/messages";
 import {
@@ -35,7 +36,10 @@ export default async function AthleteDetailsPage({
   params,
 }: AthleteDetailsPageProps) {
   const { athleteId } = await params;
-  const readModel = await getAthleteRegistrationReadModel(athleteId);
+  const currentUser = await getCurrentParentUser();
+  const readModel = await getAthleteRegistrationReadModel(athleteId, {
+    parentId: currentUser.parentId,
+  });
 
   if (!readModel) {
     notFound();
