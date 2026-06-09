@@ -37,6 +37,12 @@ export type AthleteRegistrationReadOptions = {
   parentId?: string;
 };
 
+function normalizeModelId(id: string) {
+  const trimmedId = id.trim();
+
+  return trimmedId.length > 0 ? trimmedId : null;
+}
+
 function shouldUseFirestore() {
   return Boolean(getFirebaseAdminConfig());
 }
@@ -119,16 +125,22 @@ export async function getAthleteRegistrationReadModel(
   athleteId: string,
   options: AthleteRegistrationReadOptions = {},
 ): Promise<AthleteRegistrationReadModel | null> {
+  const normalizedAthleteId = normalizeModelId(athleteId);
+
+  if (!normalizedAthleteId) {
+    return null;
+  }
+
   if (!shouldUseFirestore()) {
-    return buildMockAthleteReadModel(athleteId);
+    return buildMockAthleteReadModel(normalizedAthleteId);
   }
 
   try {
     const repositories = createFirestoreRepositories();
-    const athlete = await repositories.athletes.getById(athleteId);
+    const athlete = await repositories.athletes.getById(normalizedAthleteId);
 
     if (!athlete) {
-      return buildMockAthleteReadModel(athleteId);
+      return buildMockAthleteReadModel(normalizedAthleteId);
     }
 
     const registration =
@@ -149,7 +161,7 @@ export async function getAthleteRegistrationReadModel(
     };
   } catch (error) {
     console.warn("Falling back to mock athlete data.", error);
-    return buildMockAthleteReadModel(athleteId);
+    return buildMockAthleteReadModel(normalizedAthleteId);
   }
 }
 

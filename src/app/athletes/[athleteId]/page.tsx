@@ -11,10 +11,7 @@ import { getCoachesByIds } from "../../data/coaches";
 import { getCurrentParentUser } from "../../data/currentUser.server";
 import { getEventById, getEventsByIds } from "../../data/events";
 import { getMessagesByAthleteId } from "../../data/messages";
-import {
-  getAthleteRegistrationReadModel,
-  getStaticAthleteParams,
-} from "../../data/parentAthleteRegistration.server";
+import { getAthleteRegistrationReadModel } from "../../data/parentAthleteRegistration.server";
 import { getTeamById } from "../../data/teams";
 import {
   getTransportationEntriesByEventId,
@@ -28,9 +25,7 @@ type AthleteDetailsPageProps = {
   }>;
 };
 
-export function generateStaticParams() {
-  return getStaticAthleteParams();
-}
+export const dynamic = "force-dynamic";
 
 export default async function AthleteDetailsPage({
   params,

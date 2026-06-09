@@ -12,6 +12,8 @@ import {
 import { getTeamById } from "../data/teams";
 import { getTransportationEntryByAthleteAndEventId } from "../data/transportation";
 
+export const dynamic = "force-dynamic";
+
 export default async function ParentHome() {
   const currentUser = await getCurrentParentUser();
   const {

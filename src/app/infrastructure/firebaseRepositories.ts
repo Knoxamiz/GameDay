@@ -126,6 +126,20 @@ function getSnapshotRecord<TRecord>(
   } as TRecord;
 }
 
+function normalizeFirestoreDocumentId(id: unknown) {
+  if (typeof id !== "string") {
+    return null;
+  }
+
+  const trimmedId = id.trim();
+
+  if (!trimmedId || trimmedId.includes("/")) {
+    return null;
+  }
+
+  return trimmedId;
+}
+
 function applyScope(query: FirestoreQuery, scope?: QueryScope) {
   if (!scope) {
     return query;
@@ -174,13 +188,19 @@ class FirestoreCollectionRepository<TRecord extends object>
   }
 
   async getById(id: string) {
+    const documentId = normalizeFirestoreDocumentId(id);
+
+    if (!documentId) {
+      return null;
+    }
+
     const collection = await this.getCollection();
 
     if (!collection) {
       return null;
     }
 
-    const snapshot = await collection.doc(id).get();
+    const snapshot = await collection.doc(documentId).get();
 
     return getSnapshotRecord<TRecord>(snapshot, this.idKey);
   }
