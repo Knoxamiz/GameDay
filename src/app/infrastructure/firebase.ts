@@ -39,13 +39,12 @@ export function normalizePrivateKey(privateKey: string) {
 }
 
 export function getFirebaseClientConfig(): FirebaseClientConfig | null {
-  const apiKey = readInfrastructureEnv("NEXT_PUBLIC_FIREBASE_API_KEY");
-  const authDomain = readInfrastructureEnv("NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN");
-  const projectId = readInfrastructureEnv("NEXT_PUBLIC_FIREBASE_PROJECT_ID");
-  const storageBucket = readInfrastructureEnv(
-    "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET",
-  );
-  const appId = readInfrastructureEnv("NEXT_PUBLIC_FIREBASE_APP_ID");
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY?.trim();
+  const authDomain = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN?.trim();
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID?.trim();
+  const storageBucket =
+    process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET?.trim();
+  const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID?.trim();
 
   if (!apiKey || !authDomain || !projectId || !storageBucket || !appId) {
     return null;
