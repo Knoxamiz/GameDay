@@ -27,6 +27,7 @@ import {
   type RegistrationRequirement,
   type RegistrationRequirementStatus,
 } from "../data/registrations";
+import type { ParentRegistrationRequirementUpdatePayload } from "../data/registrationRequirementUpdate";
 import {
   saveDocumentRequirementStatus,
   useDocumentRequirements,
@@ -41,6 +42,8 @@ import {
 } from "./registrationRequirementState";
 
 type RegistrationRequirementsChecklistProps = {
+  athleteId: string;
+  parentId: string;
   registrationId: string;
   requirements: RegistrationRequirement[];
 };
@@ -94,6 +97,8 @@ function getPaymentTone(status: PaymentRequirementStatus) {
 }
 
 export default function RegistrationRequirementsChecklist({
+  athleteId,
+  parentId,
   registrationId,
   requirements,
 }: RegistrationRequirementsChecklistProps) {
@@ -132,6 +137,33 @@ export default function RegistrationRequirementsChecklist({
       : totalNeedsReview > 0
         ? "text-yellow-200"
         : "text-blue-300";
+
+  function syncParentRequirementStatus(
+    requirementId: string,
+    requirementLabel: string,
+    status: RegistrationRequirementStatus,
+  ) {
+    if (!athleteId || !parentId || !registrationId || !requirementId) {
+      return;
+    }
+
+    const payload: ParentRegistrationRequirementUpdatePayload = {
+      athleteId,
+      parentId,
+      registrationId,
+      requirementId,
+      requirementLabel,
+      status,
+    };
+
+    void fetch(`/api/registrations/${registrationId}/requirements`, {
+      body: JSON.stringify(payload),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "PATCH",
+    }).catch(() => undefined);
+  }
 
   return (
     <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
@@ -188,9 +220,14 @@ export default function RegistrationRequirementsChecklist({
                 isDocumentBlocked(requirement)) && (
                 <button
                   type="button"
-                  onClick={() =>
-                    saveDocumentRequirementStatus(requirement.id, "Uploaded")
-                  }
+                  onClick={() => {
+                    saveDocumentRequirementStatus(requirement.id, "Uploaded");
+                    syncParentRequirementStatus(
+                      requirement.id,
+                      requirement.label,
+                      "Uploaded",
+                    );
+                  }}
                   className="mt-3 w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
                 >
                   {isDocumentBlocked(requirement)
@@ -295,13 +332,18 @@ export default function RegistrationRequirementsChecklist({
                 isRequirementBlocked(requirement)) && (
                 <button
                   type="button"
-                  onClick={() =>
+                  onClick={() => {
                     saveRegistrationRequirementStatus(
                       registrationId,
                       requirement.label,
                       "Uploaded",
-                    )
-                  }
+                    );
+                    syncParentRequirementStatus(
+                      requirement.label,
+                      requirement.label,
+                      "Uploaded",
+                    );
+                  }}
                   className="mt-3 w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
                 >
                   {isRequirementBlocked(requirement)

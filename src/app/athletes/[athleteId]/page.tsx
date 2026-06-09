@@ -201,6 +201,8 @@ export default async function AthleteDetailsPage({
         </div>
 
         <RegistrationRequirementsChecklist
+          athleteId={athlete.id}
+          parentId={currentUser.parentId}
           registrationId={registrationId}
           requirements={registrationRequirements}
         />
