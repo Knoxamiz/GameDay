@@ -6,12 +6,14 @@ import MvpNav, { getRoleHref } from "../../components/MvpNav";
 import RegistrationRequirementsChecklist from "../../components/RegistrationRequirementsChecklist";
 import RideShareBoard from "../../components/RideShareBoard";
 import TransportationStatusPicker from "../../components/TransportationStatusPicker";
-import { athletes, getAthleteById } from "../../data/athletes";
 import { getAttendanceEntryByAthleteAndEventId } from "../../data/attendance";
 import { getCoachesByIds } from "../../data/coaches";
 import { getEventById, getEventsByIds } from "../../data/events";
 import { getMessagesByAthleteId } from "../../data/messages";
-import { getRegistrationById } from "../../data/registrations";
+import {
+  getAthleteRegistrationReadModel,
+  getStaticAthleteParams,
+} from "../../data/parentAthleteRegistration.server";
 import { getTeamById } from "../../data/teams";
 import {
   getTransportationEntriesByEventId,
@@ -26,27 +28,25 @@ type AthleteDetailsPageProps = {
 };
 
 export function generateStaticParams() {
-  return athletes.map((athlete) => ({
-    athleteId: athlete.id,
-  }));
+  return getStaticAthleteParams();
 }
 
 export default async function AthleteDetailsPage({
   params,
 }: AthleteDetailsPageProps) {
   const { athleteId } = await params;
-  const athlete = getAthleteById(athleteId);
+  const readModel = await getAthleteRegistrationReadModel(athleteId);
 
-  if (!athlete) {
+  if (!readModel) {
     notFound();
   }
 
+  const { athlete, registration } = readModel;
   const team = getTeamById(athlete.teamId);
   const nextEvent = athlete.nextEventId
     ? getEventById(athlete.nextEventId)
     : undefined;
   const upcomingEvents = getEventsByIds(athlete.upcomingEventIds);
-  const registration = getRegistrationById(athlete.registrationId);
   const registrationRequirements = registration?.requirements ?? [];
   const registrationId = registration?.id ?? athlete.registrationId;
   const coaches = team ? getCoachesByIds(team.coachIds) : [];

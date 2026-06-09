@@ -1,20 +1,24 @@
 import ParentAthleteCard from "../components/ParentAthleteCard";
 import BottomNav from "../components/BottomNav";
 import MvpNav, { getRoleHref } from "../components/MvpNav";
-import { getAthletesByParentId } from "../data/athletes";
 import { getAttendanceEntryByAthleteAndEventId } from "../data/attendance";
 import { getEventById } from "../data/events";
 import { getMessagesByParentId } from "../data/messages";
-import { getCurrentParent } from "../data/parents";
-import { getRegistrationById } from "../data/registrations";
+import {
+  getParentAthleteRegistrationReadModel,
+  getRegistrationByAthlete,
+} from "../data/parentAthleteRegistration.server";
 import { getTeamById } from "../data/teams";
 import { getTransportationEntryByAthleteAndEventId } from "../data/transportation";
 
-const currentParent = getCurrentParent();
-const parentAthletes = getAthletesByParentId(currentParent.id);
-const parentAnnouncements = getMessagesByParentId(currentParent.id);
+export default async function ParentHome() {
+  const {
+    athletes: parentAthletes,
+    parent: currentParent,
+    registrations,
+  } = await getParentAthleteRegistrationReadModel();
+  const parentAnnouncements = getMessagesByParentId(currentParent.id);
 
-export default function ParentHome() {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
@@ -38,7 +42,10 @@ export default function ParentHome() {
             const nextEvent = athlete.nextEventId
               ? getEventById(athlete.nextEventId)
               : undefined;
-            const registration = getRegistrationById(athlete.registrationId);
+            const registration = getRegistrationByAthlete(
+              athlete,
+              registrations,
+            );
             const transportation = nextEvent
               ? getTransportationEntryByAthleteAndEventId(
                   athlete.id,
