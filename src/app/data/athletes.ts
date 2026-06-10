@@ -10,7 +10,7 @@ export type Athlete = {
   school: string;
   teamId: string;
   nextEventId?: string;
-  upcomingEventIds: string[];
+  upcomingEventIds?: string[];
   registrationId: string;
 };
 
@@ -99,8 +99,10 @@ export function getAthletesByParentId(parentId: string) {
   return athletes.filter((athlete) => athlete.parentId === parentId);
 }
 
-export function getAthletesByIds(athleteIds: string[]) {
-  return athleteIds
+export function getAthletesByIds(athleteIds?: string[] | null) {
+  const safeAthleteIds = Array.isArray(athleteIds) ? athleteIds : [];
+
+  return safeAthleteIds
     .map((athleteId) => getAthleteById(athleteId))
     .filter((athlete): athlete is Athlete => Boolean(athlete));
 }

@@ -149,8 +149,10 @@ export function getEventById(eventId: string) {
   return events.find((event) => event.id === eventId);
 }
 
-export function getEventsByIds(eventIds: string[]) {
-  return eventIds
+export function getEventsByIds(eventIds?: string[] | null) {
+  const safeEventIds = Array.isArray(eventIds) ? eventIds : [];
+
+  return safeEventIds
     .map((eventId) => getEventById(eventId))
     .filter((event): event is GameDayEvent => Boolean(event));
 }
@@ -159,8 +161,9 @@ export function getEventsByOrganizationId(organizationId: string) {
   return events.filter((event) => event.organizationId === organizationId);
 }
 
-export function getEventsByTeamIds(teamIds: string[]) {
-  const teamIdSet = new Set(teamIds);
+export function getEventsByTeamIds(teamIds?: string[] | null) {
+  const safeTeamIds = Array.isArray(teamIds) ? teamIds : [];
+  const teamIdSet = new Set(safeTeamIds);
 
   return events.filter(
     (event) => event.teamId && teamIdSet.has(event.teamId),

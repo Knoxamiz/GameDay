@@ -72,8 +72,10 @@ export function getCurrentCoach() {
   return getCoachById(currentCoachId) ?? coaches[0];
 }
 
-export function getCoachesByIds(coachIds: string[]) {
-  return coachIds
+export function getCoachesByIds(coachIds?: string[] | null) {
+  const safeCoachIds = Array.isArray(coachIds) ? coachIds : [];
+
+  return safeCoachIds
     .map((coachId) => getCoachById(coachId))
     .filter((coach): coach is Coach => Boolean(coach));
 }

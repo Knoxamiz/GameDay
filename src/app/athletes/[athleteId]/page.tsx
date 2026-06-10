@@ -46,7 +46,9 @@ export default async function AthleteDetailsPage({
     ? getEventById(athlete.nextEventId)
     : undefined;
   const upcomingEvents = getEventsByIds(athlete.upcomingEventIds);
-  const registrationRequirements = registration?.requirements ?? [];
+  const registrationRequirements = Array.isArray(registration?.requirements)
+    ? registration.requirements
+    : [];
   const registrationId = registration?.id ?? athlete.registrationId;
   const coaches = team ? getCoachesByIds(team.coachIds) : [];
   const teamUpdates = getMessagesByAthleteId(athlete.id);
