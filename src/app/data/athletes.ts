@@ -1,5 +1,6 @@
 export type Athlete = {
   id: string;
+  organizationId?: string;
   firstName: string;
   lastName: string;
   name: string;
@@ -7,11 +8,17 @@ export type Athlete = {
   grade: string;
   jerseySize: string;
   parentId: string;
+  parentUid?: string;
+  ownerUid?: string;
+  createdByUid?: string;
+  createdAt?: string;
+  source?: string;
   school: string;
   teamId: string;
   nextEventId?: string;
   upcomingEventIds?: string[];
   registrationId: string;
+  updatedAt?: string;
 };
 
 export const athletes: Athlete[] = [

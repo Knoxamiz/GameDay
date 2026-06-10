@@ -2,14 +2,19 @@ import { cookies, headers } from "next/headers";
 import type { AuthSession, AuthSessionSource } from "../infrastructure/auth";
 import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
+import { getLiveParentId, getLiveParentUid } from "./liveIdentity";
 import { currentParentId } from "./parents";
 
-export type CurrentParentUserSource = "firebase-session" | "mock";
+export type CurrentParentUserSource =
+  | "firebase-session"
+  | "mock"
+  | "signed-out";
 
 export type CurrentParentUser = {
   athleteIds: string[];
   organizationIds: string[];
   parentId: string;
+  parentUid?: string;
   session?: AuthSession;
   source: CurrentParentUserSource;
   teamIds: string[];
@@ -42,6 +47,16 @@ function getMockParentUser(): CurrentParentUser {
   };
 }
 
+function getSignedOutParentUser(): CurrentParentUser {
+  return {
+    athleteIds: [],
+    organizationIds: [],
+    parentId: "",
+    source: "signed-out",
+    teamIds: [],
+  };
+}
+
 export async function getCurrentParentUser(): Promise<CurrentParentUser> {
   if (!getFirebaseAdminConfig()) {
     return getMockParentUser();
@@ -51,20 +66,26 @@ export async function getCurrentParentUser(): Promise<CurrentParentUser> {
     // Real auth attempt: resolve the current parent from Firebase token claims.
     const authProvider = new FirebaseAdminAuthProvider();
     const session = await authProvider.verifySession(await getAuthSessionSource());
+    const parentId = getLiveParentId(session);
+    const parentUid = getLiveParentUid(session);
 
-    if (session?.claims.role === "parent" && session.claims.parentId) {
+    if (session?.claims.role === "parent" && parentId && parentUid) {
       return {
         athleteIds: session.claims.athleteIds,
         organizationIds: session.claims.organizationIds,
-        parentId: session.claims.parentId,
+        parentId,
+        parentUid,
         session,
         source: "firebase-session",
         teamIds: session.claims.teamIds,
       };
     }
   } catch (error) {
-    console.warn("Falling back to mock parent user.", error);
+    console.warn("Could not resolve live parent user.", {
+      message: error instanceof Error ? error.message : "Unknown error",
+      name: error instanceof Error ? error.name : typeof error,
+    });
   }
 
-  return getMockParentUser();
+  return getSignedOutParentUser();
 }

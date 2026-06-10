@@ -177,7 +177,7 @@ export async function signInFirebaseParentWithEmailPassword(
 
   const { session } = result;
 
-  if (session.claims.role !== "parent" || !session.claims.parentId) {
+  if (session.claims.role !== "parent") {
     throw new Error("This login path currently supports parent users only.");
   }
 

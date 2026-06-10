@@ -28,6 +28,7 @@ export type RegistrationSubmissionResult = {
   athleteName?: string;
   parentId?: string;
   parentName?: string;
+  parentUid?: string;
   registrationId?: string;
   source: RegistrationSubmissionSource;
   status?: RegistrationStatus;

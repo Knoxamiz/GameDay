@@ -4,13 +4,18 @@ import {
   type PaymentRequirementStatus,
 } from "../../../../data/payments";
 import type { ParentPaymentRequirementUpdatePayload } from "../../../../data/paymentRequirementUpdate";
-import { updateParentPaymentRequirementIntent } from "../../../../data/paymentRequirementUpdate.server";
+import {
+  ParentPaymentRequirementError,
+  updateParentPaymentRequirementIntent,
+} from "../../../../data/paymentRequirementUpdate.server";
 
 type RegistrationPaymentRouteProps = {
   params: Promise<{
     registrationId: string;
   }>;
 };
+
+export const runtime = "nodejs";
 
 function getText(value: unknown) {
   return typeof value === "string" ? value : "";
@@ -30,6 +35,33 @@ function getPaymentRequirementStatus(value: unknown): PaymentRequirementStatus {
   return paymentRequirementStatusValues.includes(value as PaymentRequirementStatus)
     ? (value as PaymentRequirementStatus)
     : "Missing";
+}
+
+function getPaymentErrorResponse(error: unknown) {
+  const status = error instanceof ParentPaymentRequirementError
+    ? error.status
+    : 500;
+  const message =
+    error instanceof Error ? error.message : "Could not record payment intent.";
+  const reason =
+    error instanceof ParentPaymentRequirementError
+      ? error.reason
+      : "payment-intent-update-failed";
+
+  console.warn("Parent payment intent update failed.", {
+    errorName: error instanceof Error ? error.name : typeof error,
+    message,
+    reason,
+    status,
+  });
+
+  return NextResponse.json(
+    {
+      error: status >= 500 ? "Could not record payment intent." : message,
+      reason,
+    },
+    { status },
+  );
 }
 
 export async function PATCH(
@@ -53,16 +85,18 @@ export async function PATCH(
     required: getBoolean(body?.required),
     status: getPaymentRequirementStatus(body?.status),
   };
-  const result = await updateParentPaymentRequirementIntent(payload, {
-    sessionSource: {
-      authorizationHeader: request.headers.get("authorization") ?? undefined,
-      cookieHeader: request.headers.get("cookie") ?? undefined,
-    },
-  }).catch(() => ({
-    source: "mock" as const,
-  }));
+  try {
+    const result = await updateParentPaymentRequirementIntent(payload, {
+      sessionSource: {
+        authorizationHeader: request.headers.get("authorization") ?? undefined,
+        cookieHeader: request.headers.get("cookie") ?? undefined,
+      },
+    });
 
-  return NextResponse.json(result, {
-    status: result.source === "firestore" ? 200 : 202,
-  });
+    return NextResponse.json(result, {
+      status: result.source === "firestore" ? 200 : 202,
+    });
+  } catch (error) {
+    return getPaymentErrorResponse(error);
+  }
 }

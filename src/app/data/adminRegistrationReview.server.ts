@@ -21,6 +21,17 @@ type UpdateAdminRegistrationReviewOptions = {
   sessionSource: AuthSessionSource;
 };
 
+export class AdminRegistrationReviewError extends Error {
+  constructor(
+    readonly reason: string,
+    message: string,
+    readonly status = 400,
+  ) {
+    super(message);
+    this.name = "AdminRegistrationReviewError";
+  }
+}
+
 function fallbackResult(reason?: string): AdminRegistrationReviewResult {
   return {
     reason,
@@ -28,12 +39,12 @@ function fallbackResult(reason?: string): AdminRegistrationReviewResult {
   };
 }
 
-function deniedResult(reason: string): AdminRegistrationReviewResult {
-  return {
-    denied: true,
-    reason,
-    source: "mock",
-  };
+function createReviewError(
+  reason: string,
+  message: string,
+  status = 400,
+): never {
+  throw new AdminRegistrationReviewError(reason, message, status);
 }
 
 function normalizeText(value: unknown) {
@@ -149,7 +160,9 @@ function upsertPaymentRequirementStatus(
     id: paymentRequirementId,
     label,
     organizationId: registration.organizationId,
+    ownerUid: registration.ownerUid,
     parentId: registration.parentId,
+    parentUid: registration.parentUid,
     registrationId: registration.id,
     required: payload.required,
     reviewedAt,
@@ -172,28 +185,46 @@ export async function updateAdminRegistrationReview(
   const registrationId = normalizeText(payload.registrationId);
 
   if (!registrationId) {
-    return fallbackResult("missing-registration-id");
+    createReviewError(
+      "missing-registration-id",
+      "A registration ID is required.",
+      400,
+    );
   }
 
   const authProvider = new FirebaseAdminAuthProvider();
-  const session = await authProvider.verifySession(options.sessionSource);
+  const session = await authProvider
+    .verifySession(options.sessionSource)
+    .catch(() => null);
 
   // Firestore admin writes are intentionally disabled without a verified admin session.
   if (session?.claims.role !== "admin") {
-    return deniedResult("admin-session-required");
+    createReviewError(
+      "admin-session-required",
+      "Please sign in as an admin before reviewing registrations.",
+      403,
+    );
   }
 
   const repositories = createFirestoreRepositories();
   const registration = await repositories.registrations.getById(registrationId);
 
   if (!registration) {
-    return fallbackResult("registration-not-found");
+    createReviewError(
+      "registration-not-found",
+      "Could not find this registration.",
+      404,
+    );
   }
 
   const capability = getActionCapability(payload);
 
   if (!canAdminReviewRegistration(session, registration, capability)) {
-    return deniedResult("admin-organization-access-required");
+    createReviewError(
+      "admin-organization-access-required",
+      "This admin cannot review this registration.",
+      403,
+    );
   }
 
   const reviewedAt = new Date().toISOString();
@@ -234,7 +265,11 @@ export async function updateAdminRegistrationReview(
     );
 
     if (!requirements) {
-      return fallbackResult("requirement-not-found");
+      createReviewError(
+        "requirement-not-found",
+        "Could not find this registration requirement.",
+        404,
+      );
     }
 
     await repositories.registrations.update(

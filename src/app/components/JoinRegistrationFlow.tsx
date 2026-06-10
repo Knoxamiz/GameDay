@@ -235,7 +235,8 @@ export default function JoinRegistrationFlow({
   if (submitted && submissionResult) {
     const confirmedAthleteName =
       submissionResult.athleteName || athleteName || "New Athlete";
-    const confirmationMessage = `Registration submitted for ${confirmedAthleteName}. Registration ID: ${submissionResult.registrationId}. Status: ${submissionResult.status}.`;
+    const confirmedParentName = submissionResult.parentName || form.parentName;
+    const confirmationMessage = `Registration submitted for ${confirmedAthleteName}. Parent: ${confirmedParentName}. Registration ID: ${submissionResult.registrationId}. Status: ${submissionResult.status}.`;
 
     return (
       <>
@@ -262,6 +263,10 @@ export default function JoinRegistrationFlow({
           <p className="mt-4 font-semibold text-slate-400">Status</p>
           <p className="mt-1 font-semibold text-blue-300">
             {submissionResult.status}
+          </p>
+          <p className="mt-4 font-semibold text-slate-400">Parent</p>
+          <p className="mt-1 font-semibold text-white">
+            {confirmedParentName}
           </p>
         </div>
 

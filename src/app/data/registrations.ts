@@ -42,11 +42,14 @@ export type Registration = {
   athleteId: string;
   athleteName?: string;
   parentId: string;
+  parentUid?: string;
   parentName: string;
   organizationId: string;
   teamId: string;
   adminNotes?: string;
   createdAt?: string;
+  createdByUid?: string;
+  ownerUid?: string;
   paymentRequirements?: PaymentRequirement[];
   registrationId?: string;
   reviewedAt?: string;

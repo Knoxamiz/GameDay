@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getFirebaseAdminConfig } from "../../../../infrastructure/firebase";
 import {
+  ParentRegistrationRequirementError,
   updateParentRegistrationRequirementStatus,
   uploadParentRegistrationRequirementDocument,
 } from "../../../../data/registrationRequirementUpdate.server";
@@ -17,6 +19,8 @@ type RegistrationRequirementRouteProps = {
     registrationId: string;
   }>;
 };
+
+export const runtime = "nodejs";
 
 function getText(value: unknown) {
   return typeof value === "string" ? value : "";
@@ -42,6 +46,37 @@ function getRegistrationRequirementStatus(
     : "Missing";
 }
 
+function getRequirementErrorResponse(error: unknown) {
+  const status =
+    error instanceof ParentRegistrationRequirementError ? error.status : 500;
+  const message =
+    error instanceof Error
+      ? error.message
+      : "Could not update this registration requirement.";
+  const reason =
+    error instanceof ParentRegistrationRequirementError
+      ? error.reason
+      : "registration-requirement-update-failed";
+
+  console.warn("Parent registration requirement update failed.", {
+    errorName: error instanceof Error ? error.name : typeof error,
+    message,
+    reason,
+    status,
+  });
+
+  return NextResponse.json(
+    {
+      error:
+        status >= 500
+          ? "Could not update this registration requirement."
+          : message,
+      reason,
+    },
+    { status },
+  );
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: RegistrationRequirementRouteProps,
@@ -59,18 +94,20 @@ export async function PATCH(
     requirementLabel: getText(body?.requirementLabel),
     status: getRegistrationRequirementStatus(body?.status),
   };
-  const result = await updateParentRegistrationRequirementStatus(payload, {
-    sessionSource: {
-      authorizationHeader: request.headers.get("authorization") ?? undefined,
-      cookieHeader: request.headers.get("cookie") ?? undefined,
-    },
-  }).catch(() => ({
-    source: "mock" as const,
-  }));
+  try {
+    const result = await updateParentRegistrationRequirementStatus(payload, {
+      sessionSource: {
+        authorizationHeader: request.headers.get("authorization") ?? undefined,
+        cookieHeader: request.headers.get("cookie") ?? undefined,
+      },
+    });
 
-  return NextResponse.json(result, {
-    status: result.source === "firestore" ? 200 : 202,
-  });
+    return NextResponse.json(result, {
+      status: result.source === "firestore" ? 200 : 202,
+    });
+  } catch (error) {
+    return getRequirementErrorResponse(error);
+  }
 }
 
 export async function POST(
@@ -82,7 +119,15 @@ export async function POST(
   const file = formData ? getFormFile(formData) : null;
 
   if (!formData || !file) {
-    return NextResponse.json({ source: "mock" }, { status: 202 });
+    return getFirebaseAdminConfig()
+      ? NextResponse.json(
+          {
+            error: "Choose a document before uploading.",
+            reason: "missing-upload-file",
+          },
+          { status: 400 },
+        )
+      : NextResponse.json({ source: "mock" }, { status: 202 });
   }
 
   const payload: ParentRegistrationRequirementUploadPayload = {
@@ -97,16 +142,18 @@ export async function POST(
     requirementId: getFormText(formData, "requirementId"),
     requirementLabel: getFormText(formData, "requirementLabel"),
   };
-  const result = await uploadParentRegistrationRequirementDocument(payload, {
-    sessionSource: {
-      authorizationHeader: request.headers.get("authorization") ?? undefined,
-      cookieHeader: request.headers.get("cookie") ?? undefined,
-    },
-  }).catch(() => ({
-    source: "mock" as const,
-  }));
+  try {
+    const result = await uploadParentRegistrationRequirementDocument(payload, {
+      sessionSource: {
+        authorizationHeader: request.headers.get("authorization") ?? undefined,
+        cookieHeader: request.headers.get("cookie") ?? undefined,
+      },
+    });
 
-  return NextResponse.json(result, {
-    status: result.source === "firestore" ? 201 : 202,
-  });
+    return NextResponse.json(result, {
+      status: result.source === "firestore" ? 201 : 202,
+    });
+  } catch (error) {
+    return getRequirementErrorResponse(error);
+  }
 }

@@ -21,7 +21,9 @@ export type QueryScope = {
   coachId?: string;
   eventId?: string;
   organizationId?: string;
+  ownerUid?: string;
   parentId?: string;
+  parentUid?: string;
   registrationId?: string;
   status?: string;
   teamId?: string;

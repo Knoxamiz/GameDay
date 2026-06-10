@@ -11,15 +11,19 @@ import {
 } from "../../../../../data/registrations";
 import type {
   AdminRegistrationReviewPayload,
-  AdminRegistrationReviewResult,
 } from "../../../../../data/adminRegistrationReview";
-import { updateAdminRegistrationReview } from "../../../../../data/adminRegistrationReview.server";
+import {
+  AdminRegistrationReviewError,
+  updateAdminRegistrationReview,
+} from "../../../../../data/adminRegistrationReview.server";
 
 type AdminRegistrationReviewRouteProps = {
   params: Promise<{
     registrationId: string;
   }>;
 };
+
+export const runtime = "nodejs";
 
 function getText(value: unknown) {
   return typeof value === "string" ? value : "";
@@ -123,23 +127,50 @@ export async function PATCH(
 
   if (!payload) {
     return NextResponse.json(
-      { reason: "unsupported-admin-registration-action", source: "mock" },
+      {
+        error: "Unsupported admin registration action.",
+        reason: "unsupported-admin-registration-action",
+      },
       { status: 400 },
     );
   }
 
-  const result = await updateAdminRegistrationReview(payload, {
-    sessionSource: {
-      authorizationHeader: request.headers.get("authorization") ?? undefined,
-      cookieHeader: request.headers.get("cookie") ?? undefined,
-    },
-  }).catch(
-    (): AdminRegistrationReviewResult => ({
-    source: "mock" as const,
-    }),
-  );
+  try {
+    const result = await updateAdminRegistrationReview(payload, {
+      sessionSource: {
+        authorizationHeader: request.headers.get("authorization") ?? undefined,
+        cookieHeader: request.headers.get("cookie") ?? undefined,
+      },
+    });
 
-  return NextResponse.json(result, {
-    status: result.source === "firestore" ? 200 : result.denied ? 403 : 202,
-  });
+    return NextResponse.json(result, {
+      status: result.source === "firestore" ? 200 : 202,
+    });
+  } catch (error) {
+    const status =
+      error instanceof AdminRegistrationReviewError ? error.status : 500;
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Could not review this registration.";
+    const reason =
+      error instanceof AdminRegistrationReviewError
+        ? error.reason
+        : "admin-registration-review-failed";
+
+    console.warn("Admin registration review failed.", {
+      errorName: error instanceof Error ? error.name : typeof error,
+      message,
+      reason,
+      status,
+    });
+
+    return NextResponse.json(
+      {
+        error: status >= 500 ? "Could not review this registration." : message,
+        reason,
+      },
+      { status },
+    );
+  }
 }

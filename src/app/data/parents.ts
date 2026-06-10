@@ -1,5 +1,9 @@
 export type ParentGuardian = {
   id: string;
+  parentId?: string;
+  parentUid?: string;
+  ownerUid?: string;
+  createdByUid?: string;
   firstName: string;
   lastName: string;
   name: string;
@@ -7,6 +11,9 @@ export type ParentGuardian = {
   phone: string;
   athleteIds: string[];
   organizationIds: string[];
+  createdAt?: string;
+  source?: string;
+  updatedAt?: string;
 };
 
 export const currentParentId = "jennifer-smith";

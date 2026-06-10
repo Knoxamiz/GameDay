@@ -60,6 +60,28 @@ function buildMockParentReadModel(
   };
 }
 
+function buildLiveEmptyParentReadModel(
+  parentId: string,
+): ParentAthleteRegistrationReadModel {
+  const safeParentId = parentId || "live-parent";
+
+  return {
+    athletes: [],
+    parent: {
+      athleteIds: [],
+      email: "",
+      firstName: "Parent",
+      id: safeParentId,
+      lastName: "",
+      name: "Parent",
+      organizationIds: [],
+      phone: "",
+    },
+    registrations: [],
+    source: "firestore",
+  };
+}
+
 function buildMockAthleteReadModel(
   athleteId: string,
 ): AthleteRegistrationReadModel | null {
@@ -90,18 +112,24 @@ export function getRegistrationByAthlete(
 }
 
 export async function getParentAthleteRegistrationReadModel(
-  parentId = currentParentId,
+  parentId?: string,
 ): Promise<ParentAthleteRegistrationReadModel> {
   if (!shouldUseFirestore()) {
-    return buildMockParentReadModel(parentId);
+    return buildMockParentReadModel(parentId ?? currentParentId);
+  }
+
+  const normalizedParentId = normalizeModelId(parentId ?? "");
+
+  if (!normalizedParentId) {
+    return buildLiveEmptyParentReadModel("");
   }
 
   try {
     const repositories = createFirestoreRepositories();
-    const parent = await repositories.parents.getById(parentId);
+    const parent = await repositories.parents.getById(normalizedParentId);
 
     if (!parent) {
-      return buildMockParentReadModel(parentId);
+      return buildLiveEmptyParentReadModel(normalizedParentId);
     }
 
     const [firestoreAthletes, firestoreRegistrations] = await Promise.all([
@@ -116,8 +144,11 @@ export async function getParentAthleteRegistrationReadModel(
       source: "firestore",
     };
   } catch (error) {
-    console.warn("Falling back to mock parent data.", error);
-    return buildMockParentReadModel(parentId);
+    console.warn("Falling back to empty live parent data.", {
+      message: error instanceof Error ? error.message : "Unknown error",
+      name: error instanceof Error ? error.name : typeof error,
+    });
+    return buildLiveEmptyParentReadModel(normalizedParentId);
   }
 }
 
@@ -140,7 +171,7 @@ export async function getAthleteRegistrationReadModel(
     const athlete = await repositories.athletes.getById(normalizedAthleteId);
 
     if (!athlete) {
-      return buildMockAthleteReadModel(normalizedAthleteId);
+      return null;
     }
 
     const registration =
@@ -160,8 +191,11 @@ export async function getAthleteRegistrationReadModel(
       source: "firestore",
     };
   } catch (error) {
-    console.warn("Falling back to mock athlete data.", error);
-    return buildMockAthleteReadModel(normalizedAthleteId);
+    console.warn("Could not load live athlete data.", {
+      message: error instanceof Error ? error.message : "Unknown error",
+      name: error instanceof Error ? error.name : typeof error,
+    });
+    return null;
   }
 }
 

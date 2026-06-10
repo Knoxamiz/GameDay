@@ -2,6 +2,7 @@ import type { AuthSessionSource } from "../infrastructure/auth";
 import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
+import { getLiveParentId, getLiveParentUid } from "./liveIdentity";
 import type { PaymentRequirement } from "./payments";
 import type {
   ParentPaymentRequirementUpdatePayload,
@@ -12,10 +13,29 @@ type UpdateParentPaymentRequirementOptions = {
   sessionSource: AuthSessionSource;
 };
 
+export class ParentPaymentRequirementError extends Error {
+  constructor(
+    readonly reason: string,
+    message: string,
+    readonly status = 400,
+  ) {
+    super(message);
+    this.name = "ParentPaymentRequirementError";
+  }
+}
+
 function fallbackResult(): ParentPaymentRequirementUpdateResult {
   return {
     source: "mock",
   };
+}
+
+function createPaymentError(
+  reason: string,
+  message: string,
+  status = 400,
+): never {
+  throw new ParentPaymentRequirementError(reason, message, status);
 }
 
 function normalizeText(value: unknown) {
@@ -81,14 +101,32 @@ export async function updateParentPaymentRequirementIntent(
     !registrationId ||
     payload.status !== "Submitted"
   ) {
-    return fallbackResult();
+    createPaymentError(
+      "invalid-payment-intent",
+      "Could not record this payment intent.",
+      400,
+    );
   }
 
   const authProvider = new FirebaseAdminAuthProvider();
-  const session = await authProvider.verifySession(options.sessionSource);
+  const session = await authProvider
+    .verifySession(options.sessionSource)
+    .catch(() => null);
+  const liveParentId = getLiveParentId(session);
+  const parentUid = getLiveParentUid(session);
 
-  if (session?.claims.role !== "parent" || session.claims.parentId !== parentId) {
-    return fallbackResult();
+  if (
+    !session ||
+    session.claims.role !== "parent" ||
+    !liveParentId ||
+    !parentUid ||
+    liveParentId !== parentId
+  ) {
+    createPaymentError(
+      "parent-session-required",
+      "Please sign in as the parent owner before recording payment.",
+      403,
+    );
   }
 
   const repositories = createFirestoreRepositories();
@@ -100,7 +138,11 @@ export async function updateParentPaymentRequirementIntent(
     registration.organizationId !== organizationId ||
     registration.parentId !== parentId
   ) {
-    return fallbackResult();
+    createPaymentError(
+      "registration-not-found",
+      "Could not find a registration owned by this parent.",
+      404,
+    );
   }
 
   const submittedAt = new Date().toISOString();
@@ -108,17 +150,22 @@ export async function updateParentPaymentRequirementIntent(
     amountDue: normalizeAmount(payload.amountDue),
     amountPaid: 0,
     athleteId,
+    createdAt: submittedAt,
+    createdByUid: parentUid,
     description: normalizeText(payload.description),
     id: paymentRequirementId,
     intentRecordedAt: submittedAt,
     label,
     organizationId,
+    ownerUid: parentUid,
     parentId,
+    parentUid,
     registrationId,
     required: payload.required,
     status: "Submitted",
     submittedAt,
     teamId: registration.teamId,
+    updatedAt: submittedAt,
   };
 
   await repositories.registrations.update(

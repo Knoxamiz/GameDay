@@ -3,6 +3,7 @@ import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import { FirebaseDocumentStorageAdapter } from "../infrastructure/firebaseStorage";
+import { getLiveParentId } from "./liveIdentity";
 import type {
   ParentRegistrationRequirementUploadPayload,
   ParentRegistrationRequirementUploadResult,
@@ -18,10 +19,29 @@ type UpdateParentRegistrationRequirementOptions = {
   sessionSource: AuthSessionSource;
 };
 
+export class ParentRegistrationRequirementError extends Error {
+  constructor(
+    readonly reason: string,
+    message: string,
+    readonly status = 400,
+  ) {
+    super(message);
+    this.name = "ParentRegistrationRequirementError";
+  }
+}
+
 function fallbackResult(): ParentRegistrationRequirementUpdateResult {
   return {
     source: "mock",
   };
+}
+
+function createRequirementError(
+  reason: string,
+  message: string,
+  status = 400,
+): never {
+  throw new ParentRegistrationRequirementError(reason, message, status);
 }
 
 function normalizeText(value: unknown) {
@@ -108,14 +128,30 @@ export async function updateParentRegistrationRequirementStatus(
     !requirementLabel ||
     !isParentSubmissionStatus(payload.status)
   ) {
-    return fallbackResult();
+    createRequirementError(
+      "invalid-requirement-update",
+      "Could not update this registration requirement.",
+      400,
+    );
   }
 
   const authProvider = new FirebaseAdminAuthProvider();
-  const session = await authProvider.verifySession(options.sessionSource);
+  const session = await authProvider
+    .verifySession(options.sessionSource)
+    .catch(() => null);
+  const liveParentId = getLiveParentId(session);
 
-  if (session?.claims.role !== "parent" || session.claims.parentId !== parentId) {
-    return fallbackResult();
+  if (
+    !session ||
+    session.claims.role !== "parent" ||
+    !liveParentId ||
+    liveParentId !== parentId
+  ) {
+    createRequirementError(
+      "parent-session-required",
+      "Please sign in as the parent owner before updating registration.",
+      403,
+    );
   }
 
   const repositories = createFirestoreRepositories();
@@ -126,7 +162,11 @@ export async function updateParentRegistrationRequirementStatus(
     registration.parentId !== parentId ||
     registration.athleteId !== athleteId
   ) {
-    return fallbackResult();
+    createRequirementError(
+      "registration-not-found",
+      "Could not find a registration owned by this parent.",
+      404,
+    );
   }
 
   const requirements = updateRequirementStatus(
@@ -136,7 +176,11 @@ export async function updateParentRegistrationRequirementStatus(
   );
 
   if (!requirements) {
-    return fallbackResult();
+    createRequirementError(
+      "requirement-not-found",
+      "Could not find this registration requirement.",
+      404,
+    );
   }
 
   await repositories.registrations.update(
@@ -189,14 +233,30 @@ export async function uploadParentRegistrationRequirementDocument(
     !requirementLabel ||
     payload.contentLength <= 0
   ) {
-    return fallbackResult();
+    createRequirementError(
+      "invalid-requirement-upload",
+      "Choose a document before uploading.",
+      400,
+    );
   }
 
   const authProvider = new FirebaseAdminAuthProvider();
-  const session = await authProvider.verifySession(options.sessionSource);
+  const session = await authProvider
+    .verifySession(options.sessionSource)
+    .catch(() => null);
+  const liveParentId = getLiveParentId(session);
 
-  if (session?.claims.role !== "parent" || session.claims.parentId !== parentId) {
-    return fallbackResult();
+  if (
+    !session ||
+    session.claims.role !== "parent" ||
+    !liveParentId ||
+    liveParentId !== parentId
+  ) {
+    createRequirementError(
+      "parent-session-required",
+      "Please sign in as the parent owner before uploading documents.",
+      403,
+    );
   }
 
   const repositories = createFirestoreRepositories();
@@ -208,7 +268,11 @@ export async function uploadParentRegistrationRequirementDocument(
     registration.organizationId !== organizationId ||
     registration.parentId !== parentId
   ) {
-    return fallbackResult();
+    createRequirementError(
+      "registration-not-found",
+      "Could not find a registration owned by this parent.",
+      404,
+    );
   }
 
   if (
@@ -216,7 +280,11 @@ export async function uploadParentRegistrationRequirementDocument(
       (requirement) => requirement.label === requirementLabel,
     )
   ) {
-    return fallbackResult();
+    createRequirementError(
+      "requirement-not-found",
+      "Could not find this registration requirement.",
+      404,
+    );
   }
 
   const actor = {
@@ -257,7 +325,11 @@ export async function uploadParentRegistrationRequirementDocument(
   );
 
   if (!requirements) {
-    return fallbackResult();
+    createRequirementError(
+      "requirement-not-found",
+      "Could not find this registration requirement.",
+      404,
+    );
   }
 
   await repositories.registrations.update(

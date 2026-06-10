@@ -16,16 +16,21 @@ export type PaymentRequirement = PaymentRequirementTemplate & {
   adminNotes?: string;
   amountPaid: number;
   athleteId: string;
+  createdAt?: string;
+  createdByUid?: string;
   id: string;
   intentRecordedAt?: string;
   organizationId: string;
   parentId: string;
+  parentUid?: string;
+  ownerUid?: string;
   registrationId: string;
   reviewedAt?: string;
   reviewedBy?: string;
   submittedAt?: string;
   status: PaymentRequirementStatus;
   teamId: string;
+  updatedAt?: string;
 };
 
 export type PaymentRequirementSummary = {

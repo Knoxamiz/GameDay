@@ -50,12 +50,12 @@ export const backendCollections: BackendCollection[] = [
 export const backendRelationships: BackendRelationship[] = [
   {
     from: "parents",
-    keys: ["organizationIds", "athleteIds"],
+    keys: ["parentUid", "ownerUid", "organizationIds", "athleteIds"],
     to: "organizations",
   },
   {
     from: "athletes",
-    keys: ["parentId", "teamId", "registrationId"],
+    keys: ["parentId", "parentUid", "ownerUid", "teamId", "registrationId"],
     to: "registrations",
   },
   {
@@ -70,7 +70,14 @@ export const backendRelationships: BackendRelationship[] = [
   },
   {
     from: "registrations",
-    keys: ["organizationId", "teamId", "athleteId", "parentId"],
+    keys: [
+      "organizationId",
+      "teamId",
+      "athleteId",
+      "parentId",
+      "parentUid",
+      "ownerUid",
+    ],
     to: "athletes",
   },
   {
@@ -113,16 +120,16 @@ export const backendCollectionSpecs: Record<
   },
   parents: {
     collection: "parents",
-    indexes: [["organizationIds"], ["athleteIds"]],
+    indexes: [["parentUid"], ["ownerUid"], ["organizationIds"], ["athleteIds"]],
     primaryKey: "id",
-    scopeKeys: ["organizationIds", "athleteIds"],
+    scopeKeys: ["parentUid", "ownerUid", "organizationIds", "athleteIds"],
     serverWritesRequired: true,
   },
   athletes: {
     collection: "athletes",
-    indexes: [["parentId"], ["teamId"], ["registrationId"]],
+    indexes: [["parentId"], ["parentUid"], ["ownerUid"], ["teamId"], ["registrationId"]],
     primaryKey: "id",
-    scopeKeys: ["parentId", "teamId"],
+    scopeKeys: ["parentId", "parentUid", "ownerUid", "teamId"],
     serverWritesRequired: true,
   },
   coaches: {
@@ -148,9 +155,23 @@ export const backendCollectionSpecs: Record<
   },
   registrations: {
     collection: "registrations",
-    indexes: [["organizationId"], ["teamId"], ["athleteId"], ["parentId"]],
+    indexes: [
+      ["organizationId"],
+      ["teamId"],
+      ["athleteId"],
+      ["parentId"],
+      ["parentUid"],
+      ["ownerUid"],
+    ],
     primaryKey: "id",
-    scopeKeys: ["organizationId", "teamId", "athleteId", "parentId"],
+    scopeKeys: [
+      "organizationId",
+      "teamId",
+      "athleteId",
+      "parentId",
+      "parentUid",
+      "ownerUid",
+    ],
     serverWritesRequired: true,
   },
   documentRequirements: {
@@ -221,6 +242,8 @@ export const backendPaymentMetadataKeys = [
   "teamId",
   "athleteId",
   "parentId",
+  "parentUid",
+  "ownerUid",
   "registrationId",
   "paymentRequirementId",
 ];

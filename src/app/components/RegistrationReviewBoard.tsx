@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { AdminRegistrationReviewPayload } from "../data/adminRegistrationReview";
 import { getAthleteById } from "../data/athletes";
 import {
@@ -59,11 +59,22 @@ import {
 
 type RegistrationReviewBoardProps = {
   registrations: Registration[];
-  source?: "firestore" | "mock";
+  source?: RegistrationReviewSource;
 };
 
 type RegistrationReviewCardProps = {
+  onReviewError: (message: string | null) => void;
   registration: Registration;
+  source: RegistrationReviewSource;
+};
+
+type RegistrationReviewSource = "firestore" | "mock";
+
+type ReviewSyncOptions = {
+  onError: (message: string | null) => void;
+  onSuccess: () => void;
+  payload: AdminRegistrationReviewPayload;
+  source: RegistrationReviewSource;
 };
 
 const requirementDecisionOptions: RegistrationRequirementStatus[] = [
@@ -130,26 +141,72 @@ function getPaymentTone(status: PaymentRequirementStatus) {
   return "bg-slate-700 text-slate-300";
 }
 
-function syncAdminRegistrationReview(payload: AdminRegistrationReviewPayload) {
+async function getResponseError(response: Response, fallback: string) {
+  const body = (await response.json().catch(() => null)) as {
+    error?: unknown;
+  } | null;
+
+  return typeof body?.error === "string" ? body.error : fallback;
+}
+
+async function syncAdminRegistrationReview(payload: AdminRegistrationReviewPayload) {
   if (!payload.registrationId) {
     return;
   }
 
-  void fetch(`/api/admin/registrations/${payload.registrationId}/review`, {
+  const response = await fetch(
+    `/api/admin/registrations/${payload.registrationId}/review`,
+    {
     body: JSON.stringify(payload),
+      credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
     },
     method: "PATCH",
-  }).catch(() => undefined);
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await getResponseError(response, "Could not review this registration."),
+    );
+  }
+}
+
+function saveAdminReviewChange({
+  onError,
+  onSuccess,
+  payload,
+  source,
+}: ReviewSyncOptions) {
+  onError(null);
+
+  if (source !== "firestore") {
+    onSuccess();
+    return;
+  }
+
+  void syncAdminRegistrationReview(payload)
+    .then(onSuccess)
+    .catch((error) =>
+      onError(
+        error instanceof Error
+          ? error.message
+          : "Could not review this registration.",
+      ),
+    );
 }
 
 function DocumentReviewSection({
   documents,
+  onReviewError,
   registrationId,
+  source,
 }: {
   documents: DocumentRequirement[];
+  onReviewError: (message: string | null) => void;
   registrationId: string;
+  source: RegistrationReviewSource;
 }) {
   const openDocuments = documents.filter(isDocumentOpen);
   const summary = summarizeDocumentRequirements(documents);
@@ -197,13 +254,18 @@ function DocumentReviewSection({
                     key={option}
                     type="button"
                     onClick={() => {
-                      saveDocumentRequirementStatus(document.id, option);
-                      syncAdminRegistrationReview({
-                        actionType: "requirement-status",
-                        registrationId,
-                        requirementId: document.id,
-                        requirementLabel: document.label,
-                        status: option,
+                      saveAdminReviewChange({
+                        onError: onReviewError,
+                        onSuccess: () =>
+                          saveDocumentRequirementStatus(document.id, option),
+                        payload: {
+                          actionType: "requirement-status",
+                          registrationId,
+                          requirementId: document.id,
+                          requirementLabel: document.label,
+                          status: option,
+                        },
+                        source,
                       });
                     }}
                     className={`rounded-xl border px-2 py-2 ${
@@ -225,11 +287,15 @@ function DocumentReviewSection({
 }
 
 function PaymentReviewSection({
+  onReviewError,
   payments,
   registrationId,
+  source,
 }: {
+  onReviewError: (message: string | null) => void;
   payments: PaymentRequirement[];
   registrationId: string;
+  source: RegistrationReviewSource;
 }) {
   const openPayments = payments.filter(isPaymentOpen);
   const summary = summarizePaymentRequirements(payments);
@@ -277,16 +343,21 @@ function PaymentReviewSection({
                     key={option}
                     type="button"
                     onClick={() => {
-                      savePaymentRequirementStatus(payment.id, option);
-                      syncAdminRegistrationReview({
-                        actionType: "payment-status",
-                        amountDue: payment.amountDue,
-                        description: payment.description,
-                        label: payment.label,
-                        paymentRequirementId: payment.id,
-                        registrationId,
-                        required: payment.required,
-                        status: option,
+                      saveAdminReviewChange({
+                        onError: onReviewError,
+                        onSuccess: () =>
+                          savePaymentRequirementStatus(payment.id, option),
+                        payload: {
+                          actionType: "payment-status",
+                          amountDue: payment.amountDue,
+                          description: payment.description,
+                          label: payment.label,
+                          paymentRequirementId: payment.id,
+                          registrationId,
+                          required: payment.required,
+                          status: option,
+                        },
+                        source,
                       });
                     }}
                     className={`rounded-xl border px-2 py-2 ${
@@ -319,7 +390,11 @@ function getStatusDetails(status: RegistrationStatus, details: string) {
   return details;
 }
 
-function RegistrationReviewCard({ registration }: RegistrationReviewCardProps) {
+function RegistrationReviewCard({
+  onReviewError,
+  registration,
+  source,
+}: RegistrationReviewCardProps) {
   const athlete = getAthleteById(registration.athleteId);
   const parent = getParentById(registration.parentId);
   const team = getTeamById(registration.teamId);
@@ -407,16 +482,21 @@ function RegistrationReviewCard({ registration }: RegistrationReviewCardProps) {
                       key={option}
                       type="button"
                       onClick={() => {
-                        saveRegistrationRequirementStatus(
-                          registration.id,
-                          requirement.label,
-                          option,
-                        );
-                        syncAdminRegistrationReview({
-                          actionType: "requirement-status",
-                          registrationId: registration.id,
-                          requirementLabel: requirement.label,
-                          status: option,
+                        saveAdminReviewChange({
+                          onError: onReviewError,
+                          onSuccess: () =>
+                            saveRegistrationRequirementStatus(
+                              registration.id,
+                              requirement.label,
+                              option,
+                            ),
+                          payload: {
+                            actionType: "requirement-status",
+                            registrationId: registration.id,
+                            requirementLabel: requirement.label,
+                            status: option,
+                          },
+                          source,
                         });
                       }}
                       className={`rounded-xl border px-2 py-2 ${
@@ -437,11 +517,15 @@ function RegistrationReviewCard({ registration }: RegistrationReviewCardProps) {
 
       <DocumentReviewSection
         documents={documents}
+        onReviewError={onReviewError}
         registrationId={registration.id}
+        source={source}
       />
       <PaymentReviewSection
+        onReviewError={onReviewError}
         payments={payments}
         registrationId={registration.id}
+        source={source}
       />
 
       <div className="mt-4 grid grid-cols-3 gap-2 text-xs font-semibold">
@@ -450,11 +534,15 @@ function RegistrationReviewCard({ registration }: RegistrationReviewCardProps) {
             key={option}
             type="button"
             onClick={() => {
-              saveRegistrationStatus(registration.id, option);
-              syncAdminRegistrationReview({
-                actionType: "registration-status",
-                registrationId: registration.id,
-                status: option,
+              saveAdminReviewChange({
+                onError: onReviewError,
+                onSuccess: () => saveRegistrationStatus(registration.id, option),
+                payload: {
+                  actionType: "registration-status",
+                  registrationId: registration.id,
+                  status: option,
+                },
+                source,
               });
             }}
             className={`rounded-xl border px-2 py-3 ${
@@ -481,6 +569,8 @@ export default function RegistrationReviewBoard({
   registrations,
   source = "mock",
 }: RegistrationReviewBoardProps) {
+  const [reviewError, setReviewError] = useState<string | null>(null);
+
   useEffect(() => {
     if (source !== "firestore") {
       return;
@@ -546,10 +636,17 @@ export default function RegistrationReviewBoard({
       </div>
 
       <div className="mt-6 space-y-4">
+        {reviewError && (
+          <p className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm font-semibold text-red-300">
+            {reviewError}
+          </p>
+        )}
         {registrations.map((registration) => (
           <RegistrationReviewCard
             key={registration.id}
+            onReviewError={setReviewError}
             registration={registration}
+            source={source}
           />
         ))}
       </div>

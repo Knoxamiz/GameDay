@@ -14,8 +14,8 @@ service cloud.firestore {
       return signedIn() && request.auth.token.role == "admin";
     }
 
-    function parentId() {
-      return request.auth.token.parentId;
+    function liveParentId() {
+      return "parent-" + request.auth.uid;
     }
 
     function adminOrganizations() {
@@ -28,17 +28,36 @@ service cloud.firestore {
         && adminOrganizations().hasAny([orgId]);
     }
 
+    function adminHasAnyOrg(orgIds) {
+      return isAdmin()
+        && adminOrganizations() is list
+        && orgIds is list
+        && adminOrganizations().hasAny(orgIds);
+    }
+
     function parentOwnsData(data) {
       return isParent()
-        && data.parentId == parentId();
+        && (
+          data.ownerUid == request.auth.uid
+          || data.parentUid == request.auth.uid
+          || data.parentId == liveParentId()
+        );
     }
 
     match /parents/{parentDocId} {
-      allow read, update: if isParent() && parentDocId == parentId();
-      allow create: if isParent() && request.resource.data.parentId == parentId();
+      allow read, update: if isParent()
+        && (
+          parentDocId == liveParentId()
+          || resource.data.ownerUid == request.auth.uid
+          || resource.data.parentUid == request.auth.uid
+        );
+      allow create: if isParent()
+        && parentDocId == liveParentId()
+        && request.resource.data.parentId == liveParentId()
+        && request.resource.data.ownerUid == request.auth.uid;
       allow delete: if false;
 
-      allow read, update: if adminHasOrg(resource.data.organizationId);
+      allow read, update: if adminHasAnyOrg(resource.data.organizationIds);
     }
 
     match /athletes/{athleteId} {

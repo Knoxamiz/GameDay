@@ -12,6 +12,7 @@ import {
   getLandingRouteForClaims,
   type AuthSession,
 } from "../../infrastructure/auth";
+import { getLiveParentId, getLiveParentUid } from "../../data/liveIdentity";
 
 export const runtime = "nodejs";
 
@@ -34,7 +35,7 @@ function getCookieOptions(maxAge: number) {
 function isValidParentSession(
   session: AuthSession | null,
 ): session is AuthSession {
-  return Boolean(session?.claims.role === "parent" && session.claims.parentId);
+  return Boolean(session?.claims.role === "parent" && getLiveParentUid(session));
 }
 
 function isValidAdminSession(
@@ -64,7 +65,12 @@ function getSessionResponseBody(session: AuthSession) {
     coachId: session.claims.coachId,
     email: session.user.email,
     landingRoute: getLandingRouteForClaims(session.claims),
-    parentId: session.claims.parentId,
+    parentId:
+      session.claims.role === "parent"
+        ? getLiveParentId(session)
+        : session.claims.parentId,
+    parentUid:
+      session.claims.role === "parent" ? getLiveParentUid(session) : undefined,
     role: session.claims.role,
     status: "signed-in",
   };

@@ -29,7 +29,6 @@ import {
   type RegistrationRequirement,
   type RegistrationRequirementStatus,
 } from "../data/registrations";
-import type { ParentRegistrationRequirementUpdatePayload } from "../data/registrationRequirementUpdate";
 import {
   saveDocumentRequirementStatus,
   useDocumentRequirements,
@@ -109,6 +108,7 @@ export default function RegistrationRequirementsChecklist({
   const [uploadingRequirementId, setUploadingRequirementId] = useState<
     string | null
   >(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const currentRequirements = useRegistrationRequirements(
     registrationId,
     requirements,
@@ -145,34 +145,15 @@ export default function RegistrationRequirementsChecklist({
         ? "text-yellow-200"
         : "text-blue-300";
 
-  function syncParentRequirementStatus(
-    requirementId: string,
-    requirementLabel: string,
-    status: RegistrationRequirementStatus,
-  ) {
-    if (!athleteId || !parentId || !registrationId || !requirementId) {
-      return;
-    }
+  async function getResponseError(response: Response, fallback: string) {
+    const body = (await response.json().catch(() => null)) as {
+      error?: unknown;
+    } | null;
 
-    const payload: ParentRegistrationRequirementUpdatePayload = {
-      athleteId,
-      parentId,
-      registrationId,
-      requirementId,
-      requirementLabel,
-      status,
-    };
-
-    void fetch(`/api/registrations/${registrationId}/requirements`, {
-      body: JSON.stringify(payload),
-      headers: {
-        "Content-Type": "application/json",
-      },
-      method: "PATCH",
-    }).catch(() => undefined);
+    return typeof body?.error === "string" ? body.error : fallback;
   }
 
-  function syncParentPaymentRequirementStatus(
+  async function syncParentPaymentRequirementStatus(
     paymentRequirementId: string,
     label: string,
     amountDue: number,
@@ -187,7 +168,7 @@ export default function RegistrationRequirementsChecklist({
       !registrationId ||
       !paymentRequirementId
     ) {
-      return;
+      throw new Error("Missing payment registration context.");
     }
 
     const payload: ParentPaymentRequirementUpdatePayload = {
@@ -203,13 +184,20 @@ export default function RegistrationRequirementsChecklist({
       status,
     };
 
-    void fetch(`/api/registrations/${registrationId}/payments`, {
+    const response = await fetch(`/api/registrations/${registrationId}/payments`, {
       body: JSON.stringify(payload),
+      credentials: "same-origin",
       headers: {
         "Content-Type": "application/json",
       },
       method: "PATCH",
-    }).catch(() => undefined);
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        await getResponseError(response, "Could not record payment."),
+      );
+    }
   }
 
   async function uploadParentRequirementDocument(
@@ -218,9 +206,6 @@ export default function RegistrationRequirementsChecklist({
     file: File,
     saveLocalStatus: () => void,
   ) {
-    saveLocalStatus();
-    syncParentRequirementStatus(requirementId, requirementLabel, "Uploaded");
-
     if (
       !athleteId ||
       !organizationId ||
@@ -228,9 +213,11 @@ export default function RegistrationRequirementsChecklist({
       !registrationId ||
       !requirementId
     ) {
+      setActionError("Missing document registration context.");
       return;
     }
 
+    setActionError(null);
     const formData = new FormData();
     formData.set("athleteId", athleteId);
     formData.set("file", file);
@@ -242,12 +229,23 @@ export default function RegistrationRequirementsChecklist({
     setUploadingRequirementId(requirementId);
 
     try {
-      await fetch(`/api/registrations/${registrationId}/requirements`, {
+      const response = await fetch(`/api/registrations/${registrationId}/requirements`, {
         body: formData,
+        credentials: "same-origin",
         method: "POST",
       });
-    } catch {
-      // Local status already reflects the parent action when Firebase is absent.
+
+      if (!response.ok) {
+        throw new Error(
+          await getResponseError(response, "Could not upload document."),
+        );
+      }
+
+      saveLocalStatus();
+    } catch (error) {
+      setActionError(
+        error instanceof Error ? error.message : "Could not upload document.",
+      );
     } finally {
       setUploadingRequirementId((currentRequirementId) =>
         currentRequirementId === requirementId ? null : currentRequirementId,
@@ -261,6 +259,11 @@ export default function RegistrationRequirementsChecklist({
       <p className={`mt-3 text-sm font-semibold ${summaryTone}`}>
         {summaryLabel}
       </p>
+      {actionError && (
+        <p className="mt-3 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm font-semibold text-red-300">
+          {actionError}
+        </p>
+      )}
       <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs font-semibold">
         <div className="rounded-xl bg-slate-800 p-3">
           <p className="text-slate-400">Documents</p>
@@ -381,15 +384,29 @@ export default function RegistrationRequirementsChecklist({
                 <button
                   type="button"
                   onClick={() => {
-                    savePaymentRequirementStatus(requirement.id, "Submitted");
-                    syncParentPaymentRequirementStatus(
+                    setActionError(null);
+
+                    void syncParentPaymentRequirementStatus(
                       requirement.id,
                       requirement.label,
                       requirement.amountDue,
                       requirement.description,
                       requirement.required,
                       "Submitted",
-                    );
+                    )
+                      .then(() =>
+                        savePaymentRequirementStatus(
+                          requirement.id,
+                          "Submitted",
+                        ),
+                      )
+                      .catch((error) =>
+                        setActionError(
+                          error instanceof Error
+                            ? error.message
+                            : "Could not record payment.",
+                        ),
+                      );
                   }}
                   className="mt-3 w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
                 >
