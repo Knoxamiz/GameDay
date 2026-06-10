@@ -3,14 +3,24 @@
 import { FormEvent, useState } from "react";
 import {
   createFirebaseClientAuthAdapter,
+  signInFirebaseAdminWithEmailPassword,
   signInFirebaseParentWithEmailPassword,
 } from "../infrastructure/firebaseClientAuth";
+
+type LoginRole = "parent" | "admin";
+
+type SessionResponse = {
+  error?: string;
+  landingRoute?: string;
+  role?: LoginRole;
+};
 
 export default function ParentLoginForm() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState<LoginRole>("parent");
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -18,10 +28,16 @@ export default function ParentLoginForm() {
     setIsSubmitting(true);
 
     try {
-      const loginResult = await signInFirebaseParentWithEmailPassword({
-        email,
-        password,
-      });
+      const loginResult =
+        role === "admin"
+          ? await signInFirebaseAdminWithEmailPassword({
+              email,
+              password,
+            })
+          : await signInFirebaseParentWithEmailPassword({
+              email,
+              password,
+            });
 
       if (!loginResult) {
         throw new Error("Firebase client login is not configured.");
@@ -36,13 +52,17 @@ export default function ParentLoginForm() {
       });
 
       if (!response.ok) {
-        const body = (await response.json().catch(() => null)) as {
-          error?: string;
-        } | null;
+        const body = (await response.json().catch(() => null)) as
+          | SessionResponse
+          | null;
         throw new Error(body?.error ?? "Could not create parent session.");
       }
 
-      window.location.assign("/parent");
+      const body = (await response.json().catch(() => null)) as
+        | SessionResponse
+        | null;
+
+      window.location.assign(body?.landingRoute ?? `/${role}`);
     } catch (loginError) {
       setError(
         loginError instanceof Error
@@ -62,7 +82,7 @@ export default function ParentLoginForm() {
       await fetch("/api/session", { method: "DELETE" });
       const adapter = await createFirebaseClientAuthAdapter();
       await adapter?.logout();
-      window.location.assign("/parent");
+      window.location.assign(role === "admin" ? "/admin" : "/parent");
     } catch (logoutError) {
       setError(
         logoutError instanceof Error
@@ -76,13 +96,30 @@ export default function ParentLoginForm() {
 
   return (
     <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-      <h2 className="text-xl font-bold">Parent Login</h2>
+      <h2 className="text-xl font-bold">Firebase Login</h2>
       <p className="mt-2 text-sm text-slate-400">
-        Sign in with a Firebase parent account. If Firebase is not configured,
-        GameDay still falls back to the demo parent.
+        Sign in with a Firebase parent or admin account. If Firebase is not
+        configured, GameDay still falls back to the demo views.
       </p>
 
       <form className="mt-5 space-y-4" onSubmit={handleLogin}>
+        <div className="grid grid-cols-2 gap-2 text-sm font-semibold">
+          {(["parent", "admin"] as const).map((option) => (
+            <button
+              className={`rounded-xl border px-4 py-3 ${
+                role === option
+                  ? "border-blue-500 bg-blue-500/20 text-blue-200"
+                  : "border-slate-700 bg-slate-950 text-slate-300"
+              }`}
+              key={option}
+              onClick={() => setRole(option)}
+              type="button"
+            >
+              {option === "parent" ? "Parent" : "Admin"}
+            </button>
+          ))}
+        </div>
+
         <label className="block">
           <span className="text-sm font-semibold text-slate-300">Email</span>
           <input

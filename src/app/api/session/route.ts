@@ -4,6 +4,10 @@ import {
   firebaseSessionCookieName,
   FirebaseAdminAuthProvider,
 } from "../../infrastructure/firebaseAuth";
+import {
+  getLandingRouteForClaims,
+  type AuthSession,
+} from "../../infrastructure/auth";
 
 const sessionMaxAgeSeconds = 60 * 60;
 
@@ -15,6 +19,22 @@ function getCookieOptions(maxAge: number) {
     sameSite: "lax" as const,
     secure: process.env.NODE_ENV === "production",
   };
+}
+
+function isValidParentSession(
+  session: AuthSession | null,
+): session is AuthSession {
+  return Boolean(session?.claims.role === "parent" && session.claims.parentId);
+}
+
+function isValidAdminSession(
+  session: AuthSession | null,
+): session is AuthSession {
+  return Boolean(
+    session?.claims.role === "admin" &&
+      session.claims.adminId &&
+      session.claims.organizationIds.length > 0,
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -39,15 +59,21 @@ export async function POST(request: NextRequest) {
     authorizationHeader: `Bearer ${idToken}`,
   });
 
-  if (session?.claims.role !== "parent" || !session.claims.parentId) {
+  if (!isValidParentSession(session) && !isValidAdminSession(session)) {
     return NextResponse.json(
-      { error: "This session endpoint currently supports parent users only." },
+      {
+        error:
+          "This session endpoint requires parent claims or admin claims with an organization.",
+      },
       { status: 403 },
     );
   }
 
   const response = NextResponse.json({
+    adminId: session.claims.adminId,
+    landingRoute: getLandingRouteForClaims(session.claims),
     parentId: session.claims.parentId,
+    role: session.claims.role,
     status: "ok",
   });
   response.cookies.set(

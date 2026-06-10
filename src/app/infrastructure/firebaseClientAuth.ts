@@ -135,7 +135,7 @@ export async function createFirebaseClientAuthAdapter(): Promise<ClientAuthAdapt
   };
 }
 
-export async function signInFirebaseParentWithEmailPassword(
+export async function signInFirebaseUserWithEmailPassword(
   credentials: AuthCredentials,
 ) {
   const app = await getFirebaseClientApp();
@@ -160,14 +160,52 @@ export async function signInFirebaseParentWithEmailPassword(
     throw new Error("Firebase user is missing required GameDay role claims.");
   }
 
-  if (session.claims.role !== "parent" || !session.claims.parentId) {
-    throw new Error("This login path currently supports parent users only.");
-  }
-
   return {
     idToken,
     session,
   };
+}
+
+export async function signInFirebaseParentWithEmailPassword(
+  credentials: AuthCredentials,
+) {
+  const result = await signInFirebaseUserWithEmailPassword(credentials);
+
+  if (!result) {
+    return null;
+  }
+
+  const { session } = result;
+
+  if (session.claims.role !== "parent" || !session.claims.parentId) {
+    throw new Error("This login path currently supports parent users only.");
+  }
+
+  return result;
+}
+
+export async function signInFirebaseAdminWithEmailPassword(
+  credentials: AuthCredentials,
+) {
+  const result = await signInFirebaseUserWithEmailPassword(credentials);
+
+  if (!result) {
+    return null;
+  }
+
+  const { session } = result;
+
+  if (
+    session.claims.role !== "admin" ||
+    !session.claims.adminId ||
+    session.claims.organizationIds.length === 0
+  ) {
+    throw new Error(
+      "Admin login requires role, adminId, and organizationIds claims.",
+    );
+  }
+
+  return result;
 }
 
 export async function requireFirebaseClientAuthAdapter() {
