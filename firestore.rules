@@ -1,0 +1,71 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isParent() {
+      return signedIn() && request.auth.token.role == "parent";
+    }
+
+    function isAdmin() {
+      return signedIn() && request.auth.token.role == "admin";
+    }
+
+    function parentId() {
+      return request.auth.token.parentId;
+    }
+
+    function adminOrganizations() {
+      return request.auth.token.organizationIds;
+    }
+
+    function adminHasOrg(orgId) {
+      return isAdmin()
+        && adminOrganizations() is list
+        && adminOrganizations().hasAny([orgId]);
+    }
+
+    function parentOwnsData(data) {
+      return isParent()
+        && data.parentId == parentId();
+    }
+
+    match /parents/{parentDocId} {
+      allow read, update: if isParent() && parentDocId == parentId();
+      allow create: if isParent() && request.resource.data.parentId == parentId();
+      allow delete: if false;
+
+      allow read, update: if adminHasOrg(resource.data.organizationId);
+    }
+
+    match /athletes/{athleteId} {
+      allow read: if parentOwnsData(resource.data)
+        || adminHasOrg(resource.data.organizationId);
+
+      allow create, update: if parentOwnsData(request.resource.data)
+        || adminHasOrg(request.resource.data.organizationId);
+
+      allow delete: if false;
+    }
+
+    match /registrations/{registrationId} {
+      allow read: if parentOwnsData(resource.data)
+        || adminHasOrg(resource.data.organizationId);
+
+      allow create: if parentOwnsData(request.resource.data)
+        || adminHasOrg(request.resource.data.organizationId);
+
+      allow update: if parentOwnsData(resource.data)
+        || adminHasOrg(resource.data.organizationId);
+
+      allow delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

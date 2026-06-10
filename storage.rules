@@ -1,0 +1,35 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isParent() {
+      return signedIn() && request.auth.token.role == "parent";
+    }
+
+    function isAdmin() {
+      return signedIn() && request.auth.token.role == "admin";
+    }
+
+    function adminHasOrg(orgId) {
+      return isAdmin()
+        && request.auth.token.organizationIds is list
+        && request.auth.token.organizationIds.hasAny([orgId]);
+    }
+
+    match /organizations/{organizationId}/registrations/{registrationId}/requirements/{requirementId}/{fileName} {
+      allow read: if adminHasOrg(organizationId);
+      allow write: if adminHasOrg(organizationId);
+
+      // Current app uploads through the server Admin SDK, which bypasses Storage rules.
+      // Direct parent client uploads should remain disabled until client-side ownership validation is finalized.
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
