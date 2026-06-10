@@ -1,5 +1,6 @@
 "use client";
 
+import type { AdminRegistrationReviewPayload } from "../data/adminRegistrationReview";
 import { getAthleteById } from "../data/athletes";
 import {
   getDocumentRequirementsByRegistrationId,
@@ -127,10 +128,26 @@ function getPaymentTone(status: PaymentRequirementStatus) {
   return "bg-slate-700 text-slate-300";
 }
 
+function syncAdminRegistrationReview(payload: AdminRegistrationReviewPayload) {
+  if (!payload.registrationId) {
+    return;
+  }
+
+  void fetch(`/api/admin/registrations/${payload.registrationId}/review`, {
+    body: JSON.stringify(payload),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    method: "PATCH",
+  }).catch(() => undefined);
+}
+
 function DocumentReviewSection({
   documents,
+  registrationId,
 }: {
   documents: DocumentRequirement[];
+  registrationId: string;
 }) {
   const openDocuments = documents.filter(isDocumentOpen);
   const summary = summarizeDocumentRequirements(documents);
@@ -177,9 +194,16 @@ function DocumentReviewSection({
                   <button
                     key={option}
                     type="button"
-                    onClick={() =>
-                      saveDocumentRequirementStatus(document.id, option)
-                    }
+                    onClick={() => {
+                      saveDocumentRequirementStatus(document.id, option);
+                      syncAdminRegistrationReview({
+                        actionType: "requirement-status",
+                        registrationId,
+                        requirementId: document.id,
+                        requirementLabel: document.label,
+                        status: option,
+                      });
+                    }}
                     className={`rounded-xl border px-2 py-2 ${
                       option === document.status
                         ? "border-blue-500 bg-blue-500/20 text-blue-200"
@@ -200,8 +224,10 @@ function DocumentReviewSection({
 
 function PaymentReviewSection({
   payments,
+  registrationId,
 }: {
   payments: PaymentRequirement[];
+  registrationId: string;
 }) {
   const openPayments = payments.filter(isPaymentOpen);
   const summary = summarizePaymentRequirements(payments);
@@ -248,7 +274,19 @@ function PaymentReviewSection({
                   <button
                     key={option}
                     type="button"
-                    onClick={() => savePaymentRequirementStatus(payment.id, option)}
+                    onClick={() => {
+                      savePaymentRequirementStatus(payment.id, option);
+                      syncAdminRegistrationReview({
+                        actionType: "payment-status",
+                        amountDue: payment.amountDue,
+                        description: payment.description,
+                        label: payment.label,
+                        paymentRequirementId: payment.id,
+                        registrationId,
+                        required: payment.required,
+                        status: option,
+                      });
+                    }}
                     className={`rounded-xl border px-2 py-2 ${
                       option === payment.status
                         ? "border-blue-500 bg-blue-500/20 text-blue-200"
@@ -366,13 +404,19 @@ function RegistrationReviewCard({ registration }: RegistrationReviewCardProps) {
                     <button
                       key={option}
                       type="button"
-                      onClick={() =>
+                      onClick={() => {
                         saveRegistrationRequirementStatus(
                           registration.id,
                           requirement.label,
                           option,
-                        )
-                      }
+                        );
+                        syncAdminRegistrationReview({
+                          actionType: "requirement-status",
+                          registrationId: registration.id,
+                          requirementLabel: requirement.label,
+                          status: option,
+                        });
+                      }}
                       className={`rounded-xl border px-2 py-2 ${
                         option === requirement.status
                           ? "border-blue-500 bg-blue-500/20 text-blue-200"
@@ -389,8 +433,14 @@ function RegistrationReviewCard({ registration }: RegistrationReviewCardProps) {
         )}
       </div>
 
-      <DocumentReviewSection documents={documents} />
-      <PaymentReviewSection payments={payments} />
+      <DocumentReviewSection
+        documents={documents}
+        registrationId={registration.id}
+      />
+      <PaymentReviewSection
+        payments={payments}
+        registrationId={registration.id}
+      />
 
       <div className="mt-4 grid grid-cols-3 gap-2 text-xs font-semibold">
         {registrationAdminDecisionOptions.map((option) => (
@@ -399,6 +449,11 @@ function RegistrationReviewCard({ registration }: RegistrationReviewCardProps) {
             type="button"
             onClick={() => {
               saveRegistrationStatus(registration.id, option);
+              syncAdminRegistrationReview({
+                actionType: "registration-status",
+                registrationId: registration.id,
+                status: option,
+              });
             }}
             className={`rounded-xl border px-2 py-3 ${
               option === status

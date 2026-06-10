@@ -15,10 +15,13 @@ export type RegistrationStatus =
   | "Pending Review";
 
 export type RegistrationRequirement = {
+  adminNotes?: string;
   contentType?: string;
   description?: string;
   fileName?: string;
   label: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
   required?: boolean;
   status: RegistrationRequirementStatus;
   storagePath?: string;
@@ -41,7 +44,10 @@ export type Registration = {
   parentName: string;
   organizationId: string;
   teamId: string;
+  adminNotes?: string;
   paymentRequirements?: PaymentRequirement[];
+  reviewedAt?: string;
+  reviewedBy?: string;
   status: RegistrationStatus;
   details: string;
   submittedDate?: string;
