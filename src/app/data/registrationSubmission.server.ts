@@ -1,5 +1,5 @@
 import type { Athlete } from "./athletes";
-import { getActiveRegistrationInviteByCode } from "./invites";
+import type { RegistrationInvite } from "./invites";
 import {
   createLiveRecordId,
   getLiveParentId,
@@ -39,51 +39,12 @@ export class RegistrationSubmissionError extends Error {
   }
 }
 
-function fallbackResult(
-  payload: RegistrationSubmissionPayload,
-): RegistrationSubmissionResult {
-  const athleteFirstName = normalizeNamePart(payload.athlete.firstName);
-  const athleteLastName = normalizeNamePart(payload.athlete.lastName);
-  const athleteName = [athleteFirstName, athleteLastName]
-    .filter(Boolean)
-    .join(" ");
-  const registrationId = createRecordId("preview-registration", [
-    athleteFirstName,
-    athleteLastName,
-  ]);
-
-  return {
-    athleteId: createRecordId("preview-athlete", [
-      athleteFirstName,
-      athleteLastName,
-    ]),
-    athleteName: athleteName || "New Athlete",
-    registrationId,
-    source: "mock",
-    status: "Pending Review",
-  };
-}
-
 function normalizeText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
 function normalizeNamePart(value: unknown) {
   return normalizeText(value).replace(/\s+/g, " ");
-}
-
-function createRecordId(prefix: string, parts: string[]) {
-  const slug = parts
-    .map((part) =>
-      part
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, ""),
-    )
-    .filter(Boolean)
-    .join("-");
-
-  return `${prefix}-${slug || "record"}`;
 }
 
 function getSubmittedDate() {
@@ -119,11 +80,21 @@ function createSubmissionError(
   throw new RegistrationSubmissionError(reason, message, status);
 }
 
+function isActiveRegistrationInvite(
+  invite: RegistrationInvite | null | undefined,
+): invite is RegistrationInvite {
+  return Boolean(invite?.status === "Active");
+}
+
 function buildRegistrationRequirements(
-  invite: NonNullable<ReturnType<typeof getActiveRegistrationInviteByCode>>,
+  invite: RegistrationInvite,
   payload: RegistrationSubmissionPayload,
 ): RegistrationRequirement[] {
-  return invite.documentRequirements.map((requirement) => {
+  const documentRequirements = Array.isArray(invite.documentRequirements)
+    ? invite.documentRequirements
+    : [];
+
+  return documentRequirements.map((requirement) => {
     const submittedStatus = payload.requirementStatuses[requirement.label];
     const status: RegistrationRequirementStatus =
       submittedStatus === "Uploaded" || submittedStatus === "Submitted"
@@ -140,7 +111,7 @@ function buildRegistrationRequirements(
 }
 
 function buildPaymentRequirements(
-  invite: NonNullable<ReturnType<typeof getActiveRegistrationInviteByCode>>,
+  invite: RegistrationInvite,
   payload: RegistrationSubmissionPayload,
   registrationId: string,
   athleteId: string,
@@ -148,7 +119,11 @@ function buildPaymentRequirements(
   parentUid: string,
   submittedAt: string,
 ): PaymentRequirement[] {
-  return invite.paymentRequirements.map((requirement) => {
+  const paymentRequirements = Array.isArray(invite.paymentRequirements)
+    ? invite.paymentRequirements
+    : [];
+
+  return paymentRequirements.map((requirement) => {
     const submittedStatus = payload.paymentStatuses[requirement.label];
     const status: PaymentRequirementStatus =
       submittedStatus === "Submitted" ? "Submitted" : "Missing";
@@ -181,15 +156,20 @@ export async function submitParentRegistration(
   options: SubmitParentRegistrationOptions,
 ): Promise<RegistrationSubmissionResult> {
   if (!getFirebaseAdminConfig()) {
-    return fallbackResult(payload);
+    createSubmissionError(
+      "firebase-unavailable",
+      "Registration is not available until Firebase is configured.",
+      503,
+    );
   }
 
   const inviteCode = normalizeText(payload.inviteCode);
-  const invite = getActiveRegistrationInviteByCode(inviteCode);
   const athleteFirstName = normalizeNamePart(payload.athlete.firstName);
   const athleteLastName = normalizeNamePart(payload.athlete.lastName);
+  const repositories = createFirestoreRepositories();
+  const invite = await repositories.registrationInvites.getByCode(inviteCode);
 
-  if (!invite) {
+  if (!isActiveRegistrationInvite(invite)) {
     createSubmissionError(
       "invalid-invite",
       "This registration invite is not active.",
@@ -220,7 +200,6 @@ export async function submitParentRegistration(
     );
   }
 
-  const repositories = createFirestoreRepositories();
   const parent = await repositories.parents.getById(parentId);
   const athleteName = `${athleteFirstName} ${athleteLastName}`;
   const athleteId = createLiveRecordId("athlete", [

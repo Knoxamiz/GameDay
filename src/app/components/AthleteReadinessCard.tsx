@@ -6,8 +6,8 @@ import {
   type ReadinessResult,
 } from "../data/readiness";
 import { buildReadinessActions } from "../data/readinessActions";
-import { getDocumentRequirementsByRegistrationId } from "../data/documents";
-import { getPaymentRequirementsByRegistrationId } from "../data/payments";
+import type { DocumentRequirement } from "../data/documents";
+import type { PaymentRequirement } from "../data/payments";
 import type {
   RegistrationRequirement,
   RegistrationStatus,
@@ -27,6 +27,8 @@ type AthleteReadinessCardProps = {
   eventId?: string;
   initialAttendanceStatus: AttendanceStatus;
   initialTransportationStatus: TransportationStatus;
+  documentRequirements?: DocumentRequirement[];
+  paymentRequirements?: PaymentRequirement[];
   registrationId: string;
   registrationRequirements: RegistrationRequirement[];
   registrationStatus: RegistrationStatus;
@@ -46,6 +48,8 @@ export default function AthleteReadinessCard({
   eventId,
   initialAttendanceStatus,
   initialTransportationStatus,
+  documentRequirements: initialDocumentRequirements = [],
+  paymentRequirements: initialPaymentRequirements = [],
   registrationId,
   registrationRequirements,
   registrationStatus,
@@ -70,10 +74,10 @@ export default function AthleteReadinessCard({
     registrationStatus,
   );
   const documentRequirements = useDocumentRequirements(
-    getDocumentRequirementsByRegistrationId(registrationId),
+    initialDocumentRequirements,
   );
   const paymentRequirements = usePaymentRequirements(
-    getPaymentRequirementsByRegistrationId(registrationId),
+    initialPaymentRequirements,
   );
   const readiness = buildAthleteReadiness({
     attendanceStatus,

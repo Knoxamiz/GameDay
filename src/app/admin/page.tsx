@@ -6,64 +6,52 @@ import MvpNav, { getRoleHref } from "../components/MvpNav";
 import RegistrationAdminActionLinks from "../components/RegistrationAdminActionLinks";
 import SessionControls from "../components/SessionControls";
 import TransportationIssueAction from "../components/TransportationIssueAction";
-import { attendanceEntries } from "../data/attendance";
-import { getCoachesByOrganizationId } from "../data/coaches";
-import { getEventsByOrganizationId } from "../data/events";
-import { getMessagesByAudience } from "../data/messages";
-import { blackDiamondsOrganization } from "../data/organizations";
-import { getRegistrationsByOrganizationId } from "../data/registrations";
-import {
-  getTeamById,
-  getTeamsByOrganizationId,
-  getTeamsNeedingCoaches,
-} from "../data/teams";
-import { transportationEntries } from "../data/transportation";
+import { getAdminHomeReadModel } from "../data/adminHomeRead.server";
+import { getTeamsNeedingCoaches } from "../data/teams";
 
-const adminUpcomingEvents = getEventsByOrganizationId(
-  blackDiamondsOrganization.id,
-);
-const adminUpcomingEventIdSet = new Set(
-  adminUpcomingEvents.map((event) => event.id),
-);
-const adminAttendanceEntries = attendanceEntries.filter((entry) =>
-  adminUpcomingEventIdSet.has(entry.eventId),
-);
-const organizationTeams = getTeamsByOrganizationId(blackDiamondsOrganization.id);
-const organizationCoaches = getCoachesByOrganizationId(
-  blackDiamondsOrganization.id,
-);
-const organizationRegistrations = getRegistrationsByOrganizationId(
-  blackDiamondsOrganization.id,
-);
-const teamsNeedingCoaches = getTeamsNeedingCoaches(organizationTeams);
-const adminCommunications = getMessagesByAudience(
-  "admin",
-  blackDiamondsOrganization.id,
-);
+export const dynamic = "force-dynamic";
 
-const organizationStatus = [
-  {
-    label: "Registered Players",
-    value: organizationTeams.reduce(
-      (playerCount, team) => playerCount + team.playerCount,
-      0,
-    ),
-  },
-  {
-    label: "Active Teams",
-    value: organizationTeams.length,
-  },
-  {
-    label: "Coaches",
-    value: organizationCoaches.length,
-  },
-  {
-    label: "Upcoming Events",
-    value: adminUpcomingEvents.length,
-  },
-];
+export default async function AdminHome() {
+  const {
+    attendanceEntries,
+    coaches: organizationCoaches,
+    communications: adminCommunications,
+    events: adminUpcomingEvents,
+    organization,
+    registrations: organizationRegistrations,
+    teams: organizationTeams,
+    transportationEntries,
+  } = await getAdminHomeReadModel();
+  const adminUpcomingEventIdSet = new Set(
+    adminUpcomingEvents.map((event) => event.id),
+  );
+  const adminAttendanceEntries = attendanceEntries.filter((entry) =>
+    adminUpcomingEventIdSet.has(entry.eventId),
+  );
+  const teamsNeedingCoaches = getTeamsNeedingCoaches(organizationTeams);
+  const organizationStatus = [
+    {
+      label: "Registered Players",
+      value: organizationTeams.reduce(
+        (playerCount, team) => playerCount + team.playerCount,
+        0,
+      ),
+    },
+    {
+      label: "Active Teams",
+      value: organizationTeams.length,
+    },
+    {
+      label: "Coaches",
+      value: organizationCoaches.length,
+    },
+    {
+      label: "Upcoming Events",
+      value: adminUpcomingEvents.length,
+    },
+  ];
+  const teamById = new Map(organizationTeams.map((team) => [team.id, team]));
 
-export default function AdminHome() {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
@@ -75,7 +63,7 @@ export default function AdminHome() {
 
         <SessionControls role="admin" />
 
-        <p className="mt-5 text-slate-300">{blackDiamondsOrganization.name}</p>
+        <p className="mt-5 text-slate-300">{organization.name}</p>
 
         <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
@@ -131,7 +119,7 @@ export default function AdminHome() {
           <h2 className="text-lg font-bold">Upcoming Events</h2>
           <div className="mt-3 space-y-3">
             {adminUpcomingEvents.map((event) => {
-              const team = event.teamId ? getTeamById(event.teamId) : undefined;
+              const team = event.teamId ? teamById.get(event.teamId) : undefined;
 
               return (
                 <Link

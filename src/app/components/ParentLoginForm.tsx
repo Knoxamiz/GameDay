@@ -16,7 +16,7 @@ type SessionResponse = {
   error?: string;
   landingRoute?: string;
   role?: LoginRole;
-  status?: "preview" | "signed-in" | "signed-out";
+  status?: "signed-in" | "signed-out";
 };
 
 type SignedInSessionResponse = SessionResponse & {
@@ -183,8 +183,7 @@ export default function ParentLoginForm({
     <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
       <h2 className="text-xl font-bold">Sign in to GameDay</h2>
       <p className="mt-2 text-sm text-slate-400">
-        Parent, coach, and admin accounts use Firebase. Preview pages remain
-        available when Firebase is not configured.
+        Parent, coach, and admin accounts use Firebase.
       </p>
 
       {isCheckingSession && (

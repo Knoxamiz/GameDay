@@ -3,10 +3,9 @@ import MvpNav, {
   getMvpNavRole,
   getRoleHref,
 } from "../components/MvpNav";
-import { getCurrentCoach } from "../data/coaches";
-import { getEventById } from "../data/events";
-import { getTeamsByCoachId, teams } from "../data/teams";
-import { getTransportationSummaryByEventId } from "../data/transportation";
+import { summarizeTransportationEntries } from "../data/transportation";
+import { getFirebaseAdminConfig } from "../infrastructure/firebase";
+import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 
 type TeamsHomeProps = {
   searchParams?: Promise<{
@@ -14,11 +13,46 @@ type TeamsHomeProps = {
   }>;
 };
 
+export const dynamic = "force-dynamic";
+
+function isDefined<TValue>(
+  value: TValue | null | undefined,
+): value is TValue {
+  return Boolean(value);
+}
+
 export default async function TeamsHome({ searchParams }: TeamsHomeProps) {
   const role = getMvpNavRole((await searchParams)?.role);
-  const currentCoach = getCurrentCoach();
-  const visibleTeams =
-    role === "coach" ? getTeamsByCoachId(currentCoach.id) : teams;
+  const repositories = getFirebaseAdminConfig()
+    ? createFirestoreRepositories()
+    : null;
+  const visibleTeams = repositories ? await repositories.teams.list() : [];
+  const nextEvents = repositories
+    ? (
+        await Promise.all(
+          visibleTeams
+            .map((team) => team.nextEventId)
+            .filter((eventId): eventId is string => Boolean(eventId))
+            .map((eventId) => repositories.events.getById(eventId)),
+        )
+      ).filter(isDefined)
+    : [];
+  const nextEventsById = new Map(
+    nextEvents.map((event) => [event.id, event]),
+  );
+  const transportationLists = repositories
+    ? await Promise.all(
+        nextEvents.map((event) =>
+          repositories.transportation.listByEventId(event.id),
+        ),
+      )
+    : [];
+  const transportationByEventId = new Map(
+    nextEvents.map((event, index) => [
+      event.id,
+      transportationLists[index] ?? [],
+    ]),
+  );
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -33,13 +67,21 @@ export default async function TeamsHome({ searchParams }: TeamsHomeProps) {
         </div>
 
         <div className="mt-6 space-y-4">
+          {visibleTeams.length === 0 && (
+            <p className="rounded-2xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300">
+              No teams listed.
+            </p>
+          )}
           {visibleTeams.map((team) => {
             const nextEvent = team.nextEventId
-              ? getEventById(team.nextEventId)
+              ? nextEventsById.get(team.nextEventId)
               : undefined;
             const transportation = nextEvent
-              ? getTransportationSummaryByEventId(nextEvent.id)
-              : { needsRide: 0, canOfferRide: 0 };
+              ? summarizeTransportationEntries(
+                  nextEvent.id,
+                  transportationByEventId.get(nextEvent.id) ?? [],
+                )
+              : { needsRide: 0 };
             const needsCoach = team.coachIds.length === 0;
             const needsRideHelp = transportation.needsRide > 0;
 

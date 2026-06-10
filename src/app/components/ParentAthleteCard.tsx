@@ -2,13 +2,10 @@
 
 import Link from "next/link";
 import type { AttendanceStatus } from "../data/attendance";
+import { summarizeDocumentRequirements, type DocumentRequirement } from "../data/documents";
 import {
-  getDocumentRequirementsByRegistrationId,
-  summarizeDocumentRequirements,
-} from "../data/documents";
-import {
-  getPaymentRequirementsByRegistrationId,
   summarizePaymentRequirements,
+  type PaymentRequirement,
 } from "../data/payments";
 import type {
   RegistrationRequirement,
@@ -42,10 +39,30 @@ type ParentAthleteCardProps = {
   };
   initialAttendanceStatus: AttendanceStatus;
   initialTransportationStatus: TransportationStatus;
+  paymentRequirements?: PaymentRequirement[];
   registrationId: string;
   registrationRequirements: RegistrationRequirement[];
   registrationStatus: RegistrationStatus;
 };
+
+function getDocumentRequirementsFromRegistration(
+  registrationId: string,
+  athleteId: string,
+  requirements: RegistrationRequirement[],
+): DocumentRequirement[] {
+  return requirements.map((requirement) => ({
+    athleteId,
+    description: requirement.description ?? "",
+    id: `${registrationId}-${requirement.label.toLowerCase().replaceAll(" ", "-")}`,
+    label: requirement.label,
+    organizationId: "",
+    parentId: "",
+    registrationId,
+    required: requirement.required ?? true,
+    status: requirement.status,
+    teamId: "",
+  }));
+}
 
 export default function ParentAthleteCard({
   athleteId,
@@ -54,6 +71,7 @@ export default function ParentAthleteCard({
   nextEvent,
   initialAttendanceStatus,
   initialTransportationStatus,
+  paymentRequirements: initialPaymentRequirements = [],
   registrationId,
   registrationRequirements,
   registrationStatus,
@@ -78,10 +96,14 @@ export default function ParentAthleteCard({
     registrationStatus,
   );
   const documentRequirements = useDocumentRequirements(
-    getDocumentRequirementsByRegistrationId(registrationId),
+    getDocumentRequirementsFromRegistration(
+      registrationId,
+      athleteId,
+      registrationRequirements,
+    ),
   );
   const paymentRequirements = usePaymentRequirements(
-    getPaymentRequirementsByRegistrationId(registrationId),
+    initialPaymentRequirements,
   );
   const registrationRequirementSummary =
     summarizeRegistrationRequirements(requirements);

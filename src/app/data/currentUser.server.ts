@@ -3,11 +3,9 @@ import type { AuthSession, AuthSessionSource } from "../infrastructure/auth";
 import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
 import { getLiveParentId, getLiveParentUid } from "./liveIdentity";
-import { currentParentId } from "./parents";
 
 export type CurrentParentUserSource =
   | "firebase-session"
-  | "mock"
   | "signed-out";
 
 export type CurrentParentUser = {
@@ -36,17 +34,6 @@ async function getAuthSessionSource(): Promise<AuthSessionSource> {
   };
 }
 
-function getMockParentUser(): CurrentParentUser {
-  // Mock fallback keeps the current MVP usable without Firebase Auth/session env.
-  return {
-    athleteIds: [],
-    organizationIds: [],
-    parentId: currentParentId,
-    source: "mock",
-    teamIds: [],
-  };
-}
-
 function getSignedOutParentUser(): CurrentParentUser {
   return {
     athleteIds: [],
@@ -59,7 +46,7 @@ function getSignedOutParentUser(): CurrentParentUser {
 
 export async function getCurrentParentUser(): Promise<CurrentParentUser> {
   if (!getFirebaseAdminConfig()) {
-    return getMockParentUser();
+    return getSignedOutParentUser();
   }
 
   try {

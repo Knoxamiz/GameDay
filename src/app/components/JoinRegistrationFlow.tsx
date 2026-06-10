@@ -242,9 +242,7 @@ export default function JoinRegistrationFlow({
       <>
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">
-            {submissionResult.source === "firestore"
-              ? "Registration Submitted"
-              : "Preview Registration Submitted"}
+            Registration Submitted
           </p>
           <h1 className="mt-3 text-3xl font-bold">
             {confirmedAthleteName}

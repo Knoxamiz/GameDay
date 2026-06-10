@@ -40,40 +40,7 @@ export const transportationOptions: TransportationStatus[] = [
   "Can Offer Ride",
 ];
 
-export const transportationEntries: TransportationEntry[] = [
-  {
-    id: "transport-emma-smith",
-    eventId: "practice-jun-2",
-    athleteId: "emma-smith",
-    name: "Emma Smith",
-    parentId: "jennifer-smith",
-    status: "Driving Self",
-  },
-  {
-    id: "transport-olivia-smith",
-    eventId: "tournament-saturday-10u",
-    athleteId: "olivia-smith",
-    name: "Olivia Smith",
-    parentId: "jennifer-smith",
-    status: "Unknown",
-  },
-  {
-    id: "transport-sarah-jones",
-    eventId: "practice-jun-2",
-    athleteId: "sarah-jones",
-    name: "Sarah Jones",
-    parentId: "sarah-jones-parent",
-    status: "Needs Ride",
-  },
-  {
-    id: "transport-jennifer-smith",
-    eventId: "practice-jun-2",
-    name: "Jennifer Smith",
-    parentId: "jennifer-smith",
-    status: "Can Offer Ride",
-    seatsAvailable: 2,
-  },
-];
+export const transportationEntries: TransportationEntry[] = [];
 
 export function summarizeTransportationEntries(
   eventId: string,

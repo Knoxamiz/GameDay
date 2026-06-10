@@ -21,7 +21,7 @@ export type RegistrationSubmissionPayload = {
   requirementStatuses: Record<string, RegistrationRequirementStatus>;
 };
 
-export type RegistrationSubmissionSource = "firestore" | "mock";
+export type RegistrationSubmissionSource = "firestore";
 
 export type RegistrationSubmissionResult = {
   athleteId?: string;

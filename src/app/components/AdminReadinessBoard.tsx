@@ -1,9 +1,8 @@
 "use client";
 
 import type { AttendanceEntry } from "../data/attendance";
-import { getDocumentRequirementsByRegistrationIds } from "../data/documents";
+import type { DocumentRequirement } from "../data/documents";
 import type { GameDayEvent } from "../data/events";
-import { getPaymentRequirementsByRegistrationIds } from "../data/payments";
 import {
   buildEventReadiness,
   buildTeamReadiness,
@@ -41,6 +40,23 @@ function getPriority(item: ReadinessBoardItem) {
 
 function getTopItem(items: ReadinessBoardItem[]) {
   return [...items].sort((first, second) => getPriority(second) - getPriority(first))[0];
+}
+
+function getRegistrationDocumentRequirements(
+  registration: Registration,
+): DocumentRequirement[] {
+  return registration.requirements.map((requirement) => ({
+    athleteId: registration.athleteId,
+    description: requirement.description ?? "",
+    id: `${registration.id}-${requirement.label.toLowerCase().replaceAll(" ", "-")}`,
+    label: requirement.label,
+    organizationId: registration.organizationId,
+    parentId: registration.parentId,
+    registrationId: registration.id,
+    required: requirement.required ?? true,
+    status: requirement.status,
+    teamId: registration.teamId,
+  }));
 }
 
 function ReadinessWatchItem({
@@ -83,14 +99,13 @@ export default function AdminReadinessBoard({
   const currentTransportationEntries =
     useAllTransportationEntries(transportationEntries);
   const currentRegistrations = useRegistrations(registrations);
-  const currentRegistrationIds = currentRegistrations.map(
-    (registration) => registration.id,
-  );
   const currentDocumentRequirements = useDocumentRequirements(
-    getDocumentRequirementsByRegistrationIds(currentRegistrationIds),
+    currentRegistrations.flatMap(getRegistrationDocumentRequirements),
   );
   const currentPaymentRequirements = usePaymentRequirements(
-    getPaymentRequirementsByRegistrationIds(currentRegistrationIds),
+    currentRegistrations.flatMap(
+      (registration) => registration.paymentRequirements ?? [],
+    ),
   );
   const eventItems: ReadinessBoardItem[] = events.map((event) => {
     const eventRegistrations = event.teamId

@@ -3,11 +3,10 @@ import MvpNav, {
   getMvpNavRole,
   getRoleHref,
 } from "../components/MvpNav";
-import { getAttendanceSummaryByEventId } from "../data/attendance";
-import { getGameAlertByEventId } from "../data/gameAlerts";
-import { getVisibleScheduleEvents } from "../data/schedule";
-import { getTeamById } from "../data/teams";
-import { getTransportationSummaryByEventId } from "../data/transportation";
+import { summarizeAttendanceEntries } from "../data/attendance";
+import { summarizeTransportationEntries } from "../data/transportation";
+import { getFirebaseAdminConfig } from "../infrastructure/firebase";
+import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 
 type EventsHomeProps = {
   searchParams?: Promise<{
@@ -15,9 +14,58 @@ type EventsHomeProps = {
   }>;
 };
 
+export const dynamic = "force-dynamic";
+
+function isDefined<TValue>(
+  value: TValue | null | undefined,
+): value is TValue {
+  return Boolean(value);
+}
+
 export default async function EventsHome({ searchParams }: EventsHomeProps) {
   const role = getMvpNavRole((await searchParams)?.role);
-  const visibleEvents = getVisibleScheduleEvents(role);
+  const repositories = getFirebaseAdminConfig()
+    ? createFirestoreRepositories()
+    : null;
+  const visibleEvents = repositories ? await repositories.events.list() : [];
+  const [attendanceLists, transportationLists] = repositories
+    ? await Promise.all([
+        Promise.all(
+          visibleEvents.map((event) =>
+            repositories.attendance.listByEventId(event.id),
+          ),
+        ),
+        Promise.all(
+          visibleEvents.map((event) =>
+            repositories.transportation.listByEventId(event.id),
+          ),
+        ),
+      ])
+    : [[], []];
+  const teams = repositories
+    ? (
+      await Promise.all(
+        visibleEvents
+          .map((event) => event.teamId)
+          .filter((teamId): teamId is string => Boolean(teamId))
+          .map((teamId) => repositories.teams.getById(teamId)),
+      )
+    )
+      .filter(isDefined)
+    : [];
+  const teamsById = new Map(teams.map((team) => [team.id, team]));
+  const attendanceByEventId = new Map(
+    visibleEvents.map((event, index) => [
+      event.id,
+      attendanceLists[index] ?? [],
+    ]),
+  );
+  const transportationByEventId = new Map(
+    visibleEvents.map((event, index) => [
+      event.id,
+      transportationLists[index] ?? [],
+    ]),
+  );
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -38,11 +86,21 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
         </div>
 
         <div className="mt-6 space-y-4">
+          {visibleEvents.length === 0 && (
+            <p className="rounded-2xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300">
+              No events listed.
+            </p>
+          )}
           {visibleEvents.map((event) => {
-            const team = event.teamId ? getTeamById(event.teamId) : undefined;
-            const gameAlert = getGameAlertByEventId(event.id);
-            const attendance = getAttendanceSummaryByEventId(event.id);
-            const transportation = getTransportationSummaryByEventId(event.id);
+            const team = event.teamId ? teamsById.get(event.teamId) : undefined;
+            const attendance = summarizeAttendanceEntries(
+              event.id,
+              attendanceByEventId.get(event.id) ?? [],
+            );
+            const transportation = summarizeTransportationEntries(
+              event.id,
+              transportationByEventId.get(event.id) ?? [],
+            );
             const hasTransportationIssue = transportation.needsRide > 0;
 
             return (
@@ -68,31 +126,6 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
                     {hasTransportationIssue ? "Ride Help" : "On Track"}
                   </span>
                 </div>
-
-                {gameAlert && (
-                  <div className="mt-4 rounded-xl bg-slate-800 p-4 text-sm">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="font-semibold text-white">Game Alert</p>
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                          gameAlert.status === "Live"
-                            ? "bg-red-500/20 text-red-300"
-                            : gameAlert.status === "Final"
-                              ? "bg-blue-500/20 text-blue-300"
-                              : "bg-slate-700 text-slate-300"
-                        }`}
-                      >
-                        {gameAlert.status.toUpperCase()}
-                      </span>
-                    </div>
-                    <p className="mt-3 font-semibold text-blue-300">
-                      {gameAlert.homeScore} - {gameAlert.awayScore}
-                    </p>
-                    <p className="mt-1 text-slate-400">
-                      {gameAlert.homeTeamName} vs {gameAlert.awayTeamName}
-                    </p>
-                  </div>
-                )}
 
                 <p className="mt-3 text-sm text-slate-400">
                   {team?.name ?? "Organization"}

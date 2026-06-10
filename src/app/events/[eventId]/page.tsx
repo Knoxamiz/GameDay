@@ -1,6 +1,5 @@
 import EventDetails from "../../components/EventDetails";
 import { getMvpNavRole } from "../../components/MvpNav";
-import { events } from "../../data/events";
 
 type EventDetailsPageProps = {
   params: Promise<{
@@ -12,11 +11,7 @@ type EventDetailsPageProps = {
   }>;
 };
 
-export function generateStaticParams() {
-  return events.map((event) => ({
-    eventId: event.id,
-  }));
-}
+export const dynamic = "force-dynamic";
 
 export default async function EventDetailsPage({
   params,

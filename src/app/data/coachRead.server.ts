@@ -3,21 +3,15 @@ import type { AuthSession, AuthSessionSource } from "../infrastructure/auth";
 import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
-import {
-  getAttendanceEntriesByEventId,
-  type AttendanceEntry,
-} from "./attendance";
-import { getCurrentCoach, type Coach } from "./coaches";
-import { getEventById, type GameDayEvent } from "./events";
-import { getMessagesByAudience, type GameDayMessage } from "./messages";
-import { type Registration, getRegistrationsByTeamId } from "./registrations";
-import { getTeamsByCoachId, type Team } from "./teams";
-import {
-  getTransportationEntriesByEventId,
-  type TransportationEntry,
-} from "./transportation";
+import type { AttendanceEntry } from "./attendance";
+import type { Coach } from "./coaches";
+import type { GameDayEvent } from "./events";
+import type { GameDayMessage } from "./messages";
+import type { Registration } from "./registrations";
+import type { Team } from "./teams";
+import type { TransportationEntry } from "./transportation";
 
-export type CoachHomeReadSource = "firestore" | "mock";
+export type CoachHomeReadSource = "empty" | "firestore";
 
 export type CoachHomeReadModel = {
   attendanceEntries: AttendanceEntry[];
@@ -62,42 +56,46 @@ function uniqueById<TRecord extends { id: string }>(records: TRecord[]) {
   return [...new Map(records.map((record) => [record.id, record])).values()];
 }
 
-function getCoachMessages(coach: Coach, teamIds: string[]) {
+async function getCoachMessages(coach: Coach, teamIds: string[]) {
+  const repositories = createFirestoreRepositories();
   const teamIdSet = new Set(teamIds.length > 0 ? teamIds : coach.teamIds);
+  const [organizationMessages, teamMessageLists] = await Promise.all([
+    repositories.messages.listByAudience({
+      organizationId: coach.organizationId,
+    }),
+    Promise.all(
+      [...teamIdSet].map((teamId) => repositories.messages.listByTeamId(teamId)),
+    ),
+  ]);
 
-  return getMessagesByAudience("coach", coach.organizationId).filter(
-    (message) => !message.teamId || teamIdSet.has(message.teamId),
-  );
+  return uniqueById([...organizationMessages, ...teamMessageLists.flat()])
+    .filter((message) => message.audience.includes("coach"))
+    .filter((message) => !message.teamId || teamIdSet.has(message.teamId))
+    .sort((first, second) => second.timestamp.localeCompare(first.timestamp));
 }
 
-function getMockCoachHomeReadModel(): CoachHomeReadModel {
-  const coach = getCurrentCoach();
-  const coachTeams = getTeamsByCoachId(coach.id);
-  const coachTeam = coachTeams[0];
-  const todayEvent = coachTeam?.nextEventId
-    ? getEventById(coachTeam.nextEventId)
-    : undefined;
-  const coachTeamRegistrations = coachTeam
-    ? getRegistrationsByTeamId(coachTeam.id)
-    : [];
+function getEmptyCoachHomeReadModel(
+  session?: AuthSession | null,
+): CoachHomeReadModel {
+  const coach = session ? getSessionCoachFallback(session) : {
+    email: "",
+    firstName: "Coach",
+    id: "",
+    lastName: "",
+    name: "GameDay Coach",
+    organizationId: "",
+    phone: "",
+    teamIds: [],
+  };
 
   return {
-    attendanceEntries: todayEvent
-      ? getAttendanceEntriesByEventId(todayEvent.id)
-      : [],
+    attendanceEntries: [],
     coach,
-    coachMessages: getCoachMessages(
-      coach,
-      coachTeams.map((team) => team.id),
-    ),
-    coachTeam,
-    coachTeamRegistrations,
-    coachTeams,
-    source: "mock",
-    todayEvent,
-    transportationEntries: todayEvent
-      ? getTransportationEntriesByEventId(todayEvent.id)
-      : [],
+    coachMessages: [],
+    coachTeamRegistrations: [],
+    coachTeams: [],
+    source: "empty",
+    transportationEntries: [],
   };
 }
 
@@ -188,7 +186,7 @@ async function getPrimaryCoachEvent(
 
 export async function getCoachHomeReadModel(): Promise<CoachHomeReadModel> {
   if (!getFirebaseAdminConfig()) {
-    return getMockCoachHomeReadModel();
+    return getEmptyCoachHomeReadModel();
   }
 
   try {
@@ -196,13 +194,13 @@ export async function getCoachHomeReadModel(): Promise<CoachHomeReadModel> {
     const session = await authProvider.verifySession(await getAuthSessionSource());
 
     if (!isValidCoachSession(session)) {
-      return getMockCoachHomeReadModel();
+      return getEmptyCoachHomeReadModel(session);
     }
 
     const coachId = session.claims.coachId;
 
     if (!coachId) {
-      return getMockCoachHomeReadModel();
+      return getEmptyCoachHomeReadModel(session);
     }
 
     const repositories = createFirestoreRepositories();
@@ -218,8 +216,17 @@ export async function getCoachHomeReadModel(): Promise<CoachHomeReadModel> {
       coachTeam,
       coachEvents,
     );
-    const [coachTeamRegistrations, attendanceEntries, transportationEntries] =
+    const [
+      coachMessages,
+      coachTeamRegistrations,
+      attendanceEntries,
+      transportationEntries,
+    ] =
       await Promise.all([
+        getCoachMessages(
+          coach,
+          coachTeams.map((team) => team.id),
+        ),
         coachTeam ? repositories.registrations.listByTeamId(coachTeam.id) : [],
         todayEvent ? repositories.attendance.listByEventId(todayEvent.id) : [],
         todayEvent
@@ -230,10 +237,7 @@ export async function getCoachHomeReadModel(): Promise<CoachHomeReadModel> {
     return {
       attendanceEntries,
       coach,
-      coachMessages: getCoachMessages(
-        coach,
-        coachTeams.map((team) => team.id),
-      ),
+      coachMessages,
       coachTeam,
       coachTeamRegistrations,
       coachTeams,
@@ -242,11 +246,11 @@ export async function getCoachHomeReadModel(): Promise<CoachHomeReadModel> {
       transportationEntries,
     };
   } catch (error) {
-    console.warn("Falling back to mock coach data.", {
+    console.warn("Could not load live coach data.", {
       message: error instanceof Error ? error.message : "Unknown error",
       name: error instanceof Error ? error.name : typeof error,
     });
 
-    return getMockCoachHomeReadModel();
+    return getEmptyCoachHomeReadModel();
   }
 }

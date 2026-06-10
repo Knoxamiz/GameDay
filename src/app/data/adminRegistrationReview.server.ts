@@ -32,13 +32,6 @@ export class AdminRegistrationReviewError extends Error {
   }
 }
 
-function fallbackResult(reason?: string): AdminRegistrationReviewResult {
-  return {
-    reason,
-    source: "mock",
-  };
-}
-
 function createReviewError(
   reason: string,
   message: string,
@@ -179,7 +172,11 @@ export async function updateAdminRegistrationReview(
   options: UpdateAdminRegistrationReviewOptions,
 ): Promise<AdminRegistrationReviewResult> {
   if (!getFirebaseAdminConfig()) {
-    return fallbackResult("firebase-admin-not-configured");
+    createReviewError(
+      "firebase-unavailable",
+      "Registration review is not available until Firebase is configured.",
+      503,
+    );
   }
 
   const registrationId = normalizeText(payload.registrationId);

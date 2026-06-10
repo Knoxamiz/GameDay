@@ -1,24 +1,10 @@
 import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
-import {
-  athletes,
-  getAthleteById,
-  getAthletesByParentId,
-  type Athlete,
-} from "./athletes";
-import {
-  currentParentId,
-  getCurrentParent,
-  getParentById,
-  type ParentGuardian,
-} from "./parents";
-import {
-  getRegistrationById,
-  getRegistrationsByParentId,
-  type Registration,
-} from "./registrations";
+import { athletes, type Athlete } from "./athletes";
+import type { ParentGuardian } from "./parents";
+import type { Registration } from "./registrations";
 
-export type ParentAthleteRegistrationSource = "firestore" | "mock";
+export type ParentAthleteRegistrationSource = "empty" | "firestore";
 
 export type ParentAthleteRegistrationReadModel = {
   athletes: Athlete[];
@@ -47,19 +33,6 @@ function shouldUseFirestore() {
   return Boolean(getFirebaseAdminConfig());
 }
 
-function buildMockParentReadModel(
-  parentId = currentParentId,
-): ParentAthleteRegistrationReadModel {
-  const parent = getParentById(parentId) ?? getCurrentParent();
-
-  return {
-    athletes: getAthletesByParentId(parent.id),
-    parent,
-    registrations: getRegistrationsByParentId(parent.id),
-    source: "mock",
-  };
-}
-
 function buildLiveEmptyParentReadModel(
   parentId: string,
 ): ParentAthleteRegistrationReadModel {
@@ -78,23 +51,7 @@ function buildLiveEmptyParentReadModel(
       phone: "",
     },
     registrations: [],
-    source: "firestore",
-  };
-}
-
-function buildMockAthleteReadModel(
-  athleteId: string,
-): AthleteRegistrationReadModel | null {
-  const athlete = getAthleteById(athleteId);
-
-  if (!athlete) {
-    return null;
-  }
-
-  return {
-    athlete,
-    registration: getRegistrationById(athlete.registrationId),
-    source: "mock",
+    source: "empty",
   };
 }
 
@@ -102,12 +59,10 @@ export function getRegistrationByAthlete(
   athlete: Athlete,
   registrations: Registration[],
 ) {
-  return (
-    registrations.find(
-      (registration) =>
-        registration.id === athlete.registrationId ||
-        registration.athleteId === athlete.id,
-    ) ?? getRegistrationById(athlete.registrationId)
+  return registrations.find(
+    (registration) =>
+      registration.id === athlete.registrationId ||
+      registration.athleteId === athlete.id,
   );
 }
 
@@ -115,7 +70,7 @@ export async function getParentAthleteRegistrationReadModel(
   parentId?: string,
 ): Promise<ParentAthleteRegistrationReadModel> {
   if (!shouldUseFirestore()) {
-    return buildMockParentReadModel(parentId ?? currentParentId);
+    return buildLiveEmptyParentReadModel(parentId ?? "");
   }
 
   const normalizedParentId = normalizeModelId(parentId ?? "");
@@ -163,7 +118,7 @@ export async function getAthleteRegistrationReadModel(
   }
 
   if (!shouldUseFirestore()) {
-    return buildMockAthleteReadModel(normalizedAthleteId);
+    return null;
   }
 
   try {

@@ -14,5 +14,5 @@ export type ParentPaymentRequirementUpdatePayload = {
 };
 
 export type ParentPaymentRequirementUpdateResult = {
-  source: "firestore" | "mock";
+  source: "firestore";
 };

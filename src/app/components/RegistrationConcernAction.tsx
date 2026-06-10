@@ -1,14 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { summarizeDocumentRequirements } from "../data/documents";
+import { summarizePaymentRequirements } from "../data/payments";
 import {
-  getDocumentRequirementsByRegistrationIds,
-  summarizeDocumentRequirements,
-} from "../data/documents";
-import {
-  getPaymentRequirementsByRegistrationIds,
-  summarizePaymentRequirements,
-} from "../data/payments";
+  getDocumentRequirementsFromRegistrations,
+  getPaymentRequirementsFromRegistrations,
+} from "../data/registrationDerivedRequirements";
 import type { Registration } from "../data/registrations";
 import { useDocumentRequirements } from "./documentRequirementState";
 import { usePaymentRequirements } from "./paymentRequirementState";
@@ -24,12 +22,11 @@ export default function RegistrationConcernAction({
   registrations,
 }: RegistrationConcernActionProps) {
   const registrationConcernCount = useRegistrationConcernCount(registrations);
-  const registrationIds = registrations.map((registration) => registration.id);
   const documents = useDocumentRequirements(
-    getDocumentRequirementsByRegistrationIds(registrationIds),
+    getDocumentRequirementsFromRegistrations(registrations),
   );
   const payments = usePaymentRequirements(
-    getPaymentRequirementsByRegistrationIds(registrationIds),
+    getPaymentRequirementsFromRegistrations(registrations),
   );
   const documentSummary = summarizeDocumentRequirements(documents);
   const paymentSummary = summarizePaymentRequirements(payments);

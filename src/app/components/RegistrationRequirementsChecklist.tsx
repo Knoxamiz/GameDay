@@ -2,21 +2,21 @@
 
 import { useState } from "react";
 import {
-  getDocumentRequirementsByRegistrationId,
   isDocumentBlocked,
   isDocumentCleared,
   isDocumentMissing,
   isDocumentNeedsReview,
   summarizeDocumentRequirements,
+  type DocumentRequirement,
   type DocumentRequirementStatus,
 } from "../data/documents";
 import {
-  getPaymentRequirementsByRegistrationId,
   isPaymentBlocked,
   isPaymentCleared,
   isPaymentMissing,
   isPaymentNeedsReview,
   summarizePaymentRequirements,
+  type PaymentRequirement,
   type PaymentRequirementStatus,
 } from "../data/payments";
 import type { ParentPaymentRequirementUpdatePayload } from "../data/paymentRequirementUpdate";
@@ -44,8 +44,10 @@ import {
 
 type RegistrationRequirementsChecklistProps = {
   athleteId: string;
+  documentRequirements?: DocumentRequirement[];
   organizationId: string;
   parentId: string;
+  paymentRequirements?: PaymentRequirement[];
   registrationId: string;
   requirements: RegistrationRequirement[];
 };
@@ -100,8 +102,10 @@ function getPaymentTone(status: PaymentRequirementStatus) {
 
 export default function RegistrationRequirementsChecklist({
   athleteId,
+  documentRequirements: initialDocumentRequirements = [],
   organizationId,
   parentId,
+  paymentRequirements: initialPaymentRequirements = [],
   registrationId,
   requirements,
 }: RegistrationRequirementsChecklistProps) {
@@ -114,10 +118,10 @@ export default function RegistrationRequirementsChecklist({
     requirements,
   );
   const documentRequirements = useDocumentRequirements(
-    getDocumentRequirementsByRegistrationId(registrationId),
+    initialDocumentRequirements,
   );
   const paymentRequirements = usePaymentRequirements(
-    getPaymentRequirementsByRegistrationId(registrationId),
+    initialPaymentRequirements,
   );
   const summary = summarizeRegistrationRequirements(currentRequirements);
   const documentSummary = summarizeDocumentRequirements(documentRequirements);

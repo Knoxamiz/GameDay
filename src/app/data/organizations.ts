@@ -14,10 +14,10 @@ export const organizations: Organization[] = [
     id: "black-diamonds",
     name: "Black Diamonds Girls Flag Football",
     status: {
-      registeredPlayers: 127,
-      activeTeams: 5,
-      coaches: 12,
-      upcomingEvents: 18,
+      registeredPlayers: 0,
+      activeTeams: 0,
+      coaches: 0,
+      upcomingEvents: 0,
     },
   },
 ];

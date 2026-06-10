@@ -52,8 +52,8 @@ export const accessRoles: AccessRoleDefinition[] = [
 ];
 
 export const authReadiness = {
-  backendProvider: "Firebase Auth target",
-  currentMode: "role-preview-no-auth",
+  backendProvider: "Firebase Auth",
+  currentMode: "firebase-session",
   requiredClaims: [
     "role",
     "organizationIds",
@@ -63,5 +63,5 @@ export const authReadiness = {
     "coachId",
     "adminId",
   ],
-  sessionSource: "URL route and preview role only",
+  sessionSource: "Verified Firebase session and role claims",
 };

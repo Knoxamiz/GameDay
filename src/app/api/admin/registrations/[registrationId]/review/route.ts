@@ -143,9 +143,7 @@ export async function PATCH(
       },
     });
 
-    return NextResponse.json(result, {
-      status: result.source === "firestore" ? 200 : 202,
-    });
+    return NextResponse.json(result, { status: 200 });
   } catch (error) {
     const status =
       error instanceof AdminRegistrationReviewError ? error.status : 500;

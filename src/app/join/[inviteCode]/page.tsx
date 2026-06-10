@@ -1,11 +1,7 @@
 import { notFound } from "next/navigation";
 import JoinRegistrationFlow from "../../components/JoinRegistrationFlow";
 import MvpNav from "../../components/MvpNav";
-import {
-  getActiveRegistrationInviteByCode,
-  getRegistrationInviteContext,
-  registrationInvites,
-} from "../../data/invites";
+import { getRegistrationInviteReadModelByCode } from "../../data/registrationInviteRead.server";
 
 type JoinInvitePageProps = {
   params: Promise<{
@@ -13,21 +9,16 @@ type JoinInvitePageProps = {
   }>;
 };
 
-export function generateStaticParams() {
-  return registrationInvites.map((invite) => ({
-    inviteCode: invite.code,
-  }));
-}
+export const dynamic = "force-dynamic";
 
 export default async function JoinInvitePage({ params }: JoinInvitePageProps) {
   const { inviteCode } = await params;
-  const invite = getActiveRegistrationInviteByCode(inviteCode);
+  const { invite, organization, team } =
+    await getRegistrationInviteReadModelByCode(inviteCode);
 
   if (!invite) {
     notFound();
   }
-
-  const { organization, team } = getRegistrationInviteContext(invite);
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">

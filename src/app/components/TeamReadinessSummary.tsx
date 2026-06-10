@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import type { AttendanceEntry } from "../data/attendance";
-import { getDocumentRequirementsByRegistrationIds } from "../data/documents";
-import { getPaymentRequirementsByRegistrationIds } from "../data/payments";
 import { buildTeamReadiness } from "../data/readiness";
 import { buildReadinessActions } from "../data/readinessActions";
+import {
+  getDocumentRequirementsFromRegistrations,
+  getPaymentRequirementsFromRegistrations,
+} from "../data/registrationDerivedRequirements";
 import type { Registration } from "../data/registrations";
 import type { TransportationEntry } from "../data/transportation";
 import ReadinessActionList from "./ReadinessActionList";
@@ -40,14 +42,11 @@ export default function TeamReadinessSummary({
     transportationEntries,
   );
   const currentRegistrations = useRegistrations(registrations);
-  const registrationIds = currentRegistrations.map(
-    (registration) => registration.id,
-  );
   const currentDocumentRequirements = useDocumentRequirements(
-    getDocumentRequirementsByRegistrationIds(registrationIds),
+    getDocumentRequirementsFromRegistrations(currentRegistrations),
   );
   const currentPaymentRequirements = usePaymentRequirements(
-    getPaymentRequirementsByRegistrationIds(registrationIds),
+    getPaymentRequirementsFromRegistrations(currentRegistrations),
   );
   const readiness = buildTeamReadiness({
     attendanceEntries: currentAttendanceEntries,

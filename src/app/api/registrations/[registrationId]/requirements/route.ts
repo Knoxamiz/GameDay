@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getFirebaseAdminConfig } from "../../../../infrastructure/firebase";
 import {
   ParentRegistrationRequirementError,
   updateParentRegistrationRequirementStatus,
@@ -102,9 +101,7 @@ export async function PATCH(
       },
     });
 
-    return NextResponse.json(result, {
-      status: result.source === "firestore" ? 200 : 202,
-    });
+    return NextResponse.json(result, { status: 200 });
   } catch (error) {
     return getRequirementErrorResponse(error);
   }
@@ -119,15 +116,13 @@ export async function POST(
   const file = formData ? getFormFile(formData) : null;
 
   if (!formData || !file) {
-    return getFirebaseAdminConfig()
-      ? NextResponse.json(
-          {
-            error: "Choose a document before uploading.",
-            reason: "missing-upload-file",
-          },
-          { status: 400 },
-        )
-      : NextResponse.json({ source: "mock" }, { status: 202 });
+    return NextResponse.json(
+      {
+        error: "Choose a document before uploading.",
+        reason: "missing-upload-file",
+      },
+      { status: 400 },
+    );
   }
 
   const payload: ParentRegistrationRequirementUploadPayload = {
@@ -150,9 +145,7 @@ export async function POST(
       },
     });
 
-    return NextResponse.json(result, {
-      status: result.source === "firestore" ? 201 : 202,
-    });
+    return NextResponse.json(result, { status: 201 });
   } catch (error) {
     return getRequirementErrorResponse(error);
   }

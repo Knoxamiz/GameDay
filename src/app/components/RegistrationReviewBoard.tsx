@@ -2,10 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { AdminRegistrationReviewPayload } from "../data/adminRegistrationReview";
-import { getAthleteById } from "../data/athletes";
 import {
-  getDocumentRequirementsByRegistrationId,
-  getDocumentRequirementsByRegistrationIds,
   isDocumentBlocked,
   isDocumentMissing,
   isDocumentNeedsReview,
@@ -15,8 +12,6 @@ import {
   type DocumentRequirementStatus,
 } from "../data/documents";
 import {
-  getPaymentRequirementsByRegistrationId,
-  getPaymentRequirementsByRegistrationIds,
   isPaymentBlocked,
   isPaymentMissing,
   isPaymentNeedsReview,
@@ -25,7 +20,6 @@ import {
   type PaymentRequirement,
   type PaymentRequirementStatus,
 } from "../data/payments";
-import { getParentById } from "../data/parents";
 import {
   isRequirementBlocked,
   isRequirementMissing,
@@ -37,7 +31,6 @@ import {
   type RegistrationRequirementStatus,
   type RegistrationStatus,
 } from "../data/registrations";
-import { getTeamById } from "../data/teams";
 import {
   saveDocumentRequirementStatus,
   useDocumentRequirements,
@@ -68,7 +61,7 @@ type RegistrationReviewCardProps = {
   source: RegistrationReviewSource;
 };
 
-type RegistrationReviewSource = "firestore" | "mock";
+type RegistrationReviewSource = "empty" | "firestore";
 
 type ReviewSyncOptions = {
   onError: (message: string | null) => void;
@@ -390,24 +383,38 @@ function getStatusDetails(status: RegistrationStatus, details: string) {
   return details;
 }
 
+function getRegistrationDocumentRequirements(
+  registration: Registration,
+): DocumentRequirement[] {
+  return registration.requirements.map((requirement) => ({
+    athleteId: registration.athleteId,
+    description: requirement.description ?? "",
+    id: `${registration.id}-${requirement.label.toLowerCase().replaceAll(" ", "-")}`,
+    label: requirement.label,
+    organizationId: registration.organizationId,
+    parentId: registration.parentId,
+    registrationId: registration.id,
+    required: requirement.required ?? true,
+    status: requirement.status,
+    teamId: registration.teamId,
+  }));
+}
+
 function RegistrationReviewCard({
   onReviewError,
   registration,
   source,
 }: RegistrationReviewCardProps) {
-  const athlete = getAthleteById(registration.athleteId);
-  const parent = getParentById(registration.parentId);
-  const team = getTeamById(registration.teamId);
   const status = useRegistrationStatus(registration.id, registration.status);
   const requirements = useRegistrationRequirements(
     registration.id,
     registration.requirements,
   );
   const documents = useDocumentRequirements(
-    getDocumentRequirementsByRegistrationId(registration.id),
+    getRegistrationDocumentRequirements(registration),
   );
   const payments = usePaymentRequirements(
-    getPaymentRequirementsByRegistrationId(registration.id),
+    registration.paymentRequirements ?? [],
   );
   const requirementSummary = summarizeRegistrationRequirements(requirements);
   const openRequirements = requirements.filter(isRequirementOpen);
@@ -417,13 +424,13 @@ function RegistrationReviewCard({
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-            {team?.label ?? "Team TBD"}
+            {registration.teamId || "Team TBD"}
           </p>
           <h2 className="mt-2 text-xl font-bold">
-            {athlete?.name ?? registration.athleteId}
+            {registration.athleteName ?? registration.athleteId}
           </h2>
           <p className="mt-1 text-sm text-slate-400">
-            Parent: {parent?.name ?? registration.parentName}
+            Parent: {registration.parentName}
           </p>
         </div>
         <RegistrationStatusBadge status={status} />
@@ -567,7 +574,7 @@ function RegistrationReviewCard({
 
 export default function RegistrationReviewBoard({
   registrations,
-  source = "mock",
+  source = "empty",
 }: RegistrationReviewBoardProps) {
   const [reviewError, setReviewError] = useState<string | null>(null);
 
@@ -596,12 +603,11 @@ export default function RegistrationReviewBoard({
   }, [registrations, source]);
 
   const summary = useRegistrationSummary(registrations);
-  const registrationIds = registrations.map((registration) => registration.id);
   const documents = useDocumentRequirements(
-    getDocumentRequirementsByRegistrationIds(registrationIds),
+    registrations.flatMap(getRegistrationDocumentRequirements),
   );
   const payments = usePaymentRequirements(
-    getPaymentRequirementsByRegistrationIds(registrationIds),
+    registrations.flatMap((registration) => registration.paymentRequirements ?? []),
   );
   const documentSummary = summarizeDocumentRequirements(documents);
   const paymentSummary = summarizePaymentRequirements(payments);

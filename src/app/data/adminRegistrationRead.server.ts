@@ -3,9 +3,7 @@ import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import type { AuthSessionSource } from "../infrastructure/auth";
-import { blackDiamondsOrganization } from "./organizations";
 import {
-  getRegistrationsByOrganizationId,
   registrationRequirementStatusValues,
   registrationStatusValues,
   type Registration,
@@ -17,7 +15,7 @@ import {
   type PaymentRequirementStatus,
 } from "./payments";
 
-export type AdminRegistrationReadSource = "firestore" | "mock";
+export type AdminRegistrationReadSource = "empty" | "firestore";
 
 export type AdminRegistrationReadModel = {
   registrations: Registration[];
@@ -97,16 +95,16 @@ function normalizeRegistration(registration: Registration): Registration {
   };
 }
 
-function getMockAdminRegistrationReadModel(): AdminRegistrationReadModel {
+function getEmptyAdminRegistrationReadModel(): AdminRegistrationReadModel {
   return {
-    registrations: getRegistrationsByOrganizationId(blackDiamondsOrganization.id),
-    source: "mock",
+    registrations: [],
+    source: "empty",
   };
 }
 
 export async function getAdminRegistrationReadModel(): Promise<AdminRegistrationReadModel> {
   if (!getFirebaseAdminConfig()) {
-    return getMockAdminRegistrationReadModel();
+    return getEmptyAdminRegistrationReadModel();
   }
 
   try {
@@ -118,7 +116,7 @@ export async function getAdminRegistrationReadModel(): Promise<AdminRegistration
       !session.claims.adminId ||
       session.claims.organizationIds.length === 0
     ) {
-      return getMockAdminRegistrationReadModel();
+      return getEmptyAdminRegistrationReadModel();
     }
 
     const repositories = createFirestoreRepositories();
@@ -141,7 +139,7 @@ export async function getAdminRegistrationReadModel(): Promise<AdminRegistration
       source: "firestore",
     };
   } catch (error) {
-    console.warn("Falling back to mock admin registration data.", error);
-    return getMockAdminRegistrationReadModel();
+    console.warn("Could not load live admin registration data.", error);
+    return getEmptyAdminRegistrationReadModel();
   }
 }

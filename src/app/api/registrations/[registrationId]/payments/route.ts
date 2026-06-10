@@ -93,9 +93,7 @@ export async function PATCH(
       },
     });
 
-    return NextResponse.json(result, {
-      status: result.source === "firestore" ? 200 : 202,
-    });
+    return NextResponse.json(result, { status: 200 });
   } catch (error) {
     return getPaymentErrorResponse(error);
   }

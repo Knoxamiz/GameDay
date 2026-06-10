@@ -249,17 +249,13 @@ export const backendPaymentMetadataKeys = [
 ];
 
 export const betaPersistenceReadiness = {
-  backendMode: "mock-local-state",
+  backendMode: "firestore-live-state",
   blockers: [
-    "Firebase project and environment variables are not configured.",
-    "Authentication and role claims are not implemented.",
-    "Document upload storage is not implemented.",
     "Payment provider integration is intentionally not connected.",
   ],
   migrationPath: [
-    "Keep current IDs as Firebase document IDs where possible.",
-    "Move local state helpers behind repository functions.",
+    "Keep production reads on Firestore-backed repository functions.",
     "Persist role-scoped reads by organizationId, teamId, parentId, and athleteId.",
-    "Add server-side validation before real document or payment workflows.",
+    "Add payment provider integration before collecting real payments.",
   ],
 };

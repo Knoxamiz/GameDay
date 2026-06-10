@@ -66,7 +66,7 @@ const utilityItemsByRole: Record<
       label: "Schedule",
     },
     {
-      href: "/teams/black-diamonds-12u",
+      href: "/coach",
       label: "My Team",
     },
     {

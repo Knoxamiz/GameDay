@@ -1,6 +1,5 @@
 import TeamDetails from "../../components/TeamDetails";
 import { getMvpNavRole } from "../../components/MvpNav";
-import { teams } from "../../data/teams";
 
 type TeamDetailsPageProps = {
   params: Promise<{
@@ -11,11 +10,7 @@ type TeamDetailsPageProps = {
   }>;
 };
 
-export function generateStaticParams() {
-  return teams.map((team) => ({
-    teamId: team.id,
-  }));
-}
+export const dynamic = "force-dynamic";
 
 export default async function TeamDetailsPage({
   params,

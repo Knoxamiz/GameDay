@@ -10,7 +10,7 @@ export type ParentRegistrationRequirementUpdatePayload = {
 };
 
 export type ParentRegistrationRequirementUpdateResult = {
-  source: "firestore" | "mock";
+  source: "firestore";
 };
 
 export type ParentRegistrationRequirementUploadPayload = {
@@ -27,6 +27,6 @@ export type ParentRegistrationRequirementUploadPayload = {
 };
 
 export type ParentRegistrationRequirementUploadResult = {
-  source: "firestore" | "mock";
+  source: "firestore";
   storagePath?: string;
 };

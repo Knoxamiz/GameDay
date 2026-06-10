@@ -55,27 +55,9 @@ export const rideShareSafetyRules = [
 const rideShareParticipantDetailsByEntryId: Record<
   string,
   RideShareParticipantDetails
-> = {
-  "transport-sarah-jones": {
-    dropoffPreference: "Field meetup",
-    pickupPreference: "School meetup",
-    publicNote: "Needs a safe pickup near school.",
-  },
-  "transport-jennifer-smith": {
-    dropoffPreference: "Field meetup",
-    pickupPreference: "Approved meetup spot",
-    publicNote: "Can offer seats from an approved meetup spot.",
-  },
-};
+> = {};
 
-const rideShareMatchSeeds: RideShareMatchSeed[] = [
-  {
-    driverEntryId: "transport-jennifer-smith",
-    eventId: "practice-jun-2",
-    riderEntryId: "transport-sarah-jones",
-    status: "Requested",
-  },
-];
+const rideShareMatchSeeds: RideShareMatchSeed[] = [];
 
 function getDefaultParticipantDetails(
   entry: TransportationEntry,
@@ -99,17 +81,17 @@ export function getRideShareMatchId(
   return `ride-share.${eventId}.${riderEntryId}.${driverEntryId}`;
 }
 
-function getSeededMatchStatus(
+function getInitialMatchStatus(
   eventId: string,
   riderEntryId: string,
   driverEntryId: string,
 ) {
   return (
     rideShareMatchSeeds.find(
-      (seed) =>
-        seed.eventId === eventId &&
-        seed.riderEntryId === riderEntryId &&
-        seed.driverEntryId === driverEntryId,
+      (match) =>
+        match.eventId === eventId &&
+        match.riderEntryId === riderEntryId &&
+        match.driverEntryId === driverEntryId,
     )?.status ?? "Open"
   );
 }
@@ -142,7 +124,7 @@ export function buildRideShareMatches(
       driver,
       eventId,
       id: getRideShareMatchId(eventId, rider.id, driver.id),
-      initialStatus: getSeededMatchStatus(eventId, rider.id, driver.id),
+      initialStatus: getInitialMatchStatus(eventId, rider.id, driver.id),
       privateDetailCopy:
         "Private pickup and dropoff details unlock only for the matched parents after confirmation.",
       publicNote: `${rider.name} can be matched with ${driver.guardianName}.`,

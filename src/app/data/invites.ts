@@ -1,12 +1,6 @@
-import {
-  documentRequirementTemplates,
-  type DocumentRequirementTemplate,
-} from "./documents";
+import type { DocumentRequirementTemplate } from "./documents";
 import { getOrganizationById } from "./organizations";
-import {
-  paymentRequirementTemplates,
-  type PaymentRequirementTemplate,
-} from "./payments";
+import type { PaymentRequirementTemplate } from "./payments";
 import { getTeamById } from "./teams";
 
 export type RegistrationInviteStatus = "Active" | "Paused";
@@ -25,36 +19,7 @@ export type RegistrationInvite = {
   title: string;
 };
 
-export const registrationInvites: RegistrationInvite[] = [
-  {
-    code: "black-diamonds-12u",
-    description:
-      "Use this invite for parents joining the Black Diamonds 12U registration path.",
-    documentRequirements: documentRequirementTemplates,
-    id: "invite-black-diamonds-12u",
-    inviteUrl: "/join/black-diamonds-12u",
-    organizationId: "black-diamonds",
-    paymentRequirements: paymentRequirementTemplates,
-    qrLabel: "Black Diamonds 12U QR Invite",
-    status: "Active",
-    teamId: "black-diamonds-12u",
-    title: "Join Black Diamonds 12U",
-  },
-  {
-    code: "black-diamonds-10u",
-    description:
-      "Use this invite for parents joining the Black Diamonds 10U registration path.",
-    documentRequirements: documentRequirementTemplates,
-    id: "invite-black-diamonds-10u",
-    inviteUrl: "/join/black-diamonds-10u",
-    organizationId: "black-diamonds",
-    paymentRequirements: paymentRequirementTemplates,
-    qrLabel: "Black Diamonds 10U QR Invite",
-    status: "Active",
-    teamId: "black-diamonds-10u",
-    title: "Join Black Diamonds 10U",
-  },
-];
+export const registrationInvites: RegistrationInvite[] = [];
 
 export function getRegistrationInviteByCode(inviteCode: string) {
   return registrationInvites.find((invite) => invite.code === inviteCode);

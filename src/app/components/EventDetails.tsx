@@ -1,14 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getAttendanceEntriesByEventId } from "../data/attendance";
-import { getEventById } from "../data/events";
-import { getGameAlertByEventId } from "../data/gameAlerts";
-import { getMessagesByEventId } from "../data/messages";
-import { getRegistrationsByTeamId } from "../data/registrations";
-import { getTeamById } from "../data/teams";
-import {
-  getTransportationEntriesByEventId,
-} from "../data/transportation";
+import { getFirebaseAdminConfig } from "../infrastructure/firebase";
+import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import AttendanceSummaryCard from "./AttendanceSummaryCard";
 import EventReadinessSummary from "./EventReadinessSummary";
 import GameAlertPanel from "./GameAlertPanel";
@@ -22,31 +15,45 @@ type EventDetailsProps = {
   role?: MvpNavRole;
 };
 
-export default function EventDetails({
+export default async function EventDetails({
   eventId,
   mode = "full",
   role = "shared",
 }: EventDetailsProps) {
-  const eventDetails = getEventById(eventId);
+  if (!getFirebaseAdminConfig()) {
+    notFound();
+  }
+
+  const repositories = createFirestoreRepositories();
+  const eventDetails = await repositories.events.getById(eventId);
 
   if (!eventDetails) {
     notFound();
   }
 
   const team = eventDetails.teamId
-    ? getTeamById(eventDetails.teamId)
+    ? await repositories.teams.getById(eventDetails.teamId)
     : undefined;
-  const gameAlert = getGameAlertByEventId(eventDetails.id);
-  const eventMessages = getMessagesByEventId(eventDetails.id);
+  const [
+    gameAlert,
+    eventMessages,
+    attendanceEntries,
+    registrations,
+    transportationEntries,
+  ] = await Promise.all([
+    repositories.gameAlerts.getByEventId(eventDetails.id),
+    repositories.messages.listByEventId(eventDetails.id),
+    repositories.attendance.listByEventId(eventDetails.id),
+    eventDetails.teamId
+      ? repositories.registrations.listByTeamId(eventDetails.teamId)
+      : [],
+    repositories.transportation.listByEventId(eventDetails.id),
+  ]);
   const eventAnnouncements = eventMessages.map((message) => message.content);
   const eventChat = eventMessages.map((message) => message.subject);
-  const attendanceEntries = getAttendanceEntriesByEventId(eventDetails.id);
-  const registrations = eventDetails.teamId
-    ? getRegistrationsByTeamId(eventDetails.teamId)
+  const eventNotes = Array.isArray(eventDetails.notes)
+    ? eventDetails.notes
     : [];
-  const transportationEntries = getTransportationEntriesByEventId(
-    eventDetails.id,
-  );
   const eventActionHref = getRoleHref(`/events/${eventDetails.id}`, role);
   const rideShareHref = getRoleHref(
     `/events/${eventDetails.id}?view=ride-share`,
@@ -196,8 +203,8 @@ export default function EventDetails({
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Event Notes</h2>
           <ul className="mt-3 space-y-3 text-sm text-slate-300">
-            {eventDetails.notes.length > 0 ? (
-              eventDetails.notes.map((note) => <li key={note}>{note}</li>)
+            {eventNotes.length > 0 ? (
+              eventNotes.map((note) => <li key={note}>{note}</li>)
             ) : (
               <li>No event notes yet.</li>
             )}

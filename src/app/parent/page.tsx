@@ -2,16 +2,11 @@ import ParentAthleteCard from "../components/ParentAthleteCard";
 import BottomNav from "../components/BottomNav";
 import MvpNav, { getRoleHref } from "../components/MvpNav";
 import SessionControls from "../components/SessionControls";
-import { getAttendanceEntryByAthleteAndEventId } from "../data/attendance";
 import { getCurrentParentUser } from "../data/currentUser.server";
-import { getEventById } from "../data/events";
-import { getMessagesByParentId } from "../data/messages";
 import {
   getParentAthleteRegistrationReadModel,
   getRegistrationByAthlete,
 } from "../data/parentAthleteRegistration.server";
-import { getTeamById } from "../data/teams";
-import { getTransportationEntryByAthleteAndEventId } from "../data/transportation";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +17,7 @@ export default async function ParentHome() {
     parent: currentParent,
     registrations,
   } = await getParentAthleteRegistrationReadModel(currentUser.parentId);
-  const parentAnnouncements = getMessagesByParentId(currentParent.id);
+  const parentAnnouncements: { content: string; id: string }[] = [];
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -45,33 +40,20 @@ export default async function ParentHome() {
 
         <div className="mt-4 space-y-3">
           {parentAthletes.map((athlete) => {
-            const team = getTeamById(athlete.teamId);
-            const nextEvent = athlete.nextEventId
-              ? getEventById(athlete.nextEventId)
-              : undefined;
             const registration = getRegistrationByAthlete(
               athlete,
               registrations,
             );
-            const transportation = nextEvent
-              ? getTransportationEntryByAthleteAndEventId(
-                  athlete.id,
-                  nextEvent.id,
-                )
-              : undefined;
-            const attendance = nextEvent
-              ? getAttendanceEntryByAthleteAndEventId(athlete.id, nextEvent.id)
-              : undefined;
 
             return (
               <ParentAthleteCard
                 key={athlete.name}
                 athleteId={athlete.id}
                 athleteName={athlete.name}
-                teamName={team?.name}
-                nextEvent={nextEvent}
-                initialTransportationStatus={transportation?.status ?? "Unknown"}
-                initialAttendanceStatus={attendance?.status ?? "Unknown"}
+                teamName={athlete.teamId}
+                initialTransportationStatus="Unknown"
+                initialAttendanceStatus="Unknown"
+                paymentRequirements={registration?.paymentRequirements ?? []}
                 registrationId={registration?.id ?? athlete.registrationId}
                 registrationRequirements={registration?.requirements ?? []}
                 registrationStatus={registration?.status ?? "Pending"}

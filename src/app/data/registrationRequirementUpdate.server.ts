@@ -30,12 +30,6 @@ export class ParentRegistrationRequirementError extends Error {
   }
 }
 
-function fallbackResult(): ParentRegistrationRequirementUpdateResult {
-  return {
-    source: "mock",
-  };
-}
-
 function createRequirementError(
   reason: string,
   message: string,
@@ -111,7 +105,11 @@ export async function updateParentRegistrationRequirementStatus(
   options: UpdateParentRegistrationRequirementOptions,
 ): Promise<ParentRegistrationRequirementUpdateResult> {
   if (!getFirebaseAdminConfig()) {
-    return fallbackResult();
+    createRequirementError(
+      "firebase-unavailable",
+      "Registration document updates are not available until Firebase is configured.",
+      503,
+    );
   }
 
   const athleteId = normalizeText(payload.athleteId);
@@ -210,7 +208,11 @@ export async function uploadParentRegistrationRequirementDocument(
   options: UpdateParentRegistrationRequirementOptions,
 ): Promise<ParentRegistrationRequirementUploadResult> {
   if (!getFirebaseAdminConfig()) {
-    return fallbackResult();
+    createRequirementError(
+      "firebase-unavailable",
+      "Registration document uploads are not available until Firebase is configured.",
+      503,
+    );
   }
 
   const athleteId = normalizeText(payload.athleteId);

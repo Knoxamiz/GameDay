@@ -1,13 +1,15 @@
 "use client";
 
 import type { AttendanceEntry } from "../data/attendance";
-import { getDocumentRequirementsByRegistrationIds } from "../data/documents";
-import { getPaymentRequirementsByRegistrationIds } from "../data/payments";
 import {
   buildEventReadiness,
   type ReadinessResult,
 } from "../data/readiness";
 import { buildReadinessActions } from "../data/readinessActions";
+import {
+  getDocumentRequirementsFromRegistrations,
+  getPaymentRequirementsFromRegistrations,
+} from "../data/registrationDerivedRequirements";
 import type { Registration } from "../data/registrations";
 import type { TransportationEntry } from "../data/transportation";
 import ReadinessActionList from "./ReadinessActionList";
@@ -58,14 +60,11 @@ export default function EventReadinessSummary({
     transportationEntries,
   );
   const currentRegistrations = useRegistrations(registrations);
-  const registrationIds = currentRegistrations.map(
-    (registration) => registration.id,
-  );
   const currentDocumentRequirements = useDocumentRequirements(
-    getDocumentRequirementsByRegistrationIds(registrationIds),
+    getDocumentRequirementsFromRegistrations(currentRegistrations),
   );
   const currentPaymentRequirements = usePaymentRequirements(
-    getPaymentRequirementsByRegistrationIds(registrationIds),
+    getPaymentRequirementsFromRegistrations(currentRegistrations),
   );
   const readiness = buildEventReadiness({
     attendanceEntries: currentAttendanceEntries,

@@ -1,13 +1,7 @@
 "use client";
 
-import {
-  getDocumentRequirementsByRegistrationId,
-  isDocumentOpen,
-} from "../data/documents";
-import {
-  getPaymentRequirementsByRegistrationId,
-  isPaymentOpen,
-} from "../data/payments";
+import { isDocumentOpen, type DocumentRequirement } from "../data/documents";
+import { isPaymentOpen, type PaymentRequirement } from "../data/payments";
 import type { RegistrationRequirement } from "../data/registrations";
 import type { TransportationStatus } from "../data/transportation";
 import { useDocumentRequirements } from "./documentRequirementState";
@@ -20,8 +14,10 @@ import {
 
 type TransportationStatusPickerProps = {
   athleteId: string;
+  documentRequirements?: DocumentRequirement[];
   eventId: string;
   initialStatus: TransportationStatus;
+  paymentRequirements?: PaymentRequirement[];
   registrationId: string;
   registrationRequirements: RegistrationRequirement[];
   options: TransportationStatus[];
@@ -29,8 +25,10 @@ type TransportationStatusPickerProps = {
 
 export default function TransportationStatusPicker({
   athleteId,
+  documentRequirements: initialDocumentRequirements = [],
   eventId,
   initialStatus,
+  paymentRequirements: initialPaymentRequirements = [],
   registrationId,
   registrationRequirements,
   options,
@@ -45,10 +43,10 @@ export default function TransportationStatusPicker({
     registrationRequirements,
   );
   const documents = useDocumentRequirements(
-    getDocumentRequirementsByRegistrationId(registrationId),
+    initialDocumentRequirements,
   );
   const payments = usePaymentRequirements(
-    getPaymentRequirementsByRegistrationId(registrationId),
+    initialPaymentRequirements,
   );
   const missingRequirementLabels = requirements
     .filter((requirement) => requirement.status === "Missing")

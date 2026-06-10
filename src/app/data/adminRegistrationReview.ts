@@ -4,7 +4,7 @@ import type {
   RegistrationStatus,
 } from "./registrations";
 
-export type AdminRegistrationReviewSource = "firestore" | "mock";
+export type AdminRegistrationReviewSource = "firestore";
 
 export type AdminRegistrationReviewPayload =
   | {

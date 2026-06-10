@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
   if (!getFirebaseAdminConfig()) {
     return NextResponse.json({
       configured: false,
-      status: "preview",
+      status: "signed-out",
     });
   }
 

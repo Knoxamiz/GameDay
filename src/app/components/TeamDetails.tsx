@@ -1,27 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getAthletesByIds } from "../data/athletes";
+import { summarizeAttendanceEntries } from "../data/attendance";
+import { summarizeDocumentRequirements } from "../data/documents";
+import { teamCommunicationItems } from "../data/messages";
+import { summarizePaymentRequirements } from "../data/payments";
 import {
-  getAttendanceEntriesByEventId,
-  getAttendanceSummaryByEventId,
-} from "../data/attendance";
-import { getCoachesByIds } from "../data/coaches";
-import {
-  getDocumentRequirementsByTeamId,
-  summarizeDocumentRequirements,
-} from "../data/documents";
-import { getEventById, getEventsByIds } from "../data/events";
-import { getMessagesByTeamId, teamCommunicationItems } from "../data/messages";
-import {
-  getPaymentRequirementsByTeamId,
-  summarizePaymentRequirements,
-} from "../data/payments";
-import { getRegistrationsByTeamId } from "../data/registrations";
-import { getTeamById } from "../data/teams";
-import {
-  getTransportationEntriesByEventId,
-  getTransportationSummaryByEventId,
-} from "../data/transportation";
+  getDocumentRequirementsFromRegistrations,
+  getPaymentRequirementsFromRegistrations,
+} from "../data/registrationDerivedRequirements";
+import { summarizeTransportationEntries } from "../data/transportation";
+import { getFirebaseAdminConfig } from "../infrastructure/firebase";
+import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import AttendanceRosterCard from "./AttendanceRosterCard";
 import AttendanceSummaryCard from "./AttendanceSummaryCard";
 import MvpNav, { getRoleHref, type MvpNavRole } from "./MvpNav";
@@ -34,44 +23,80 @@ type TeamDetailsProps = {
   role?: MvpNavRole;
 };
 
-export default function TeamDetails({
+function isDefined<TValue>(
+  value: TValue | null | undefined,
+): value is TValue {
+  return Boolean(value);
+}
+
+export default async function TeamDetails({
   teamId,
   role = "shared",
 }: TeamDetailsProps) {
-  const teamDetails = getTeamById(teamId);
+  if (!getFirebaseAdminConfig()) {
+    notFound();
+  }
+
+  const repositories = createFirestoreRepositories();
+  const teamDetails = await repositories.teams.getById(teamId);
 
   if (!teamDetails) {
     notFound();
   }
 
-  const teamCoaches = getCoachesByIds(teamDetails.coachIds);
-  const nextEvent = teamDetails.nextEventId
-    ? getEventById(teamDetails.nextEventId)
-    : undefined;
-  const rosterPreview = getAthletesByIds(teamDetails.rosterPreviewIds);
-  const roster = getAthletesByIds(teamDetails.athleteIds);
-  const teamRegistrations = getRegistrationsByTeamId(teamDetails.id);
+  const [teamCoaches, nextEvent, rosterPreview, roster, teamRegistrations] =
+    await Promise.all([
+      Promise.all(
+        teamDetails.coachIds.map((coachId) =>
+          repositories.coaches.getById(coachId),
+        ),
+      ).then((coaches) => coaches.filter(isDefined)),
+      teamDetails.nextEventId
+        ? repositories.events.getById(teamDetails.nextEventId)
+        : null,
+      Promise.all(
+        teamDetails.rosterPreviewIds.map((athleteId) =>
+          repositories.athletes.getById(athleteId),
+        ),
+      ).then((athletes) => athletes.filter(isDefined)),
+      Promise.all(
+        teamDetails.athleteIds.map((athleteId) =>
+          repositories.athletes.getById(athleteId),
+        ),
+      ).then((athletes) => athletes.filter(isDefined)),
+      repositories.registrations.listByTeamId(teamDetails.id),
+    ]);
   const documentSummary = summarizeDocumentRequirements(
-    getDocumentRequirementsByTeamId(teamDetails.id),
+    getDocumentRequirementsFromRegistrations(teamRegistrations),
   );
   const paymentSummary = summarizePaymentRequirements(
-    getPaymentRequirementsByTeamId(teamDetails.id),
+    getPaymentRequirementsFromRegistrations(teamRegistrations),
   );
-  const teamAnnouncements = getMessagesByTeamId(teamDetails.id).filter(
+  const teamAnnouncements = (await repositories.messages.listByTeamId(teamDetails.id)).filter(
     (message) => message.type === "Team Announcement",
   );
-  const upcomingEvents = getEventsByIds(teamDetails.eventIds);
+  const upcomingEvents = (
+    await Promise.all(
+      teamDetails.eventIds.map((eventId) => repositories.events.getById(eventId)),
+    )
+  ).filter(isDefined);
   const attendance = nextEvent
-    ? getAttendanceSummaryByEventId(nextEvent.id)
+    ? summarizeAttendanceEntries(
+        nextEvent.id,
+        await repositories.attendance.listByEventId(nextEvent.id),
+      )
     : undefined;
   const attendanceEntries = nextEvent
-    ? getAttendanceEntriesByEventId(nextEvent.id)
+    ? await repositories.attendance.listByEventId(nextEvent.id)
     : [];
   const transportation = nextEvent
-    ? getTransportationSummaryByEventId(nextEvent.id)
+    ? summarizeTransportationEntries(
+        nextEvent.id,
+        await repositories.transportation.listByEventId(nextEvent.id),
+      )
     : undefined;
   const transportationEntries = nextEvent
-    ? getTransportationEntriesByEventId(nextEvent.id)
+    ? await repositories.transportation.listByEventId(nextEvent.id)
     : [];
   const teamStatusItems = nextEvent
     ? [

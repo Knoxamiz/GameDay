@@ -61,69 +61,7 @@ export const paymentRequirementTemplates: PaymentRequirementTemplate[] = [
   },
 ];
 
-function createPaymentRequirement(
-  registrationId: string,
-  athleteId: string,
-  parentId: string,
-  teamId: string,
-  status: PaymentRequirementStatus,
-  amountPaid = 0,
-): PaymentRequirement {
-  const template = paymentRequirementTemplates[0];
-
-  return {
-    ...template,
-    amountPaid,
-    athleteId,
-    id: `${registrationId}-registration-fee`,
-    organizationId: "black-diamonds",
-    parentId,
-    registrationId,
-    status,
-    teamId,
-  };
-}
-
-export const paymentRequirements: PaymentRequirement[] = [
-  createPaymentRequirement(
-    "registration-emma-smith",
-    "emma-smith",
-    "jennifer-smith",
-    "black-diamonds-12u",
-    "Missing",
-  ),
-  createPaymentRequirement(
-    "registration-olivia-smith",
-    "olivia-smith",
-    "jennifer-smith",
-    "black-diamonds-10u",
-    "Submitted",
-    125,
-  ),
-  createPaymentRequirement(
-    "registration-mason-smith",
-    "mason-smith",
-    "jennifer-smith",
-    "black-diamonds-hs",
-    "Missing",
-  ),
-  createPaymentRequirement(
-    "registration-sarah-jones",
-    "sarah-jones",
-    "sarah-jones-parent",
-    "black-diamonds-12u",
-    "Submitted",
-    125,
-  ),
-  createPaymentRequirement(
-    "registration-katie-brown",
-    "katie-brown",
-    "katie-brown-parent",
-    "black-diamonds-12u",
-    "Paid",
-    125,
-  ),
-];
+export const paymentRequirements: PaymentRequirement[] = [];
 
 export function isPaymentMissing(requirement: PaymentRequirement) {
   return requirement.status === "Missing";

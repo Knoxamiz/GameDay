@@ -139,20 +139,20 @@ export const registrationForm = {
     },
   ],
   review: {
-    parentName: "Jennifer Smith",
-    athleteName: "Emma Smith",
-    teamLabel: "12U Girls",
+    parentName: "",
+    athleteName: "",
+    teamLabel: "",
     requirements: [
-      "Birth Certificate Uploaded",
-      "Physical Needed Before Approval",
-      "Waiver Accepted",
+      "Birth Certificate",
+      "Physical",
+      "Waiver",
     ],
   },
   submitted: {
-    athleteName: "Emma Smith",
-    teamLabel: "12U Girls",
+    athleteName: "",
+    teamLabel: "",
     status: "Pending Review",
-    submittedDate: "May 31, 2026",
+    submittedDate: "",
     nextSteps: [
       "Admin reviews registration",
       "Team assignment confirmed",
@@ -161,159 +161,7 @@ export const registrationForm = {
   },
 };
 
-export const registrations: Registration[] = [
-  {
-    id: "registration-emma-smith",
-    athleteId: "emma-smith",
-    parentId: "jennifer-smith",
-    parentName: "Jennifer Smith",
-    organizationId: "black-diamonds",
-    teamId: "black-diamonds-12u",
-    status: "Incomplete",
-    details: "One required document still needs to be submitted.",
-    submittedDate: "May 31, 2026",
-    requirements: [
-      {
-        label: "Birth Certificate",
-        required: true,
-        status: "Approved",
-      },
-      {
-        label: "Waiver",
-        required: true,
-        status: "Approved",
-      },
-      {
-        label: "Photo",
-        required: true,
-        status: "Uploaded",
-      },
-      {
-        label: "Physical",
-        required: true,
-        status: "Missing",
-      },
-    ],
-  },
-  {
-    id: "registration-olivia-smith",
-    athleteId: "olivia-smith",
-    parentId: "jennifer-smith",
-    parentName: "Jennifer Smith",
-    organizationId: "black-diamonds",
-    teamId: "black-diamonds-10u",
-    status: "Incomplete",
-    details: "Emergency contact form still needs parent signature.",
-    requirements: [
-      {
-        label: "Birth Certificate",
-        required: true,
-        status: "Approved",
-      },
-      {
-        label: "Waiver",
-        required: true,
-        status: "Missing",
-      },
-      {
-        label: "Photo",
-        required: true,
-        status: "Uploaded",
-      },
-      {
-        label: "Physical",
-        required: true,
-        status: "Approved",
-      },
-    ],
-  },
-  {
-    id: "registration-mason-smith",
-    athleteId: "mason-smith",
-    parentId: "jennifer-smith",
-    parentName: "Jennifer Smith",
-    organizationId: "black-diamonds",
-    teamId: "black-diamonds-hs",
-    status: "Pending",
-    details: "Season registration has not opened yet.",
-    requirements: [
-      {
-        label: "Birth Certificate",
-        required: true,
-        status: "Missing",
-      },
-      {
-        label: "Waiver",
-        required: true,
-        status: "Missing",
-      },
-      {
-        label: "Photo",
-        required: true,
-        status: "Missing",
-      },
-      {
-        label: "Physical",
-        required: true,
-        status: "Missing",
-      },
-    ],
-  },
-  {
-    id: "registration-sarah-jones",
-    athleteId: "sarah-jones",
-    parentId: "sarah-jones-parent",
-    parentName: "Sarah's Parent",
-    organizationId: "black-diamonds",
-    teamId: "black-diamonds-12u",
-    status: "Pending Review",
-    details: "Registration is waiting for admin review.",
-    requirements: [
-      {
-        label: "Birth Certificate",
-        required: true,
-        status: "Uploaded",
-      },
-      {
-        label: "Waiver",
-        required: true,
-        status: "Submitted",
-      },
-      {
-        label: "Physical",
-        required: true,
-        status: "Missing",
-      },
-    ],
-  },
-  {
-    id: "registration-katie-brown",
-    athleteId: "katie-brown",
-    parentId: "katie-brown-parent",
-    parentName: "Katie's Parent",
-    organizationId: "black-diamonds",
-    teamId: "black-diamonds-12u",
-    status: "Approved",
-    details: "Registration is complete.",
-    requirements: [
-      {
-        label: "Birth Certificate",
-        required: true,
-        status: "Approved",
-      },
-      {
-        label: "Waiver",
-        required: true,
-        status: "Approved",
-      },
-      {
-        label: "Physical",
-        required: true,
-        status: "Waived",
-      },
-    ],
-  },
-];
+export const registrations: Registration[] = [];
 
 export function getRegistrationById(registrationId: string) {
   return registrations.find((registration) => registration.id === registrationId);

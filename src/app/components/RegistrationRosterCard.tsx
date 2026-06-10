@@ -1,14 +1,12 @@
 "use client";
 
 import type { Athlete } from "../data/athletes";
+import { summarizeDocumentRequirements } from "../data/documents";
+import { summarizePaymentRequirements } from "../data/payments";
 import {
-  getDocumentRequirementsByRegistrationIds,
-  summarizeDocumentRequirements,
-} from "../data/documents";
-import {
-  getPaymentRequirementsByRegistrationIds,
-  summarizePaymentRequirements,
-} from "../data/payments";
+  getDocumentRequirementsFromRegistrations,
+  getPaymentRequirementsFromRegistrations,
+} from "../data/registrationDerivedRequirements";
 import {
   summarizeRegistrationRequirements,
   type Registration,
@@ -34,14 +32,11 @@ export default function RegistrationRosterCard({
       registration,
     ]),
   );
-  const registrationIds = currentRegistrations.map(
-    (registration) => registration.id,
-  );
   const documents = useDocumentRequirements(
-    getDocumentRequirementsByRegistrationIds(registrationIds),
+    getDocumentRequirementsFromRegistrations(currentRegistrations),
   );
   const payments = usePaymentRequirements(
-    getPaymentRequirementsByRegistrationIds(registrationIds),
+    getPaymentRequirementsFromRegistrations(currentRegistrations),
   );
 
   return (

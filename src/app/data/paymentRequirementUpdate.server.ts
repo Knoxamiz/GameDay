@@ -24,12 +24,6 @@ export class ParentPaymentRequirementError extends Error {
   }
 }
 
-function fallbackResult(): ParentPaymentRequirementUpdateResult {
-  return {
-    source: "mock",
-  };
-}
-
 function createPaymentError(
   reason: string,
   message: string,
@@ -82,7 +76,11 @@ export async function updateParentPaymentRequirementIntent(
   options: UpdateParentPaymentRequirementOptions,
 ): Promise<ParentPaymentRequirementUpdateResult> {
   if (!getFirebaseAdminConfig()) {
-    return fallbackResult();
+    createPaymentError(
+      "firebase-unavailable",
+      "Payment intent updates are not available until Firebase is configured.",
+      503,
+    );
   }
 
   const athleteId = normalizeText(payload.athleteId);

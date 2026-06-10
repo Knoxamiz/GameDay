@@ -2,15 +2,12 @@
 
 import Link from "next/link";
 import {
-  getDocumentRequirementsByRegistrationIds,
-  summarizeDocumentRequirements,
-} from "../data/documents";
-import {
-  getPaymentRequirementsByRegistrationIds,
   summarizePaymentRequirements,
 } from "../data/payments";
-import type { Registration } from "../data/registrations";
-import { useDocumentRequirements } from "./documentRequirementState";
+import {
+  summarizeRegistrationRequirements,
+  type Registration,
+} from "../data/registrations";
 import { usePaymentRequirements } from "./paymentRequirementState";
 import { useRegistrationSummary } from "./registrationStatusState";
 
@@ -24,14 +21,12 @@ export default function RegistrationAdminActionLinks({
   registrations,
 }: RegistrationAdminActionLinksProps) {
   const summary = useRegistrationSummary(registrations);
-  const registrationIds = registrations.map((registration) => registration.id);
-  const documents = useDocumentRequirements(
-    getDocumentRequirementsByRegistrationIds(registrationIds),
-  );
   const payments = usePaymentRequirements(
-    getPaymentRequirementsByRegistrationIds(registrationIds),
+    registrations.flatMap((registration) => registration.paymentRequirements ?? []),
   );
-  const documentSummary = summarizeDocumentRequirements(documents);
+  const documentSummary = summarizeRegistrationRequirements(
+    registrations.flatMap((registration) => registration.requirements),
+  );
   const paymentSummary = summarizePaymentRequirements(payments);
 
   return (
