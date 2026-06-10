@@ -1,14 +1,13 @@
 import BottomNav from "../../components/BottomNav";
 import MvpNav, { getRoleHref } from "../../components/MvpNav";
 import RegistrationReviewBoard from "../../components/RegistrationReviewBoard";
-import { blackDiamondsOrganization } from "../../data/organizations";
-import { getRegistrationsByOrganizationId } from "../../data/registrations";
+import { getAdminRegistrationReadModel } from "../../data/adminRegistrationRead.server";
 
-const organizationRegistrations = getRegistrationsByOrganizationId(
-  blackDiamondsOrganization.id,
-);
+export const dynamic = "force-dynamic";
 
-export default function AdminRegistrationsPage() {
+export default async function AdminRegistrationsPage() {
+  const registrationReadModel = await getAdminRegistrationReadModel();
+
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
@@ -21,7 +20,10 @@ export default function AdminRegistrationsPage() {
           </p>
         </div>
 
-        <RegistrationReviewBoard registrations={organizationRegistrations} />
+        <RegistrationReviewBoard
+          registrations={registrationReadModel.registrations}
+          source={registrationReadModel.source}
+        />
 
         <BottomNav
           items={[

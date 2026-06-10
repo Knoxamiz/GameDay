@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import type { AdminRegistrationReviewPayload } from "../data/adminRegistrationReview";
 import { getAthleteById } from "../data/athletes";
 import {
@@ -58,6 +59,7 @@ import {
 
 type RegistrationReviewBoardProps = {
   registrations: Registration[];
+  source?: "firestore" | "mock";
 };
 
 type RegistrationReviewCardProps = {
@@ -477,7 +479,32 @@ function RegistrationReviewCard({ registration }: RegistrationReviewCardProps) {
 
 export default function RegistrationReviewBoard({
   registrations,
+  source = "mock",
 }: RegistrationReviewBoardProps) {
+  useEffect(() => {
+    if (source !== "firestore") {
+      return;
+    }
+
+    registrations.forEach((registration) => {
+      saveRegistrationStatus(registration.id, registration.status);
+      registration.requirements.forEach((requirement) => {
+        saveRegistrationRequirementStatus(
+          registration.id,
+          requirement.label,
+          requirement.status,
+        );
+        saveDocumentRequirementStatus(
+          `${registration.id}-${requirement.label.toLowerCase().replaceAll(" ", "-")}`,
+          requirement.status,
+        );
+      });
+      registration.paymentRequirements?.forEach((requirement) => {
+        savePaymentRequirementStatus(requirement.id, requirement.status);
+      });
+    });
+  }, [registrations, source]);
+
   const summary = useRegistrationSummary(registrations);
   const registrationIds = registrations.map((registration) => registration.id);
   const documents = useDocumentRequirements(
