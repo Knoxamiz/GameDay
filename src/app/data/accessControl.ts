@@ -54,6 +54,14 @@ export const accessRoles: AccessRoleDefinition[] = [
 export const authReadiness = {
   backendProvider: "Firebase Auth target",
   currentMode: "role-preview-no-auth",
-  requiredClaims: ["role", "organizationIds", "teamIds", "athleteIds"],
+  requiredClaims: [
+    "role",
+    "organizationIds",
+    "teamIds",
+    "athleteIds",
+    "parentId",
+    "coachId",
+    "adminId",
+  ],
   sessionSource: "URL route and preview role only",
 };

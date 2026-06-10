@@ -208,6 +208,31 @@ export async function signInFirebaseAdminWithEmailPassword(
   return result;
 }
 
+export async function signInFirebaseCoachWithEmailPassword(
+  credentials: AuthCredentials,
+) {
+  const result = await signInFirebaseUserWithEmailPassword(credentials);
+
+  if (!result) {
+    return null;
+  }
+
+  const { session } = result;
+
+  if (
+    session.claims.role !== "coach" ||
+    !session.claims.coachId ||
+    session.claims.organizationIds.length === 0 ||
+    session.claims.teamIds.length === 0
+  ) {
+    throw new Error(
+      "Coach login requires role, coachId, organizationIds, and teamIds claims.",
+    );
+  }
+
+  return result;
+}
+
 export async function requireFirebaseClientAuthAdapter() {
   const adapter = await createFirebaseClientAuthAdapter();
 

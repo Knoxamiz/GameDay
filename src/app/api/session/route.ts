@@ -47,9 +47,21 @@ function isValidAdminSession(
   );
 }
 
+function isValidCoachSession(
+  session: AuthSession | null,
+): session is AuthSession {
+  return Boolean(
+    session?.claims.role === "coach" &&
+      session.claims.coachId &&
+      session.claims.organizationIds.length > 0 &&
+      session.claims.teamIds.length > 0,
+  );
+}
+
 function getSessionResponseBody(session: AuthSession) {
   return {
     adminId: session.claims.adminId,
+    coachId: session.claims.coachId,
     email: session.user.email,
     landingRoute: getLandingRouteForClaims(session.claims),
     parentId: session.claims.parentId,
@@ -104,7 +116,11 @@ export async function GET(request: NextRequest) {
       cookieHeader: request.headers.get("cookie") ?? undefined,
     });
 
-    if (!isValidParentSession(session) && !isValidAdminSession(session)) {
+    if (
+      !isValidParentSession(session) &&
+      !isValidCoachSession(session) &&
+      !isValidAdminSession(session)
+    ) {
       return NextResponse.json({
         configured: true,
         status: "signed-out",
@@ -165,11 +181,15 @@ export async function POST(request: NextRequest) {
       authorizationHeader: `Bearer ${idToken}`,
     });
 
-    if (!isValidParentSession(session) && !isValidAdminSession(session)) {
+    if (
+      !isValidParentSession(session) &&
+      !isValidCoachSession(session) &&
+      !isValidAdminSession(session)
+    ) {
       return NextResponse.json(
         {
           error:
-            "This session endpoint requires parent claims or admin claims with an organization.",
+            "This session endpoint requires parent, coach, or admin claims with an organization.",
         },
         { status: 403 },
       );

@@ -5,37 +5,22 @@ import MvpNav, { getRoleHref } from "../components/MvpNav";
 import RegistrationConcernAction from "../components/RegistrationConcernAction";
 import TeamReadinessSummary from "../components/TeamReadinessSummary";
 import TransportationSummaryCard from "../components/TransportationSummaryCard";
-import { getAttendanceEntriesByEventId } from "../data/attendance";
-import { getCurrentCoach } from "../data/coaches";
-import { getEventById } from "../data/events";
-import { getMessagesByAudience } from "../data/messages";
-import { getRegistrationsByTeamId } from "../data/registrations";
-import { getTeamsByCoachId } from "../data/teams";
-import { getTransportationEntriesByEventId } from "../data/transportation";
+import { getCoachHomeReadModel } from "../data/coachRead.server";
 
-const currentCoach = getCurrentCoach();
-const coachTeams = getTeamsByCoachId(currentCoach.id);
-const coachTeam = coachTeams[0];
-const todayEvent = coachTeam?.nextEventId
-  ? getEventById(coachTeam.nextEventId)
-  : undefined;
-const transportationEntries = todayEvent
-  ? getTransportationEntriesByEventId(todayEvent.id)
-  : [];
-const attendanceEntries = todayEvent
-  ? getAttendanceEntriesByEventId(todayEvent.id)
-  : [];
-const coachTeamRegistrations = coachTeam
-  ? getRegistrationsByTeamId(coachTeam.id)
-  : [];
-const coachMessages = getMessagesByAudience(
-  "coach",
-  currentCoach.organizationId,
-).filter((message) =>
-  coachTeam ? !message.teamId || message.teamId === coachTeam.id : true,
-);
+export const dynamic = "force-dynamic";
 
-export default function CoachHome() {
+export default async function CoachHome() {
+  const {
+    attendanceEntries,
+    coach: currentCoach,
+    coachMessages,
+    coachTeam,
+    coachTeamRegistrations,
+    coachTeams,
+    todayEvent,
+    transportationEntries,
+  } = await getCoachHomeReadModel();
+
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">

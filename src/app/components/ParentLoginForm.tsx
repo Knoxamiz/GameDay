@@ -4,10 +4,11 @@ import { FormEvent, useEffect, useState } from "react";
 import {
   createFirebaseClientAuthAdapter,
   signInFirebaseAdminWithEmailPassword,
+  signInFirebaseCoachWithEmailPassword,
   signInFirebaseParentWithEmailPassword,
 } from "../infrastructure/firebaseClientAuth";
 
-type LoginRole = "parent" | "admin";
+type LoginRole = "parent" | "coach" | "admin";
 
 type SessionResponse = {
   configured?: boolean;
@@ -28,11 +29,19 @@ type ParentLoginFormProps = {
 };
 
 function getRoleLabel(role: LoginRole) {
-  return role === "admin" ? "Admin" : "Parent";
+  if (role === "admin") {
+    return "Admin";
+  }
+
+  return role === "coach" ? "Coach" : "Parent";
 }
 
 function getRoleRoute(role: LoginRole) {
-  return role === "admin" ? "/admin" : "/parent";
+  if (role === "admin") {
+    return "/admin";
+  }
+
+  return role === "coach" ? "/coach" : "/parent";
 }
 
 function isSignedInSession(
@@ -40,7 +49,9 @@ function isSignedInSession(
 ): session is SignedInSessionResponse {
   return Boolean(
     session?.status === "signed-in" &&
-      (session.role === "parent" || session.role === "admin"),
+      (session.role === "parent" ||
+        session.role === "coach" ||
+        session.role === "admin"),
   );
 }
 
@@ -96,14 +107,10 @@ export default function ParentLoginForm({
     try {
       const loginResult =
         role === "admin"
-          ? await signInFirebaseAdminWithEmailPassword({
-              email,
-              password,
-            })
-          : await signInFirebaseParentWithEmailPassword({
-              email,
-              password,
-            });
+          ? await signInFirebaseAdminWithEmailPassword({ email, password })
+          : role === "coach"
+            ? await signInFirebaseCoachWithEmailPassword({ email, password })
+            : await signInFirebaseParentWithEmailPassword({ email, password });
 
       if (!loginResult) {
         throw new Error("Firebase client login is not configured.");
@@ -168,8 +175,8 @@ export default function ParentLoginForm({
     <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
       <h2 className="text-xl font-bold">Sign in to GameDay</h2>
       <p className="mt-2 text-sm text-slate-400">
-        Parent and admin accounts use Firebase. Preview pages remain available
-        when Firebase is not configured.
+        Parent, coach, and admin accounts use Firebase. Preview pages remain
+        available when Firebase is not configured.
       </p>
 
       {isCheckingSession && (
@@ -211,8 +218,8 @@ export default function ParentLoginForm({
             <legend className="text-sm font-semibold text-slate-300">
               Account type
             </legend>
-            <div className="mt-2 grid grid-cols-2 gap-2 text-sm font-semibold">
-              {(["parent", "admin"] as const).map((option) => (
+            <div className="mt-2 grid grid-cols-3 gap-2 text-sm font-semibold">
+              {(["parent", "coach", "admin"] as const).map((option) => (
                 <button
                   className={`rounded-xl border px-4 py-3 ${
                     role === option

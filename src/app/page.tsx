@@ -31,6 +31,11 @@ const signInActions = [
     label: "Sign in as Parent",
   },
   {
+    body: "Team account for attendance, transportation, and readiness.",
+    href: "/login?role=coach",
+    label: "Sign in as Coach",
+  },
+  {
     body: "Organization account for registrations, documents, and payments.",
     href: "/login?role=admin",
     label: "Sign in as Admin",
@@ -47,8 +52,8 @@ export default function Home() {
           </p>
           <h1 className="text-3xl font-bold">GameDay</h1>
           <p className="mt-3 text-sm text-slate-300">
-            Sign in for live parent and admin workflows, or keep exploring the
-            preview paths.
+            Sign in for live parent, coach, and admin workflows, or keep
+            exploring the preview paths.
           </p>
         </div>
 
