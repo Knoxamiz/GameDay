@@ -37,6 +37,52 @@ function isValidAdminSession(
   );
 }
 
+function getSessionResponseBody(session: AuthSession) {
+  return {
+    adminId: session.claims.adminId,
+    email: session.user.email,
+    landingRoute: getLandingRouteForClaims(session.claims),
+    parentId: session.claims.parentId,
+    role: session.claims.role,
+    status: "signed-in",
+  };
+}
+
+export async function GET(request: NextRequest) {
+  if (!getFirebaseAdminConfig()) {
+    return NextResponse.json({
+      configured: false,
+      status: "preview",
+    });
+  }
+
+  try {
+    const authProvider = new FirebaseAdminAuthProvider();
+    const session = await authProvider.verifySession({
+      cookieHeader: request.headers.get("cookie") ?? undefined,
+    });
+
+    if (!isValidParentSession(session) && !isValidAdminSession(session)) {
+      return NextResponse.json({
+        configured: true,
+        status: "signed-out",
+      });
+    }
+
+    return NextResponse.json({
+      configured: true,
+      ...getSessionResponseBody(session),
+    });
+  } catch (error) {
+    console.warn("Could not read Firebase session.", error);
+
+    return NextResponse.json({
+      configured: true,
+      status: "signed-out",
+    });
+  }
+}
+
 export async function POST(request: NextRequest) {
   if (!getFirebaseAdminConfig()) {
     return NextResponse.json(
@@ -70,10 +116,7 @@ export async function POST(request: NextRequest) {
   }
 
   const response = NextResponse.json({
-    adminId: session.claims.adminId,
-    landingRoute: getLandingRouteForClaims(session.claims),
-    parentId: session.claims.parentId,
-    role: session.claims.role,
+    ...getSessionResponseBody(session),
     status: "ok",
   });
   response.cookies.set(

@@ -24,30 +24,63 @@ const rolePreviews = [
   },
 ];
 
+const signInActions = [
+  {
+    body: "Family account for athlete readiness, registration, and logistics.",
+    href: "/login?role=parent",
+    label: "Sign in as Parent",
+  },
+  {
+    body: "Organization account for registrations, documents, and payments.",
+    href: "/login?role=admin",
+    label: "Sign in as Admin",
+  },
+];
+
 export default function Home() {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <p className="text-xs font-semibold uppercase tracking-wide text-blue-300">
-            Mobile Beta Preview
+            Youth Sports Logistics
           </p>
           <h1 className="text-3xl font-bold">GameDay</h1>
           <p className="mt-3 text-sm text-slate-300">
-            Preview the MVP by role. This build uses demo data and local device
-            state only.
+            Sign in for live parent and admin workflows, or keep exploring the
+            preview paths.
           </p>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-sm text-yellow-100">
-          <p className="font-semibold">No real accounts, documents, or payments.</p>
-          <p className="mt-2 text-yellow-100/80">
-            Auth, Firebase, file storage, and payment processing are prepared
-            for integration but intentionally not connected in this beta shell.
+        <div className="mt-4 rounded-2xl border border-blue-500/30 bg-blue-500/10 p-4 text-sm text-blue-100">
+          <p className="font-semibold">Live Firebase sign-in is available.</p>
+          <p className="mt-2 text-blue-100/80">
+            Preview mode remains available when Firebase is not configured in a
+            local or review environment.
           </p>
         </div>
 
-        <div className="mt-6 space-y-4">
+        <div className="mt-6 space-y-3">
+          {signInActions.map((action) => (
+            <Link
+              key={action.href}
+              href={action.href}
+              className="block rounded-2xl border border-blue-500/40 bg-blue-500 p-5 shadow-lg"
+            >
+              <p className="text-xl font-bold text-white">{action.label}</p>
+              <p className="mt-2 text-sm text-blue-50/90">{action.body}</p>
+            </Link>
+          ))}
+        </div>
+
+        <div id="preview" className="mt-6 space-y-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              Continue Preview
+            </p>
+            <h2 className="mt-2 text-2xl font-bold">Demo role paths</h2>
+          </div>
+
           {rolePreviews.map((preview) => (
             <Link
               key={preview.href}
@@ -57,7 +90,7 @@ export default function Home() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    Continue as
+                    Preview as
                   </p>
                   <h2 className="mt-2 text-2xl font-bold">{preview.role}</h2>
                 </div>
