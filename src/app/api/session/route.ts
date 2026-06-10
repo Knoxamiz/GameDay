@@ -13,6 +13,8 @@ import {
   type AuthSession,
 } from "../../infrastructure/auth";
 
+export const runtime = "nodejs";
+
 const sessionMaxAgeSeconds = 60 * 60;
 const redactedErrorPatterns = [
   /-----BEGIN PRIVATE KEY-----[\s\S]*?-----END PRIVATE KEY-----/g,
