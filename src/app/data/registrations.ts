@@ -13,10 +13,14 @@ export type RegistrationStatus =
   | "Pending Review";
 
 export type RegistrationRequirement = {
+  contentType?: string;
   description?: string;
+  fileName?: string;
   label: string;
   required?: boolean;
   status: RegistrationRequirementStatus;
+  storagePath?: string;
+  uploadedAt?: string;
 };
 
 export type RegistrationRequirementSummary = {

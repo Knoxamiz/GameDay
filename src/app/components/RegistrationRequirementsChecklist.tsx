@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   getDocumentRequirementsByRegistrationId,
   isDocumentBlocked,
@@ -43,6 +44,7 @@ import {
 
 type RegistrationRequirementsChecklistProps = {
   athleteId: string;
+  organizationId: string;
   parentId: string;
   registrationId: string;
   requirements: RegistrationRequirement[];
@@ -98,10 +100,14 @@ function getPaymentTone(status: PaymentRequirementStatus) {
 
 export default function RegistrationRequirementsChecklist({
   athleteId,
+  organizationId,
   parentId,
   registrationId,
   requirements,
 }: RegistrationRequirementsChecklistProps) {
+  const [uploadingRequirementId, setUploadingRequirementId] = useState<
+    string | null
+  >(null);
   const currentRequirements = useRegistrationRequirements(
     registrationId,
     requirements,
@@ -165,6 +171,49 @@ export default function RegistrationRequirementsChecklist({
     }).catch(() => undefined);
   }
 
+  async function uploadParentRequirementDocument(
+    requirementId: string,
+    requirementLabel: string,
+    file: File,
+    saveLocalStatus: () => void,
+  ) {
+    saveLocalStatus();
+    syncParentRequirementStatus(requirementId, requirementLabel, "Uploaded");
+
+    if (
+      !athleteId ||
+      !organizationId ||
+      !parentId ||
+      !registrationId ||
+      !requirementId
+    ) {
+      return;
+    }
+
+    const formData = new FormData();
+    formData.set("athleteId", athleteId);
+    formData.set("file", file);
+    formData.set("organizationId", organizationId);
+    formData.set("parentId", parentId);
+    formData.set("requirementId", requirementId);
+    formData.set("requirementLabel", requirementLabel);
+
+    setUploadingRequirementId(requirementId);
+
+    try {
+      await fetch(`/api/registrations/${registrationId}/requirements`, {
+        body: formData,
+        method: "POST",
+      });
+    } catch {
+      // Local status already reflects the parent action when Firebase is absent.
+    } finally {
+      setUploadingRequirementId((currentRequirementId) =>
+        currentRequirementId === requirementId ? null : currentRequirementId,
+      );
+    }
+  }
+
   return (
     <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
       <h2 className="text-lg font-bold">Registration Status</h2>
@@ -218,22 +267,38 @@ export default function RegistrationRequirementsChecklist({
               )}
               {(isDocumentMissing(requirement) ||
                 isDocumentBlocked(requirement)) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    saveDocumentRequirementStatus(requirement.id, "Uploaded");
-                    syncParentRequirementStatus(
-                      requirement.id,
-                      requirement.label,
-                      "Uploaded",
-                    );
-                  }}
-                  className="mt-3 w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
+                <label
+                  aria-disabled={uploadingRequirementId === requirement.id}
+                  className="mt-3 block w-full cursor-pointer rounded-xl border border-slate-700 bg-slate-900 py-3 text-center font-semibold text-white"
                 >
-                  {isDocumentBlocked(requirement)
-                    ? "Resubmit Document"
-                    : "Upload / Submit Document"}
-                </button>
+                  <input
+                    className="sr-only"
+                    disabled={uploadingRequirementId === requirement.id}
+                    onChange={(event) => {
+                      const file = event.currentTarget.files?.[0];
+                      event.currentTarget.value = "";
+
+                      if (file) {
+                        void uploadParentRequirementDocument(
+                          requirement.id,
+                          requirement.label,
+                          file,
+                          () =>
+                            saveDocumentRequirementStatus(
+                              requirement.id,
+                              "Uploaded",
+                            ),
+                        );
+                      }
+                    }}
+                    type="file"
+                  />
+                  {uploadingRequirementId === requirement.id
+                    ? "Uploading..."
+                    : isDocumentBlocked(requirement)
+                      ? "Resubmit Document"
+                      : "Upload / Submit Document"}
+                </label>
               )}
             </div>
           ))
@@ -330,26 +395,39 @@ export default function RegistrationRequirementsChecklist({
               )}
               {(isRequirementMissing(requirement) ||
                 isRequirementBlocked(requirement)) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    saveRegistrationRequirementStatus(
-                      registrationId,
-                      requirement.label,
-                      "Uploaded",
-                    );
-                    syncParentRequirementStatus(
-                      requirement.label,
-                      requirement.label,
-                      "Uploaded",
-                    );
-                  }}
-                  className="mt-3 w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
+                <label
+                  aria-disabled={uploadingRequirementId === requirement.label}
+                  className="mt-3 block w-full cursor-pointer rounded-xl border border-slate-700 bg-slate-900 py-3 text-center font-semibold text-white"
                 >
-                  {isRequirementBlocked(requirement)
-                    ? "Resubmit Item"
-                    : "Upload / Submit Item"}
-                </button>
+                  <input
+                    className="sr-only"
+                    disabled={uploadingRequirementId === requirement.label}
+                    onChange={(event) => {
+                      const file = event.currentTarget.files?.[0];
+                      event.currentTarget.value = "";
+
+                      if (file) {
+                        void uploadParentRequirementDocument(
+                          requirement.label,
+                          requirement.label,
+                          file,
+                          () =>
+                            saveRegistrationRequirementStatus(
+                              registrationId,
+                              requirement.label,
+                              "Uploaded",
+                            ),
+                        );
+                      }
+                    }}
+                    type="file"
+                  />
+                  {uploadingRequirementId === requirement.label
+                    ? "Uploading..."
+                    : isRequirementBlocked(requirement)
+                      ? "Resubmit Item"
+                      : "Upload / Submit Item"}
+                </label>
               )}
             </div>
           ))

@@ -12,6 +12,7 @@ export type DocumentStorageTarget = {
 export type DocumentUploadRequest = {
   contentLength: number;
   contentType: string;
+  data?: Buffer;
   originalFileName: string;
   target: DocumentStorageTarget;
 };
@@ -46,6 +47,10 @@ export interface DocumentStorageProvider {
     actor: RepositoryActor,
   ): Promise<SignedDocumentUpload>;
   deleteDocument(storagePath: string, actor: RepositoryActor): Promise<void>;
+  uploadDocument(
+    request: DocumentUploadRequest & { data: Buffer },
+    actor: RepositoryActor,
+  ): Promise<StoredDocument>;
 }
 
 export function sanitizeStorageSegment(value: string) {
@@ -56,18 +61,18 @@ export function sanitizeStorageSegment(value: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-export function buildDocumentStoragePath(target: DocumentStorageTarget) {
+export function buildDocumentStoragePath(
+  target: DocumentStorageTarget,
+  originalFileName = "document",
+) {
   return [
     "organizations",
     target.organizationId,
-    "teams",
-    target.teamId,
-    "athletes",
-    target.athleteId,
     "registrations",
     target.registrationId,
-    "documents",
+    "requirements",
     target.documentRequirementId,
+    originalFileName,
   ]
     .map(sanitizeStorageSegment)
     .join("/");

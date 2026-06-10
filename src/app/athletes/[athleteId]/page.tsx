@@ -202,6 +202,7 @@ export default async function AthleteDetailsPage({
 
         <RegistrationRequirementsChecklist
           athleteId={athlete.id}
+          organizationId={registration?.organizationId ?? team?.organizationId ?? ""}
           parentId={currentUser.parentId}
           registrationId={registrationId}
           requirements={registrationRequirements}

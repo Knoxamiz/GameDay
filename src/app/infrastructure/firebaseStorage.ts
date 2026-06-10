@@ -20,6 +20,16 @@ type FirebaseStorageFile = {
     expires: number;
     version: "v4";
   }) => Promise<[string]>;
+  save: (
+    data: Buffer,
+    options?: {
+      metadata?: {
+        contentType?: string;
+        metadata?: Record<string, string>;
+      };
+      resumable?: boolean;
+    },
+  ) => Promise<unknown>;
 };
 
 type FirebaseStorageBucket = {
@@ -94,7 +104,10 @@ export class FirebaseDocumentStorageAdapter implements DocumentStorageProvider {
       throw new FirebaseSdkNotInstalledError("firebase-admin");
     }
 
-    const storagePath = buildDocumentStoragePath(request.target);
+    const storagePath = buildDocumentStoragePath(
+      request.target,
+      request.originalFileName,
+    );
     const expiresAt = Date.now() + signedUrlDurationMs;
     const [uploadUrl] = await bucket.file(storagePath).getSignedUrl({
       action: "write",
@@ -167,5 +180,42 @@ export class FirebaseDocumentStorageAdapter implements DocumentStorageProvider {
     }
 
     await bucket.file(storagePath).delete();
+  }
+
+  async uploadDocument(
+    request: DocumentUploadRequest & { data: Buffer },
+    actor: RepositoryActor,
+  ): Promise<StoredDocument> {
+    void actor;
+    const bucket = await getStorageBucket();
+
+    if (!bucket) {
+      throw new FirebaseSdkNotInstalledError("firebase-admin");
+    }
+
+    const storagePath = buildDocumentStoragePath(
+      request.target,
+      request.originalFileName,
+    );
+    const uploadedAt = new Date().toISOString();
+
+    await bucket.file(storagePath).save(request.data, {
+      metadata: {
+        contentType: request.contentType,
+        metadata: {
+          originalFileName: request.originalFileName,
+          uploadedAt,
+        },
+      },
+      resumable: false,
+    });
+
+    return {
+      contentLength: request.contentLength,
+      contentType: request.contentType,
+      originalFileName: request.originalFileName,
+      storagePath,
+      uploadedAt,
+    };
   }
 }

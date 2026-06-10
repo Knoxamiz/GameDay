@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { updateParentRegistrationRequirementStatus } from "../../../../data/registrationRequirementUpdate.server";
-import type { ParentRegistrationRequirementUpdatePayload } from "../../../../data/registrationRequirementUpdate";
+import {
+  updateParentRegistrationRequirementStatus,
+  uploadParentRegistrationRequirementDocument,
+} from "../../../../data/registrationRequirementUpdate.server";
+import type {
+  ParentRegistrationRequirementUploadPayload,
+  ParentRegistrationRequirementUpdatePayload,
+} from "../../../../data/registrationRequirementUpdate";
 import {
   registrationRequirementStatusValues,
   type RegistrationRequirementStatus,
@@ -14,6 +20,16 @@ type RegistrationRequirementRouteProps = {
 
 function getText(value: unknown) {
   return typeof value === "string" ? value : "";
+}
+
+function getFormText(formData: FormData, key: string) {
+  return getText(formData.get(key));
+}
+
+function getFormFile(formData: FormData) {
+  const file = formData.get("file");
+
+  return file instanceof File ? file : null;
 }
 
 function getRegistrationRequirementStatus(
@@ -54,5 +70,43 @@ export async function PATCH(
 
   return NextResponse.json(result, {
     status: result.source === "firestore" ? 200 : 202,
+  });
+}
+
+export async function POST(
+  request: NextRequest,
+  { params }: RegistrationRequirementRouteProps,
+) {
+  const { registrationId } = await params;
+  const formData = await request.formData().catch(() => null);
+  const file = formData ? getFormFile(formData) : null;
+
+  if (!formData || !file) {
+    return NextResponse.json({ source: "mock" }, { status: 202 });
+  }
+
+  const payload: ParentRegistrationRequirementUploadPayload = {
+    athleteId: getFormText(formData, "athleteId"),
+    contentLength: file.size,
+    contentType: file.type || "application/octet-stream",
+    data: Buffer.from(await file.arrayBuffer()),
+    fileName: file.name,
+    organizationId: getFormText(formData, "organizationId"),
+    parentId: getFormText(formData, "parentId"),
+    registrationId,
+    requirementId: getFormText(formData, "requirementId"),
+    requirementLabel: getFormText(formData, "requirementLabel"),
+  };
+  const result = await uploadParentRegistrationRequirementDocument(payload, {
+    sessionSource: {
+      authorizationHeader: request.headers.get("authorization") ?? undefined,
+      cookieHeader: request.headers.get("cookie") ?? undefined,
+    },
+  }).catch(() => ({
+    source: "mock" as const,
+  }));
+
+  return NextResponse.json(result, {
+    status: result.source === "firestore" ? 201 : 202,
   });
 }

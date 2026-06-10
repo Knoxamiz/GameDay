@@ -213,7 +213,7 @@ export const backendCollectionSpecs: Record<
 
 export const backendStorageTargets = {
   documentUploads:
-    "organizations/{organizationId}/teams/{teamId}/athletes/{athleteId}/registrations/{registrationId}/documents/{documentRequirementId}",
+    "organizations/{organizationId}/registrations/{registrationId}/requirements/{documentRequirementId}/{fileName}",
 };
 
 export const backendPaymentMetadataKeys = [
