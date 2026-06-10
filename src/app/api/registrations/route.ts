@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { submitParentRegistration } from "../../data/registrationSubmission.server";
+import {
+  RegistrationSubmissionError,
+  submitParentRegistration,
+} from "../../data/registrationSubmission.server";
 import type { RegistrationSubmissionPayload } from "../../data/registrationSubmission";
 import {
   paymentRequirementStatusValues,
@@ -9,6 +12,8 @@ import {
   registrationRequirementStatusValues,
   type RegistrationRequirementStatus,
 } from "../../data/registrations";
+
+export const runtime = "nodejs";
 
 function getStringRecord(value: unknown): Record<string, string> {
   if (!value || typeof value !== "object") {
@@ -81,16 +86,46 @@ function getSubmissionPayload(body: unknown): RegistrationSubmissionPayload {
 
 export async function POST(request: NextRequest) {
   const payload = getSubmissionPayload(await request.json().catch(() => null));
-  const result = await submitParentRegistration(payload, {
-    sessionSource: {
-      authorizationHeader: request.headers.get("authorization") ?? undefined,
-      cookieHeader: request.headers.get("cookie") ?? undefined,
-    },
-  }).catch(() => ({
-    source: "mock" as const,
-  }));
 
-  return NextResponse.json(result, {
-    status: result.source === "firestore" ? 201 : 202,
-  });
+  try {
+    const result = await submitParentRegistration(payload, {
+      sessionSource: {
+        authorizationHeader: request.headers.get("authorization") ?? undefined,
+        cookieHeader: request.headers.get("cookie") ?? undefined,
+      },
+    });
+
+    return NextResponse.json(result, {
+      status: result.source === "firestore" ? 201 : 202,
+    });
+  } catch (error) {
+    const reason =
+      error instanceof RegistrationSubmissionError
+        ? error.reason
+        : "registration-submit-failed";
+    const status =
+      error instanceof RegistrationSubmissionError ? error.status : 500;
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Could not submit registration.";
+
+    console.warn("Parent registration submission failed.", {
+      errorName: error instanceof Error ? error.name : typeof error,
+      message,
+      reason,
+      status,
+    });
+
+    return NextResponse.json(
+      {
+        error:
+          status >= 500
+            ? "Could not submit registration. Please try again."
+            : message,
+        reason,
+      },
+      { status },
+    );
+  }
 }

@@ -40,17 +40,22 @@ export type RegistrationRequirementSummary = {
 export type Registration = {
   id: string;
   athleteId: string;
+  athleteName?: string;
   parentId: string;
   parentName: string;
   organizationId: string;
   teamId: string;
   adminNotes?: string;
+  createdAt?: string;
   paymentRequirements?: PaymentRequirement[];
+  registrationId?: string;
   reviewedAt?: string;
   reviewedBy?: string;
+  source?: string;
   status: RegistrationStatus;
   details: string;
   submittedDate?: string;
+  updatedAt?: string;
   requirements: RegistrationRequirement[];
 };
 

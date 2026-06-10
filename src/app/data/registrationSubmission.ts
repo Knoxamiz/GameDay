@@ -1,4 +1,7 @@
-import type { RegistrationRequirementStatus } from "./registrations";
+import type {
+  RegistrationRequirementStatus,
+  RegistrationStatus,
+} from "./registrations";
 import type { PaymentRequirementStatus } from "./payments";
 
 export type RegistrationSubmissionPayload = {
@@ -22,6 +25,10 @@ export type RegistrationSubmissionSource = "firestore" | "mock";
 
 export type RegistrationSubmissionResult = {
   athleteId?: string;
+  athleteName?: string;
+  parentId?: string;
+  parentName?: string;
   registrationId?: string;
   source: RegistrationSubmissionSource;
+  status?: RegistrationStatus;
 };

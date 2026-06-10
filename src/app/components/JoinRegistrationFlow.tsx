@@ -13,7 +13,10 @@ import {
   type PaymentRequirementStatus,
 } from "../data/payments";
 import type { RegistrationRequirementStatus } from "../data/registrations";
-import type { RegistrationSubmissionPayload } from "../data/registrationSubmission";
+import type {
+  RegistrationSubmissionPayload,
+  RegistrationSubmissionResult,
+} from "../data/registrationSubmission";
 import type { Team } from "../data/teams";
 
 type JoinRegistrationFlowProps = {
@@ -30,6 +33,11 @@ type JoinFormState = {
   parentName: string;
   parentPhone: string;
   school: string;
+};
+
+type RegistrationSubmissionResponse = RegistrationSubmissionResult & {
+  error?: string;
+  reason?: string;
 };
 
 const emptyForm: JoinFormState = {
@@ -73,6 +81,9 @@ export default function JoinRegistrationFlow({
 }: JoinRegistrationFlowProps) {
   const [form, setForm] = useState(emptyForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [submissionResult, setSubmissionResult] =
+    useState<RegistrationSubmissionResult | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [documentStatusByRequirement, setDocumentStatusByRequirement] = useState<
     Record<string, DocumentRequirementStatus>
@@ -183,33 +194,75 @@ export default function JoinRegistrationFlow({
     };
 
     setIsSubmitting(true);
+    setSubmissionError(null);
+    setSubmissionResult(null);
 
     try {
-      await fetch("/api/registrations", {
+      const response = await fetch("/api/registrations", {
         body: JSON.stringify(payload),
+        credentials: "same-origin",
         headers: {
           "Content-Type": "application/json",
         },
         method: "POST",
       });
+
+      const result = (await response.json().catch(() => null)) as
+        | RegistrationSubmissionResponse
+        | null;
+
+      if (!response.ok) {
+        throw new Error(result?.error ?? "Could not submit registration.");
+      }
+
+      if (!result?.registrationId || !result.status) {
+        throw new Error("Registration submitted without a confirmation ID.");
+      }
+
+      setSubmissionResult(result);
+      setSubmitted(true);
+    } catch (submitError) {
+      setSubmissionError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Could not submit registration.",
+      );
     } finally {
       setIsSubmitting(false);
-      setSubmitted(true);
     }
   }
 
-  if (submitted) {
+  if (submitted && submissionResult) {
+    const confirmedAthleteName =
+      submissionResult.athleteName || athleteName || "New Athlete";
+    const confirmationMessage = `Registration submitted for ${confirmedAthleteName}. Registration ID: ${submissionResult.registrationId}. Status: ${submissionResult.status}.`;
+
     return (
       <>
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">
-            Registration Submitted
+            {submissionResult.source === "firestore"
+              ? "Registration Submitted"
+              : "Preview Registration Submitted"}
           </p>
           <h1 className="mt-3 text-3xl font-bold">
-            {athleteName || "New Athlete"}
+            {confirmedAthleteName}
           </h1>
           <p className="mt-2 text-slate-300">{team?.name ?? "Team TBD"}</p>
-          <p className="mt-5 font-semibold text-blue-300">Pending Review</p>
+          <p className="mt-5 text-sm font-semibold text-blue-300">
+            {confirmationMessage}
+          </p>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5 text-sm">
+          <p className="font-semibold text-slate-400">Registration ID</p>
+          <p className="mt-1 break-words font-semibold text-white">
+            {submissionResult.registrationId}
+          </p>
+          <p className="mt-4 font-semibold text-slate-400">Status</p>
+          <p className="mt-1 font-semibold text-blue-300">
+            {submissionResult.status}
+          </p>
         </div>
 
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
@@ -471,6 +524,12 @@ export default function JoinRegistrationFlow({
             : "Ready to submit for admin review."}
         </p>
       </div>
+
+      {submissionError && (
+        <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm font-semibold text-red-300">
+          {submissionError}
+        </p>
+      )}
 
       <button
         type="button"
