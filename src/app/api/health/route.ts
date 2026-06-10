@@ -17,7 +17,7 @@ import { getFirebaseWiringStatus } from "../../infrastructure/firebaseReadiness"
 
 export const runtime = "nodejs";
 
-export function GET() {
+export async function GET() {
   return NextResponse.json({
     app: "GameDay",
     auth: {
@@ -37,7 +37,7 @@ export function GET() {
       teams: teams.length,
     },
     infrastructure: getInfrastructureEnvStatus(),
-    firebase: getFirebaseWiringStatus(),
+    firebase: await getFirebaseWiringStatus(),
     status: "ok",
   });
 }

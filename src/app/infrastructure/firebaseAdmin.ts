@@ -1,6 +1,7 @@
 import {
   FirebaseSdkNotInstalledError,
   getFirebaseAdminConfig,
+  getFirebaseAdminEnvDiagnostics,
   isMissingModuleError,
   type FirebaseAdminConfig,
 } from "./firebase";
@@ -88,4 +89,18 @@ export async function requireFirebaseAdminApp() {
   return firebaseAdmin.getApps().length > 0
     ? firebaseAdmin.getApp()
     : firebaseAdmin.initializeApp(buildAdminOptions(firebaseAdmin, config));
+}
+
+export async function getFirebaseAdminAppInitializationStatus() {
+  try {
+    return {
+      diagnostics: getFirebaseAdminEnvDiagnostics(),
+      initialized: Boolean(await getFirebaseAdminApp()),
+    };
+  } catch {
+    return {
+      diagnostics: getFirebaseAdminEnvDiagnostics(),
+      initialized: false,
+    };
+  }
 }

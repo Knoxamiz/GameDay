@@ -18,6 +18,18 @@ export type FirebaseAdminConfig = {
   storageBucket: string;
 };
 
+export type FirebaseAdminEnvDiagnostics = {
+  clientEmailExists: boolean;
+  privateKeyContainsEscapedNewlines: boolean;
+  privateKeyContainsRealNewlines: boolean;
+  privateKeyExists: boolean;
+  privateKeyHadMatchingOuterQuotes: boolean;
+  privateKeyIncludesPemFooter: boolean;
+  privateKeyStartsWithPemHeader: boolean;
+  projectIdExists: boolean;
+  storageBucketExists: boolean;
+};
+
 export class FirebaseIntegrationNotConfiguredError extends Error {
   constructor(readonly target: "admin" | "client") {
     super(`Firebase ${target} integration is not configured.`);
@@ -34,8 +46,55 @@ export class FirebaseSdkNotInstalledError extends Error {
   }
 }
 
+function stripMatchingOuterQuotes(value: string) {
+  const trimmedValue = value.trim();
+  const firstCharacter = trimmedValue.at(0);
+  const lastCharacter = trimmedValue.at(-1);
+
+  if (
+    trimmedValue.length >= 2 &&
+    ((firstCharacter === '"' && lastCharacter === '"') ||
+      (firstCharacter === "'" && lastCharacter === "'"))
+  ) {
+    return trimmedValue.slice(1, -1).trim();
+  }
+
+  return trimmedValue;
+}
+
 export function normalizePrivateKey(privateKey: string) {
-  return privateKey.replace(/\\n/g, "\n");
+  return stripMatchingOuterQuotes(privateKey).replace(/\\n/g, "\n").trim();
+}
+
+export function getFirebaseAdminEnvDiagnostics(): FirebaseAdminEnvDiagnostics {
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID?.trim();
+  const storageBucket =
+    process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET?.trim();
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL?.trim();
+  const rawPrivateKey = process.env.FIREBASE_PRIVATE_KEY?.trim();
+  const unquotedPrivateKey = rawPrivateKey
+    ? stripMatchingOuterQuotes(rawPrivateKey)
+    : "";
+  const normalizedPrivateKey = rawPrivateKey
+    ? normalizePrivateKey(rawPrivateKey)
+    : "";
+
+  return {
+    clientEmailExists: Boolean(clientEmail),
+    privateKeyContainsEscapedNewlines: unquotedPrivateKey.includes("\\n"),
+    privateKeyContainsRealNewlines: unquotedPrivateKey.includes("\n"),
+    privateKeyExists: Boolean(rawPrivateKey),
+    privateKeyHadMatchingOuterQuotes:
+      Boolean(rawPrivateKey) && rawPrivateKey !== unquotedPrivateKey,
+    privateKeyIncludesPemFooter: normalizedPrivateKey.includes(
+      "-----END PRIVATE KEY-----",
+    ),
+    privateKeyStartsWithPemHeader: normalizedPrivateKey.startsWith(
+      "-----BEGIN PRIVATE KEY-----",
+    ),
+    projectIdExists: Boolean(projectId),
+    storageBucketExists: Boolean(storageBucket),
+  };
 }
 
 export function getFirebaseClientConfig(): FirebaseClientConfig | null {

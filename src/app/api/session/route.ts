@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getFirebaseAdminConfig } from "../../infrastructure/firebase";
+import {
+  getFirebaseAdminConfig,
+  getFirebaseAdminEnvDiagnostics,
+} from "../../infrastructure/firebase";
+import { getFirebaseAdminApp } from "../../infrastructure/firebaseAdmin";
 import {
   firebaseSessionCookieName,
   FirebaseAdminAuthProvider,
@@ -10,6 +14,10 @@ import {
 } from "../../infrastructure/auth";
 
 const sessionMaxAgeSeconds = 60 * 60;
+const redactedErrorPatterns = [
+  /-----BEGIN PRIVATE KEY-----[\s\S]*?-----END PRIVATE KEY-----/g,
+  /sk_(live|test)_[A-Za-z0-9_]+/g,
+];
 
 function getCookieOptions(maxAge: number) {
   return {
@@ -48,6 +56,38 @@ function getSessionResponseBody(session: AuthSession) {
   };
 }
 
+function getSafeErrorDetails(error: unknown) {
+  if (!(error instanceof Error)) {
+    return {
+      message: "Non-Error thrown",
+      name: typeof error,
+    };
+  }
+
+  return {
+    message: redactedErrorPatterns.reduce(
+      (message, pattern) => message.replace(pattern, "[redacted]"),
+      error.message,
+    ),
+    name: error.name,
+  };
+}
+
+function logFirebaseAdminSessionDiagnostic(
+  reason: string,
+  options?: {
+    adminAppInitialized?: boolean;
+    error?: unknown;
+  },
+) {
+  console.warn("Firebase Admin session diagnostic", {
+    adminAppInitialized: options?.adminAppInitialized ?? false,
+    diagnostics: getFirebaseAdminEnvDiagnostics(),
+    error: options?.error ? getSafeErrorDetails(options.error) : undefined,
+    reason,
+  });
+}
+
 export async function GET(request: NextRequest) {
   if (!getFirebaseAdminConfig()) {
     return NextResponse.json({
@@ -74,7 +114,7 @@ export async function GET(request: NextRequest) {
       ...getSessionResponseBody(session),
     });
   } catch (error) {
-    console.warn("Could not read Firebase session.", error);
+    logFirebaseAdminSessionDiagnostic("session-read-failed", { error });
 
     return NextResponse.json({
       configured: true,
@@ -85,6 +125,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   if (!getFirebaseAdminConfig()) {
+    logFirebaseAdminSessionDiagnostic("config-missing");
+
     return NextResponse.json(
       { error: "Firebase Admin session verification is not configured." },
       { status: 503 },
@@ -100,32 +142,59 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing Firebase ID token." }, { status: 400 });
   }
 
-  const authProvider = new FirebaseAdminAuthProvider();
-  const session = await authProvider.verifySession({
-    authorizationHeader: `Bearer ${idToken}`,
-  });
+  let adminAppInitialized = false;
 
-  if (!isValidParentSession(session) && !isValidAdminSession(session)) {
+  try {
+    adminAppInitialized = Boolean(await getFirebaseAdminApp());
+
+    if (!adminAppInitialized) {
+      logFirebaseAdminSessionDiagnostic("admin-app-unavailable", {
+        adminAppInitialized,
+      });
+
+      return NextResponse.json(
+        { error: "Firebase Admin session verification is not configured." },
+        { status: 503 },
+      );
+    }
+
+    const authProvider = new FirebaseAdminAuthProvider();
+    const session = await authProvider.verifySession({
+      authorizationHeader: `Bearer ${idToken}`,
+    });
+
+    if (!isValidParentSession(session) && !isValidAdminSession(session)) {
+      return NextResponse.json(
+        {
+          error:
+            "This session endpoint requires parent claims or admin claims with an organization.",
+        },
+        { status: 403 },
+      );
+    }
+
+    const response = NextResponse.json({
+      ...getSessionResponseBody(session),
+      status: "ok",
+    });
+    response.cookies.set(
+      firebaseSessionCookieName,
+      idToken,
+      getCookieOptions(sessionMaxAgeSeconds),
+    );
+
+    return response;
+  } catch (error) {
+    logFirebaseAdminSessionDiagnostic("session-verification-failed", {
+      adminAppInitialized,
+      error,
+    });
+
     return NextResponse.json(
-      {
-        error:
-          "This session endpoint requires parent claims or admin claims with an organization.",
-      },
-      { status: 403 },
+      { error: "Firebase Admin session verification is not configured." },
+      { status: 503 },
     );
   }
-
-  const response = NextResponse.json({
-    ...getSessionResponseBody(session),
-    status: "ok",
-  });
-  response.cookies.set(
-    firebaseSessionCookieName,
-    idToken,
-    getCookieOptions(sessionMaxAgeSeconds),
-  );
-
-  return response;
 }
 
 export function DELETE() {
