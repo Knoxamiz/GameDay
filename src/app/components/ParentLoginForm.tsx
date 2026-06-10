@@ -152,7 +152,15 @@ export default function ParentLoginForm({
     setIsSubmitting(true);
 
     try {
-      await fetch("/api/session", { method: "DELETE" });
+      const response = await fetch("/api/session", {
+        credentials: "same-origin",
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Could not clear GameDay session.");
+      }
+
       const adapter = await createFirebaseClientAuthAdapter();
       await adapter?.logout();
       setEmail("");
@@ -209,7 +217,7 @@ export default function ParentLoginForm({
             onClick={handleLogout}
             type="button"
           >
-            {isSubmitting ? "Signing Out..." : "Sign Out"}
+            {isSubmitting ? "Signing Out..." : "Sign Out to Switch Role"}
           </button>
         </div>
       ) : (

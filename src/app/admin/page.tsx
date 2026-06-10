@@ -4,6 +4,7 @@ import AttendanceConcernAction from "../components/AttendanceConcernAction";
 import BottomNav from "../components/BottomNav";
 import MvpNav, { getRoleHref } from "../components/MvpNav";
 import RegistrationAdminActionLinks from "../components/RegistrationAdminActionLinks";
+import SessionControls from "../components/SessionControls";
 import TransportationIssueAction from "../components/TransportationIssueAction";
 import { attendanceEntries } from "../data/attendance";
 import { getCoachesByOrganizationId } from "../data/coaches";
@@ -71,6 +72,8 @@ export default function AdminHome() {
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <h1 className="text-3xl font-bold">GameDay - Admin</h1>
         </div>
+
+        <SessionControls role="admin" />
 
         <p className="mt-5 text-slate-300">{blackDiamondsOrganization.name}</p>
 

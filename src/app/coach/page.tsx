@@ -3,6 +3,7 @@ import AttendanceSummaryCard from "../components/AttendanceSummaryCard";
 import BottomNav from "../components/BottomNav";
 import MvpNav, { getRoleHref } from "../components/MvpNav";
 import RegistrationConcernAction from "../components/RegistrationConcernAction";
+import SessionControls from "../components/SessionControls";
 import TeamReadinessSummary from "../components/TeamReadinessSummary";
 import TransportationSummaryCard from "../components/TransportationSummaryCard";
 import { getCoachHomeReadModel } from "../data/coachRead.server";
@@ -29,6 +30,8 @@ export default async function CoachHome() {
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <h1 className="text-3xl font-bold">GameDay - Coach</h1>
         </div>
+
+        <SessionControls role="coach" />
 
         <p className="mt-5 text-slate-300">
           {currentCoach.name} · {coachTeams.length} Team

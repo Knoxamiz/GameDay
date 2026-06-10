@@ -1,6 +1,7 @@
 import ParentAthleteCard from "../components/ParentAthleteCard";
 import BottomNav from "../components/BottomNav";
 import MvpNav, { getRoleHref } from "../components/MvpNav";
+import SessionControls from "../components/SessionControls";
 import { getAttendanceEntryByAthleteAndEventId } from "../data/attendance";
 import { getCurrentParentUser } from "../data/currentUser.server";
 import { getEventById } from "../data/events";
@@ -31,6 +32,8 @@ export default async function ParentHome() {
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <h1 className="text-3xl font-bold">GameDay</h1>
         </div>
+
+        <SessionControls role="parent" />
 
         <p className="mt-5 text-lg text-slate-300">
           Good Evening {currentParent.firstName}
