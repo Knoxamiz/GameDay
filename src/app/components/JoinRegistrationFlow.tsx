@@ -159,6 +159,12 @@ export default function JoinRegistrationFlow({
         requirement.status as RegistrationRequirementStatus,
       ]),
     );
+    const paymentStatuses = Object.fromEntries(
+      paymentRequirements.map((requirement) => [
+        requirement.label,
+        requirement.status,
+      ]),
+    );
     const payload: RegistrationSubmissionPayload = {
       athlete: {
         firstName: form.athleteFirstName,
@@ -172,6 +178,7 @@ export default function JoinRegistrationFlow({
         name: form.parentName,
         phone: form.parentPhone,
       },
+      paymentStatuses,
       requirementStatuses,
     };
 

@@ -19,6 +19,7 @@ import {
   summarizePaymentRequirements,
   type PaymentRequirementStatus,
 } from "../data/payments";
+import type { ParentPaymentRequirementUpdatePayload } from "../data/paymentRequirementUpdate";
 import {
   isRequirementBlocked,
   isRequirementCleared,
@@ -163,6 +164,46 @@ export default function RegistrationRequirementsChecklist({
     };
 
     void fetch(`/api/registrations/${registrationId}/requirements`, {
+      body: JSON.stringify(payload),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "PATCH",
+    }).catch(() => undefined);
+  }
+
+  function syncParentPaymentRequirementStatus(
+    paymentRequirementId: string,
+    label: string,
+    amountDue: number,
+    description: string,
+    required: boolean,
+    status: PaymentRequirementStatus,
+  ) {
+    if (
+      !athleteId ||
+      !organizationId ||
+      !parentId ||
+      !registrationId ||
+      !paymentRequirementId
+    ) {
+      return;
+    }
+
+    const payload: ParentPaymentRequirementUpdatePayload = {
+      amountDue,
+      athleteId,
+      description,
+      label,
+      organizationId,
+      parentId,
+      paymentRequirementId,
+      registrationId,
+      required,
+      status,
+    };
+
+    void fetch(`/api/registrations/${registrationId}/payments`, {
       body: JSON.stringify(payload),
       headers: {
         "Content-Type": "application/json",
@@ -339,9 +380,17 @@ export default function RegistrationRequirementsChecklist({
                 isPaymentBlocked(requirement)) && (
                 <button
                   type="button"
-                  onClick={() =>
-                    savePaymentRequirementStatus(requirement.id, "Submitted")
-                  }
+                  onClick={() => {
+                    savePaymentRequirementStatus(requirement.id, "Submitted");
+                    syncParentPaymentRequirementStatus(
+                      requirement.id,
+                      requirement.label,
+                      requirement.amountDue,
+                      requirement.description,
+                      requirement.required,
+                      "Submitted",
+                    );
+                  }}
                   className="mt-3 w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
                 >
                   {isPaymentBlocked(requirement)

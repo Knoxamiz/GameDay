@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { submitParentRegistration } from "../../data/registrationSubmission.server";
 import type { RegistrationSubmissionPayload } from "../../data/registrationSubmission";
 import {
+  paymentRequirementStatusValues,
+  type PaymentRequirementStatus,
+} from "../../data/payments";
+import {
   registrationRequirementStatusValues,
   type RegistrationRequirementStatus,
 } from "../../data/registrations";
@@ -34,6 +38,21 @@ function getRegistrationRequirementStatuses(
   );
 }
 
+function getPaymentRequirementStatuses(
+  value: unknown,
+): Record<string, PaymentRequirementStatus> {
+  const statuses = getStringRecord(value);
+
+  return Object.fromEntries(
+    Object.entries(statuses).filter(
+      (entry): entry is [string, PaymentRequirementStatus] =>
+        paymentRequirementStatusValues.includes(
+          entry[1] as PaymentRequirementStatus,
+        ),
+    ),
+  );
+}
+
 function getSubmissionPayload(body: unknown): RegistrationSubmissionPayload {
   const payload = body && typeof body === "object" ? body : {};
   const record = payload as Record<string, unknown>;
@@ -53,6 +72,7 @@ function getSubmissionPayload(body: unknown): RegistrationSubmissionPayload {
       name: parent.name ?? "",
       phone: parent.phone ?? "",
     },
+    paymentStatuses: getPaymentRequirementStatuses(record.paymentStatuses),
     requirementStatuses: getRegistrationRequirementStatuses(
       record.requirementStatuses,
     ),

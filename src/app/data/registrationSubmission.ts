@@ -1,4 +1,5 @@
 import type { RegistrationRequirementStatus } from "./registrations";
+import type { PaymentRequirementStatus } from "./payments";
 
 export type RegistrationSubmissionPayload = {
   athlete: {
@@ -13,6 +14,7 @@ export type RegistrationSubmissionPayload = {
     name: string;
     phone: string;
   };
+  paymentStatuses: Record<string, PaymentRequirementStatus>;
   requirementStatuses: Record<string, RegistrationRequirementStatus>;
 };
 

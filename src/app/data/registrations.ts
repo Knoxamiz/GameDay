@@ -1,3 +1,5 @@
+import type { PaymentRequirement } from "./payments";
+
 export type RegistrationRequirementStatus =
   | "Missing"
   | "Submitted"
@@ -39,6 +41,7 @@ export type Registration = {
   parentName: string;
   organizationId: string;
   teamId: string;
+  paymentRequirements?: PaymentRequirement[];
   status: RegistrationStatus;
   details: string;
   submittedDate?: string;

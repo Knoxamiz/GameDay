@@ -1,6 +1,10 @@
 import { randomUUID } from "crypto";
 import type { Athlete } from "./athletes";
 import { getActiveRegistrationInviteByCode } from "./invites";
+import type {
+  PaymentRequirement,
+  PaymentRequirementStatus,
+} from "./payments";
 import type { ParentGuardian } from "./parents";
 import type {
   Registration,
@@ -80,6 +84,38 @@ function buildRegistrationRequirements(
   });
 }
 
+function buildPaymentRequirements(
+  invite: NonNullable<ReturnType<typeof getActiveRegistrationInviteByCode>>,
+  payload: RegistrationSubmissionPayload,
+  registrationId: string,
+  athleteId: string,
+  parentId: string,
+): PaymentRequirement[] {
+  const submittedAt = getSubmittedDate();
+
+  return invite.paymentRequirements.map((requirement) => {
+    const submittedStatus = payload.paymentStatuses[requirement.label];
+    const status: PaymentRequirementStatus =
+      submittedStatus === "Submitted" ? "Submitted" : "Missing";
+
+    return {
+      ...requirement,
+      amountPaid: 0,
+      athleteId,
+      id: `${registrationId}-${requirement.label
+        .toLowerCase()
+        .replaceAll(" ", "-")}`,
+      intentRecordedAt: status === "Submitted" ? submittedAt : undefined,
+      organizationId: invite.organizationId,
+      parentId,
+      registrationId,
+      submittedAt: status === "Submitted" ? submittedAt : undefined,
+      status,
+      teamId: invite.teamId,
+    };
+  });
+}
+
 export async function submitParentRegistration(
   payload: RegistrationSubmissionPayload,
   options: SubmitParentRegistrationOptions,
@@ -135,6 +171,13 @@ export async function submitParentRegistration(
       normalizeNamePart(payload.parent.name),
       parent,
       session.user.displayName,
+    ),
+    paymentRequirements: buildPaymentRequirements(
+      invite,
+      payload,
+      registrationId,
+      athleteId,
+      parentId,
     ),
     requirements: buildRegistrationRequirements(invite, payload),
     status: "Pending Review",
