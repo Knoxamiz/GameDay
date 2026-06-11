@@ -8,6 +8,8 @@ import {
   getPaymentRequirementsFromRegistrations,
 } from "../data/registrationDerivedRequirements";
 import {
+  getRegistrationRosterStatus,
+  getRosterStatusLabel,
   summarizeRegistrationRequirements,
   type Registration,
 } from "../data/registrations";
@@ -41,7 +43,7 @@ export default function RegistrationRosterCard({
 
   return (
     <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-      <h2 className="text-lg font-bold">Registration Status</h2>
+      <h2 className="text-lg font-bold">Roster</h2>
       <div className="mt-4 space-y-3 text-sm text-slate-300">
         {roster.length > 0 ? (
           roster.map((player) => {
@@ -83,6 +85,13 @@ export default function RegistrationRosterCard({
                       {paymentSummary?.open ?? 0} payments open
                     </p>
                   )}
+                  {registration && (
+                    <p className="mt-1 text-xs text-slate-400">
+                      {getRosterStatusLabel(
+                        getRegistrationRosterStatus(registration),
+                      )}
+                    </p>
+                  )}
                 </div>
                 {registration ? (
                   <RegistrationStatusBadge status={registration.status} />
@@ -95,7 +104,7 @@ export default function RegistrationRosterCard({
             );
           })
         ) : (
-          <p>No roster listed.</p>
+          <p>No rostered athletes.</p>
         )}
       </div>
     </div>

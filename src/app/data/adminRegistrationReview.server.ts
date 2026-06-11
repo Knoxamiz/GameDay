@@ -15,6 +15,7 @@ import type {
 import type {
   Registration,
   RegistrationRequirement,
+  RosterStatus,
 } from "./registrations";
 
 type UpdateAdminRegistrationReviewOptions = {
@@ -42,6 +43,10 @@ function createReviewError(
 
 function normalizeText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function getAdminNotesValue(value: unknown, currentValue?: string) {
+  return normalizeText(value) || currentValue;
 }
 
 function getActionCapability(
@@ -167,6 +172,30 @@ function upsertPaymentRequirementStatus(
   return [...updatedPaymentRequirements, paymentRequirement];
 }
 
+async function assertRosterStatusAllowed(
+  registration: Registration,
+  rosterStatus: RosterStatus,
+) {
+  const repositories = createFirestoreRepositories();
+  const team = await repositories.teams.getById(registration.teamId);
+
+  if (!team || team.organizationId !== registration.organizationId) {
+    createReviewError(
+      "registration-team-scope-invalid",
+      "This registration is not attached to a valid team in its organization.",
+      400,
+    );
+  }
+
+  if (rosterStatus === "rostered" && registration.status !== "Approved") {
+    createReviewError(
+      "registration-approval-required",
+      "Approve the registration before marking the athlete rostered.",
+      400,
+    );
+  }
+}
+
 export async function updateAdminRegistrationReview(
   payload: AdminRegistrationReviewPayload,
   options: UpdateAdminRegistrationReviewOptions,
@@ -228,14 +257,24 @@ export async function updateAdminRegistrationReview(
   const reviewedBy = session.claims.adminId ?? session.user.id;
 
   if (payload.actionType === "registration-status") {
+    const adminNotes = getAdminNotesValue(
+      payload.adminNotes,
+      registration.adminNotes,
+    );
+    const registrationPatch: Partial<Registration> = {
+      reviewedAt,
+      reviewedBy,
+      status: payload.status,
+      updatedAt: reviewedAt,
+    };
+
+    if (adminNotes) {
+      registrationPatch.adminNotes = adminNotes;
+    }
+
     await repositories.registrations.update(
       registrationId,
-      {
-        adminNotes: normalizeText(payload.adminNotes) || registration.adminNotes,
-        reviewedAt,
-        reviewedBy,
-        status: payload.status,
-      },
+      registrationPatch,
       {
         actor: {
           athleteIds: session.claims.athleteIds,
@@ -245,6 +284,49 @@ export async function updateAdminRegistrationReview(
           teamIds: session.claims.teamIds,
         },
         reason: "Admin reviewed registration status.",
+      },
+    );
+
+    return {
+      source: "firestore",
+    };
+  }
+
+  if (payload.actionType === "roster-status") {
+    await assertRosterStatusAllowed(registration, payload.rosterStatus);
+
+    const rosterPatch: Partial<Registration> = {
+      reviewedAt,
+      reviewedBy,
+      rosterStatus: payload.rosterStatus,
+      updatedAt: reviewedAt,
+    };
+    const adminNotes = getAdminNotesValue(
+      payload.adminNotes,
+      registration.adminNotes,
+    );
+
+    if (adminNotes) {
+      rosterPatch.adminNotes = adminNotes;
+    }
+
+    if (payload.rosterStatus === "rostered") {
+      rosterPatch.rosteredAt = reviewedAt;
+      rosterPatch.rosteredBy = reviewedBy;
+    }
+
+    await repositories.registrations.update(
+      registrationId,
+      rosterPatch,
+      {
+        actor: {
+          athleteIds: session.claims.athleteIds,
+          id: reviewedBy,
+          organizationIds: session.claims.organizationIds,
+          role: session.claims.role,
+          teamIds: session.claims.teamIds,
+        },
+        reason: "Admin updated roster status.",
       },
     );
 
@@ -275,6 +357,7 @@ export async function updateAdminRegistrationReview(
         reviewedAt,
         reviewedBy,
         requirements,
+        updatedAt: reviewedAt,
       },
       {
         actor: {
@@ -306,6 +389,7 @@ export async function updateAdminRegistrationReview(
       paymentRequirements,
       reviewedAt,
       reviewedBy,
+      updatedAt: reviewedAt,
     },
     {
       actor: {

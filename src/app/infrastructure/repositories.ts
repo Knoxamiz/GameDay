@@ -25,6 +25,7 @@ export type QueryScope = {
   parentId?: string;
   parentUid?: string;
   registrationId?: string;
+  rosterStatus?: string;
   status?: string;
   teamId?: string;
 };
@@ -93,6 +94,7 @@ export interface RegistrationRepository extends MutableRepository<Registration> 
   listByAthleteId(athleteId: string): Promise<Registration[]>;
   listByOrganizationId(organizationId: string): Promise<Registration[]>;
   listByParentId(parentId: string): Promise<Registration[]>;
+  listRosteredByTeamId(teamId: string): Promise<Registration[]>;
   listByTeamId(teamId: string): Promise<Registration[]>;
 }
 

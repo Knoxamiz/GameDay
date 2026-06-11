@@ -12,6 +12,7 @@ import {
   getEventTeamIds,
   getEventTimeLabel,
 } from "../data/events";
+import { isCoachVisibleRosterRegistration } from "../data/registrations";
 import { getTeamsNeedingCoaches } from "../data/teams";
 
 export const dynamic = "force-dynamic";
@@ -36,11 +37,9 @@ export default async function AdminHome() {
   const teamsNeedingCoaches = getTeamsNeedingCoaches(organizationTeams);
   const organizationStatus = [
     {
-      label: "Registered Players",
-      value: organizationTeams.reduce(
-        (playerCount, team) => playerCount + team.playerCount,
-        0,
-      ),
+      label: "Rostered Athletes",
+      value: organizationRegistrations.filter(isCoachVisibleRosterRegistration)
+        .length,
     },
     {
       label: "Active Teams",

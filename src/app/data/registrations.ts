@@ -12,7 +12,10 @@ export type RegistrationStatus =
   | "Rejected"
   | "Incomplete"
   | "Pending"
-  | "Pending Review";
+  | "Pending Review"
+  | "Waitlisted";
+
+export type RosterStatus = "not_rostered" | "rostered" | "inactive";
 
 export type RegistrationRequirement = {
   adminNotes?: string;
@@ -54,6 +57,9 @@ export type Registration = {
   registrationId?: string;
   reviewedAt?: string;
   reviewedBy?: string;
+  rosteredAt?: string;
+  rosteredBy?: string;
+  rosterStatus?: RosterStatus;
   source?: string;
   status: RegistrationStatus;
   details: string;
@@ -82,12 +88,20 @@ export const registrationStatusValues: RegistrationStatus[] = [
   "Incomplete",
   "Pending",
   "Pending Review",
+  "Waitlisted",
 ];
 
 export const registrationAdminDecisionOptions: RegistrationStatus[] = [
   "Approved",
   "Incomplete",
   "Rejected",
+  "Waitlisted",
+];
+
+export const rosterStatusValues: RosterStatus[] = [
+  "not_rostered",
+  "rostered",
+  "inactive",
 ];
 
 export const registrationForm = {
@@ -195,7 +209,32 @@ export function isRegistrationConcern(status: RegistrationStatus) {
   return (
     isRegistrationPending(status) ||
     isRegistrationIncomplete(status) ||
-    status === "Rejected"
+    status === "Rejected" ||
+    status === "Waitlisted"
+  );
+}
+
+export function getRegistrationRosterStatus(registration?: Registration | null) {
+  return registration?.rosterStatus ?? "not_rostered";
+}
+
+export function getRosterStatusLabel(status: RosterStatus) {
+  if (status === "rostered") {
+    return "Rostered";
+  }
+
+  if (status === "inactive") {
+    return "Inactive";
+  }
+
+  return "Not Rostered";
+}
+
+export function isCoachVisibleRosterRegistration(registration: Registration) {
+  return (
+    getRegistrationRosterStatus(registration) === "rostered" &&
+    registration.status !== "Rejected" &&
+    registration.status !== "Waitlisted"
   );
 }
 

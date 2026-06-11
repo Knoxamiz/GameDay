@@ -59,6 +59,13 @@ service cloud.firestore {
         );
     }
 
+    function parentKeepsRegistrationReviewFields() {
+      return request.resource.data.status == resource.data.status
+        && request.resource.data.rosterStatus == resource.data.rosterStatus
+        && request.resource.data.teamId == resource.data.teamId
+        && request.resource.data.organizationId == resource.data.organizationId;
+    }
+
     match /parents/{parentDocId} {
       allow read, update: if isParent()
         && (
@@ -90,9 +97,14 @@ service cloud.firestore {
         || adminHasOrg(resource.data.organizationId);
 
       allow create: if parentOwnsData(request.resource.data)
+        && (
+          !("rosterStatus" in request.resource.data)
+          || request.resource.data.rosterStatus == "not_rostered"
+        )
         || adminHasOrg(request.resource.data.organizationId);
 
       allow update: if parentOwnsData(resource.data)
+        && parentKeepsRegistrationReviewFields()
         || adminHasOrg(resource.data.organizationId);
 
       allow delete: if false;

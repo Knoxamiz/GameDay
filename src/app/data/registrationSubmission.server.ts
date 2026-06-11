@@ -283,6 +283,7 @@ export async function submitParentRegistration(
     ),
     registrationId,
     requirements: buildRegistrationRequirements(invite, payload),
+    rosterStatus: "not_rostered",
     source: "team-invite",
     status: "Pending Review",
     submittedDate: submittedAt,

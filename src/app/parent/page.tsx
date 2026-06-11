@@ -15,6 +15,7 @@ import {
   getParentAthleteRegistrationReadModel,
   getRegistrationByAthlete,
 } from "../data/parentAthleteRegistration.server";
+import { getRegistrationRosterStatus } from "../data/registrations";
 
 export const dynamic = "force-dynamic";
 
@@ -77,6 +78,7 @@ export default async function ParentHome() {
                 registrationId={registration?.id ?? athlete.registrationId}
                 registrationRequirements={registration?.requirements ?? []}
                 registrationStatus={registration?.status ?? "Pending"}
+                rosterStatus={getRegistrationRosterStatus(registration)}
               />
             );
           })}

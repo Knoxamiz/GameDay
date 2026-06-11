@@ -21,6 +21,7 @@ export type CoachHomeReadModel = {
   attendanceEntries: AttendanceEntry[];
   coach: Coach;
   coachMessages: GameDayMessage[];
+  coachRosterRegistrations: Registration[];
   coachTeam?: Team;
   coachTeamRegistrations: Registration[];
   coachTeams: Team[];
@@ -96,6 +97,7 @@ function getEmptyCoachHomeReadModel(
     attendanceEntries: [],
     coach,
     coachMessages: [],
+    coachRosterRegistrations: [],
     coachTeamRegistrations: [],
     coachTeams: [],
     source: "empty",
@@ -222,6 +224,7 @@ export async function getCoachHomeReadModel(): Promise<CoachHomeReadModel> {
     );
     const [
       coachMessages,
+      coachRosterRegistrationLists,
       coachTeamRegistrations,
       attendanceEntries,
       transportationEntries,
@@ -231,7 +234,12 @@ export async function getCoachHomeReadModel(): Promise<CoachHomeReadModel> {
           coach,
           coachTeams.map((team) => team.id),
         ),
-        coachTeam ? repositories.registrations.listByTeamId(coachTeam.id) : [],
+        Promise.all(
+          coachTeams.map((team) =>
+            repositories.registrations.listRosteredByTeamId(team.id),
+          ),
+        ),
+        coachTeam ? repositories.registrations.listRosteredByTeamId(coachTeam.id) : [],
         todayEvent ? repositories.attendance.listByEventId(todayEvent.id) : [],
         todayEvent
           ? repositories.transportation.listByEventId(todayEvent.id)
@@ -242,6 +250,7 @@ export async function getCoachHomeReadModel(): Promise<CoachHomeReadModel> {
       attendanceEntries,
       coach,
       coachMessages,
+      coachRosterRegistrations: uniqueById(coachRosterRegistrationLists.flat()),
       coachTeam,
       coachTeamRegistrations,
       coachTeams,

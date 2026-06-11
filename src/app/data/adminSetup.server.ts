@@ -12,6 +12,7 @@ import type { RegistrationInvite } from "./invites";
 import { createLiveRecordId, slugifyIdentityPart } from "./liveIdentity";
 import type { Organization } from "./organizations";
 import { paymentRequirementTemplates } from "./payments";
+import { isCoachVisibleRosterRegistration, type Registration } from "./registrations";
 import type { Team } from "./teams";
 
 export type AdminSetupReadModel = {
@@ -166,20 +167,20 @@ function assertClaimedOrganization(session: AuthSession, organizationId: string)
 function getOrganizationStatus({
   coaches,
   events,
+  registrations,
   teams,
 }: {
   coaches: number;
   events: number;
+  registrations: Registration[];
   teams: Team[];
 }) {
   return {
     activeTeams: teams.filter((team) => team.lifecycleStatus !== "Inactive")
       .length,
     coaches,
-    registeredPlayers: teams.reduce(
-      (playerCount, team) => playerCount + team.playerCount,
-      0,
-    ),
+    registeredPlayers: registrations.filter(isCoachVisibleRosterRegistration)
+      .length,
     upcomingEvents: events,
   };
 }
@@ -264,11 +265,12 @@ async function createOrUpdateOrganization(
   assertClaimedOrganization(session, organizationId);
 
   const repositories = createFirestoreRepositories();
-  const [currentOrganization, teams, coaches, events] = await Promise.all([
+  const [currentOrganization, teams, coaches, events, registrations] = await Promise.all([
     repositories.organizations.getById(organizationId),
     repositories.teams.listByOrganizationId(organizationId),
     repositories.coaches.listByOrganizationId(organizationId),
     repositories.events.listByOrganizationId(organizationId),
+    repositories.registrations.listByOrganizationId(organizationId),
   ]);
   const now = new Date().toISOString();
   const organization: Organization = {
@@ -284,6 +286,7 @@ async function createOrUpdateOrganization(
     status: getOrganizationStatus({
       coaches: coaches.length,
       events: events.length,
+      registrations,
       teams,
     }),
     updatedAt: now,

@@ -9,7 +9,10 @@ import type { RegistrationInvite } from "../data/invites";
 import type { GameDayMessage } from "../data/messages";
 import type { ParentGuardian } from "../data/parents";
 import type { PaymentRequirement } from "../data/payments";
-import type { Registration } from "../data/registrations";
+import {
+  isCoachVisibleRosterRegistration,
+  type Registration,
+} from "../data/registrations";
 import type { RideShareMatch } from "../data/rideShare";
 import type { Team } from "../data/teams";
 import type { TransportationEntry } from "../data/transportation";
@@ -357,6 +360,17 @@ class FirestoreRegistrationRepository
 
   listByParentId(parentId: string) {
     return this.list({ scope: { parentId } });
+  }
+
+  async listRosteredByTeamId(teamId: string) {
+    const registrations = await this.list({
+      scope: {
+        rosterStatus: "rostered",
+        teamId,
+      },
+    });
+
+    return registrations.filter(isCoachVisibleRosterRegistration);
   }
 
   listByTeamId(teamId: string) {

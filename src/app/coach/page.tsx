@@ -12,6 +12,10 @@ import {
   getEventLocationLabel,
   getEventTimeLabel,
 } from "../data/events";
+import {
+  getRegistrationRosterStatus,
+  getRosterStatusLabel,
+} from "../data/registrations";
 
 export const dynamic = "force-dynamic";
 
@@ -20,12 +24,14 @@ export default async function CoachHome() {
     attendanceEntries,
     coach: currentCoach,
     coachMessages,
+    coachRosterRegistrations,
     coachTeam,
     coachTeamRegistrations,
     coachTeams,
     todayEvent,
     transportationEntries,
   } = await getCoachHomeReadModel();
+  const coachTeamById = new Map(coachTeams.map((team) => [team.id, team]));
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -59,6 +65,48 @@ export default async function CoachHome() {
             </div>
           </div>
         )}
+
+        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <h2 className="text-lg font-bold">Roster</h2>
+          <div className="mt-3 space-y-3 text-sm text-slate-300">
+            {coachRosterRegistrations.length === 0 ? (
+              <p>No rostered athletes.</p>
+            ) : (
+              coachRosterRegistrations.map((registration) => {
+                const team = coachTeamById.get(registration.teamId);
+
+                return (
+                  <div
+                    className="rounded-xl bg-slate-800 p-3"
+                    key={registration.id}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-white">
+                          {registration.athleteName ?? registration.athleteId}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-400">
+                          {team?.label ?? registration.teamId}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-400">
+                          Parent: {registration.parentName}
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-blue-500/20 px-3 py-1 text-xs font-semibold text-blue-300">
+                        {getRosterStatusLabel(
+                          getRegistrationRosterStatus(registration),
+                        )}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs text-slate-300">
+                      Registration: {registration.status}
+                    </p>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
 
         <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">

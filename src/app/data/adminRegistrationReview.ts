@@ -2,6 +2,7 @@ import type { PaymentRequirementStatus } from "./payments";
 import type {
   RegistrationRequirementStatus,
   RegistrationStatus,
+  RosterStatus,
 } from "./registrations";
 
 export type AdminRegistrationReviewSource = "firestore";
@@ -12,6 +13,12 @@ export type AdminRegistrationReviewPayload =
       adminNotes?: string;
       registrationId: string;
       status: RegistrationStatus;
+    }
+  | {
+      actionType: "roster-status";
+      adminNotes?: string;
+      registrationId: string;
+      rosterStatus: RosterStatus;
     }
   | {
       actionType: "requirement-status";

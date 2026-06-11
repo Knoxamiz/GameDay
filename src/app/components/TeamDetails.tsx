@@ -10,6 +10,7 @@ import {
   getEventTimeLabel,
   sortEventsByStartDate,
 } from "../data/events";
+import { getEventScheduleReadModel } from "../data/eventSchedule.server";
 import { teamCommunicationItems } from "../data/messages";
 import { summarizePaymentRequirements } from "../data/payments";
 import {
@@ -52,28 +53,34 @@ export default async function TeamDetails({
     notFound();
   }
 
-  const [teamCoaches, nextEventRecord, rosterPreview, roster, teamRegistrations] =
-    await Promise.all([
-      Promise.all(
-        teamDetails.coachIds.map((coachId) =>
-          repositories.coaches.getById(coachId),
-        ),
-      ).then((coaches) => coaches.filter(isDefined)),
-      teamDetails.nextEventId
-        ? repositories.events.getById(teamDetails.nextEventId)
-        : null,
-      Promise.all(
-        teamDetails.rosterPreviewIds.map((athleteId) =>
-          repositories.athletes.getById(athleteId),
-        ),
-      ).then((athletes) => athletes.filter(isDefined)),
-      Promise.all(
-        teamDetails.athleteIds.map((athleteId) =>
-          repositories.athletes.getById(athleteId),
-        ),
-      ).then((athletes) => athletes.filter(isDefined)),
-      repositories.registrations.listByTeamId(teamDetails.id),
-    ]);
+  if (role !== "shared") {
+    const scopedSchedule = await getEventScheduleReadModel(role);
+    const canReadTeam = scopedSchedule.teams.some((team) => team.id === teamId);
+
+    if (!canReadTeam) {
+      notFound();
+    }
+  }
+
+  const [teamCoaches, nextEventRecord, teamRegistrations] = await Promise.all([
+    Promise.all(
+      teamDetails.coachIds.map((coachId) =>
+        repositories.coaches.getById(coachId),
+      ),
+    ).then((coaches) => coaches.filter(isDefined)),
+    teamDetails.nextEventId
+      ? repositories.events.getById(teamDetails.nextEventId)
+      : null,
+    repositories.registrations.listRosteredByTeamId(teamDetails.id),
+  ]);
+  const roster = (
+    await Promise.all(
+      teamRegistrations.map((registration) =>
+        repositories.athletes.getById(registration.athleteId),
+      ),
+    )
+  ).filter(isDefined);
+  const rosterPreview = roster.slice(0, 4);
   const teamEvents = (await repositories.events.listByTeamId(teamDetails.id))
     .filter((event) => event.status !== "draft")
     .sort(sortEventsByStartDate);
@@ -111,7 +118,7 @@ export default async function TeamDetails({
     : [];
   const teamStatusItems = nextEvent
     ? [
-        `${teamDetails.playerCount} Registered`,
+        `${roster.length} Rostered`,
         `${attendance?.attending ?? 0} Confirmed For ${nextEvent.type}`,
         `${attendance?.unknown ?? 0} Unknown Attendance`,
         `${transportation?.needsRide ?? 0} Need Ride`,
@@ -147,7 +154,7 @@ export default async function TeamDetails({
         <div className="mt-5 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <h1 className="text-3xl font-bold">{teamDetails.name}</h1>
           <p className="mt-3 text-sm text-slate-300">
-            {teamDetails.playerCount} Players
+            {roster.length} Rostered Athlete{roster.length === 1 ? "" : "s"}
           </p>
           <div className="mt-4 space-y-2 text-sm text-slate-300">
             {teamCoaches.length > 0 ? (
@@ -211,7 +218,7 @@ export default async function TeamDetails({
           <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
             <h2 className="text-lg font-bold">Roster</h2>
             <p className="mt-3 text-sm text-slate-300">
-              {teamDetails.playerCount} Players
+              {roster.length} Rostered Athlete{roster.length === 1 ? "" : "s"}
             </p>
             <div className="mt-4 space-y-2 text-sm text-slate-300">
               {rosterPreview.map((player) => (

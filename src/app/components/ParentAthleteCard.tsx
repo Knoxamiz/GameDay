@@ -10,8 +10,12 @@ import {
 import type {
   RegistrationRequirement,
   RegistrationStatus,
+  RosterStatus,
 } from "../data/registrations";
-import { summarizeRegistrationRequirements } from "../data/registrations";
+import {
+  getRosterStatusLabel,
+  summarizeRegistrationRequirements,
+} from "../data/registrations";
 import { buildAthleteReadiness } from "../data/readiness";
 import { buildReadinessActions } from "../data/readinessActions";
 import type { TransportationStatus } from "../data/transportation";
@@ -43,6 +47,7 @@ type ParentAthleteCardProps = {
   registrationId: string;
   registrationRequirements: RegistrationRequirement[];
   registrationStatus: RegistrationStatus;
+  rosterStatus: RosterStatus;
 };
 
 function getDocumentRequirementsFromRegistration(
@@ -75,6 +80,7 @@ export default function ParentAthleteCard({
   registrationId,
   registrationRequirements,
   registrationStatus,
+  rosterStatus,
 }: ParentAthleteCardProps) {
   const nextEventId = nextEvent?.id;
   const attendanceStatus = useAttendanceStatus(
@@ -214,6 +220,20 @@ export default function ParentAthleteCard({
                 <span className={registrationTone}>{registrationLabel}</span>
               </p>
               <p className="flex justify-between gap-3 text-slate-300">
+                <span className="text-slate-400">Roster</span>
+                <span
+                  className={
+                    rosterStatus === "rostered"
+                      ? "font-semibold text-blue-300"
+                      : rosterStatus === "inactive"
+                        ? "font-semibold text-red-300"
+                        : "font-semibold text-yellow-200"
+                  }
+                >
+                  {getRosterStatusLabel(rosterStatus)}
+                </span>
+              </p>
+              <p className="flex justify-between gap-3 text-slate-300">
                 <span className="text-slate-400">Documents</span>
                 <span
                   className={
@@ -264,7 +284,27 @@ export default function ParentAthleteCard({
           </div>
         ) : (
           <div className="rounded-xl bg-slate-800 p-4 text-sm text-slate-300">
-            No upcoming event is set for this athlete.
+            <p>No upcoming event is set for this athlete.</p>
+            <div className="mt-4 space-y-2 border-t border-slate-700 pt-4">
+              <p className="flex justify-between gap-3">
+                <span className="text-slate-400">Registration</span>
+                <span className={registrationTone}>{registrationLabel}</span>
+              </p>
+              <p className="flex justify-between gap-3">
+                <span className="text-slate-400">Roster</span>
+                <span
+                  className={
+                    rosterStatus === "rostered"
+                      ? "font-semibold text-blue-300"
+                      : rosterStatus === "inactive"
+                        ? "font-semibold text-red-300"
+                        : "font-semibold text-yellow-200"
+                  }
+                >
+                  {getRosterStatusLabel(rosterStatus)}
+                </span>
+              </p>
+            </div>
           </div>
         )}
 

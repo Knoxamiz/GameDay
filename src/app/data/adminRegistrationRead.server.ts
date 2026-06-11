@@ -5,10 +5,12 @@ import { createFirestoreRepositories } from "../infrastructure/firebaseRepositor
 import type { AuthSessionSource } from "../infrastructure/auth";
 import {
   registrationRequirementStatusValues,
+  rosterStatusValues,
   registrationStatusValues,
   type Registration,
   type RegistrationRequirementStatus,
   type RegistrationStatus,
+  type RosterStatus,
 } from "./registrations";
 import {
   paymentRequirementStatusValues,
@@ -62,6 +64,10 @@ function normalizeRegistrationStatus(value: unknown): RegistrationStatus {
   return normalizeStatusValue(value, registrationStatusValues, "Pending Review");
 }
 
+function normalizeRosterStatus(value: unknown): RosterStatus {
+  return normalizeStatusValue(value, rosterStatusValues, "not_rostered");
+}
+
 function normalizeRegistrationRequirementStatus(
   value: unknown,
 ): RegistrationRequirementStatus {
@@ -91,6 +97,7 @@ function normalizeRegistration(registration: Registration): Registration {
           status: normalizeRegistrationRequirementStatus(requirement.status),
         }))
       : [],
+    rosterStatus: normalizeRosterStatus(registration.rosterStatus),
     status: normalizeRegistrationStatus(registration.status),
   };
 }

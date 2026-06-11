@@ -6,8 +6,10 @@ import {
 import {
   registrationAdminDecisionOptions,
   registrationRequirementStatusValues,
+  rosterStatusValues,
   type RegistrationRequirementStatus,
   type RegistrationStatus,
+  type RosterStatus,
 } from "../../../../../data/registrations";
 import type {
   AdminRegistrationReviewPayload,
@@ -43,6 +45,12 @@ function getRegistrationStatus(value: unknown): RegistrationStatus {
   return registrationAdminDecisionOptions.includes(value as RegistrationStatus)
     ? (value as RegistrationStatus)
     : "Incomplete";
+}
+
+function getRosterStatus(value: unknown): RosterStatus {
+  return rosterStatusValues.includes(value as RosterStatus)
+    ? (value as RosterStatus)
+    : "not_rostered";
 }
 
 function getRegistrationRequirementStatus(
@@ -83,6 +91,15 @@ function getPayload(
       adminNotes: getText(body?.adminNotes),
       registrationId,
       status: getRegistrationStatus(body?.status),
+    };
+  }
+
+  if (actionType === "roster-status") {
+    return {
+      actionType,
+      adminNotes: getText(body?.adminNotes),
+      registrationId,
+      rosterStatus: getRosterStatus(body?.rosterStatus),
     };
   }
 

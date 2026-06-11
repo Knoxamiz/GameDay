@@ -51,7 +51,11 @@ export default async function EventDetails({
     repositories.messages.listByEventId(eventDetails.id),
     repositories.attendance.listByEventId(eventDetails.id),
     Promise.all(
-      eventTeamIds.map((teamId) => repositories.registrations.listByTeamId(teamId)),
+      eventTeamIds.map((teamId) =>
+        role === "admin"
+          ? repositories.registrations.listByTeamId(teamId)
+          : repositories.registrations.listRosteredByTeamId(teamId),
+      ),
     ),
     repositories.transportation.listByEventId(eventDetails.id),
   ]);

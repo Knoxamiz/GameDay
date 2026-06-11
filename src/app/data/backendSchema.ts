@@ -77,6 +77,7 @@ export const backendRelationships: BackendRelationship[] = [
       "parentId",
       "parentUid",
       "ownerUid",
+      "rosterStatus",
     ],
     to: "athletes",
   },
@@ -162,6 +163,7 @@ export const backendCollectionSpecs: Record<
       ["parentId"],
       ["parentUid"],
       ["ownerUid"],
+      ["teamId", "rosterStatus"],
     ],
     primaryKey: "id",
     scopeKeys: [
@@ -171,6 +173,7 @@ export const backendCollectionSpecs: Record<
       "parentId",
       "parentUid",
       "ownerUid",
+      "rosterStatus",
     ],
     serverWritesRequired: true,
   },

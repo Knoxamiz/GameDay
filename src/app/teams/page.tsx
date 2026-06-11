@@ -7,8 +7,8 @@ import {
   getEventShortDateLabel,
   getEventTimeLabel,
 } from "../data/events";
+import { getEventScheduleReadModel } from "../data/eventSchedule.server";
 import { summarizeTransportationEntries } from "../data/transportation";
-import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 
 type TeamsHomeProps = {
@@ -27,10 +27,11 @@ function isDefined<TValue>(
 
 export default async function TeamsHome({ searchParams }: TeamsHomeProps) {
   const role = getMvpNavRole((await searchParams)?.role);
-  const repositories = getFirebaseAdminConfig()
+  const schedule = await getEventScheduleReadModel(role);
+  const repositories = schedule.source === "firestore"
     ? createFirestoreRepositories()
     : null;
-  const visibleTeams = repositories ? await repositories.teams.list() : [];
+  const visibleTeams = schedule.teams;
   const nextEvents = repositories
     ? (
         await Promise.all(
@@ -44,17 +45,30 @@ export default async function TeamsHome({ searchParams }: TeamsHomeProps) {
   const nextEventsById = new Map(
     nextEvents.map((event) => [event.id, event]),
   );
-  const transportationLists = repositories
-    ? await Promise.all(
-        nextEvents.map((event) =>
-          repositories.transportation.listByEventId(event.id),
+  const [transportationLists, rosteredRegistrationLists] = repositories
+    ? await Promise.all([
+        Promise.all(
+          nextEvents.map((event) =>
+            repositories.transportation.listByEventId(event.id),
+          ),
         ),
-      )
-    : [];
+        Promise.all(
+          visibleTeams.map((team) =>
+            repositories.registrations.listRosteredByTeamId(team.id),
+          ),
+        ),
+      ])
+    : [[], []];
   const transportationByEventId = new Map(
     nextEvents.map((event, index) => [
       event.id,
       transportationLists[index] ?? [],
+    ]),
+  );
+  const rosteredCountByTeamId = new Map(
+    visibleTeams.map((team, index) => [
+      team.id,
+      rosteredRegistrationLists[index]?.length ?? 0,
     ]),
   );
 
@@ -73,7 +87,9 @@ export default async function TeamsHome({ searchParams }: TeamsHomeProps) {
         <div className="mt-6 space-y-4">
           {visibleTeams.length === 0 && (
             <p className="rounded-2xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300">
-              No teams listed.
+              {role === "shared"
+                ? "Sign in as a parent, coach, or admin to view teams."
+                : "No teams available for this view."}
             </p>
           )}
           {visibleTeams.map((team) => {
@@ -119,9 +135,9 @@ export default async function TeamsHome({ searchParams }: TeamsHomeProps) {
 
                 <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                   <div className="rounded-xl bg-slate-800 p-3">
-                    <p className="text-slate-400">Players</p>
+                    <p className="text-slate-400">Rostered</p>
                     <p className="mt-1 font-semibold text-white">
-                      {team.playerCount}
+                      {rosteredCountByTeamId.get(team.id) ?? 0}
                     </p>
                   </div>
                   <div className="rounded-xl bg-slate-800 p-3">

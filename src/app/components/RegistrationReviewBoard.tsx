@@ -26,10 +26,14 @@ import {
   isRequirementNeedsReview,
   isRequirementOpen,
   registrationAdminDecisionOptions,
+  getRegistrationRosterStatus,
+  getRosterStatusLabel,
+  rosterStatusValues,
   summarizeRegistrationRequirements,
   type Registration,
   type RegistrationRequirementStatus,
   type RegistrationStatus,
+  type RosterStatus,
 } from "../data/registrations";
 import {
   saveDocumentRequirementStatus,
@@ -57,6 +61,7 @@ type RegistrationReviewBoardProps = {
 
 type RegistrationReviewCardProps = {
   onReviewError: (message: string | null) => void;
+  onReviewSuccess: (message: string) => void;
   registration: Registration;
   source: RegistrationReviewSource;
 };
@@ -402,10 +407,14 @@ function getRegistrationDocumentRequirements(
 
 function RegistrationReviewCard({
   onReviewError,
+  onReviewSuccess,
   registration,
   source,
 }: RegistrationReviewCardProps) {
   const status = useRegistrationStatus(registration.id, registration.status);
+  const [rosterStatus, setRosterStatus] = useState<RosterStatus>(
+    getRegistrationRosterStatus(registration),
+  );
   const requirements = useRegistrationRequirements(
     registration.id,
     registration.requirements,
@@ -439,6 +448,62 @@ function RegistrationReviewCard({
       <p className="mt-4 text-sm text-slate-300">
         {getStatusDetails(status, registration.details)}
       </p>
+
+      <div className="mt-4 rounded-xl bg-slate-800 p-4 text-sm">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="font-semibold text-white">Roster Status</p>
+            <p className="mt-1 text-xs text-slate-400">
+              Coach rosters only include rostered athletes.
+            </p>
+          </div>
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+              rosterStatus === "rostered"
+                ? "bg-blue-500/20 text-blue-300"
+                : rosterStatus === "inactive"
+                  ? "bg-red-500/20 text-red-300"
+                  : "bg-yellow-500/20 text-yellow-200"
+            }`}
+          >
+            {getRosterStatusLabel(rosterStatus)}
+          </span>
+        </div>
+        <div className="mt-3 grid grid-cols-3 gap-2 text-xs font-semibold">
+          {rosterStatusValues.map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => {
+                saveAdminReviewChange({
+                  onError: onReviewError,
+                  onSuccess: () => {
+                    setRosterStatus(option);
+                    onReviewSuccess(
+                      `${registration.athleteName ?? registration.athleteId} is ${getRosterStatusLabel(
+                        option,
+                      ).toLowerCase()}.`,
+                    );
+                  },
+                  payload: {
+                    actionType: "roster-status",
+                    registrationId: registration.id,
+                    rosterStatus: option,
+                  },
+                  source,
+                });
+              }}
+              className={`rounded-xl border px-2 py-2 ${
+                option === rosterStatus
+                  ? "border-blue-500 bg-blue-500/20 text-blue-200"
+                  : "border-slate-700 bg-slate-950 text-slate-300"
+              }`}
+            >
+              {getRosterStatusLabel(option)}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="mt-4 rounded-xl bg-slate-800 p-4 text-sm">
         <p className="font-semibold text-white">Requirements</p>
@@ -535,7 +600,7 @@ function RegistrationReviewCard({
         source={source}
       />
 
-      <div className="mt-4 grid grid-cols-3 gap-2 text-xs font-semibold">
+      <div className="mt-4 grid grid-cols-2 gap-2 text-xs font-semibold">
         {registrationAdminDecisionOptions.map((option) => (
           <button
             key={option}
@@ -577,6 +642,7 @@ export default function RegistrationReviewBoard({
   source = "empty",
 }: RegistrationReviewBoardProps) {
   const [reviewError, setReviewError] = useState<string | null>(null);
+  const [reviewMessage, setReviewMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (source !== "firestore") {
@@ -642,6 +708,11 @@ export default function RegistrationReviewBoard({
       </div>
 
       <div className="mt-6 space-y-4">
+        {reviewMessage && (
+          <p className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-3 text-sm font-semibold text-blue-200">
+            {reviewMessage}
+          </p>
+        )}
         {reviewError && (
           <p className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm font-semibold text-red-300">
             {reviewError}
@@ -650,7 +721,14 @@ export default function RegistrationReviewBoard({
         {registrations.map((registration) => (
           <RegistrationReviewCard
             key={registration.id}
-            onReviewError={setReviewError}
+            onReviewError={(message) => {
+              setReviewMessage(null);
+              setReviewError(message);
+            }}
+            onReviewSuccess={(message) => {
+              setReviewError(null);
+              setReviewMessage(message);
+            }}
             registration={registration}
             source={source}
           />
