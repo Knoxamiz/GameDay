@@ -1,12 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import type { Coach, CoachAssignmentStatus } from "../data/coaches";
 import type { RegistrationInvite } from "../data/invites";
 import type { Organization } from "../data/organizations";
 import type { Team } from "../data/teams";
 
 type AdminSetupPanelProps = {
   canManageSetup: boolean;
+  coaches: Coach[];
   organizationIds: string[];
   organizations: Organization[];
   registrationInvites: RegistrationInvite[];
@@ -25,6 +27,7 @@ function getCurrentSeasonLabel() {
 
 export default function AdminSetupPanel({
   canManageSetup,
+  coaches,
   organizationIds,
   organizations,
   registrationInvites,
@@ -39,6 +42,12 @@ export default function AdminSetupPanel({
   const [teamDivision, setTeamDivision] = useState("");
   const [teamSeason, setTeamSeason] = useState(getCurrentSeasonLabel());
   const [teamStatus, setTeamStatus] = useState<"Active" | "Inactive">("Active");
+  const [coachName, setCoachName] = useState("");
+  const [coachEmail, setCoachEmail] = useState("");
+  const [coachUid, setCoachUid] = useState("");
+  const [coachStatus, setCoachStatus] =
+    useState<CoachAssignmentStatus>("Active");
+  const [coachTeamIds, setCoachTeamIds] = useState<string[]>([]);
   const [inviteTeamId, setInviteTeamId] = useState(teams[0]?.id ?? "");
   const [inviteTitle, setInviteTitle] = useState("");
   const [inviteStatus, setInviteStatus] = useState<"Active" | "Paused">(
@@ -55,7 +64,26 @@ export default function AdminSetupPanel({
         : organizations.map((organization) => organization.id),
     [organizationIds, organizations],
   );
-  const activeTeams = teams.filter((team) => team.lifecycleStatus !== "Inactive");
+  const activeTeams = teams.filter(
+    (team) =>
+      team.lifecycleStatus !== "Inactive" &&
+      team.organizationId === organizationId,
+  );
+  const activeTeamIdSet = new Set(activeTeams.map((team) => team.id));
+  const selectedCoachTeamIds = coachTeamIds.filter((teamId) =>
+    activeTeamIdSet.has(teamId),
+  );
+  const selectedInviteTeamId = activeTeamIdSet.has(inviteTeamId)
+    ? inviteTeamId
+    : activeTeams[0]?.id ?? "";
+
+  function toggleCoachTeam(teamId: string) {
+    setCoachTeamIds((currentTeamIds) =>
+      currentTeamIds.includes(teamId)
+        ? currentTeamIds.filter((currentTeamId) => currentTeamId !== teamId)
+        : [...currentTeamIds, teamId],
+    );
+  }
 
   async function saveSetup(payload: Record<string, unknown>) {
     setError(null);
@@ -80,7 +108,7 @@ export default function AdminSetupPanel({
       }
 
       setMessage(body?.message ?? "Setup saved.");
-      window.location.reload();
+      window.setTimeout(() => window.location.reload(), 600);
     } catch (setupError) {
       setError(
         setupError instanceof Error ? setupError.message : "Could not save setup.",
@@ -248,6 +276,109 @@ export default function AdminSetupPanel({
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
           Step 3
         </p>
+        <h2 className="mt-2 text-xl font-bold">Coach Assignment</h2>
+        <p className="mt-2 text-sm text-slate-300">
+          Assign a real coach account to one or more real teams.
+        </p>
+        {activeTeams.length === 0 ? (
+          <p className="mt-4 rounded-xl bg-slate-800 p-3 text-sm text-slate-300">
+            Create an active team first.
+          </p>
+        ) : (
+          <div className="mt-4 space-y-3">
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-300">
+                Coach Name
+              </span>
+              <input
+                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
+                onChange={(event) => setCoachName(event.target.value)}
+                value={coachName}
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-300">
+                Coach Email
+              </span>
+              <input
+                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
+                onChange={(event) => setCoachEmail(event.target.value)}
+                type="email"
+                value={coachEmail}
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-300">
+                Firebase UID
+              </span>
+              <input
+                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
+                onChange={(event) => setCoachUid(event.target.value)}
+                placeholder="Optional"
+                value={coachUid}
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-300">
+                Status
+              </span>
+              <select
+                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
+                onChange={(event) =>
+                  setCoachStatus(
+                    event.target.value === "Inactive" ? "Inactive" : "Active",
+                  )
+                }
+                value={coachStatus}
+              >
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </label>
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-semibold text-slate-300">
+                Teams
+              </legend>
+              {activeTeams.map((team) => (
+                <label
+                  className="flex items-center justify-between gap-3 rounded-xl bg-slate-800 p-3 text-sm font-semibold text-slate-300"
+                  key={team.id}
+                >
+                  {team.name}
+                  <input
+                    checked={selectedCoachTeamIds.includes(team.id)}
+                    onChange={() => toggleCoachTeam(team.id)}
+                    type="checkbox"
+                  />
+                </label>
+              ))}
+            </fieldset>
+            <button
+              className="w-full rounded-xl bg-blue-500 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isSaving}
+              onClick={() =>
+                void saveSetup({
+                  actionType: "coach-assignment",
+                  email: coachEmail,
+                  name: coachName,
+                  organizationId,
+                  status: coachStatus,
+                  teamIds: selectedCoachTeamIds,
+                  uid: coachUid,
+                })
+              }
+              type="button"
+            >
+              Save Coach Assignment
+            </button>
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+          Step 4
+        </p>
         <h2 className="mt-2 text-xl font-bold">Registration Invite</h2>
         <p className="mt-2 text-sm text-slate-300">
           Parent registration opens only after a real invite exists.
@@ -263,7 +394,7 @@ export default function AdminSetupPanel({
               <select
                 className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
                 onChange={(event) => setInviteTeamId(event.target.value)}
-                value={inviteTeamId || activeTeams[0]?.id}
+                value={selectedInviteTeamId}
               >
                 {activeTeams.map((team) => (
                   <option key={team.id} value={team.id}>
@@ -317,7 +448,7 @@ export default function AdminSetupPanel({
                   includePayment,
                   organizationId,
                   status: inviteStatus,
-                  teamId: inviteTeamId || activeTeams[0]?.id,
+                  teamId: selectedInviteTeamId,
                   title: inviteTitle,
                 })
               }
@@ -334,6 +465,7 @@ export default function AdminSetupPanel({
         <div className="mt-3 space-y-2 text-sm text-slate-300">
           <p>{organizations.length} organization record(s)</p>
           <p>{teams.length} team record(s)</p>
+          <p>{coaches.length} coach assignment(s)</p>
           <p>{registrationInvites.length} registration invite(s)</p>
         </div>
       </section>

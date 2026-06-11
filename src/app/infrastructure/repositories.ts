@@ -19,6 +19,7 @@ export type QueryScope = {
   athleteId?: string;
   code?: string;
   coachId?: string;
+  email?: string;
   eventId?: string;
   organizationId?: string;
   ownerUid?: string;
@@ -28,6 +29,7 @@ export type QueryScope = {
   rosterStatus?: string;
   status?: string;
   teamId?: string;
+  uid?: string;
 };
 
 export type RepositoryActor = {
@@ -76,6 +78,8 @@ export interface AthleteRepository extends MutableRepository<Athlete> {
 }
 
 export interface CoachRepository extends MutableRepository<Coach> {
+  getByEmail(email: string): Promise<Coach | null>;
+  getByUid(uid: string): Promise<Coach | null>;
   listByOrganizationId(organizationId: string): Promise<Coach[]>;
   listByTeamId(teamId: string): Promise<Coach[]>;
 }

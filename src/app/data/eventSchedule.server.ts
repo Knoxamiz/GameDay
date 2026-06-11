@@ -8,6 +8,10 @@ import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import {
+  getCoachAssignedTeams,
+  resolveCoachAssignmentScope,
+} from "./coachAssignments.server";
+import {
   eventHasTeamId,
   getEventTeamIds,
   sortEventsByStartDate,
@@ -89,11 +93,7 @@ function isRoleSession(
   }
 
   if (role === "coach") {
-    return Boolean(
-      session.claims.coachId &&
-        session.claims.organizationIds.length > 0 &&
-        session.claims.teamIds.length > 0,
-    );
+    return true;
   }
 
   return Boolean(getLiveParentId(session));
@@ -180,10 +180,11 @@ async function getCoachScheduleReadModel(
   session: AuthSession,
 ): Promise<EventScheduleReadModel> {
   const repositories = createFirestoreRepositories();
-  const organizationIds = session.claims.organizationIds;
-  const teamIds = session.claims.teamIds;
+  const coachScope = await resolveCoachAssignmentScope(session);
+  const organizationIds = coachScope.organizationIds;
+  const teamIds = coachScope.teamIds;
   const [teams, eventLists] = await Promise.all([
-    getTeamsByIds(teamIds),
+    getCoachAssignedTeams(coachScope),
     Promise.all(
       teamIds.map((teamId) => repositories.events.listByTeamId(teamId)),
     ),

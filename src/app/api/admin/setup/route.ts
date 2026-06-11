@@ -23,6 +23,19 @@ function getTeamStatus(value: unknown): "Active" | "Inactive" {
   return value === "Inactive" ? "Inactive" : "Active";
 }
 
+function getCoachStatus(value: unknown): "Active" | "Inactive" {
+  return value === "Inactive" ? "Inactive" : "Active";
+}
+
+function getStringList(value: unknown) {
+  return Array.isArray(value)
+    ? value
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter(Boolean)
+    : [];
+}
+
 function getSetupPayload(body: Record<string, unknown> | null) {
   if (!body) {
     return null;
@@ -46,6 +59,18 @@ function getSetupPayload(body: Record<string, unknown> | null) {
       organizationId: getText(body.organizationId),
       season: getText(body.season),
       status: getTeamStatus(body.status),
+    } satisfies AdminSetupPayload;
+  }
+
+  if (actionType === "coach-assignment") {
+    return {
+      actionType,
+      email: getText(body.email),
+      name: getText(body.name),
+      organizationId: getText(body.organizationId),
+      status: getCoachStatus(body.status),
+      teamIds: getStringList(body.teamIds),
+      uid: getText(body.uid),
     } satisfies AdminSetupPayload;
   }
 

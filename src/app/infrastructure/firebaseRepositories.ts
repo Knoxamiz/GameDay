@@ -314,8 +314,32 @@ class FirestoreAthleteRepository
 class FirestoreCoachRepository
   extends FirestoreCollectionRepository<Coach>
   implements CoachRepository {
-  listByOrganizationId(organizationId: string) {
-    return this.list({ scope: { organizationId } });
+  getByEmail(email: string) {
+    return this.list({ limit: 1, scope: { email } }).then(
+      (coaches) => coaches[0] ?? null,
+    );
+  }
+
+  getByUid(uid: string) {
+    return this.list({ limit: 1, scope: { uid } }).then(
+      (coaches) => coaches[0] ?? null,
+    );
+  }
+
+  async listByOrganizationId(organizationId: string) {
+    const [organizationIdCoaches, organizationIdsCoaches] = await Promise.all([
+      this.list({ scope: { organizationId } }),
+      this.listWhere("organizationIds", arrayContainsOperator, organizationId),
+    ]);
+
+    return [
+      ...new Map(
+        [...organizationIdCoaches, ...organizationIdsCoaches].map((coach) => [
+          coach.id,
+          coach,
+        ]),
+      ).values(),
+    ];
   }
 
   listByTeamId(teamId: string) {

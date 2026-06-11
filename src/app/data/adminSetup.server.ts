@@ -7,6 +7,7 @@ import {
 import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
+import { isActiveCoach, type Coach, type CoachAssignmentStatus } from "./coaches";
 import { documentRequirementTemplates } from "./documents";
 import type { RegistrationInvite } from "./invites";
 import { createLiveRecordId, slugifyIdentityPart } from "./liveIdentity";
@@ -17,6 +18,7 @@ import type { Team } from "./teams";
 
 export type AdminSetupReadModel = {
   canManageSetup: boolean;
+  coaches: Coach[];
   organizationIds: string[];
   organizations: Organization[];
   registrationInvites: RegistrationInvite[];
@@ -37,6 +39,15 @@ export type AdminSetupPayload =
       organizationId: string;
       season: string;
       status: "Active" | "Inactive";
+    }
+  | {
+      actionType: "coach-assignment";
+      email: string;
+      name: string;
+      organizationId: string;
+      status: CoachAssignmentStatus;
+      teamIds: string[];
+      uid?: string;
     }
   | {
       actionType: "registration-invite";
@@ -92,11 +103,26 @@ function uniqueStringList(values: (string | undefined)[]) {
   return [...new Set(values.map(normalizeText).filter(Boolean))];
 }
 
+function uniqueById<TRecord extends { id: string }>(records: TRecord[]) {
+  return [...new Map(records.map((record) => [record.id, record])).values()];
+}
+
+function hasSameMembers(first: string[], second: string[]) {
+  const firstSet = new Set(first);
+  const secondSet = new Set(second);
+
+  return (
+    firstSet.size === secondSet.size &&
+    [...firstSet].every((value) => secondSet.has(value))
+  );
+}
+
 function emptyReadModel(
   organizationIds: string[] = [],
 ): AdminSetupReadModel {
   return {
     canManageSetup: false,
+    coaches: [],
     organizationIds,
     organizations: [],
     registrationInvites: [],
@@ -170,7 +196,7 @@ function getOrganizationStatus({
   registrations,
   teams,
 }: {
-  coaches: number;
+  coaches: Coach[];
   events: number;
   registrations: Registration[];
   teams: Team[];
@@ -178,7 +204,7 @@ function getOrganizationStatus({
   return {
     activeTeams: teams.filter((team) => team.lifecycleStatus !== "Inactive")
       .length,
-    coaches,
+    coaches: coaches.filter(isActiveCoach).length,
     registeredPlayers: registrations.filter(isCoachVisibleRosterRegistration)
       .length,
     upcomingEvents: events,
@@ -210,7 +236,7 @@ export async function getAdminSetupReadModel(): Promise<AdminSetupReadModel> {
 
     const repositories = createFirestoreRepositories();
     const organizationIds = session.claims.organizationIds;
-    const [organizations, teamLists, inviteList] = await Promise.all([
+    const [organizations, teamLists, coachLists, inviteList] = await Promise.all([
       Promise.all(
         organizationIds.map((organizationId) =>
           repositories.organizations.getById(organizationId),
@@ -221,12 +247,18 @@ export async function getAdminSetupReadModel(): Promise<AdminSetupReadModel> {
           repositories.teams.listByOrganizationId(organizationId),
         ),
       ),
+      Promise.all(
+        organizationIds.map((organizationId) =>
+          repositories.coaches.listByOrganizationId(organizationId),
+        ),
+      ),
       repositories.registrationInvites.list(),
     ]);
     const organizationSet = new Set(organizationIds);
 
     return {
       canManageSetup: true,
+      coaches: uniqueById(coachLists.flat()),
       organizationIds,
       organizations: organizations.filter(
         (organization): organization is Organization => Boolean(organization),
@@ -235,7 +267,7 @@ export async function getAdminSetupReadModel(): Promise<AdminSetupReadModel> {
         organizationSet.has(invite.organizationId),
       ),
       source: "firestore",
-      teams: teamLists.flat(),
+      teams: uniqueById(teamLists.flat()),
     };
   } catch (error) {
     console.warn("Could not load admin setup data.", {
@@ -284,7 +316,7 @@ async function createOrUpdateOrganization(
     name,
     ownerUid: currentOrganization?.ownerUid ?? session.user.id,
     status: getOrganizationStatus({
-      coaches: coaches.length,
+      coaches,
       events: events.length,
       registrations,
       teams,
@@ -376,6 +408,197 @@ async function createTeam(
   };
 }
 
+function getNameParts(name: string) {
+  const [firstName = name, ...lastNameParts] = name.split(/\s+/);
+
+  return {
+    firstName,
+    lastName: lastNameParts.join(" "),
+  };
+}
+
+function getCoachIdFromEmail(email: string) {
+  return `coach-${slugifyIdentityPart(email)}`;
+}
+
+async function updateTeamCoachHelpers({
+  assignedTeamIds,
+  coachId,
+  organizationId,
+  session,
+  status,
+  updatedAt,
+}: {
+  assignedTeamIds: string[];
+  coachId: string;
+  organizationId: string;
+  session: AuthSession;
+  status: CoachAssignmentStatus;
+  updatedAt: string;
+}) {
+  const repositories = createFirestoreRepositories();
+  const activeAssignedTeamIds = new Set(
+    status === "Active" ? assignedTeamIds : [],
+  );
+  const organizationTeams =
+    await repositories.teams.listByOrganizationId(organizationId);
+
+  await Promise.all(
+    organizationTeams.map(async (team) => {
+      const currentCoachIds = Array.isArray(team.coachIds) ? team.coachIds : [];
+      const nextCoachIds = uniqueStringList([
+        ...currentCoachIds.filter((teamCoachId) => teamCoachId !== coachId),
+        activeAssignedTeamIds.has(team.id) ? coachId : undefined,
+      ]);
+
+      if (hasSameMembers(currentCoachIds, nextCoachIds)) {
+        return;
+      }
+
+      await repositories.teams.update(
+        team.id,
+        {
+          coachIds: nextCoachIds,
+          updatedAt,
+        },
+        {
+          actor: getRecordActor(session),
+          reason: "Admin updated coach assignment helper fields.",
+        },
+      );
+    }),
+  );
+}
+
+async function createOrUpdateCoachAssignment(
+  session: AuthSession,
+  payload: Extract<AdminSetupPayload, { actionType: "coach-assignment" }>,
+): Promise<AdminSetupResult> {
+  const organizationId = normalizeText(payload.organizationId);
+  const email = normalizeText(payload.email).toLowerCase();
+  const name = normalizeText(payload.name);
+  const uid = normalizeText(payload.uid);
+  const status = payload.status === "Inactive" ? "Inactive" : "Active";
+  const teamIds = uniqueStringList(payload.teamIds);
+
+  if (!organizationId || !email || !name || teamIds.length === 0) {
+    createSetupError(
+      "invalid-coach-assignment",
+      "Organization, coach name, email, and at least one team are required.",
+      400,
+    );
+  }
+
+  assertClaimedOrganization(session, organizationId);
+
+  const repositories = createFirestoreRepositories();
+  const [organization, currentCoachByEmail, teams] = await Promise.all([
+    repositories.organizations.getById(organizationId),
+    repositories.coaches.getByEmail(email),
+    Promise.all(teamIds.map((teamId) => repositories.teams.getById(teamId))),
+  ]);
+
+  if (!organization) {
+    createSetupError(
+      "organization-required",
+      "Create the organization before assigning coaches.",
+      400,
+    );
+  }
+
+  const validTeams = teams.filter((team): team is Team => Boolean(team));
+
+  if (
+    validTeams.length !== teamIds.length ||
+    validTeams.some((team) => team.organizationId !== organizationId)
+  ) {
+    createSetupError(
+      "coach-team-scope-invalid",
+      "Coaches can only be assigned to teams inside this organization.",
+      403,
+    );
+  }
+
+  const generatedCoachId = getCoachIdFromEmail(email);
+  const currentCoach =
+    currentCoachByEmail ?? (await repositories.coaches.getById(generatedCoachId));
+  const coachId = currentCoach?.id ?? generatedCoachId;
+  const currentCoachTeams = currentCoach?.teamIds.length
+    ? await Promise.all(
+        currentCoach.teamIds.map((teamId) => repositories.teams.getById(teamId)),
+      )
+    : [];
+  const otherOrganizationTeamIds = currentCoachTeams
+    .filter(
+      (team): team is Team =>
+        Boolean(team && team.organizationId !== organizationId),
+    )
+    .map((team) => team.id);
+  const organizationIds = uniqueStringList([
+    ...(currentCoach?.organizationIds ?? []),
+    currentCoach?.organizationId,
+    organizationId,
+  ]);
+  const coachTeamIds = uniqueStringList([
+    ...otherOrganizationTeamIds,
+    ...(status === "Active" ? teamIds : []),
+  ]);
+  const { firstName, lastName } = getNameParts(name);
+  const now = new Date().toISOString();
+  const coach: Coach = {
+    coachId: currentCoach?.coachId ?? coachId,
+    createdAt: currentCoach?.createdAt ?? now,
+    createdByUid: currentCoach?.createdByUid ?? session.user.id,
+    email,
+    firstName,
+    id: coachId,
+    lastName,
+    name,
+    organizationId: organizationIds[0] ?? organizationId,
+    organizationIds,
+    phone: currentCoach?.phone ?? "",
+    role: "coach",
+    status,
+    teamIds: coachTeamIds,
+    updatedAt: now,
+    ...(uid || currentCoach?.uid ? { uid: uid || currentCoach?.uid } : {}),
+  };
+
+  if (currentCoach) {
+    await repositories.coaches.update(coach.id, coach, {
+      actor: getRecordActor(session),
+      reason: "Admin updated coach assignment.",
+    });
+  } else {
+    await repositories.coaches.create(coach, {
+      actor: getRecordActor(session),
+      reason: "Admin created coach assignment.",
+    });
+  }
+
+  await updateTeamCoachHelpers({
+    assignedTeamIds: teamIds,
+    coachId,
+    organizationId,
+    session,
+    status,
+    updatedAt: now,
+  });
+
+  console.info("Coach assignment saved.", {
+    coachId: coach.id,
+    organizationId,
+    status,
+    teamCount: teamIds.length,
+  });
+
+  return {
+    id: coach.id,
+    message: `Coach assignment saved: ${coach.name}`,
+    source: "firestore",
+  };
+}
+
 async function createRegistrationInvite(
   session: AuthSession,
   payload: Extract<AdminSetupPayload, { actionType: "registration-invite" }>,
@@ -456,6 +679,10 @@ export async function createAdminSetupRecord(
 
   if (payload.actionType === "team") {
     return createTeam(session, payload);
+  }
+
+  if (payload.actionType === "coach-assignment") {
+    return createOrUpdateCoachAssignment(session, payload);
   }
 
   return createRegistrationInvite(session, payload);

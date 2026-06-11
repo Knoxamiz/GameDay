@@ -17,7 +17,7 @@ export default async function AdminSetupPage() {
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <h1 className="text-3xl font-bold">Setup</h1>
           <p className="mt-3 text-sm text-slate-300">
-            Create the real organization, team, and registration invite records.
+            Create the real organization, team, coach, and registration records.
           </p>
         </div>
 
@@ -25,6 +25,7 @@ export default async function AdminSetupPage() {
 
         <AdminSetupPanel
           canManageSetup={setup.canManageSetup}
+          coaches={setup.coaches}
           organizationIds={setup.organizationIds}
           organizations={setup.organizations}
           registrationInvites={setup.registrationInvites}

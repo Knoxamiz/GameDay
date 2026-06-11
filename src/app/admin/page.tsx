@@ -95,7 +95,7 @@ export default async function AdminHome() {
               href="/admin/setup"
               className="block rounded-xl bg-slate-800 p-4 font-semibold text-white"
             >
-              Setup Organization, Teams, And Invites
+              Setup Organization, Teams, Coaches, And Invites
             </Link>
             <Link
               href={getRoleHref("/events", "admin")}

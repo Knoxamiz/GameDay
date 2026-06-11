@@ -1,12 +1,22 @@
+export type CoachAssignmentStatus = "Active" | "Inactive";
+
 export type Coach = {
   id: string;
+  coachId?: string;
+  uid?: string;
   firstName: string;
   lastName: string;
   name: string;
   email: string;
   phone: string;
   organizationId: string;
+  organizationIds?: string[];
+  role?: "coach";
+  status?: CoachAssignmentStatus;
   teamIds: string[];
+  createdAt?: string;
+  createdByUid?: string;
+  updatedAt?: string;
 };
 
 export const currentCoachId = "";
@@ -20,7 +30,10 @@ const emptyCoach: Coach = {
   lastName: "",
   name: "GameDay Coach",
   organizationId: "",
+  organizationIds: [],
   phone: "",
+  role: "coach",
+  status: "Inactive",
   teamIds: [],
 };
 
@@ -41,5 +54,22 @@ export function getCoachesByIds(coachIds?: string[] | null) {
 }
 
 export function getCoachesByOrganizationId(organizationId: string) {
-  return coaches.filter((coach) => coach.organizationId === organizationId);
+  return coaches.filter(
+    (coach) =>
+      coach.organizationId === organizationId ||
+      getCoachOrganizationIds(coach).includes(organizationId),
+  );
+}
+
+export function getCoachOrganizationIds(coach: Coach) {
+  return [
+    ...new Set([
+      ...(Array.isArray(coach.organizationIds) ? coach.organizationIds : []),
+      coach.organizationId,
+    ].filter(Boolean)),
+  ];
+}
+
+export function isActiveCoach(coach: Coach | null | undefined) {
+  return Boolean(coach && coach.status !== "Inactive");
 }

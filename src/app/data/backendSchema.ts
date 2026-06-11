@@ -59,6 +59,11 @@ export const backendRelationships: BackendRelationship[] = [
     to: "registrations",
   },
   {
+    from: "coaches",
+    keys: ["coachId", "uid", "email", "organizationIds", "teamIds", "status"],
+    to: "teams",
+  },
+  {
     from: "teams",
     keys: ["organizationId", "coachIds", "athleteIds", "eventIds"],
     to: "events",
@@ -135,9 +140,25 @@ export const backendCollectionSpecs: Record<
   },
   coaches: {
     collection: "coaches",
-    indexes: [["organizationId"], ["teamIds"]],
+    indexes: [
+      ["coachId"],
+      ["uid"],
+      ["email"],
+      ["organizationId"],
+      ["organizationIds"],
+      ["teamIds"],
+      ["status"],
+    ],
     primaryKey: "id",
-    scopeKeys: ["organizationId", "teamIds"],
+    scopeKeys: [
+      "coachId",
+      "uid",
+      "email",
+      "organizationId",
+      "organizationIds",
+      "teamIds",
+      "status",
+    ],
     serverWritesRequired: true,
   },
   teams: {

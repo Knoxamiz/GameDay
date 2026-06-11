@@ -4,6 +4,11 @@ import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import type { AttendanceEntry } from "./attendance";
+import {
+  getCoachAssignedTeams,
+  resolveCoachAssignmentScope,
+  type CoachAssignmentScope,
+} from "./coachAssignments.server";
 import type { Coach } from "./coaches";
 import {
   eventHasTeamId,
@@ -49,31 +54,32 @@ async function getAuthSessionSource(): Promise<AuthSessionSource> {
 function isValidCoachSession(
   session: AuthSession | null,
 ): session is AuthSession {
-  return Boolean(
-    session?.claims.role === "coach" &&
-      session.claims.coachId &&
-      session.claims.organizationIds.length > 0 &&
-      session.claims.teamIds.length > 0,
-  );
+  return session?.claims.role === "coach";
 }
 
 function uniqueById<TRecord extends { id: string }>(records: TRecord[]) {
   return [...new Map(records.map((record) => [record.id, record])).values()];
 }
 
-async function getCoachMessages(coach: Coach, teamIds: string[]) {
+async function getCoachMessages(
+  coach: Coach,
+  teamIds: string[],
+  organizationIds: string[],
+) {
   const repositories = createFirestoreRepositories();
   const teamIdSet = new Set(teamIds.length > 0 ? teamIds : coach.teamIds);
-  const [organizationMessages, teamMessageLists] = await Promise.all([
-    repositories.messages.listByAudience({
-      organizationId: coach.organizationId,
-    }),
+  const [organizationMessageLists, teamMessageLists] = await Promise.all([
+    Promise.all(
+      organizationIds.map((organizationId) =>
+        repositories.messages.listByAudience({ organizationId }),
+      ),
+    ),
     Promise.all(
       [...teamIdSet].map((teamId) => repositories.messages.listByTeamId(teamId)),
     ),
   ]);
 
-  return uniqueById([...organizationMessages, ...teamMessageLists.flat()])
+  return uniqueById([...organizationMessageLists.flat(), ...teamMessageLists.flat()])
     .filter((message) => message.audience.includes("coach"))
     .filter((message) => !message.teamId || teamIdSet.has(message.teamId))
     .sort((first, second) => second.timestamp.localeCompare(first.timestamp));
@@ -110,72 +116,47 @@ function getSessionCoachFallback(session: AuthSession): Coach {
     session.user.displayName ?? session.user.email ?? "GameDay Coach";
 
   return {
+    coachId: session.claims.coachId ?? session.user.id,
     email: session.user.email ?? "",
     firstName: displayName,
     id: session.claims.coachId ?? session.user.id,
     lastName: "",
     name: displayName,
     organizationId: session.claims.organizationIds[0] ?? "",
+    organizationIds: session.claims.organizationIds,
     phone: "",
+    role: "coach",
+    status: "Active",
     teamIds: session.claims.teamIds,
+    uid: session.user.id,
   };
 }
 
-function isTeamInCoachScope(session: AuthSession, team: Team | null) {
-  return Boolean(
-    team &&
-      session.claims.teamIds.includes(team.id) &&
-      session.claims.organizationIds.includes(team.organizationId),
-  );
-}
-
 function isEventInCoachScope(
-  session: AuthSession,
+  scope: CoachAssignmentScope,
   event: GameDayEvent | null | undefined,
 ) {
   return Boolean(
     event &&
       event.status !== "draft" &&
-      session.claims.teamIds.some((teamId) => eventHasTeamId(event, teamId)) &&
-      session.claims.organizationIds.includes(event.organizationId),
+      scope.teamIds.some((teamId) => eventHasTeamId(event, teamId)) &&
+      scope.organizationIds.includes(event.organizationId),
   );
 }
 
-async function getScopedCoachTeams(session: AuthSession) {
-  const repositories = createFirestoreRepositories();
-  const teamsByClaim = await Promise.all(
-    session.claims.teamIds.map((teamId) => repositories.teams.getById(teamId)),
-  );
-  const claimedTeams = teamsByClaim.filter((team): team is Team =>
-    isTeamInCoachScope(session, team),
-  );
-
-  if (claimedTeams.length > 0) {
-    return uniqueById(claimedTeams);
-  }
-
-  const teamsByCoach = await repositories.teams.listByCoachId(
-    session.claims.coachId ?? "",
-  );
-
-  return uniqueById(
-    teamsByCoach.filter((team) => isTeamInCoachScope(session, team)),
-  );
-}
-
-async function getScopedCoachEvents(session: AuthSession) {
+async function getScopedCoachEvents(scope: CoachAssignmentScope) {
   const repositories = createFirestoreRepositories();
   const eventLists = await Promise.all(
-    session.claims.teamIds.map((teamId) => repositories.events.listByTeamId(teamId)),
+    scope.teamIds.map((teamId) => repositories.events.listByTeamId(teamId)),
   );
 
   return uniqueById(
-    eventLists.flat().filter((event) => isEventInCoachScope(session, event)),
+    eventLists.flat().filter((event) => isEventInCoachScope(scope, event)),
   ).sort(sortEventsByStartDate);
 }
 
 async function getPrimaryCoachEvent(
-  session: AuthSession,
+  scope: CoachAssignmentScope,
   coachTeam: Team | undefined,
   coachEvents: GameDayEvent[],
 ): Promise<GameDayEvent | undefined> {
@@ -185,7 +166,7 @@ async function getPrimaryCoachEvent(
       (await repositories.events.getById(coachTeam.nextEventId))
     : undefined;
 
-  return isEventInCoachScope(session, nextEvent)
+  return isEventInCoachScope(scope, nextEvent)
     ? (nextEvent ?? undefined)
     : coachEvents[0];
 }
@@ -203,22 +184,16 @@ export async function getCoachHomeReadModel(): Promise<CoachHomeReadModel> {
       return getEmptyCoachHomeReadModel(session);
     }
 
-    const coachId = session.claims.coachId;
-
-    if (!coachId) {
-      return getEmptyCoachHomeReadModel(session);
-    }
-
     const repositories = createFirestoreRepositories();
-    const [coachRecord, coachTeams, coachEvents] = await Promise.all([
-      repositories.coaches.getById(coachId),
-      getScopedCoachTeams(session),
-      getScopedCoachEvents(session),
+    const coachScope = await resolveCoachAssignmentScope(session);
+    const [coachTeams, coachEvents] = await Promise.all([
+      getCoachAssignedTeams(coachScope),
+      getScopedCoachEvents(coachScope),
     ]);
-    const coach = coachRecord ?? getSessionCoachFallback(session);
+    const coach = coachScope.coach;
     const coachTeam = coachTeams[0];
     const todayEvent = await getPrimaryCoachEvent(
-      session,
+      coachScope,
       coachTeam,
       coachEvents,
     );
@@ -233,6 +208,7 @@ export async function getCoachHomeReadModel(): Promise<CoachHomeReadModel> {
         getCoachMessages(
           coach,
           coachTeams.map((team) => team.id),
+          coachScope.organizationIds,
         ),
         Promise.all(
           coachTeams.map((team) =>

@@ -49,6 +49,12 @@ export default async function CoachHome() {
           {coachTeams.length === 1 ? "" : "s"}
         </p>
 
+        {coachTeams.length === 0 && (
+          <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300">
+            No team assignment has been added for this coach account yet.
+          </div>
+        )}
+
         {coachTeams.length > 1 && (
           <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
             <h2 className="text-lg font-bold">My Teams</h2>

@@ -219,15 +219,8 @@ export async function signInFirebaseCoachWithEmailPassword(
 
   const { session } = result;
 
-  if (
-    session.claims.role !== "coach" ||
-    !session.claims.coachId ||
-    session.claims.organizationIds.length === 0 ||
-    session.claims.teamIds.length === 0
-  ) {
-    throw new Error(
-      "Coach login requires role, coachId, organizationIds, and teamIds claims.",
-    );
+  if (session.claims.role !== "coach") {
+    throw new Error("Coach login requires a coach role claim.");
   }
 
   return result;

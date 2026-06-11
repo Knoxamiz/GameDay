@@ -51,12 +51,7 @@ function isValidAdminSession(
 function isValidCoachSession(
   session: AuthSession | null,
 ): session is AuthSession {
-  return Boolean(
-    session?.claims.role === "coach" &&
-      session.claims.coachId &&
-      session.claims.organizationIds.length > 0 &&
-      session.claims.teamIds.length > 0,
-  );
+  return session?.claims.role === "coach";
 }
 
 function getSessionResponseBody(session: AuthSession) {
@@ -195,7 +190,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "This session endpoint requires parent, coach, or admin claims with an organization.",
+            "This session endpoint requires a valid parent, coach, or admin role.",
         },
         { status: 403 },
       );
