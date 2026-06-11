@@ -1,8 +1,16 @@
+import Link from "next/link";
 import ParentAthleteCard from "../components/ParentAthleteCard";
 import BottomNav from "../components/BottomNav";
 import MvpNav, { getRoleHref } from "../components/MvpNav";
 import SessionControls from "../components/SessionControls";
 import { getCurrentParentUser } from "../data/currentUser.server";
+import {
+  eventHasTeamId,
+  getEventDateLabel,
+  getEventLocationLabel,
+  getEventTimeLabel,
+} from "../data/events";
+import { getEventScheduleReadModel } from "../data/eventSchedule.server";
 import {
   getParentAthleteRegistrationReadModel,
   getRegistrationByAthlete,
@@ -17,6 +25,8 @@ export default async function ParentHome() {
     parent: currentParent,
     registrations,
   } = await getParentAthleteRegistrationReadModel(currentUser.parentId);
+  const schedule = await getEventScheduleReadModel("parent");
+  const teamsById = new Map(schedule.teams.map((team) => [team.id, team]));
   const parentAnnouncements: { content: string; id: string }[] = [];
 
   return (
@@ -50,7 +60,17 @@ export default async function ParentHome() {
                 key={athlete.name}
                 athleteId={athlete.id}
                 athleteName={athlete.name}
-                teamName={athlete.teamId}
+                teamName={teamsById.get(athlete.teamId)?.name ?? athlete.teamId}
+                nextEvent={schedule.events
+                  .filter((event) => eventHasTeamId(event, athlete.teamId))
+                  .map((event) => ({
+                    date: getEventDateLabel(event),
+                    directionsUrl: "",
+                    id: event.id,
+                    location: getEventLocationLabel(event),
+                    time: getEventTimeLabel(event),
+                    title: event.title,
+                  }))[0]}
                 initialTransportationStatus="Unknown"
                 initialAttendanceStatus="Unknown"
                 paymentRequirements={registration?.paymentRequirements ?? []}
@@ -69,6 +89,23 @@ export default async function ParentHome() {
               <li key={announcement.id}>{announcement.content}</li>
             ))}
           </ul>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <h2 className="text-lg font-bold">Schedule</h2>
+          <p className="mt-3 text-sm text-slate-300">
+            {schedule.events.length === 0
+              ? "No events scheduled for your registered athletes."
+              : `${schedule.events.length} event${
+                  schedule.events.length === 1 ? "" : "s"
+                } for your registered athletes.`}
+          </p>
+          <Link
+            href={getRoleHref("/events", "parent")}
+            className="mt-4 block w-full rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
+          >
+            View Schedule
+          </Link>
         </div>
 
         <BottomNav

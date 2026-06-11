@@ -7,6 +7,11 @@ import SessionControls from "../components/SessionControls";
 import TeamReadinessSummary from "../components/TeamReadinessSummary";
 import TransportationSummaryCard from "../components/TransportationSummaryCard";
 import { getCoachHomeReadModel } from "../data/coachRead.server";
+import {
+  getEventDateLabel,
+  getEventLocationLabel,
+  getEventTimeLabel,
+} from "../data/events";
 
 export const dynamic = "force-dynamic";
 
@@ -60,11 +65,24 @@ export default async function CoachHome() {
             Today
           </h2>
           <div className="mt-4 rounded-xl bg-slate-800 p-4">
-            <p className="font-semibold">{todayEvent?.title}</p>
-            <p className="mt-2 text-sm text-slate-300">{todayEvent?.time}</p>
-            <p className="mt-1 text-sm text-slate-300">
-              {todayEvent?.location}
-            </p>
+            {todayEvent ? (
+              <>
+                <p className="font-semibold">{todayEvent.title}</p>
+                <p className="mt-2 text-sm text-slate-300">
+                  {getEventDateLabel(todayEvent)}
+                </p>
+                <p className="mt-1 text-sm text-slate-300">
+                  {getEventTimeLabel(todayEvent)}
+                </p>
+                <p className="mt-1 text-sm text-slate-300">
+                  {getEventLocationLabel(todayEvent)}
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-slate-300">
+                No events scheduled for assigned teams.
+              </p>
+            )}
           </div>
           {todayEvent && (
             <Link

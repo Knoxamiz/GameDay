@@ -340,7 +340,7 @@ class FirestoreEventRepository
   }
 
   listByTeamId(teamId: string) {
-    return this.list({ scope: { teamId } });
+    return this.listWhere("teamIds", arrayContainsOperator, teamId);
   }
 }
 

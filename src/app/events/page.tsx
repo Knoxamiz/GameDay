@@ -1,11 +1,18 @@
 import Link from "next/link";
+import AdminEventForm from "../components/AdminEventForm";
 import MvpNav, {
   getMvpNavRole,
   getRoleHref,
 } from "../components/MvpNav";
 import { summarizeAttendanceEntries } from "../data/attendance";
+import {
+  getEventDateLabel,
+  getEventLocationLabel,
+  getEventTeamIds,
+  getEventTimeLabel,
+} from "../data/events";
+import { getEventScheduleReadModel } from "../data/eventSchedule.server";
 import { summarizeTransportationEntries } from "../data/transportation";
-import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 
 type EventsHomeProps = {
@@ -16,18 +23,13 @@ type EventsHomeProps = {
 
 export const dynamic = "force-dynamic";
 
-function isDefined<TValue>(
-  value: TValue | null | undefined,
-): value is TValue {
-  return Boolean(value);
-}
-
 export default async function EventsHome({ searchParams }: EventsHomeProps) {
   const role = getMvpNavRole((await searchParams)?.role);
-  const repositories = getFirebaseAdminConfig()
+  const schedule = await getEventScheduleReadModel(role);
+  const repositories = schedule.source === "firestore"
     ? createFirestoreRepositories()
     : null;
-  const visibleEvents = repositories ? await repositories.events.list() : [];
+  const visibleEvents = schedule.events;
   const [attendanceLists, transportationLists] = repositories
     ? await Promise.all([
         Promise.all(
@@ -42,18 +44,7 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
         ),
       ])
     : [[], []];
-  const teams = repositories
-    ? (
-      await Promise.all(
-        visibleEvents
-          .map((event) => event.teamId)
-          .filter((teamId): teamId is string => Boolean(teamId))
-          .map((teamId) => repositories.teams.getById(teamId)),
-      )
-    )
-      .filter(isDefined)
-    : [];
-  const teamsById = new Map(teams.map((team) => [team.id, team]));
+  const teamsById = new Map(schedule.teams.map((team) => [team.id, team]));
   const attendanceByEventId = new Map(
     visibleEvents.map((event, index) => [
       event.id,
@@ -85,14 +76,26 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
           </a>
         </div>
 
+        {role === "admin" && (
+          <AdminEventForm
+            canCreateEvents={schedule.canCreateEvents}
+            organizationIds={schedule.organizationIds}
+            teams={schedule.teams}
+          />
+        )}
+
         <div className="mt-6 space-y-4">
           {visibleEvents.length === 0 && (
             <p className="rounded-2xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300">
-              No events listed.
+              {role === "shared"
+                ? "Sign in as a parent, coach, or admin to view a scoped schedule."
+                : "No events scheduled for this view."}
             </p>
           )}
           {visibleEvents.map((event) => {
-            const team = event.teamId ? teamsById.get(event.teamId) : undefined;
+            const eventTeams = getEventTeamIds(event)
+              .map((teamId) => teamsById.get(teamId))
+              .filter(Boolean);
             const attendance = summarizeAttendanceEntries(
               event.id,
               attendanceByEventId.get(event.id) ?? [],
@@ -128,12 +131,13 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
                 </div>
 
                 <p className="mt-3 text-sm text-slate-400">
-                  {team?.name ?? "Organization"}
+                  {eventTeams.map((team) => team?.name).join(", ") ||
+                    "Organization"}
                 </p>
                 <div className="mt-4 rounded-xl bg-slate-800 p-4 text-sm text-slate-300">
-                  <p>{event.date}</p>
-                  <p className="mt-1">{event.time}</p>
-                  <p className="mt-3">{event.location || "Location TBD"}</p>
+                  <p>{getEventDateLabel(event)}</p>
+                  <p className="mt-1">{getEventTimeLabel(event)}</p>
+                  <p className="mt-3">{getEventLocationLabel(event)}</p>
                 </div>
 
                 <div className="mt-4 grid grid-cols-2 gap-3 text-sm">

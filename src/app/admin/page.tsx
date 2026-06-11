@@ -7,6 +7,11 @@ import RegistrationAdminActionLinks from "../components/RegistrationAdminActionL
 import SessionControls from "../components/SessionControls";
 import TransportationIssueAction from "../components/TransportationIssueAction";
 import { getAdminHomeReadModel } from "../data/adminHomeRead.server";
+import {
+  getEventDateLabel,
+  getEventTeamIds,
+  getEventTimeLabel,
+} from "../data/events";
 import { getTeamsNeedingCoaches } from "../data/teams";
 
 export const dynamic = "force-dynamic";
@@ -93,6 +98,12 @@ export default async function AdminHome() {
             >
               Setup Organization, Teams, And Invites
             </Link>
+            <Link
+              href={getRoleHref("/events", "admin")}
+              className="block rounded-xl bg-slate-800 p-4 font-semibold text-white"
+            >
+              Create Schedule Event
+            </Link>
             {teamsNeedingCoaches.map((team) => (
               <Link
                 key={team.id}
@@ -124,8 +135,15 @@ export default async function AdminHome() {
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Upcoming Events</h2>
           <div className="mt-3 space-y-3">
+            {adminUpcomingEvents.length === 0 && (
+              <p className="rounded-xl bg-slate-800 p-4 text-sm text-slate-300">
+                No real events have been created yet.
+              </p>
+            )}
             {adminUpcomingEvents.map((event) => {
-              const team = event.teamId ? teamById.get(event.teamId) : undefined;
+              const eventTeams = getEventTeamIds(event)
+                .map((teamId) => teamById.get(teamId))
+                .filter(Boolean);
 
               return (
                 <Link
@@ -134,9 +152,12 @@ export default async function AdminHome() {
                   className="block rounded-xl bg-slate-800 p-4"
                 >
                   <p className="font-semibold">{event.title}</p>
-                  {team && (
+                  <p className="mt-1 text-sm text-slate-300">
+                    {getEventDateLabel(event)} {getEventTimeLabel(event)}
+                  </p>
+                  {eventTeams.length > 0 && (
                     <p className="mt-1 text-sm text-slate-300">
-                      {team.label}
+                      {eventTeams.map((team) => team?.label).join(", ")}
                     </p>
                   )}
                 </Link>

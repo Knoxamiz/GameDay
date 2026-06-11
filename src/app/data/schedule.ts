@@ -3,6 +3,7 @@ import { getCurrentCoach } from "./coaches";
 import {
   getEventsByOrganizationId,
   getEventsByTeamIds,
+  sortEventsByStartDate,
   type GameDayEvent,
 } from "./events";
 import { blackDiamondsOrganization } from "./organizations";
@@ -17,15 +18,6 @@ export function getScheduleRole(value?: string | string[]): ScheduleRole {
   return role === "admin" || role === "coach" || role === "parent"
     ? role
     : "shared";
-}
-
-function sortEventsByStartDate(
-  firstEvent: GameDayEvent,
-  secondEvent: GameDayEvent,
-) {
-  return (firstEvent.startDateTime ?? firstEvent.date).localeCompare(
-    secondEvent.startDateTime ?? secondEvent.date,
-  );
 }
 
 function dedupeEvents(events: GameDayEvent[]) {

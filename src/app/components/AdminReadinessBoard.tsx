@@ -2,7 +2,7 @@
 
 import type { AttendanceEntry } from "../data/attendance";
 import type { DocumentRequirement } from "../data/documents";
-import type { GameDayEvent } from "../data/events";
+import { eventHasTeamId, type GameDayEvent } from "../data/events";
 import {
   buildEventReadiness,
   buildTeamReadiness,
@@ -108,11 +108,9 @@ export default function AdminReadinessBoard({
     ),
   );
   const eventItems: ReadinessBoardItem[] = events.map((event) => {
-    const eventRegistrations = event.teamId
-      ? currentRegistrations.filter(
-          (registration) => registration.teamId === event.teamId,
-        )
-      : [];
+    const eventRegistrations = currentRegistrations.filter((registration) =>
+      eventHasTeamId(event, registration.teamId),
+    );
     const eventRegistrationIdSet = new Set(
       eventRegistrations.map((registration) => registration.id),
     );

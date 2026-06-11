@@ -5,7 +5,11 @@ import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import type { AttendanceEntry } from "./attendance";
 import type { Coach } from "./coaches";
-import type { GameDayEvent } from "./events";
+import {
+  eventHasTeamId,
+  sortEventsByStartDate,
+  type GameDayEvent,
+} from "./events";
 import type { GameDayMessage } from "./messages";
 import type { Registration } from "./registrations";
 import type { Team } from "./teams";
@@ -129,8 +133,8 @@ function isEventInCoachScope(
 ) {
   return Boolean(
     event &&
-      event.teamId &&
-      session.claims.teamIds.includes(event.teamId) &&
+      event.status !== "draft" &&
+      session.claims.teamIds.some((teamId) => eventHasTeamId(event, teamId)) &&
       session.claims.organizationIds.includes(event.organizationId),
   );
 }
@@ -165,7 +169,7 @@ async function getScopedCoachEvents(session: AuthSession) {
 
   return uniqueById(
     eventLists.flat().filter((event) => isEventInCoachScope(session, event)),
-  );
+  ).sort(sortEventsByStartDate);
 }
 
 async function getPrimaryCoachEvent(

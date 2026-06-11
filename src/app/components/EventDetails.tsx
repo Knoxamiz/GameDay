@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getFirebaseAdminConfig } from "../infrastructure/firebase";
+import {
+  getEventDateLabel,
+  getEventLocationLabel,
+  getEventNotes,
+  getEventTeamIds,
+  getEventTimeLabel,
+} from "../data/events";
+import { getScopedEventDetailsReadModel } from "../data/eventSchedule.server";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import AttendanceSummaryCard from "./AttendanceSummaryCard";
 import EventReadinessSummary from "./EventReadinessSummary";
@@ -20,40 +27,45 @@ export default async function EventDetails({
   mode = "full",
   role = "shared",
 }: EventDetailsProps) {
-  if (!getFirebaseAdminConfig()) {
+  const eventReadModel = await getScopedEventDetailsReadModel(eventId, role);
+
+  if (!eventReadModel) {
     notFound();
   }
 
   const repositories = createFirestoreRepositories();
-  const eventDetails = await repositories.events.getById(eventId);
-
-  if (!eventDetails) {
-    notFound();
-  }
-
-  const team = eventDetails.teamId
-    ? await repositories.teams.getById(eventDetails.teamId)
-    : undefined;
+  const eventDetails = eventReadModel.event;
+  const eventTeams = getEventTeamIds(eventDetails)
+    .map((teamId) => eventReadModel.teams.find((team) => team.id === teamId))
+    .filter(Boolean);
+  const team = eventTeams[0];
+  const eventTeamIds = getEventTeamIds(eventDetails);
   const [
     gameAlert,
     eventMessages,
     attendanceEntries,
-    registrations,
+    registrationLists,
     transportationEntries,
   ] = await Promise.all([
     repositories.gameAlerts.getByEventId(eventDetails.id),
     repositories.messages.listByEventId(eventDetails.id),
     repositories.attendance.listByEventId(eventDetails.id),
-    eventDetails.teamId
-      ? repositories.registrations.listByTeamId(eventDetails.teamId)
-      : [],
+    Promise.all(
+      eventTeamIds.map((teamId) => repositories.registrations.listByTeamId(teamId)),
+    ),
     repositories.transportation.listByEventId(eventDetails.id),
   ]);
+  const registrations = [
+    ...new Map(
+      registrationLists.flat().map((registration) => [
+        registration.id,
+        registration,
+      ]),
+    ).values(),
+  ];
   const eventAnnouncements = eventMessages.map((message) => message.content);
   const eventChat = eventMessages.map((message) => message.subject);
-  const eventNotes = Array.isArray(eventDetails.notes)
-    ? eventDetails.notes
-    : [];
+  const eventNotes = getEventNotes(eventDetails);
   const eventActionHref = getRoleHref(`/events/${eventDetails.id}`, role);
   const rideShareHref = getRoleHref(
     `/events/${eventDetails.id}?view=ride-share`,
@@ -88,10 +100,11 @@ export default async function EventDetails({
               {eventDetails.title}
             </p>
             <p className="mt-2 text-sm text-slate-300">
-              {team?.name ?? "Organization Event"}
+              {eventTeams.map((eventTeam) => eventTeam?.name).join(", ") ||
+                "Organization Event"}
             </p>
             <p className="mt-2 text-sm text-slate-300">
-              {eventDetails.date} {eventDetails.time}
+              {getEventDateLabel(eventDetails)} {getEventTimeLabel(eventDetails)}
             </p>
           </div>
 
@@ -118,16 +131,26 @@ export default async function EventDetails({
             &larr; {eventDetails.type}
           </Link>
           <p className="mt-5 text-sm font-semibold text-slate-200">
-            {team?.name ?? "Organization Event"}
+            {eventTeams.map((eventTeam) => eventTeam?.name).join(", ") ||
+              "Organization Event"}
           </p>
           <p className="mt-4 text-sm font-semibold uppercase tracking-wide text-slate-400">
             {eventDetails.type}
           </p>
-          <p className="mt-4 text-sm text-slate-300">{eventDetails.date}</p>
-          <p className="mt-1 text-sm text-slate-300">{eventDetails.time}</p>
-          {eventDetails.location && (
+          <p className="mt-4 text-sm text-slate-300">
+            {getEventDateLabel(eventDetails)}
+          </p>
+          <p className="mt-1 text-sm text-slate-300">
+            {getEventTimeLabel(eventDetails)}
+          </p>
+          {getEventLocationLabel(eventDetails) && (
             <p className="mt-4 text-sm text-slate-300">
-              {eventDetails.location}
+              {getEventLocationLabel(eventDetails)}
+            </p>
+          )}
+          {eventDetails.address && (
+            <p className="mt-1 text-sm text-slate-300">
+              {eventDetails.address}
             </p>
           )}
           {eventDetails.directionsUrl && (
@@ -149,13 +172,13 @@ export default async function EventDetails({
           <p className="mt-3 text-sm font-semibold text-green-300">
             {eventDetails.status ?? "On Schedule"}
           </p>
-          {eventDetails.lastUpdated && (
+          {eventDetails.updatedAt && (
             <>
               <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-400">
                 Last Updated
               </p>
               <p className="mt-1 text-sm text-slate-300">
-                {eventDetails.lastUpdated}
+                {eventDetails.updatedAt}
               </p>
             </>
           )}

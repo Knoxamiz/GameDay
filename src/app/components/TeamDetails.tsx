@@ -2,6 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { summarizeAttendanceEntries } from "../data/attendance";
 import { summarizeDocumentRequirements } from "../data/documents";
+import {
+  eventHasTeamId,
+  getEventDateLabel,
+  getEventLocationLabel,
+  getEventShortDateLabel,
+  getEventTimeLabel,
+  sortEventsByStartDate,
+} from "../data/events";
 import { teamCommunicationItems } from "../data/messages";
 import { summarizePaymentRequirements } from "../data/payments";
 import {
@@ -44,7 +52,7 @@ export default async function TeamDetails({
     notFound();
   }
 
-  const [teamCoaches, nextEvent, rosterPreview, roster, teamRegistrations] =
+  const [teamCoaches, nextEventRecord, rosterPreview, roster, teamRegistrations] =
     await Promise.all([
       Promise.all(
         teamDetails.coachIds.map((coachId) =>
@@ -66,6 +74,13 @@ export default async function TeamDetails({
       ).then((athletes) => athletes.filter(isDefined)),
       repositories.registrations.listByTeamId(teamDetails.id),
     ]);
+  const teamEvents = (await repositories.events.listByTeamId(teamDetails.id))
+    .filter((event) => event.status !== "draft")
+    .sort(sortEventsByStartDate);
+  const nextEvent =
+    nextEventRecord && eventHasTeamId(nextEventRecord, teamDetails.id)
+      ? nextEventRecord
+      : teamEvents[0];
   const documentSummary = summarizeDocumentRequirements(
     getDocumentRequirementsFromRegistrations(teamRegistrations),
   );
@@ -75,11 +90,7 @@ export default async function TeamDetails({
   const teamAnnouncements = (await repositories.messages.listByTeamId(teamDetails.id)).filter(
     (message) => message.type === "Team Announcement",
   );
-  const upcomingEvents = (
-    await Promise.all(
-      teamDetails.eventIds.map((eventId) => repositories.events.getById(eventId)),
-    )
-  ).filter(isDefined);
+  const upcomingEvents = teamEvents;
   const attendance = nextEvent
     ? summarizeAttendanceEntries(
         nextEvent.id,
@@ -155,11 +166,15 @@ export default async function TeamDetails({
             <>
               <div className="mt-4 rounded-xl bg-slate-800 p-4">
                 <p className="font-semibold">{nextEvent.type}</p>
-                <p className="mt-3 text-sm text-slate-300">{nextEvent.date}</p>
-                <p className="mt-1 text-sm text-slate-300">{nextEvent.time}</p>
-                {nextEvent.location && (
+                <p className="mt-3 text-sm text-slate-300">
+                  {getEventDateLabel(nextEvent)}
+                </p>
+                <p className="mt-1 text-sm text-slate-300">
+                  {getEventTimeLabel(nextEvent)}
+                </p>
+                {getEventLocationLabel(nextEvent) && (
                   <p className="mt-3 text-sm text-slate-300">
-                    {nextEvent.location}
+                    {getEventLocationLabel(nextEvent)}
                   </p>
                 )}
               </div>
@@ -246,9 +261,9 @@ export default async function TeamDetails({
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Team Status</h2>
           <div className="mt-3 space-y-3 text-sm text-slate-300">
-            {teamStatusItems.map((status) => (
-              <p key={status}>{status}</p>
-            ))}
+          {teamStatusItems.map((status) => (
+            <p key={status}>{status}</p>
+          ))}
           </div>
         </div>
 
@@ -261,7 +276,7 @@ export default async function TeamDetails({
                 href={getRoleHref(`/events/${event.id}`, role)}
                 className="block rounded-xl bg-slate-800 p-4"
               >
-                {event.shortDate} {event.type}
+                {getEventShortDateLabel(event)} {event.type}
               </Link>
             ))}
           </div>

@@ -3,6 +3,10 @@ import MvpNav, {
   getMvpNavRole,
   getRoleHref,
 } from "../components/MvpNav";
+import {
+  getEventShortDateLabel,
+  getEventTimeLabel,
+} from "../data/events";
 import { summarizeTransportationEntries } from "../data/transportation";
 import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
@@ -136,9 +140,9 @@ export default async function TeamsHome({ searchParams }: TeamsHomeProps) {
                   <div className="mt-4 rounded-xl bg-slate-800 p-4 text-sm text-slate-300">
                     <p className="font-semibold text-white">Next Event</p>
                     <p className="mt-2">
-                      {nextEvent.shortDate} {nextEvent.type}
+                      {getEventShortDateLabel(nextEvent)} {nextEvent.type}
                     </p>
-                    <p className="mt-1">{nextEvent.time}</p>
+                    <p className="mt-1">{getEventTimeLabel(nextEvent)}</p>
                   </div>
                 ) : (
                   <p className="mt-4 rounded-xl bg-slate-800 p-4 text-sm text-slate-300">

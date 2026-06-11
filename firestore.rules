@@ -14,6 +14,10 @@ service cloud.firestore {
       return signedIn() && request.auth.token.role == "admin";
     }
 
+    function isCoach() {
+      return signedIn() && request.auth.token.role == "coach";
+    }
+
     function liveParentId() {
       return "parent-" + request.auth.uid;
     }
@@ -33,6 +37,17 @@ service cloud.firestore {
         && adminOrganizations() is list
         && orgIds is list
         && adminOrganizations().hasAny(orgIds);
+    }
+
+    function userTeams() {
+      return request.auth.token.teamIds;
+    }
+
+    function userHasAnyTeam(teamIds) {
+      return signedIn()
+        && userTeams() is list
+        && teamIds is list
+        && userTeams().hasAny(teamIds);
     }
 
     function parentOwnsData(data) {
@@ -79,6 +94,27 @@ service cloud.firestore {
 
       allow update: if parentOwnsData(resource.data)
         || adminHasOrg(resource.data.organizationId);
+
+      allow delete: if false;
+    }
+
+    match /events/{eventId} {
+      allow read: if adminHasOrg(resource.data.organizationId)
+        || (
+          resource.data.status != "draft"
+          && isCoach()
+          && userHasAnyTeam(resource.data.teamIds)
+        );
+
+      allow create: if adminHasOrg(request.resource.data.organizationId)
+        && request.resource.data.teamIds is list
+        && request.resource.data.teamIds.size() > 0
+        && request.resource.data.createdByUid == request.auth.uid;
+
+      allow update: if adminHasOrg(resource.data.organizationId)
+        && request.resource.data.organizationId == resource.data.organizationId
+        && request.resource.data.teamIds is list
+        && request.resource.data.teamIds.size() > 0;
 
       allow delete: if false;
     }

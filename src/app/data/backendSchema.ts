@@ -65,7 +65,7 @@ export const backendRelationships: BackendRelationship[] = [
   },
   {
     from: "events",
-    keys: ["organizationId", "teamId"],
+    keys: ["organizationId", "teamIds"],
     to: "teams",
   },
   {
@@ -148,9 +148,9 @@ export const backendCollectionSpecs: Record<
   },
   events: {
     collection: "events",
-    indexes: [["organizationId"], ["teamId"], ["startDateTime"]],
+    indexes: [["organizationId"], ["teamIds"], ["startsAt"], ["status"]],
     primaryKey: "id",
-    scopeKeys: ["organizationId", "teamId"],
+    scopeKeys: ["organizationId", "teamIds", "status"],
     serverWritesRequired: true,
   },
   registrations: {
