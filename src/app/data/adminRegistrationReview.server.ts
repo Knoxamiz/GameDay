@@ -1,12 +1,18 @@
 import {
   hasCapability,
-  type AuthSession,
   type AuthSessionSource,
 } from "../infrastructure/auth";
 import type { AccessCapability } from "./accessControl";
 import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
+import {
+  canManageOrganization,
+  getAdminActor,
+  isAdminRoleSession,
+  resolveAdminOrganizationScope,
+  type AdminOrganizationScope,
+} from "./adminOrganizationScope.server";
 import type { PaymentRequirement } from "./payments";
 import type {
   AdminRegistrationReviewPayload,
@@ -64,15 +70,13 @@ function getActionCapability(
 }
 
 function canAdminReviewRegistration(
-  session: AuthSession | null,
+  scope: AdminOrganizationScope,
   registration: Registration,
   capability: AccessCapability,
 ) {
   return Boolean(
-    session?.claims.role === "admin" &&
-      session.claims.adminId &&
-      session.claims.organizationIds.includes(registration.organizationId) &&
-      hasCapability(session.claims, capability),
+    canManageOrganization(scope, registration.organizationId) &&
+      hasCapability(scope.session.claims, capability),
   );
 }
 
@@ -224,13 +228,15 @@ export async function updateAdminRegistrationReview(
     .catch(() => null);
 
   // Firestore admin writes are intentionally disabled without a verified admin session.
-  if (session?.claims.role !== "admin") {
+  if (!isAdminRoleSession(session)) {
     createReviewError(
       "admin-session-required",
       "Please sign in as an admin before reviewing registrations.",
       403,
     );
   }
+
+  const adminScope = await resolveAdminOrganizationScope(session);
 
   const repositories = createFirestoreRepositories();
   const registration = await repositories.registrations.getById(registrationId);
@@ -245,7 +251,7 @@ export async function updateAdminRegistrationReview(
 
   const capability = getActionCapability(payload);
 
-  if (!canAdminReviewRegistration(session, registration, capability)) {
+  if (!canAdminReviewRegistration(adminScope, registration, capability)) {
     createReviewError(
       "admin-organization-access-required",
       "This admin cannot review this registration.",
@@ -255,6 +261,7 @@ export async function updateAdminRegistrationReview(
 
   const reviewedAt = new Date().toISOString();
   const reviewedBy = session.claims.adminId ?? session.user.id;
+  const actor = getAdminActor(adminScope);
 
   if (payload.actionType === "registration-status") {
     const adminNotes = getAdminNotesValue(
@@ -276,13 +283,7 @@ export async function updateAdminRegistrationReview(
       registrationId,
       registrationPatch,
       {
-        actor: {
-          athleteIds: session.claims.athleteIds,
-          id: reviewedBy,
-          organizationIds: session.claims.organizationIds,
-          role: session.claims.role,
-          teamIds: session.claims.teamIds,
-        },
+        actor,
         reason: "Admin reviewed registration status.",
       },
     );
@@ -319,13 +320,7 @@ export async function updateAdminRegistrationReview(
       registrationId,
       rosterPatch,
       {
-        actor: {
-          athleteIds: session.claims.athleteIds,
-          id: reviewedBy,
-          organizationIds: session.claims.organizationIds,
-          role: session.claims.role,
-          teamIds: session.claims.teamIds,
-        },
+        actor,
         reason: "Admin updated roster status.",
       },
     );
@@ -360,13 +355,7 @@ export async function updateAdminRegistrationReview(
         updatedAt: reviewedAt,
       },
       {
-        actor: {
-          athleteIds: session.claims.athleteIds,
-          id: reviewedBy,
-          organizationIds: session.claims.organizationIds,
-          role: session.claims.role,
-          teamIds: session.claims.teamIds,
-        },
+        actor,
         reason: "Admin reviewed registration requirement.",
       },
     );
@@ -392,13 +381,7 @@ export async function updateAdminRegistrationReview(
       updatedAt: reviewedAt,
     },
     {
-      actor: {
-        athleteIds: session.claims.athleteIds,
-        id: reviewedBy,
-        organizationIds: session.claims.organizationIds,
-        role: session.claims.role,
-        teamIds: session.claims.teamIds,
-      },
+      actor,
       reason: "Admin reviewed registration payment.",
     },
   );

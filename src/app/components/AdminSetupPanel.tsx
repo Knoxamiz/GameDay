@@ -7,6 +7,7 @@ import type { Organization } from "../data/organizations";
 import type { Team } from "../data/teams";
 
 type AdminSetupPanelProps = {
+  canCreateOrganization: boolean;
   canManageSetup: boolean;
   coaches: Coach[];
   organizationIds: string[];
@@ -34,6 +35,7 @@ function getOrganizationNameFromId(organizationId: string) {
 }
 
 export default function AdminSetupPanel({
+  canCreateOrganization,
   canManageSetup,
   coaches,
   organizationIds,
@@ -56,6 +58,7 @@ export default function AdminSetupPanel({
   const [coachStatus, setCoachStatus] =
     useState<CoachAssignmentStatus>("Active");
   const [coachTeamIds, setCoachTeamIds] = useState<string[]>([]);
+  const [newOrganizationName, setNewOrganizationName] = useState("");
   const [inviteTeamId, setInviteTeamId] = useState(teams[0]?.id ?? "");
   const [inviteTitle, setInviteTitle] = useState("");
   const [inviteStatus, setInviteStatus] = useState<"Active" | "Paused">(
@@ -139,6 +142,52 @@ export default function AdminSetupPanel({
   }
 
   if (!canManageSetup) {
+    if (canCreateOrganization) {
+      return (
+        <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <h2 className="text-xl font-bold">Create Organization</h2>
+          <p className="mt-2 text-sm text-slate-300">
+            Create a real organization and owner membership for this account.
+          </p>
+          <div className="mt-4 space-y-3">
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-300">
+                Organization Name
+              </span>
+              <input
+                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
+                onChange={(event) => setNewOrganizationName(event.target.value)}
+                value={newOrganizationName}
+              />
+            </label>
+            <button
+              className="w-full rounded-xl bg-blue-500 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isSaving}
+              onClick={() =>
+                void saveSetup({
+                  actionType: "organization-provisioning",
+                  name: newOrganizationName,
+                })
+              }
+              type="button"
+            >
+              Create Organization
+            </button>
+          </div>
+          {message && (
+            <p className="mt-4 rounded-xl border border-blue-500/30 bg-blue-500/10 p-3 text-sm font-semibold text-blue-200">
+              {message}
+            </p>
+          )}
+          {error && (
+            <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm font-semibold text-red-300">
+              {error}
+            </p>
+          )}
+        </div>
+      );
+    }
+
     return (
       <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300">
         Sign in as an admin with organization setup access.

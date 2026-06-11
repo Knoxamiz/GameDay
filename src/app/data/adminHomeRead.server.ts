@@ -3,6 +3,10 @@ import type { AuthSession, AuthSessionSource } from "../infrastructure/auth";
 import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
+import {
+  resolveAdminOrganizationScope,
+  isAdminRoleSession,
+} from "./adminOrganizationScope.server";
 import type { AttendanceEntry } from "./attendance";
 import type { Coach } from "./coaches";
 import type { GameDayEvent } from "./events";
@@ -67,11 +71,7 @@ function getOrganizationShell(organizationId?: string): Organization {
 function isValidAdminSession(
   session: AuthSession | null,
 ): session is AuthSession {
-  return Boolean(
-    session?.claims.role === "admin" &&
-      session.claims.adminId &&
-      session.claims.organizationIds.length > 0,
-  );
+  return isAdminRoleSession(session);
 }
 
 function uniqueById<TRecord extends { id: string }>(records: TRecord[]) {
@@ -109,7 +109,13 @@ export async function getAdminHomeReadModel(): Promise<AdminHomeReadModel> {
     }
 
     const repositories = createFirestoreRepositories();
-    const organizationIds = session.claims.organizationIds;
+    const scope = await resolveAdminOrganizationScope(session);
+    const organizationIds = scope.organizationIds;
+
+    if (organizationIds.length === 0) {
+      return buildEmptyAdminHomeReadModel();
+    }
+
     const [
       organizations,
       teamLists,

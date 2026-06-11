@@ -5,7 +5,7 @@ function normalizeText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function normalizeDocumentIdSegment(value: string) {
+export function normalizeDocumentIdSegment(value: string) {
   return value
     .trim()
     .replace(/\//g, "-")

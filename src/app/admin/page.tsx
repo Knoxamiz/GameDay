@@ -56,8 +56,11 @@ export default async function AdminHome() {
     },
   ];
   const teamById = new Map(organizationTeams.map((team) => [team.id, team]));
+  const hasAdminOrganizations = adminOrganizations.length > 0;
   const organizationLabel =
-    adminOrganizations.length > 1
+    !hasAdminOrganizations
+      ? "No Organization Yet"
+      : adminOrganizations.length > 1
       ? `${adminOrganizations.length} Organizations`
       : organization.name;
 
@@ -73,6 +76,13 @@ export default async function AdminHome() {
         <SessionControls role="admin" />
 
         <p className="mt-5 text-slate-300">{organizationLabel}</p>
+
+        {!hasAdminOrganizations && (
+          <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300">
+            Create an organization in setup to start managing teams, coaches,
+            invites, and events.
+          </div>
+        )}
 
         <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
@@ -102,12 +112,14 @@ export default async function AdminHome() {
             >
               Setup Organization, Teams, Coaches, And Invites
             </Link>
-            <Link
-              href={getRoleHref("/events", "admin")}
-              className="block rounded-xl bg-slate-800 p-4 font-semibold text-white"
-            >
-              Create Schedule Event
-            </Link>
+            {hasAdminOrganizations && (
+              <Link
+                href={getRoleHref("/events", "admin")}
+                className="block rounded-xl bg-slate-800 p-4 font-semibold text-white"
+              >
+                Create Schedule Event
+              </Link>
+            )}
             {teamsNeedingCoaches.map((team) => (
               <Link
                 key={team.id}

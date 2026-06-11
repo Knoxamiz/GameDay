@@ -134,17 +134,15 @@ export function canAccessOrganization(
   claims: AuthRoleClaims,
   organizationId: string,
 ) {
-  return (
-    claims.role === "admin" || claims.organizationIds.includes(organizationId)
-  );
+  return claims.organizationIds.includes(organizationId);
 }
 
 export function canAccessTeam(claims: AuthRoleClaims, teamId: string) {
-  return claims.role === "admin" || claims.teamIds.includes(teamId);
+  return claims.teamIds.includes(teamId);
 }
 
 export function canAccessAthlete(claims: AuthRoleClaims, athleteId: string) {
-  return claims.role === "admin" || claims.athleteIds.includes(athleteId);
+  return claims.athleteIds.includes(athleteId);
 }
 
 export function getLandingRouteForClaims(claims: AuthRoleClaims) {

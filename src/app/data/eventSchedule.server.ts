@@ -8,6 +8,10 @@ import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import {
+  canUseAdminSetup,
+  resolveAdminOrganizationScope,
+} from "./adminOrganizationScope.server";
+import {
   getCoachAssignedTeams,
   resolveCoachAssignmentScope,
 } from "./coachAssignments.server";
@@ -87,9 +91,7 @@ function isRoleSession(
   }
 
   if (role === "admin") {
-    return Boolean(
-      session.claims.adminId && session.claims.organizationIds.length > 0,
-    );
+    return true;
   }
 
   if (role === "coach") {
@@ -148,7 +150,13 @@ async function getAdminScheduleReadModel(
   session: AuthSession,
 ): Promise<EventScheduleReadModel> {
   const repositories = createFirestoreRepositories();
-  const organizationIds = session.claims.organizationIds;
+  const adminScope = await resolveAdminOrganizationScope(session);
+  const organizationIds = adminScope.organizationIds;
+
+  if (organizationIds.length === 0) {
+    return emptyScheduleReadModel("admin");
+  }
+
   const [teamLists, eventLists] = await Promise.all([
     Promise.all(
       organizationIds.map((organizationId) =>
@@ -163,7 +171,9 @@ async function getAdminScheduleReadModel(
   ]);
 
   return {
-    canCreateEvents: hasCapability(session.claims, "manage-organization"),
+    canCreateEvents:
+      hasCapability(session.claims, "manage-organization") &&
+      canUseAdminSetup(adminScope),
     events: sortScheduleEvents(
       eventLists.flat().filter((event) =>
         eventIsInOrganizationScope(event, organizationIds),

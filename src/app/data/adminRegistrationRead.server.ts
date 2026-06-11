@@ -4,6 +4,10 @@ import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import type { AuthSessionSource } from "../infrastructure/auth";
 import {
+  isAdminRoleSession,
+  resolveAdminOrganizationScope,
+} from "./adminOrganizationScope.server";
+import {
   registrationRequirementStatusValues,
   rosterStatusValues,
   registrationStatusValues,
@@ -118,17 +122,19 @@ export async function getAdminRegistrationReadModel(): Promise<AdminRegistration
     const authProvider = new FirebaseAdminAuthProvider();
     const session = await authProvider.verifySession(await getAuthSessionSource());
 
-    if (
-      session?.claims.role !== "admin" ||
-      !session.claims.adminId ||
-      session.claims.organizationIds.length === 0
-    ) {
+    if (!isAdminRoleSession(session)) {
       return getEmptyAdminRegistrationReadModel();
     }
 
     const repositories = createFirestoreRepositories();
+    const scope = await resolveAdminOrganizationScope(session);
+
+    if (scope.organizationIds.length === 0) {
+      return getEmptyAdminRegistrationReadModel();
+    }
+
     const registrationLists = await Promise.all(
-      session.claims.organizationIds.map((organizationId) =>
+      scope.organizationIds.map((organizationId) =>
         repositories.registrations.listByOrganizationId(organizationId),
       ),
     );

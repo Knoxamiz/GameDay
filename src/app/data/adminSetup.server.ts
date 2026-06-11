@@ -1,32 +1,48 @@
 import { cookies, headers } from "next/headers";
-import {
-  hasCapability,
-  type AuthSession,
-  type AuthSessionSource,
-} from "../infrastructure/auth";
+import { type AuthSessionSource } from "../infrastructure/auth";
 import { getFirebaseAdminConfig } from "../infrastructure/firebase";
-import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
+import {
+  canManageOrganization,
+  canUseAdminSetup,
+  getAdminActor,
+  resolveAdminOrganizationScope,
+  verifyAdminRoleSession,
+  type AdminOrganizationScope,
+  type AdminOrganizationScopeSource,
+} from "./adminOrganizationScope.server";
 import { isActiveCoach, type Coach, type CoachAssignmentStatus } from "./coaches";
 import { documentRequirementTemplates } from "./documents";
 import type { RegistrationInvite } from "./invites";
-import { createLiveRecordId, slugifyIdentityPart } from "./liveIdentity";
+import {
+  createLiveRecordId,
+  normalizeDocumentIdSegment,
+  slugifyIdentityPart,
+} from "./liveIdentity";
+import type { OrganizationMembership } from "./organizationMemberships";
 import type { Organization } from "./organizations";
 import { paymentRequirementTemplates } from "./payments";
 import { isCoachVisibleRosterRegistration, type Registration } from "./registrations";
 import type { Team } from "./teams";
 
 export type AdminSetupReadModel = {
+  canCreateOrganization: boolean;
   canManageSetup: boolean;
   coaches: Coach[];
   organizationIds: string[];
+  organizationMemberships: OrganizationMembership[];
   organizations: Organization[];
   registrationInvites: RegistrationInvite[];
+  scopeSource: AdminOrganizationScopeSource;
   source: "empty" | "firestore";
   teams: Team[];
 };
 
 export type AdminSetupPayload =
+  | {
+      actionType: "organization-provisioning";
+      name: string;
+    }
   | {
       actionType: "organization";
       name: string;
@@ -125,11 +141,14 @@ function emptyReadModel(
   organizationIds: string[] = [],
 ): AdminSetupReadModel {
   return {
+    canCreateOrganization: false,
     canManageSetup: false,
     coaches: [],
     organizationIds,
+    organizationMemberships: [],
     organizations: [],
     registrationInvites: [],
+    scopeSource: "empty",
     source: "empty",
     teams: [],
   };
@@ -143,17 +162,10 @@ function createSetupError(
   throw new AdminSetupError(reason, message, status);
 }
 
-function isAdminSetupSession(
-  session: AuthSession | null,
-): session is AuthSession {
-  return Boolean(
-    session?.claims.role === "admin" &&
-      session.claims.adminId &&
-      session.claims.organizationIds.length > 0,
-  );
-}
-
-async function requireAdminSetupSession(source: AuthSessionSource) {
+async function requireAdminSetupScope(
+  source: AuthSessionSource,
+  options: { requireOrganizationScope?: boolean } = {},
+) {
   if (!getFirebaseAdminConfig()) {
     createSetupError(
       "firebase-unavailable",
@@ -162,10 +174,9 @@ async function requireAdminSetupSession(source: AuthSessionSource) {
     );
   }
 
-  const authProvider = new FirebaseAdminAuthProvider();
-  const session = await authProvider.verifySession(source).catch(() => null);
+  const session = await verifyAdminRoleSession(source);
 
-  if (!isAdminSetupSession(session)) {
+  if (!session) {
     createSetupError(
       "admin-session-required",
       "Please sign in as an admin before managing setup.",
@@ -173,7 +184,9 @@ async function requireAdminSetupSession(source: AuthSessionSource) {
     );
   }
 
-  if (!hasCapability(session.claims, "manage-organization")) {
+  const scope = await resolveAdminOrganizationScope(session);
+
+  if (!canUseAdminSetup(scope)) {
     createSetupError(
       "admin-setup-capability-required",
       "This admin cannot manage organization setup.",
@@ -181,11 +194,25 @@ async function requireAdminSetupSession(source: AuthSessionSource) {
     );
   }
 
-  return session;
+  if (
+    options.requireOrganizationScope !== false &&
+    scope.organizationIds.length === 0
+  ) {
+    createSetupError(
+      "admin-organization-scope-required",
+      "Create an organization before managing setup.",
+      403,
+    );
+  }
+
+  return scope;
 }
 
-function assertClaimedOrganization(session: AuthSession, organizationId: string) {
-  if (!session.claims.organizationIds.includes(organizationId)) {
+function assertManagedOrganization(
+  scope: AdminOrganizationScope,
+  organizationId: string,
+) {
+  if (!canManageOrganization(scope, organizationId)) {
     createSetupError(
       "admin-organization-access-required",
       "This admin cannot manage that organization.",
@@ -215,31 +242,35 @@ function getOrganizationStatus({
   };
 }
 
-function getRecordActor(session: AuthSession) {
-  return {
-    athleteIds: session.claims.athleteIds,
-    id: session.claims.adminId ?? session.user.id,
-    organizationIds: session.claims.organizationIds,
-    role: session.claims.role,
-    teamIds: session.claims.teamIds,
-  };
-}
-
 export async function getAdminSetupReadModel(): Promise<AdminSetupReadModel> {
   if (!getFirebaseAdminConfig()) {
     return emptyReadModel();
   }
 
   try {
-    const authProvider = new FirebaseAdminAuthProvider();
-    const session = await authProvider.verifySession(await getAuthSessionSource());
+    const session = await verifyAdminRoleSession(await getAuthSessionSource());
 
-    if (!isAdminSetupSession(session)) {
+    if (!session) {
       return emptyReadModel();
     }
 
+    const scope = await resolveAdminOrganizationScope(session);
+
+    if (!canUseAdminSetup(scope)) {
+      return emptyReadModel();
+    }
+
+    if (scope.organizationIds.length === 0) {
+      return {
+        ...emptyReadModel(),
+        canCreateOrganization: true,
+        scopeSource: scope.source,
+        source: "firestore",
+      };
+    }
+
     const repositories = createFirestoreRepositories();
-    const organizationIds = session.claims.organizationIds;
+    const organizationIds = scope.organizationIds;
     const [organizations, teamLists, coachLists, inviteLists] = await Promise.all([
       Promise.all(
         organizationIds.map((organizationId) =>
@@ -264,13 +295,16 @@ export async function getAdminSetupReadModel(): Promise<AdminSetupReadModel> {
     ]);
 
     return {
+      canCreateOrganization: true,
       canManageSetup: true,
       coaches: uniqueById(coachLists.flat()),
       organizationIds,
+      organizationMemberships: scope.memberships,
       organizations: organizations.filter(
         (organization): organization is Organization => Boolean(organization),
       ),
       registrationInvites: uniqueById(inviteLists.flat()),
+      scopeSource: scope.source,
       source: "firestore",
       teams: uniqueById(teamLists.flat()),
     };
@@ -284,10 +318,133 @@ export async function getAdminSetupReadModel(): Promise<AdminSetupReadModel> {
   }
 }
 
+async function getAvailableOrganizationId(name: string) {
+  const repositories = createFirestoreRepositories();
+  const baseOrganizationId = slugifyIdentityPart(name);
+
+  if (!baseOrganizationId) {
+    createSetupError(
+      "invalid-organization-name",
+      "Organization name must include letters or numbers.",
+      400,
+    );
+  }
+
+  for (let suffix = 0; suffix < 50; suffix += 1) {
+    const organizationId =
+      suffix === 0 ? baseOrganizationId : `${baseOrganizationId}-${suffix + 1}`;
+    const existingOrganization =
+      await repositories.organizations.getById(organizationId);
+
+    if (!existingOrganization) {
+      return organizationId;
+    }
+  }
+
+  createSetupError(
+    "organization-id-unavailable",
+    "Choose a more specific organization name.",
+    409,
+  );
+}
+
+function getMembershipId(organizationId: string, uid: string) {
+  const uidSegment = normalizeDocumentIdSegment(uid);
+
+  if (!uidSegment) {
+    createSetupError(
+      "invalid-membership-uid",
+      "A valid signed-in user is required.",
+      400,
+    );
+  }
+
+  return `organization-membership-${organizationId}-${uidSegment}`;
+}
+
+async function createProvisionedOrganization(
+  scope: AdminOrganizationScope,
+  payload: Extract<
+    AdminSetupPayload,
+    { actionType: "organization-provisioning" }
+  >,
+): Promise<AdminSetupResult> {
+  const session = scope.session;
+  const name = normalizeText(payload.name);
+
+  if (!name) {
+    createSetupError(
+      "invalid-organization",
+      "Organization name is required.",
+      400,
+    );
+  }
+
+  const repositories = createFirestoreRepositories();
+  const organizationId = await getAvailableOrganizationId(name);
+  const now = new Date().toISOString();
+  const actor = getAdminActor({
+    ...scope,
+    organizationIds: uniqueStringList([...scope.organizationIds, organizationId]),
+  });
+  const organization: Organization = {
+    adminIds: uniqueStringList([session.claims.adminId]),
+    adminUids: [session.user.id],
+    createdAt: now,
+    createdByUid: session.user.id,
+    id: organizationId,
+    name,
+    organizationId,
+    ownerUid: session.user.id,
+    ownerUids: [session.user.id],
+    slug: getSlugFromId(organizationId),
+    status: getOrganizationStatus({
+      coaches: [],
+      events: 0,
+      registrations: [],
+      teams: [],
+    }),
+    updatedAt: now,
+  };
+  const membership: OrganizationMembership = {
+    createdAt: now,
+    createdByUid: session.user.id,
+    email: session.user.email ?? "",
+    id: getMembershipId(organizationId, session.user.id),
+    organizationId,
+    role: "owner",
+    status: "active",
+    uid: session.user.id,
+    updatedAt: now,
+  };
+
+  await repositories.organizations.create(organization, {
+    actor,
+    reason: "Admin provisioned a new organization.",
+  });
+  await repositories.organizationMemberships.create(membership, {
+    actor,
+    reason: "Admin provisioned owner organization membership.",
+  });
+
+  console.info("Organization provisioned.", {
+    membershipId: membership.id,
+    organizationId,
+    uid: session.user.id,
+  });
+
+  return {
+    id: organization.id,
+    message: `Organization created: ${organization.name}`,
+    source: "firestore",
+  };
+}
+
 async function createOrUpdateOrganization(
-  session: AuthSession,
+  scope: AdminOrganizationScope,
   payload: Extract<AdminSetupPayload, { actionType: "organization" }>,
 ): Promise<AdminSetupResult> {
+  const session = scope.session;
   const organizationId = normalizeText(payload.organizationId);
   const name = normalizeText(payload.name);
 
@@ -299,7 +456,7 @@ async function createOrUpdateOrganization(
     );
   }
 
-  assertClaimedOrganization(session, organizationId);
+  assertManagedOrganization(scope, organizationId);
 
   const repositories = createFirestoreRepositories();
   const [currentOrganization, teams, coaches, events, registrations] = await Promise.all([
@@ -339,7 +496,7 @@ async function createOrUpdateOrganization(
     }),
     updatedAt: now,
   };
-  const actor = getRecordActor(session);
+  const actor = getAdminActor(scope);
 
   if (currentOrganization) {
     await repositories.organizations.update(organizationId, organization, {
@@ -361,9 +518,10 @@ async function createOrUpdateOrganization(
 }
 
 async function createTeam(
-  session: AuthSession,
+  scope: AdminOrganizationScope,
   payload: Extract<AdminSetupPayload, { actionType: "team" }>,
 ): Promise<AdminSetupResult> {
+  const session = scope.session;
   const organizationId = normalizeText(payload.organizationId);
   const name = normalizeText(payload.name);
   const division = normalizeText(payload.division);
@@ -378,7 +536,7 @@ async function createTeam(
     );
   }
 
-  assertClaimedOrganization(session, organizationId);
+  assertManagedOrganization(scope, organizationId);
 
   const repositories = createFirestoreRepositories();
   const organization = await repositories.organizations.getById(organizationId);
@@ -413,7 +571,7 @@ async function createTeam(
   };
 
   await repositories.teams.create(team, {
-    actor: getRecordActor(session),
+    actor: getAdminActor(scope),
     reason: "Admin created team setup.",
   });
 
@@ -441,14 +599,14 @@ async function updateTeamCoachHelpers({
   assignedTeamIds,
   coachId,
   organizationId,
-  session,
+  scope,
   status,
   updatedAt,
 }: {
   assignedTeamIds: string[];
   coachId: string;
   organizationId: string;
-  session: AuthSession;
+  scope: AdminOrganizationScope;
   status: CoachAssignmentStatus;
   updatedAt: string;
 }) {
@@ -478,7 +636,7 @@ async function updateTeamCoachHelpers({
           updatedAt,
         },
         {
-          actor: getRecordActor(session),
+          actor: getAdminActor(scope),
           reason: "Admin updated coach assignment helper fields.",
         },
       );
@@ -487,9 +645,10 @@ async function updateTeamCoachHelpers({
 }
 
 async function createOrUpdateCoachAssignment(
-  session: AuthSession,
+  scope: AdminOrganizationScope,
   payload: Extract<AdminSetupPayload, { actionType: "coach-assignment" }>,
 ): Promise<AdminSetupResult> {
+  const session = scope.session;
   const organizationId = normalizeText(payload.organizationId);
   const email = normalizeText(payload.email).toLowerCase();
   const name = normalizeText(payload.name);
@@ -505,7 +664,7 @@ async function createOrUpdateCoachAssignment(
     );
   }
 
-  assertClaimedOrganization(session, organizationId);
+  assertManagedOrganization(scope, organizationId);
 
   const repositories = createFirestoreRepositories();
   const [organization, currentCoachByEmail, teams] = await Promise.all([
@@ -582,12 +741,12 @@ async function createOrUpdateCoachAssignment(
 
   if (currentCoach) {
     await repositories.coaches.update(coach.id, coach, {
-      actor: getRecordActor(session),
+      actor: getAdminActor(scope),
       reason: "Admin updated coach assignment.",
     });
   } else {
     await repositories.coaches.create(coach, {
-      actor: getRecordActor(session),
+      actor: getAdminActor(scope),
       reason: "Admin created coach assignment.",
     });
   }
@@ -596,7 +755,7 @@ async function createOrUpdateCoachAssignment(
     assignedTeamIds: teamIds,
     coachId,
     organizationId,
-    session,
+    scope,
     status,
     updatedAt: now,
   });
@@ -616,9 +775,10 @@ async function createOrUpdateCoachAssignment(
 }
 
 async function createRegistrationInvite(
-  session: AuthSession,
+  scope: AdminOrganizationScope,
   payload: Extract<AdminSetupPayload, { actionType: "registration-invite" }>,
 ): Promise<AdminSetupResult> {
+  const session = scope.session;
   const organizationId = normalizeText(payload.organizationId);
   const teamId = normalizeText(payload.teamId);
   const title = normalizeText(payload.title);
@@ -632,7 +792,7 @@ async function createRegistrationInvite(
     );
   }
 
-  assertClaimedOrganization(session, organizationId);
+  assertManagedOrganization(scope, organizationId);
 
   const repositories = createFirestoreRepositories();
   const [organization, team] = await Promise.all([
@@ -672,7 +832,7 @@ async function createRegistrationInvite(
   };
 
   await repositories.registrationInvites.create(invite, {
-    actor: getRecordActor(session),
+    actor: getAdminActor(scope),
     reason: "Admin created registration invite setup.",
   });
 
@@ -687,19 +847,25 @@ export async function createAdminSetupRecord(
   payload: AdminSetupPayload,
   options: AdminSetupWriteOptions,
 ): Promise<AdminSetupResult> {
-  const session = await requireAdminSetupSession(options.sessionSource);
+  const scope = await requireAdminSetupScope(options.sessionSource, {
+    requireOrganizationScope: payload.actionType !== "organization-provisioning",
+  });
+
+  if (payload.actionType === "organization-provisioning") {
+    return createProvisionedOrganization(scope, payload);
+  }
 
   if (payload.actionType === "organization") {
-    return createOrUpdateOrganization(session, payload);
+    return createOrUpdateOrganization(scope, payload);
   }
 
   if (payload.actionType === "team") {
-    return createTeam(session, payload);
+    return createTeam(scope, payload);
   }
 
   if (payload.actionType === "coach-assignment") {
-    return createOrUpdateCoachAssignment(session, payload);
+    return createOrUpdateCoachAssignment(scope, payload);
   }
 
-  return createRegistrationInvite(session, payload);
+  return createRegistrationInvite(scope, payload);
 }

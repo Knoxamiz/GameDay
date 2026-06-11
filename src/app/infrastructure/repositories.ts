@@ -7,6 +7,7 @@ import type { GameDayEvent } from "../data/events";
 import type { GameAlert } from "../data/gameAlerts";
 import type { RegistrationInvite } from "../data/invites";
 import type { GameDayMessage } from "../data/messages";
+import type { OrganizationMembership } from "../data/organizationMemberships";
 import type { Organization } from "../data/organizations";
 import type { ParentGuardian } from "../data/parents";
 import type { PaymentRequirement } from "../data/payments";
@@ -26,6 +27,7 @@ export type QueryScope = {
   parentId?: string;
   parentUid?: string;
   registrationId?: string;
+  role?: string;
   rosterStatus?: string;
   status?: string;
   teamId?: string;
@@ -67,6 +69,14 @@ export interface MutableRepository<TRecord, TKey = string>
 }
 
 export type OrganizationRepository = MutableRepository<Organization>;
+
+export interface OrganizationMembershipRepository
+  extends MutableRepository<OrganizationMembership> {
+  listByOrganizationId(
+    organizationId: string,
+  ): Promise<OrganizationMembership[]>;
+  listByUid(uid: string): Promise<OrganizationMembership[]>;
+}
 
 export interface ParentRepository extends MutableRepository<ParentGuardian> {
   listByOrganizationId(organizationId: string): Promise<ParentGuardian[]>;
@@ -157,6 +167,7 @@ export type GameDayRepositories = {
   events: EventRepository;
   gameAlerts: GameAlertRepository;
   messages: MessageRepository;
+  organizationMemberships: OrganizationMembershipRepository;
   organizations: OrganizationRepository;
   parents: ParentRepository;
   paymentRequirements: PaymentRequirementRepository;

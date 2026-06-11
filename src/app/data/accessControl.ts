@@ -56,12 +56,12 @@ export const authReadiness = {
   currentMode: "firebase-session",
   requiredClaims: [
     "role",
-    "adminId for admins",
-    "organizationIds for admins and bootstrap coach scope",
+    "adminId for legacy admin compatibility",
+    "organizationIds for bootstrap admin and coach scope",
     "teamIds for bootstrap coach scope",
     "parentId for legacy parent compatibility",
     "coachId for legacy coach compatibility",
   ],
   sessionSource:
-    "Verified Firebase session, role claims, and Firestore assignment records",
+    "Verified Firebase session, role claims, Firestore organization memberships, and assignment records",
 };

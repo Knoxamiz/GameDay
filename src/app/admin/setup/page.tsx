@@ -24,6 +24,7 @@ export default async function AdminSetupPage() {
         <SessionControls role="admin" />
 
         <AdminSetupPanel
+          canCreateOrganization={setup.canCreateOrganization}
           canManageSetup={setup.canManageSetup}
           coaches={setup.coaches}
           organizationIds={setup.organizationIds}

@@ -7,6 +7,7 @@ import {
 } from "../../data/backendSchema";
 import { documentRequirements } from "../../data/documents";
 import { events } from "../../data/events";
+import { organizationMemberships } from "../../data/organizationMemberships";
 import { organizations } from "../../data/organizations";
 import { parents } from "../../data/parents";
 import { paymentRequirements } from "../../data/payments";
@@ -30,6 +31,7 @@ export async function GET() {
       athletes: athletes.length,
       documentRequirements: documentRequirements.length,
       events: events.length,
+      organizationMemberships: organizationMemberships.length,
       organizations: organizations.length,
       parents: parents.length,
       paymentRequirements: paymentRequirements.length,

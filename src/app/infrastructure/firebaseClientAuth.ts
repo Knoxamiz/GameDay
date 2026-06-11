@@ -195,14 +195,8 @@ export async function signInFirebaseAdminWithEmailPassword(
 
   const { session } = result;
 
-  if (
-    session.claims.role !== "admin" ||
-    !session.claims.adminId ||
-    session.claims.organizationIds.length === 0
-  ) {
-    throw new Error(
-      "Admin login requires role, adminId, and organizationIds claims.",
-    );
+  if (session.claims.role !== "admin") {
+    throw new Error("Admin login requires an admin role claim.");
   }
 
   return result;

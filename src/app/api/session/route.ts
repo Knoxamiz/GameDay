@@ -41,11 +41,7 @@ function isValidParentSession(
 function isValidAdminSession(
   session: AuthSession | null,
 ): session is AuthSession {
-  return Boolean(
-    session?.claims.role === "admin" &&
-      session.claims.adminId &&
-      session.claims.organizationIds.length > 0,
-  );
+  return session?.claims.role === "admin";
 }
 
 function isValidCoachSession(

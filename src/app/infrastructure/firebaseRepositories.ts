@@ -7,6 +7,7 @@ import type { GameDayEvent } from "../data/events";
 import type { GameAlert } from "../data/gameAlerts";
 import type { RegistrationInvite } from "../data/invites";
 import type { GameDayMessage } from "../data/messages";
+import type { OrganizationMembership } from "../data/organizationMemberships";
 import type { ParentGuardian } from "../data/parents";
 import type { PaymentRequirement } from "../data/payments";
 import {
@@ -28,6 +29,7 @@ import type {
   GameDayRepositories,
   MessageRepository,
   MutableRepository,
+  OrganizationMembershipRepository,
   OrganizationRepository,
   ParentRepository,
   PaymentRequirementRepository,
@@ -474,6 +476,18 @@ class FirestoreMessageRepository
   }
 }
 
+class FirestoreOrganizationMembershipRepository
+  extends FirestoreCollectionRepository<OrganizationMembership>
+  implements OrganizationMembershipRepository {
+  listByOrganizationId(organizationId: string) {
+    return this.list({ scope: { organizationId } });
+  }
+
+  listByUid(uid: string) {
+    return this.list({ scope: { uid } });
+  }
+}
+
 class FirestoreGameAlertRepository
   extends FirestoreCollectionRepository<GameAlert>
   implements GameAlertRepository {
@@ -515,6 +529,9 @@ export function createFirestoreRepositories(): GameDayRepositories {
     events: new FirestoreEventRepository("events"),
     gameAlerts: new FirestoreGameAlertRepository(),
     messages: new FirestoreMessageRepository("messages"),
+    organizationMemberships: new FirestoreOrganizationMembershipRepository(
+      "organizationMemberships",
+    ),
     organizations: new FirestoreCollectionRepository(
       "organizations",
     ) as OrganizationRepository,

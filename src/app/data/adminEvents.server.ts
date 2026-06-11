@@ -7,6 +7,13 @@ import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import {
+  canManageOrganization,
+  canUseAdminSetup,
+  getAdminActor,
+  resolveAdminOrganizationScope,
+  type AdminOrganizationScope,
+} from "./adminOrganizationScope.server";
+import {
   sortEventsByStartDate,
   type GameDayEvent,
   type GameDayEventStatus,
@@ -69,11 +76,7 @@ function createAdminEventError(
 function isAdminEventSession(
   session: AuthSession | null,
 ): session is AuthSession {
-  return Boolean(
-    session?.claims.role === "admin" &&
-      session.claims.adminId &&
-      session.claims.organizationIds.length > 0,
-  );
+  return session?.claims.role === "admin";
 }
 
 async function requireAdminEventSession(source: AuthSessionSource) {
@@ -96,7 +99,9 @@ async function requireAdminEventSession(source: AuthSessionSource) {
     );
   }
 
-  if (!hasCapability(session.claims, "manage-organization")) {
+  const scope = await resolveAdminOrganizationScope(session);
+
+  if (!hasCapability(session.claims, "manage-organization") || !canUseAdminSetup(scope)) {
     createAdminEventError(
       "admin-event-capability-required",
       "This admin cannot manage organization events.",
@@ -104,11 +109,22 @@ async function requireAdminEventSession(source: AuthSessionSource) {
     );
   }
 
-  return session;
+  if (scope.organizationIds.length === 0) {
+    createAdminEventError(
+      "admin-organization-scope-required",
+      "Create an organization before creating events.",
+      403,
+    );
+  }
+
+  return scope;
 }
 
-function assertClaimedOrganization(session: AuthSession, organizationId: string) {
-  if (!session.claims.organizationIds.includes(organizationId)) {
+function assertManagedOrganization(
+  scope: AdminOrganizationScope,
+  organizationId: string,
+) {
+  if (!canManageOrganization(scope, organizationId)) {
     createAdminEventError(
       "admin-organization-access-required",
       "This admin cannot create events for that organization.",
@@ -141,16 +157,6 @@ function assertValidDateRange(startsAt: string, endsAt: string) {
   }
 }
 
-function getRecordActor(session: AuthSession) {
-  return {
-    athleteIds: session.claims.athleteIds,
-    id: session.claims.adminId ?? session.user.id,
-    organizationIds: session.claims.organizationIds,
-    role: session.claims.role,
-    teamIds: session.claims.teamIds,
-  };
-}
-
 async function getValidatedEventTeams(
   organizationId: string,
   teamIds: string[],
@@ -178,10 +184,10 @@ async function getValidatedEventTeams(
 async function updateEventTeams(
   event: GameDayEvent,
   teams: Team[],
-  session: AuthSession,
+  scope: AdminOrganizationScope,
 ) {
   const repositories = createFirestoreRepositories();
-  const actor = getRecordActor(session);
+  const actor = getAdminActor(scope);
 
   await Promise.all(
     teams.map(async (team) => {
@@ -215,7 +221,8 @@ export async function createAdminEvent(
   payload: AdminEventPayload,
   options: AdminEventWriteOptions,
 ): Promise<AdminEventResult> {
-  const session = await requireAdminEventSession(options.sessionSource);
+  const scope = await requireAdminEventSession(options.sessionSource);
+  const session = scope.session;
   const organizationId = normalizeText(payload.organizationId);
   const title = normalizeText(payload.title);
   const locationName = normalizeText(payload.locationName);
@@ -231,7 +238,7 @@ export async function createAdminEvent(
     );
   }
 
-  assertClaimedOrganization(session, organizationId);
+  assertManagedOrganization(scope, organizationId);
   assertValidDateRange(startsAt, endsAt);
 
   const repositories = createFirestoreRepositories();
@@ -269,10 +276,10 @@ export async function createAdminEvent(
   };
 
   await repositories.events.create(event, {
-    actor: getRecordActor(session),
+    actor: getAdminActor(scope),
     reason: "Admin created organization event.",
   });
-  await updateEventTeams(event, teams, session);
+  await updateEventTeams(event, teams, scope);
 
   console.info("Admin event created.", {
     eventId: event.id,

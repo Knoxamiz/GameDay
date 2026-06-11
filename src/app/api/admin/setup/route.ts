@@ -43,6 +43,13 @@ function getSetupPayload(body: Record<string, unknown> | null) {
 
   const actionType = body?.actionType;
 
+  if (actionType === "organization-provisioning") {
+    return {
+      actionType,
+      name: getText(body.name),
+    } satisfies AdminSetupPayload;
+  }
+
   if (actionType === "organization") {
     return {
       actionType,
