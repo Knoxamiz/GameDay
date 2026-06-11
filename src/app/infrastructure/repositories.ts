@@ -145,6 +145,7 @@ export interface GameAlertRepository
 export interface RegistrationInviteRepository
   extends MutableRepository<RegistrationInvite> {
   getByCode(code: string): Promise<RegistrationInvite | null>;
+  listByOrganizationId(organizationId: string): Promise<RegistrationInvite[]>;
   listByTeamId(teamId: string): Promise<RegistrationInvite[]>;
 }
 

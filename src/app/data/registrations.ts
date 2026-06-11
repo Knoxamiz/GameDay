@@ -105,7 +105,7 @@ export const rosterStatusValues: RosterStatus[] = [
 ];
 
 export const registrationForm = {
-  organizationId: "black-diamonds",
+  organizationId: "",
   parentFields: ["First Name", "Last Name", "Email", "Phone Number"],
   athleteFields: [
     "First Name",

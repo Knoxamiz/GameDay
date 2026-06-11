@@ -1,12 +1,10 @@
 import { getAthletesByParentId } from "./athletes";
 import { getCurrentCoach } from "./coaches";
 import {
-  getEventsByOrganizationId,
   getEventsByTeamIds,
   sortEventsByStartDate,
   type GameDayEvent,
 } from "./events";
-import { blackDiamondsOrganization } from "./organizations";
 import { getCurrentParent } from "./parents";
 import { getTeamsByCoachId } from "./teams";
 
@@ -45,7 +43,5 @@ export function getVisibleScheduleEvents(role: ScheduleRole) {
     );
   }
 
-  return getEventsByOrganizationId(blackDiamondsOrganization.id).sort(
-    sortEventsByStartDate,
-  );
+  return [];
 }

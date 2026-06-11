@@ -46,6 +46,10 @@ export default async function TeamDetails({
     notFound();
   }
 
+  if (role === "shared") {
+    notFound();
+  }
+
   const repositories = createFirestoreRepositories();
   const teamDetails = await repositories.teams.getById(teamId);
 
@@ -53,13 +57,11 @@ export default async function TeamDetails({
     notFound();
   }
 
-  if (role !== "shared") {
-    const scopedSchedule = await getEventScheduleReadModel(role);
-    const canReadTeam = scopedSchedule.teams.some((team) => team.id === teamId);
+  const scopedSchedule = await getEventScheduleReadModel(role);
+  const canReadTeam = scopedSchedule.teams.some((team) => team.id === teamId);
 
-    if (!canReadTeam) {
-      notFound();
-    }
+  if (!canReadTeam) {
+    notFound();
   }
 
   const [teamCoaches, nextEventRecord, teamRegistrations] = await Promise.all([

@@ -99,6 +99,10 @@ function normalizeText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function getSlugFromId(value: string) {
+  return slugifyIdentityPart(value);
+}
+
 function uniqueStringList(values: (string | undefined)[]) {
   return [...new Set(values.map(normalizeText).filter(Boolean))];
 }
@@ -236,7 +240,7 @@ export async function getAdminSetupReadModel(): Promise<AdminSetupReadModel> {
 
     const repositories = createFirestoreRepositories();
     const organizationIds = session.claims.organizationIds;
-    const [organizations, teamLists, coachLists, inviteList] = await Promise.all([
+    const [organizations, teamLists, coachLists, inviteLists] = await Promise.all([
       Promise.all(
         organizationIds.map((organizationId) =>
           repositories.organizations.getById(organizationId),
@@ -252,9 +256,12 @@ export async function getAdminSetupReadModel(): Promise<AdminSetupReadModel> {
           repositories.coaches.listByOrganizationId(organizationId),
         ),
       ),
-      repositories.registrationInvites.list(),
+      Promise.all(
+        organizationIds.map((organizationId) =>
+          repositories.registrationInvites.listByOrganizationId(organizationId),
+        ),
+      ),
     ]);
-    const organizationSet = new Set(organizationIds);
 
     return {
       canManageSetup: true,
@@ -263,9 +270,7 @@ export async function getAdminSetupReadModel(): Promise<AdminSetupReadModel> {
       organizations: organizations.filter(
         (organization): organization is Organization => Boolean(organization),
       ),
-      registrationInvites: inviteList.filter((invite) =>
-        organizationSet.has(invite.organizationId),
-      ),
+      registrationInvites: uniqueById(inviteLists.flat()),
       source: "firestore",
       teams: uniqueById(teamLists.flat()),
     };
@@ -310,11 +315,22 @@ async function createOrUpdateOrganization(
       ...(currentOrganization?.adminIds ?? []),
       session.claims.adminId,
     ]),
+    adminUids: uniqueStringList([
+      ...(currentOrganization?.adminUids ?? []),
+      session.user.id,
+    ]),
     createdAt: currentOrganization?.createdAt ?? now,
     createdByUid: currentOrganization?.createdByUid ?? session.user.id,
     id: organizationId,
     name,
+    organizationId: currentOrganization?.organizationId ?? organizationId,
     ownerUid: currentOrganization?.ownerUid ?? session.user.id,
+    ownerUids: uniqueStringList([
+      ...(currentOrganization?.ownerUids ?? []),
+      currentOrganization?.ownerUid,
+      session.user.id,
+    ]),
+    slug: currentOrganization?.slug ?? getSlugFromId(organizationId),
     status: getOrganizationStatus({
       coaches,
       events: events.length,
@@ -554,7 +570,7 @@ async function createOrUpdateCoachAssignment(
     id: coachId,
     lastName,
     name,
-    organizationId: organizationIds[0] ?? organizationId,
+    organizationId,
     organizationIds,
     phone: currentCoach?.phone ?? "",
     role: "coach",

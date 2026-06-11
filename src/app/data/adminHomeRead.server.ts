@@ -18,6 +18,7 @@ export type AdminHomeReadModel = {
   coaches: Coach[];
   events: GameDayEvent[];
   organization: Organization;
+  organizations: Organization[];
   registrations: Registration[];
   source: "empty" | "firestore";
   teams: Team[];
@@ -49,13 +50,16 @@ async function getAuthSessionSource(): Promise<AuthSessionSource> {
 
 function getOrganizationShell(organizationId?: string): Organization {
   const id = organizationId || "organization";
+  const name = id
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
 
   return {
     id,
-    name:
-      id === "black-diamonds"
-        ? "Black Diamonds Girls Flag Football"
-        : "Organization",
+    name: name || "Organization",
+    organizationId: id,
     status: emptyOrganizationStatus,
   };
 }
@@ -83,6 +87,7 @@ function buildEmptyAdminHomeReadModel(
     coaches: [],
     events: [],
     organization: getOrganizationShell(organizationId),
+    organizations: organizationId ? [getOrganizationShell(organizationId)] : [],
     registrations: [],
     source: "empty",
     teams: [],
@@ -156,15 +161,18 @@ export async function getAdminHomeReadModel(): Promise<AdminHomeReadModel> {
       ),
     ]);
 
+    const organizationRecords = organizations.filter(
+      (organization): organization is Organization => Boolean(organization),
+    );
+
     return {
       attendanceEntries: uniqueById(attendanceLists.flat()),
       communications: uniqueById(communicationLists.flat()),
       coaches: uniqueById(coachLists.flat()),
       events,
       organization:
-        organizations.find((organization): organization is Organization =>
-          Boolean(organization),
-        ) ?? getOrganizationShell(organizationIds[0]),
+        organizationRecords[0] ?? getOrganizationShell(organizationIds[0]),
+      organizations: organizationRecords,
       registrations: uniqueById(registrationLists.flat()),
       source: "firestore",
       teams: uniqueById(teamLists.flat()),

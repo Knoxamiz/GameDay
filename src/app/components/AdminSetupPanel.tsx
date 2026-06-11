@@ -25,6 +25,14 @@ function getCurrentSeasonLabel() {
   return `${new Date().getFullYear()} Season`;
 }
 
+function getOrganizationNameFromId(organizationId: string) {
+  return organizationId
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
+}
+
 export default function AdminSetupPanel({
   canManageSetup,
   coaches,
@@ -33,10 +41,10 @@ export default function AdminSetupPanel({
   registrationInvites,
   teams,
 }: AdminSetupPanelProps) {
-  const primaryOrganizationId = organizationIds[0] ?? "black-diamonds";
+  const primaryOrganizationId = organizationIds[0] ?? organizations[0]?.id ?? "";
   const [organizationId, setOrganizationId] = useState(primaryOrganizationId);
   const [organizationName, setOrganizationName] = useState(
-    organizations[0]?.name ?? "Black Diamonds Girls Flag Football",
+    organizations[0]?.name ?? getOrganizationNameFromId(primaryOrganizationId),
   );
   const [teamName, setTeamName] = useState("");
   const [teamDivision, setTeamDivision] = useState("");
@@ -82,6 +90,18 @@ export default function AdminSetupPanel({
       currentTeamIds.includes(teamId)
         ? currentTeamIds.filter((currentTeamId) => currentTeamId !== teamId)
         : [...currentTeamIds, teamId],
+    );
+  }
+
+  function selectOrganization(nextOrganizationId: string) {
+    const selectedOrganization = organizations.find(
+      (organization) => organization.id === nextOrganizationId,
+    );
+
+    setOrganizationId(nextOrganizationId);
+    setOrganizationName(
+      selectedOrganization?.name ??
+        getOrganizationNameFromId(nextOrganizationId),
     );
   }
 
@@ -154,7 +174,7 @@ export default function AdminSetupPanel({
             </span>
             <select
               className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
-              onChange={(event) => setOrganizationId(event.target.value)}
+              onChange={(event) => selectOrganization(event.target.value)}
               value={organizationId}
             >
               {claimedOrganizationOptions.map((id) => (

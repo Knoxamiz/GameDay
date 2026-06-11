@@ -495,6 +495,10 @@ class FirestoreRegistrationInviteRepository
     );
   }
 
+  listByOrganizationId(organizationId: string) {
+    return this.list({ scope: { organizationId } });
+  }
+
   listByTeamId(teamId: string) {
     return this.list({ scope: { teamId } });
   }

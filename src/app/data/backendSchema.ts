@@ -119,9 +119,23 @@ export const backendCollectionSpecs: Record<
 > = {
   organizations: {
     collection: "organizations",
-    indexes: [["id"]],
+    indexes: [
+      ["id"],
+      ["organizationId"],
+      ["slug"],
+      ["ownerUid"],
+      ["ownerUids"],
+      ["adminUids"],
+    ],
     primaryKey: "id",
-    scopeKeys: ["id"],
+    scopeKeys: [
+      "id",
+      "organizationId",
+      "slug",
+      "ownerUid",
+      "ownerUids",
+      "adminUids",
+    ],
     serverWritesRequired: true,
   },
   parents: {

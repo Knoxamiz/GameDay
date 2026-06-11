@@ -201,6 +201,23 @@ export async function submitParentRegistration(
   }
 
   const parent = await repositories.parents.getById(parentId);
+  const [inviteOrganization, inviteTeam] = await Promise.all([
+    repositories.organizations.getById(invite.organizationId),
+    repositories.teams.getById(invite.teamId),
+  ]);
+
+  if (
+    !inviteOrganization ||
+    !inviteTeam ||
+    inviteTeam.organizationId !== invite.organizationId
+  ) {
+    createSubmissionError(
+      "invalid-invite-scope",
+      "This registration invite is not connected to a valid organization team.",
+      400,
+    );
+  }
+
   const athleteName = `${athleteFirstName} ${athleteLastName}`;
   const athleteId = createLiveRecordId("athlete", [
     invite.teamId,

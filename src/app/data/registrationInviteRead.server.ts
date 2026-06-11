@@ -18,14 +18,11 @@ const emptyOrganizationStatus = {
   upcomingEvents: 0,
 };
 
-function getOrganizationShell(organizationId: string): Organization | undefined {
-  if (organizationId !== "black-diamonds") {
-    return undefined;
-  }
-
+function getOrganizationShell(organizationId: string): Organization {
   return {
     id: organizationId,
-    name: "Black Diamonds Girls Flag Football",
+    name: organizationId,
+    organizationId,
     status: emptyOrganizationStatus,
   };
 }
@@ -77,8 +74,18 @@ export async function getPrimaryRegistrationInviteReadModel(): Promise<Registrat
 
   try {
     const repositories = createFirestoreRepositories();
-    const invites = await repositories.registrationInvites.list();
-    const activeInvite = invites.find((invite) => invite.status === "Active");
+    const activeInvites = await repositories.registrationInvites.list({
+      limit: 2,
+      scope: { status: "Active" },
+    });
+    const activeInvite =
+      activeInvites.length === 1 ? activeInvites[0] : undefined;
+
+    if (activeInvites.length > 1) {
+      console.warn("Multiple active registration invites found for /registration.", {
+        inviteCount: activeInvites.length,
+      });
+    }
 
     return buildInviteReadModel(activeInvite);
   } catch (error) {
