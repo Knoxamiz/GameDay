@@ -87,6 +87,12 @@ export default async function AdminHome() {
               href="/admin/registrations"
               registrations={organizationRegistrations}
             />
+            <Link
+              href="/admin/setup"
+              className="block rounded-xl bg-slate-800 p-4 font-semibold text-white"
+            >
+              Setup Organization, Teams, And Invites
+            </Link>
             {teamsNeedingCoaches.map((team) => (
               <Link
                 key={team.id}

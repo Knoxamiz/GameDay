@@ -76,6 +76,10 @@ const utilityItemsByRole: Record<
   ],
   admin: [
     {
+      href: "/admin/setup",
+      label: "Setup",
+    },
+    {
       href: "/teams",
       label: "Teams",
     },

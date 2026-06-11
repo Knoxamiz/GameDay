@@ -7,6 +7,8 @@ export type RegistrationInviteStatus = "Active" | "Paused";
 
 export type RegistrationInvite = {
   code: string;
+  createdAt?: string;
+  createdByUid?: string;
   description: string;
   documentRequirements: DocumentRequirementTemplate[];
   id: string;
@@ -17,6 +19,7 @@ export type RegistrationInvite = {
   status: RegistrationInviteStatus;
   teamId: string;
   title: string;
+  updatedAt?: string;
 };
 
 export const registrationInvites: RegistrationInvite[] = [];
