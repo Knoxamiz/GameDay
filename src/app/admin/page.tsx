@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import AdminReadinessBoard from "../components/AdminReadinessBoard";
 import AttendanceConcernAction from "../components/AttendanceConcernAction";
 import BottomNav from "../components/BottomNav";
@@ -7,6 +8,7 @@ import RegistrationAdminActionLinks from "../components/RegistrationAdminActionL
 import SessionControls from "../components/SessionControls";
 import TransportationIssueAction from "../components/TransportationIssueAction";
 import { getAdminHomeReadModel } from "../data/adminHomeRead.server";
+import { getCurrentAuthSession } from "../data/currentUser.server";
 import {
   getEventDateLabel,
   getEventTeamIds,
@@ -18,6 +20,12 @@ import { getTeamsNeedingCoaches } from "../data/teams";
 export const dynamic = "force-dynamic";
 
 export default async function AdminHome() {
+  const session = await getCurrentAuthSession();
+
+  if (session?.claims.role !== "admin") {
+    redirect("/login?role=admin");
+  }
+
   const {
     attendanceEntries,
     coaches: organizationCoaches,

@@ -44,34 +44,40 @@ function getSignedOutParentUser(): CurrentParentUser {
   };
 }
 
-export async function getCurrentParentUser(): Promise<CurrentParentUser> {
+export async function getCurrentAuthSession(): Promise<AuthSession | null> {
   if (!getFirebaseAdminConfig()) {
-    return getSignedOutParentUser();
+    return null;
   }
 
   try {
-    // Real auth attempt: resolve the current parent from Firebase token claims.
     const authProvider = new FirebaseAdminAuthProvider();
-    const session = await authProvider.verifySession(await getAuthSessionSource());
-    const parentId = getLiveParentId(session);
-    const parentUid = getLiveParentUid(session);
 
-    if (session?.claims.role === "parent" && parentId && parentUid) {
-      return {
-        athleteIds: session.claims.athleteIds,
-        organizationIds: session.claims.organizationIds,
-        parentId,
-        parentUid,
-        session,
-        source: "firebase-session",
-        teamIds: session.claims.teamIds,
-      };
-    }
+    return await authProvider.verifySession(await getAuthSessionSource());
   } catch (error) {
-    console.warn("Could not resolve live parent user.", {
+    console.warn("Could not resolve current authenticated user.", {
       message: error instanceof Error ? error.message : "Unknown error",
       name: error instanceof Error ? error.name : typeof error,
     });
+
+    return null;
+  }
+}
+
+export async function getCurrentParentUser(): Promise<CurrentParentUser> {
+  const session = await getCurrentAuthSession();
+  const parentId = getLiveParentId(session);
+  const parentUid = getLiveParentUid(session);
+
+  if (session?.claims.role === "parent" && parentId && parentUid) {
+    return {
+      athleteIds: session.claims.athleteIds,
+      organizationIds: session.claims.organizationIds,
+      parentId,
+      parentUid,
+      session,
+      source: "firebase-session",
+      teamIds: session.claims.teamIds,
+    };
   }
 
   return getSignedOutParentUser();

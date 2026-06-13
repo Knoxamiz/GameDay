@@ -1,12 +1,20 @@
 import BottomNav from "../../components/BottomNav";
+import { redirect } from "next/navigation";
 import AdminSetupPanel from "../../components/AdminSetupPanel";
 import MvpNav, { getRoleHref } from "../../components/MvpNav";
 import SessionControls from "../../components/SessionControls";
 import { getAdminSetupReadModel } from "../../data/adminSetup.server";
+import { getCurrentAuthSession } from "../../data/currentUser.server";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminSetupPage() {
+  const session = await getCurrentAuthSession();
+
+  if (session?.claims.role !== "admin") {
+    redirect("/login?role=admin");
+  }
+
   const setup = await getAdminSetupReadModel();
 
   return (

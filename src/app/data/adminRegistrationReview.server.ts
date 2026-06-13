@@ -13,7 +13,6 @@ import {
   resolveAdminOrganizationScope,
   type AdminOrganizationScope,
 } from "./adminOrganizationScope.server";
-import type { PaymentRequirement } from "./payments";
 import type {
   AdminRegistrationReviewPayload,
   AdminRegistrationReviewResult,
@@ -110,7 +109,7 @@ function updateRegistrationRequirementStatus(
   return foundRequirement ? updatedRequirements : null;
 }
 
-function upsertPaymentRequirementStatus(
+function updatePaymentRequirementStatus(
   registration: Registration,
   payload: Extract<
     AdminRegistrationReviewPayload,
@@ -121,14 +120,10 @@ function upsertPaymentRequirementStatus(
 ) {
   const currentPaymentRequirements = registration.paymentRequirements ?? [];
   const paymentRequirementId = normalizeText(payload.paymentRequirementId);
-  const label = normalizeText(payload.label);
   let foundPaymentRequirement = false;
   const updatedPaymentRequirements = currentPaymentRequirements.map(
     (paymentRequirement) => {
-      if (
-        paymentRequirement.id !== paymentRequirementId &&
-        paymentRequirement.label !== label
-      ) {
+      if (paymentRequirement.id !== paymentRequirementId) {
         return paymentRequirement;
       }
 
@@ -149,31 +144,7 @@ function upsertPaymentRequirementStatus(
     },
   );
 
-  if (foundPaymentRequirement) {
-    return updatedPaymentRequirements;
-  }
-
-  const paymentRequirement: PaymentRequirement = {
-    adminNotes: normalizeText(payload.adminNotes) || undefined,
-    amountDue: payload.amountDue,
-    amountPaid: payload.status === "Paid" ? payload.amountDue : 0,
-    athleteId: registration.athleteId,
-    description: payload.description,
-    id: paymentRequirementId,
-    label,
-    organizationId: registration.organizationId,
-    ownerUid: registration.ownerUid,
-    parentId: registration.parentId,
-    parentUid: registration.parentUid,
-    registrationId: registration.id,
-    required: payload.required,
-    reviewedAt,
-    reviewedBy,
-    status: payload.status,
-    teamId: registration.teamId,
-  };
-
-  return [...updatedPaymentRequirements, paymentRequirement];
+  return foundPaymentRequirement ? updatedPaymentRequirements : null;
 }
 
 async function assertRosterStatusAllowed(
@@ -365,12 +336,20 @@ export async function updateAdminRegistrationReview(
     };
   }
 
-  const paymentRequirements = upsertPaymentRequirementStatus(
+  const paymentRequirements = updatePaymentRequirementStatus(
     registration,
     payload,
     reviewedAt,
     reviewedBy,
   );
+
+  if (!paymentRequirements) {
+    createReviewError(
+      "payment-requirement-not-found",
+      "Could not find this payment requirement.",
+      404,
+    );
+  }
 
   await repositories.registrations.update(
     registrationId,

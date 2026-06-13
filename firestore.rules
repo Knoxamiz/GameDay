@@ -59,55 +59,30 @@ service cloud.firestore {
         );
     }
 
-    function parentKeepsRegistrationReviewFields() {
-      return request.resource.data.status == resource.data.status
-        && request.resource.data.rosterStatus == resource.data.rosterStatus
-        && request.resource.data.teamId == resource.data.teamId
-        && request.resource.data.organizationId == resource.data.organizationId;
-    }
-
     match /parents/{parentDocId} {
-      allow read, update: if isParent()
+      allow read: if isParent()
         && (
           parentDocId == liveParentId()
           || resource.data.ownerUid == request.auth.uid
           || resource.data.parentUid == request.auth.uid
         );
-      allow create: if isParent()
-        && parentDocId == liveParentId()
-        && request.resource.data.parentId == liveParentId()
-        && request.resource.data.ownerUid == request.auth.uid;
-      allow delete: if false;
+      allow create, update, delete: if false;
 
-      allow read, update: if adminHasAnyOrg(resource.data.organizationIds);
+      allow read: if adminHasAnyOrg(resource.data.organizationIds);
     }
 
     match /athletes/{athleteId} {
       allow read: if parentOwnsData(resource.data)
         || adminHasOrg(resource.data.organizationId);
 
-      allow create, update: if parentOwnsData(request.resource.data)
-        || adminHasOrg(request.resource.data.organizationId);
-
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     match /registrations/{registrationId} {
       allow read: if parentOwnsData(resource.data)
         || adminHasOrg(resource.data.organizationId);
 
-      allow create: if parentOwnsData(request.resource.data)
-        && (
-          !("rosterStatus" in request.resource.data)
-          || request.resource.data.rosterStatus == "not_rostered"
-        )
-        || adminHasOrg(request.resource.data.organizationId);
-
-      allow update: if parentOwnsData(resource.data)
-        && parentKeepsRegistrationReviewFields()
-        || adminHasOrg(resource.data.organizationId);
-
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     match /events/{eventId} {
@@ -118,17 +93,7 @@ service cloud.firestore {
           && userHasAnyTeam(resource.data.teamIds)
         );
 
-      allow create: if adminHasOrg(request.resource.data.organizationId)
-        && request.resource.data.teamIds is list
-        && request.resource.data.teamIds.size() > 0
-        && request.resource.data.createdByUid == request.auth.uid;
-
-      allow update: if adminHasOrg(resource.data.organizationId)
-        && request.resource.data.organizationId == resource.data.organizationId
-        && request.resource.data.teamIds is list
-        && request.resource.data.teamIds.size() > 0;
-
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
 
     match /{document=**} {

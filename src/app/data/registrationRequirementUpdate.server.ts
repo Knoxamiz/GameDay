@@ -10,6 +10,10 @@ import type {
   ParentRegistrationRequirementUpdatePayload,
   ParentRegistrationRequirementUpdateResult,
 } from "./registrationRequirementUpdate";
+import {
+  isRegistrationDocumentContentType,
+  registrationDocumentMaxBytes,
+} from "./registrationRequirementUpdate";
 import type {
   RegistrationRequirement,
   RegistrationRequirementStatus,
@@ -42,8 +46,20 @@ function normalizeText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function getRequirementStorageId(
+  registrationId: string,
+  requirementLabel: string,
+) {
+  const labelSegment = requirementLabel
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return `${registrationId}-${labelSegment || "requirement"}`;
+}
+
 function isParentSubmissionStatus(status: RegistrationRequirementStatus) {
-  return status === "Uploaded" || status === "Submitted";
+  return status === "Submitted";
 }
 
 function updateRequirementStatus(
@@ -185,6 +201,7 @@ export async function updateParentRegistrationRequirementStatus(
     registrationId,
     {
       requirements,
+      updatedAt: new Date().toISOString(),
     },
     {
       actor: {
@@ -216,8 +233,7 @@ export async function uploadParentRegistrationRequirementDocument(
   }
 
   const athleteId = normalizeText(payload.athleteId);
-  const contentType =
-    normalizeText(payload.contentType) || "application/octet-stream";
+  const contentType = normalizeText(payload.contentType);
   const fileName = normalizeText(payload.fileName);
   const organizationId = normalizeText(payload.organizationId);
   const parentId = normalizeText(payload.parentId);
@@ -233,7 +249,9 @@ export async function uploadParentRegistrationRequirementDocument(
     !registrationId ||
     !requirementId ||
     !requirementLabel ||
-    payload.contentLength <= 0
+    payload.contentLength <= 0 ||
+    payload.contentLength > registrationDocumentMaxBytes ||
+    !isRegistrationDocumentContentType(contentType)
   ) {
     createRequirementError(
       "invalid-requirement-upload",
@@ -296,6 +314,10 @@ export async function uploadParentRegistrationRequirementDocument(
     role: session.claims.role,
     teamIds: session.claims.teamIds,
   };
+  const storageRequirementId = getRequirementStorageId(
+    registration.id,
+    requirementLabel,
+  );
   const storage = new FirebaseDocumentStorageAdapter();
   const storedDocument = await storage.uploadDocument(
     {
@@ -305,7 +327,7 @@ export async function uploadParentRegistrationRequirementDocument(
       originalFileName: fileName,
       target: {
         athleteId,
-        documentRequirementId: requirementId,
+        documentRequirementId: storageRequirementId,
         organizationId,
         parentId,
         registrationId,
@@ -338,6 +360,7 @@ export async function uploadParentRegistrationRequirementDocument(
     registrationId,
     {
       requirements,
+      updatedAt: storedDocument.uploadedAt,
     },
     {
       actor,

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import AttendanceSummaryCard from "../components/AttendanceSummaryCard";
 import BottomNav from "../components/BottomNav";
 import MvpNav, { getRoleHref } from "../components/MvpNav";
@@ -7,6 +8,7 @@ import SessionControls from "../components/SessionControls";
 import TeamReadinessSummary from "../components/TeamReadinessSummary";
 import TransportationSummaryCard from "../components/TransportationSummaryCard";
 import { getCoachHomeReadModel } from "../data/coachRead.server";
+import { getCurrentAuthSession } from "../data/currentUser.server";
 import {
   getEventDateLabel,
   getEventLocationLabel,
@@ -20,6 +22,12 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function CoachHome() {
+  const session = await getCurrentAuthSession();
+
+  if (session?.claims.role !== "coach") {
+    redirect("/login?role=coach");
+  }
+
   const {
     attendanceEntries,
     coach: currentCoach,

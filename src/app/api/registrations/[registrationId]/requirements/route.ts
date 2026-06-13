@@ -9,6 +9,10 @@ import type {
   ParentRegistrationRequirementUpdatePayload,
 } from "../../../../data/registrationRequirementUpdate";
 import {
+  isRegistrationDocumentContentType,
+  registrationDocumentMaxBytes,
+} from "../../../../data/registrationRequirementUpdate";
+import {
   registrationRequirementStatusValues,
   type RegistrationRequirementStatus,
 } from "../../../../data/registrations";
@@ -125,10 +129,30 @@ export async function POST(
     );
   }
 
+  if (file.size <= 0 || file.size > registrationDocumentMaxBytes) {
+    return NextResponse.json(
+      {
+        error: "Choose a document smaller than 10 MB.",
+        reason: "invalid-upload-size",
+      },
+      { status: 400 },
+    );
+  }
+
+  if (!isRegistrationDocumentContentType(file.type)) {
+    return NextResponse.json(
+      {
+        error: "Upload a PDF, JPEG, PNG, WebP, HEIC, or HEIF document.",
+        reason: "invalid-upload-type",
+      },
+      { status: 400 },
+    );
+  }
+
   const payload: ParentRegistrationRequirementUploadPayload = {
     athleteId: getFormText(formData, "athleteId"),
     contentLength: file.size,
-    contentType: file.type || "application/octet-stream",
+    contentType: file.type,
     data: Buffer.from(await file.arrayBuffer()),
     fileName: file.name,
     organizationId: getFormText(formData, "organizationId"),

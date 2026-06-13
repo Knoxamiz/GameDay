@@ -47,17 +47,20 @@ function updatePaymentRequirementIntent(
   paymentRequirement: PaymentRequirement,
 ) {
   const currentPaymentRequirements = paymentRequirements ?? [];
-  let foundPaymentRequirement = false;
-  const updatedPaymentRequirements = currentPaymentRequirements.map(
+  const hasPaymentRequirement = currentPaymentRequirements.some(
+    (currentPaymentRequirement) =>
+      currentPaymentRequirement.id === paymentRequirement.id,
+  );
+
+  if (!hasPaymentRequirement) {
+    return null;
+  }
+
+  return currentPaymentRequirements.map(
     (currentPaymentRequirement) => {
-      if (
-        currentPaymentRequirement.id !== paymentRequirement.id &&
-        currentPaymentRequirement.label !== paymentRequirement.label
-      ) {
+      if (currentPaymentRequirement.id !== paymentRequirement.id) {
         return currentPaymentRequirement;
       }
-
-      foundPaymentRequirement = true;
 
       return {
         ...currentPaymentRequirement,
@@ -65,10 +68,6 @@ function updatePaymentRequirementIntent(
       };
     },
   );
-
-  return foundPaymentRequirement
-    ? updatedPaymentRequirements
-    : [...updatedPaymentRequirements, paymentRequirement];
 }
 
 export async function updateParentPaymentRequirementIntent(
@@ -143,36 +142,71 @@ export async function updateParentPaymentRequirementIntent(
     );
   }
 
+  const currentPaymentRequirement = registration.paymentRequirements?.find(
+    (requirement) => requirement.id === paymentRequirementId,
+  );
+
+  if (!currentPaymentRequirement) {
+    createPaymentError(
+      "payment-requirement-not-found",
+      "Could not find this payment requirement.",
+      404,
+    );
+  }
+
+  if (
+    currentPaymentRequirement.label !== label ||
+    currentPaymentRequirement.status === "Paid" ||
+    currentPaymentRequirement.status === "Waived"
+  ) {
+    createPaymentError(
+      "payment-requirement-not-open",
+      "This payment requirement is not open for resubmission.",
+      409,
+    );
+  }
+
   const submittedAt = new Date().toISOString();
   const paymentRequirement: PaymentRequirement = {
-    amountDue: normalizeAmount(payload.amountDue),
+    ...currentPaymentRequirement,
+    amountDue: normalizeAmount(currentPaymentRequirement.amountDue),
     amountPaid: 0,
     athleteId,
-    createdAt: submittedAt,
-    createdByUid: parentUid,
-    description: normalizeText(payload.description),
-    id: paymentRequirementId,
+    createdAt: currentPaymentRequirement.createdAt ?? submittedAt,
+    createdByUid: currentPaymentRequirement.createdByUid ?? parentUid,
+    description: currentPaymentRequirement.description,
+    id: currentPaymentRequirement.id,
     intentRecordedAt: submittedAt,
-    label,
+    label: currentPaymentRequirement.label,
     organizationId,
     ownerUid: parentUid,
     parentId,
     parentUid,
     registrationId,
-    required: payload.required,
+    required: currentPaymentRequirement.required,
     status: "Submitted",
     submittedAt,
     teamId: registration.teamId,
     updatedAt: submittedAt,
   };
+  const paymentRequirements = updatePaymentRequirementIntent(
+    registration.paymentRequirements,
+    paymentRequirement,
+  );
+
+  if (!paymentRequirements) {
+    createPaymentError(
+      "payment-requirement-not-found",
+      "Could not find this payment requirement.",
+      404,
+    );
+  }
 
   await repositories.registrations.update(
     registrationId,
     {
-      paymentRequirements: updatePaymentRequirementIntent(
-        registration.paymentRequirements,
-        paymentRequirement,
-      ),
+      paymentRequirements,
+      updatedAt: submittedAt,
     },
     {
       actor: {

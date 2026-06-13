@@ -1,11 +1,19 @@
 import BottomNav from "../../components/BottomNav";
+import { redirect } from "next/navigation";
 import MvpNav, { getRoleHref } from "../../components/MvpNav";
 import RegistrationReviewBoard from "../../components/RegistrationReviewBoard";
 import { getAdminRegistrationReadModel } from "../../data/adminRegistrationRead.server";
+import { getCurrentAuthSession } from "../../data/currentUser.server";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminRegistrationsPage() {
+  const session = await getCurrentAuthSession();
+
+  if (session?.claims.role !== "admin") {
+    redirect("/login?role=admin");
+  }
+
   const registrationReadModel = await getAdminRegistrationReadModel();
 
   return (

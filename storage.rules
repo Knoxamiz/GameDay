@@ -22,7 +22,7 @@ service firebase.storage {
 
     match /organizations/{organizationId}/registrations/{registrationId}/requirements/{requirementId}/{fileName} {
       allow read: if adminHasOrg(organizationId);
-      allow write: if adminHasOrg(organizationId);
+      allow write: if false;
 
       // Current app uploads through the server Admin SDK, which bypasses Storage rules.
       // Direct parent client uploads should remain disabled until client-side ownership validation is finalized.

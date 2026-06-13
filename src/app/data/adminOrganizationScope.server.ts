@@ -77,10 +77,17 @@ export async function resolveAdminOrganizationScope(
   session: AuthSession,
 ): Promise<AdminOrganizationScope> {
   const repositories = createFirestoreRepositories();
-  const memberships = (
-    await repositories.organizationMemberships.listByUid(session.user.id)
-  ).filter(canManageOrganizationMembership);
-  const claimOrganizationIds = uniqueStringList(session.claims.organizationIds);
+  const allMemberships =
+    await repositories.organizationMemberships.listByUid(session.user.id);
+  const memberships = allMemberships.filter(canManageOrganizationMembership);
+  const membershipOrganizationIdSet = new Set(
+    allMemberships.map((membership) => membership.organizationId),
+  );
+  const claimOrganizationIds = uniqueStringList(
+    session.claims.organizationIds.filter(
+      (organizationId) => !membershipOrganizationIdSet.has(organizationId),
+    ),
+  );
   const membershipOrganizationIds = uniqueStringList(
     memberships.map((membership) => membership.organizationId),
   );

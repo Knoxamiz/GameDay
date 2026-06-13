@@ -112,8 +112,9 @@ export async function getAthleteRegistrationReadModel(
   options: AthleteRegistrationReadOptions = {},
 ): Promise<AthleteRegistrationReadModel | null> {
   const normalizedAthleteId = normalizeModelId(athleteId);
+  const normalizedParentId = normalizeModelId(options.parentId ?? "");
 
-  if (!normalizedAthleteId) {
+  if (!normalizedAthleteId || !normalizedParentId) {
     return null;
   }
 
@@ -125,20 +126,21 @@ export async function getAthleteRegistrationReadModel(
     const repositories = createFirestoreRepositories();
     const athlete = await repositories.athletes.getById(normalizedAthleteId);
 
-    if (!athlete) {
+    if (!athlete || athlete.parentId !== normalizedParentId) {
       return null;
     }
 
     const registration =
       (await repositories.registrations.getById(athlete.registrationId)) ??
-      (options.parentId
-        ? (await repositories.registrations.listByParentId(options.parentId)).find(
-            (parentRegistration) =>
-              parentRegistration.athleteId === athlete.id ||
-              parentRegistration.id === athlete.registrationId,
-          )
-        : undefined) ??
-      (await repositories.registrations.listByAthleteId(athlete.id))[0];
+      (await repositories.registrations.listByParentId(normalizedParentId)).find(
+        (parentRegistration) =>
+          parentRegistration.athleteId === athlete.id ||
+          parentRegistration.id === athlete.registrationId,
+      );
+
+    if (!registration || registration.parentId !== normalizedParentId) {
+      return null;
+    }
 
     return {
       athlete,

@@ -43,6 +43,10 @@ export default async function AthleteDetailsPage({
 }: AthleteDetailsPageProps) {
   const { athleteId } = await params;
   const currentUser = await getCurrentParentUser();
+
+  if (currentUser.source !== "firebase-session") {
+    notFound();
+  }
   const readModel = await getAthleteRegistrationReadModel(athleteId, {
     parentId: currentUser.parentId,
   });

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import ParentAthleteCard from "../components/ParentAthleteCard";
 import BottomNav from "../components/BottomNav";
 import MvpNav, { getRoleHref } from "../components/MvpNav";
@@ -21,6 +22,10 @@ export const dynamic = "force-dynamic";
 
 export default async function ParentHome() {
   const currentUser = await getCurrentParentUser();
+
+  if (currentUser.source !== "firebase-session") {
+    redirect("/login?role=parent");
+  }
   const {
     athletes: parentAthletes,
     parent: currentParent,

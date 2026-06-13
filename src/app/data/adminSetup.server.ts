@@ -372,6 +372,14 @@ async function createProvisionedOrganization(
   const session = scope.session;
   const name = normalizeText(payload.name);
 
+  if (scope.organizationIds.length > 0) {
+    createSetupError(
+      "organization-provisioning-scope-exists",
+      "This account already has organization access.",
+      403,
+    );
+  }
+
   if (!name) {
     createSetupError(
       "invalid-organization",

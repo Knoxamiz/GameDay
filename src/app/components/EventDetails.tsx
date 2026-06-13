@@ -8,6 +8,7 @@ import {
   getEventTimeLabel,
 } from "../data/events";
 import { getScopedEventDetailsReadModel } from "../data/eventSchedule.server";
+import { getCurrentParentUser } from "../data/currentUser.server";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import AttendanceSummaryCard from "./AttendanceSummaryCard";
 import EventReadinessSummary from "./EventReadinessSummary";
@@ -40,33 +41,80 @@ export default async function EventDetails({
     .filter(Boolean);
   const team = eventTeams[0];
   const eventTeamIds = getEventTeamIds(eventDetails);
-  const [
-    gameAlert,
-    eventMessages,
-    attendanceEntries,
-    registrationLists,
-    transportationEntries,
-  ] = await Promise.all([
+  const parentUser = role === "parent" ? await getCurrentParentUser() : null;
+
+  if (role === "parent" && parentUser?.source !== "firebase-session") {
+    notFound();
+  }
+
+  const [gameAlert, rawEventMessages] = await Promise.all([
     repositories.gameAlerts.getByEventId(eventDetails.id),
     repositories.messages.listByEventId(eventDetails.id),
-    repositories.attendance.listByEventId(eventDetails.id),
-    Promise.all(
-      eventTeamIds.map((teamId) =>
-        role === "admin"
-          ? repositories.registrations.listByTeamId(teamId)
-          : repositories.registrations.listRosteredByTeamId(teamId),
-      ),
-    ),
-    repositories.transportation.listByEventId(eventDetails.id),
   ]);
-  const registrations = [
-    ...new Map(
-      registrationLists.flat().map((registration) => [
-        registration.id,
-        registration,
-      ]),
-    ).values(),
+  const registrations = parentUser
+    ? (await repositories.registrations.listByParentId(parentUser.parentId)).filter(
+        (registration) =>
+          eventTeamIds.includes(registration.teamId) &&
+          registration.parentId === parentUser.parentId &&
+          (registration.ownerUid === parentUser.parentUid ||
+            registration.parentUid === parentUser.parentUid ||
+            (!registration.ownerUid && !registration.parentUid)),
+      )
+    : [
+        ...new Map(
+          (
+            await Promise.all(
+              eventTeamIds.map((teamId) =>
+                role === "admin"
+                  ? repositories.registrations.listByTeamId(teamId)
+                  : repositories.registrations.listRosteredByTeamId(teamId),
+              ),
+            )
+          )
+            .flat()
+            .map((registration) => [registration.id, registration]),
+        ).values(),
+      ];
+  const visibleAthleteIds = [
+    ...new Set(registrations.map((registration) => registration.athleteId)),
   ];
+  const [attendanceEntries, transportationEntries] = parentUser
+    ? await Promise.all([
+        Promise.all(
+          visibleAthleteIds.map((athleteId) =>
+            repositories.attendance.listByAthleteId(athleteId),
+          ),
+        ).then((entryLists) =>
+          entryLists
+            .flat()
+            .filter((entry) => entry.eventId === eventDetails.id),
+        ),
+        Promise.all(
+          visibleAthleteIds.map((athleteId) =>
+            repositories.transportation.listByAthleteId(athleteId),
+          ),
+        ).then((entryLists) =>
+          entryLists
+            .flat()
+            .filter((entry) => entry.eventId === eventDetails.id),
+        ),
+      ])
+    : await Promise.all([
+        repositories.attendance.listByEventId(eventDetails.id),
+        repositories.transportation.listByEventId(eventDetails.id),
+      ]);
+  const visibleAthleteIdSet = new Set(visibleAthleteIds);
+  const eventMessages = rawEventMessages.filter(
+    (message) =>
+      role !== "shared" &&
+      message.audience.includes(role) &&
+      (role === "parent"
+        ? (!message.recipientParentId ||
+            message.recipientParentId === parentUser?.parentId) &&
+          (!message.recipientAthleteId ||
+            visibleAthleteIdSet.has(message.recipientAthleteId))
+        : !message.recipientParentId && !message.recipientAthleteId),
+  );
   const eventAnnouncements = eventMessages.map((message) => message.content);
   const eventChat = eventMessages.map((message) => message.subject);
   const eventNotes = getEventNotes(eventDetails);

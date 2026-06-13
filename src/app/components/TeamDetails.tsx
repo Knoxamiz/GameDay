@@ -11,7 +11,7 @@ import {
   sortEventsByStartDate,
 } from "../data/events";
 import { getEventScheduleReadModel } from "../data/eventSchedule.server";
-import { teamCommunicationItems } from "../data/messages";
+import { getCurrentParentUser } from "../data/currentUser.server";
 import { summarizePaymentRequirements } from "../data/payments";
 import {
   getDocumentRequirementsFromRegistrations,
@@ -64,6 +64,27 @@ export default async function TeamDetails({
     notFound();
   }
 
+  const parentUser = role === "parent" ? await getCurrentParentUser() : null;
+
+  if (role === "parent" && parentUser?.source !== "firebase-session") {
+    notFound();
+  }
+
+  const teamRegistrationsPromise = parentUser
+    ? repositories.registrations
+        .listByParentId(parentUser.parentId)
+        .then((registrations) =>
+          registrations.filter(
+            (registration) =>
+              registration.teamId === teamDetails.id &&
+              registration.parentId === parentUser.parentId &&
+              (registration.ownerUid === parentUser.parentUid ||
+                registration.parentUid === parentUser.parentUid ||
+                (!registration.ownerUid && !registration.parentUid)),
+          ),
+        )
+    : repositories.registrations.listRosteredByTeamId(teamDetails.id);
+
   const [teamCoaches, nextEventRecord, teamRegistrations] = await Promise.all([
     Promise.all(
       teamDetails.coachIds.map((coachId) =>
@@ -73,7 +94,7 @@ export default async function TeamDetails({
     teamDetails.nextEventId
       ? repositories.events.getById(teamDetails.nextEventId)
       : null,
-    repositories.registrations.listRosteredByTeamId(teamDetails.id),
+    teamRegistrationsPromise,
   ]);
   const roster = (
     await Promise.all(
@@ -81,8 +102,13 @@ export default async function TeamDetails({
         repositories.athletes.getById(registration.athleteId),
       ),
     )
-  ).filter(isDefined);
+  )
+    .filter(isDefined)
+    .filter(
+      (athlete) => !parentUser || athlete.parentId === parentUser.parentId,
+    );
   const rosterPreview = roster.slice(0, 4);
+  const visibleAthleteIdSet = new Set(roster.map((athlete) => athlete.id));
   const teamEvents = (await repositories.events.listByTeamId(teamDetails.id))
     .filter((event) => event.status !== "draft")
     .sort(sortEventsByStartDate);
@@ -96,28 +122,50 @@ export default async function TeamDetails({
   const paymentSummary = summarizePaymentRequirements(
     getPaymentRequirementsFromRegistrations(teamRegistrations),
   );
-  const teamAnnouncements = (await repositories.messages.listByTeamId(teamDetails.id)).filter(
-    (message) => message.type === "Team Announcement",
+  const teamAnnouncements = (
+    await repositories.messages.listByTeamId(teamDetails.id)
+  ).filter(
+    (message) =>
+      message.type === "Team Announcement" &&
+      message.audience.includes(role) &&
+      (!message.recipientParentId ||
+        message.recipientParentId === parentUser?.parentId) &&
+      (!message.recipientAthleteId ||
+        visibleAthleteIdSet.has(message.recipientAthleteId)),
   );
   const upcomingEvents = teamEvents;
-  const attendance = nextEvent
-    ? summarizeAttendanceEntries(
-        nextEvent.id,
-        await repositories.attendance.listByEventId(nextEvent.id),
-      )
-    : undefined;
   const attendanceEntries = nextEvent
-    ? await repositories.attendance.listByEventId(nextEvent.id)
+    ? parentUser
+      ? (
+          await Promise.all(
+            roster.map((athlete) =>
+              repositories.attendance.listByAthleteId(athlete.id),
+            ),
+          )
+        )
+          .flat()
+          .filter((entry) => entry.eventId === nextEvent.id)
+      : await repositories.attendance.listByEventId(nextEvent.id)
     : [];
-  const transportation = nextEvent
-    ? summarizeTransportationEntries(
-        nextEvent.id,
-        await repositories.transportation.listByEventId(nextEvent.id),
-      )
-    : undefined;
   const transportationEntries = nextEvent
-    ? await repositories.transportation.listByEventId(nextEvent.id)
+    ? parentUser
+      ? (
+          await Promise.all(
+            roster.map((athlete) =>
+              repositories.transportation.listByAthleteId(athlete.id),
+            ),
+          )
+        )
+          .flat()
+          .filter((entry) => entry.eventId === nextEvent.id)
+      : await repositories.transportation.listByEventId(nextEvent.id)
     : [];
+  const attendance = nextEvent
+    ? summarizeAttendanceEntries(nextEvent.id, attendanceEntries)
+    : undefined;
+  const transportation = nextEvent
+    ? summarizeTransportationEntries(nextEvent.id, transportationEntries)
+    : undefined;
   const teamStatusItems = nextEvent
     ? [
         `${roster.length} Rostered`,
@@ -291,14 +339,6 @@ export default async function TeamDetails({
           </div>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <h2 className="text-lg font-bold">Communication</h2>
-          <div className="mt-3 space-y-3 text-sm text-slate-300">
-            {teamCommunicationItems.map((item) => (
-              <p key={item}>{item}</p>
-            ))}
-          </div>
-        </div>
       </section>
     </main>
   );
