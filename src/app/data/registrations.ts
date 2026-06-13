@@ -63,6 +63,7 @@ export type Registration = {
   source?: string;
   status: RegistrationStatus;
   details: string;
+  inviteCode?: string;
   submittedDate?: string;
   updatedAt?: string;
   requirements: RegistrationRequirement[];

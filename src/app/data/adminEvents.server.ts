@@ -5,11 +5,10 @@ import {
 } from "../infrastructure/auth";
 import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
-import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
+import { runFirestoreTransaction } from "../infrastructure/firebaseRepositories";
 import {
   canManageOrganization,
   canUseAdminSetup,
-  getAdminActor,
   resolveAdminOrganizationScope,
   type AdminOrganizationScope,
 } from "./adminOrganizationScope.server";
@@ -20,6 +19,7 @@ import {
   type GameDayEventType,
 } from "./events";
 import { createLiveRecordId } from "./liveIdentity";
+import type { Organization } from "./organizations";
 import type { Team } from "./teams";
 
 export type AdminEventPayload = {
@@ -157,66 +157,6 @@ function assertValidDateRange(startsAt: string, endsAt: string) {
   }
 }
 
-async function getValidatedEventTeams(
-  organizationId: string,
-  teamIds: string[],
-) {
-  const repositories = createFirestoreRepositories();
-  const teams = await Promise.all(
-    teamIds.map((teamId) => repositories.teams.getById(teamId)),
-  );
-  const validTeams = teams.filter((team): team is Team => Boolean(team));
-
-  if (
-    validTeams.length !== teamIds.length ||
-    validTeams.some((team) => team.organizationId !== organizationId)
-  ) {
-    createAdminEventError(
-      "event-team-scope-invalid",
-      "Choose teams that belong to the selected organization.",
-      400,
-    );
-  }
-
-  return validTeams;
-}
-
-async function updateEventTeams(
-  event: GameDayEvent,
-  teams: Team[],
-  scope: AdminOrganizationScope,
-) {
-  const repositories = createFirestoreRepositories();
-  const actor = getAdminActor(scope);
-
-  await Promise.all(
-    teams.map(async (team) => {
-      const eventIds = uniqueStringList([...(team.eventIds ?? []), event.id]);
-      const nextEvent = team.nextEventId
-        ? await repositories.events.getById(team.nextEventId)
-        : null;
-      const shouldSetNextEvent =
-        event.status !== "canceled" &&
-        (!nextEvent ||
-          sortEventsByStartDate(event, nextEvent) < 0 ||
-          nextEvent.status === "canceled");
-
-      await repositories.teams.update(
-        team.id,
-        {
-          eventIds,
-          nextEventId: shouldSetNextEvent ? event.id : team.nextEventId,
-          updatedAt: event.updatedAt,
-        },
-        {
-          actor,
-          reason: "Admin created an event for this team.",
-        },
-      );
-    }),
-  );
-}
-
 export async function createAdminEvent(
   payload: AdminEventPayload,
   options: AdminEventWriteOptions,
@@ -241,21 +181,11 @@ export async function createAdminEvent(
   assertManagedOrganization(scope, organizationId);
   assertValidDateRange(startsAt, endsAt);
 
-  const repositories = createFirestoreRepositories();
-  const organization = await repositories.organizations.getById(organizationId);
-
-  if (!organization) {
-    createAdminEventError(
-      "organization-required",
-      "Create the organization before creating events.",
-      400,
-    );
-  }
-
-  const teams = await getValidatedEventTeams(organizationId, teamIds);
   const now = new Date().toISOString();
+  const address = normalizeText(payload.address);
+  const notes = normalizeText(payload.notes);
   const event: GameDayEvent = {
-    address: normalizeText(payload.address) || undefined,
+    ...(address ? { address } : {}),
     createdAt: now,
     createdByUid: session.user.id,
     endsAt,
@@ -265,7 +195,7 @@ export async function createAdminEvent(
       startsAt.slice(0, 10),
     ]),
     locationName,
-    notes: normalizeText(payload.notes) || undefined,
+    ...(notes ? { notes } : {}),
     organizationId,
     startsAt,
     status: payload.status,
@@ -275,11 +205,64 @@ export async function createAdminEvent(
     updatedAt: now,
   };
 
-  await repositories.events.create(event, {
-    actor: getAdminActor(scope),
-    reason: "Admin created organization event.",
+  await runFirestoreTransaction(async (transaction) => {
+    const [organization, teams] = await Promise.all([
+      transaction.get<Organization>("organizations", organizationId),
+      Promise.all(
+        teamIds.map((teamId) => transaction.get<Team>("teams", teamId)),
+      ),
+    ]);
+
+    if (!organization) {
+      createAdminEventError(
+        "organization-required",
+        "Create the organization before creating events.",
+        400,
+      );
+    }
+
+    const validTeams = teams.filter((team): team is Team => Boolean(team));
+
+    if (
+      validTeams.length !== teamIds.length ||
+      validTeams.some((team) => team.organizationId !== organizationId)
+    ) {
+      createAdminEventError(
+        "event-team-scope-invalid",
+        "Choose teams that belong to the selected organization.",
+        400,
+      );
+    }
+
+    const nextEvents = await Promise.all(
+      validTeams.map((team) =>
+        team.nextEventId
+          ? transaction.get<GameDayEvent>("events", team.nextEventId)
+          : Promise.resolve(null),
+      ),
+    );
+
+    transaction.create("events", event.id, event);
+    validTeams.forEach((team, index) => {
+      const nextEvent = nextEvents[index];
+      const shouldSetNextEvent =
+        event.status !== "canceled" &&
+        (!nextEvent ||
+          sortEventsByStartDate(event, nextEvent) < 0 ||
+          nextEvent.status === "canceled");
+
+      const teamPatch: Partial<Team> = {
+        eventIds: uniqueStringList([...(team.eventIds ?? []), event.id]),
+        updatedAt: event.updatedAt,
+      };
+
+      if (shouldSetNextEvent) {
+        teamPatch.nextEventId = event.id;
+      }
+
+      transaction.update<Team>("teams", team.id, teamPatch);
+    });
   });
-  await updateEventTeams(event, teams, scope);
 
   console.info("Admin event created.", {
     eventId: event.id,

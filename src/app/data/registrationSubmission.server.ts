@@ -22,7 +22,7 @@ import type {
 import type { AuthSessionSource } from "../infrastructure/auth";
 import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
-import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
+import { runFirestoreTransaction } from "../infrastructure/firebaseRepositories";
 
 type SubmitParentRegistrationOptions = {
   sessionSource: AuthSessionSource;
@@ -166,16 +166,6 @@ export async function submitParentRegistration(
   const inviteCode = normalizeText(payload.inviteCode);
   const athleteFirstName = normalizeNamePart(payload.athlete.firstName);
   const athleteLastName = normalizeNamePart(payload.athlete.lastName);
-  const repositories = createFirestoreRepositories();
-  const invite = await repositories.registrationInvites.getByCode(inviteCode);
-
-  if (!isActiveRegistrationInvite(invite)) {
-    createSubmissionError(
-      "invalid-invite",
-      "This registration invite is not active.",
-      400,
-    );
-  }
 
   if (!athleteFirstName || !athleteLastName) {
     createSubmissionError(
@@ -200,171 +190,166 @@ export async function submitParentRegistration(
     );
   }
 
-  const parent = await repositories.parents.getById(parentId);
-  const [inviteOrganization, inviteTeam] = await Promise.all([
-    repositories.organizations.getById(invite.organizationId),
-    repositories.teams.getById(invite.teamId),
-  ]);
-
-  if (
-    !inviteOrganization ||
-    !inviteTeam ||
-    inviteTeam.organizationId !== invite.organizationId
-  ) {
-    createSubmissionError(
-      "invalid-invite-scope",
-      "This registration invite is not connected to a valid organization team.",
-      400,
-    );
-  }
-
   const athleteName = `${athleteFirstName} ${athleteLastName}`;
-  const athleteId = createLiveRecordId("athlete", [
-    invite.teamId,
-    athleteName,
-  ]);
-  const registrationId = createLiveRecordId("registration", [
-    invite.teamId,
-    athleteName,
-  ]);
   const submittedAt = getSubmittedDate();
-  const actor = {
-    athleteIds: uniqueStringList([...session.claims.athleteIds, athleteId]),
-    id: parentId,
-    organizationIds: uniqueStringList([
-      ...session.claims.organizationIds,
-      invite.organizationId,
-    ]),
-    role: session.claims.role,
-    teamIds: uniqueStringList([...session.claims.teamIds, invite.teamId]),
-  };
-  const parentName = getParentName(
-    normalizeNamePart(payload.parent.name),
-    parent,
-    session.user.displayName,
-  );
-
-  if (!parentName) {
-    createSubmissionError(
-      "missing-parent-name",
-      "Enter the parent or guardian name before submitting.",
-      400,
+  const result = await runFirestoreTransaction(async (transaction) => {
+    const invites = await transaction.list<RegistrationInvite>(
+      "registrationInvites",
+      { limit: 2, scope: { code: inviteCode } },
+      "code",
     );
-  }
+    const invite = invites.length === 1 ? invites[0] : null;
 
-  const parentNameParts = splitParentName(parentName);
-  const parentRecord: ParentGuardian = {
-    athleteIds: uniqueStringList([...(parent?.athleteIds ?? []), athleteId]),
-    createdAt: parent?.createdAt ?? submittedAt,
-    createdByUid: parent?.createdByUid ?? parentUid,
-    email:
-      normalizeText(payload.parent.email) ||
-      parent?.email ||
-      session.user.email ||
-      "",
-    firstName: parentNameParts.firstName,
-    id: parentId,
-    lastName: parentNameParts.lastName,
-    name: parentName,
-    ownerUid: parentUid,
-    organizationIds: uniqueStringList([
-      ...(parent?.organizationIds ?? []),
-      invite.organizationId,
-    ]),
-    parentId,
-    parentUid,
-    phone: normalizeText(payload.parent.phone) || parent?.phone || "",
-    source: parent?.source ?? "firebase-registration",
-    updatedAt: submittedAt,
-  };
-  const registration: Registration = {
-    athleteId,
-    athleteName,
-    createdAt: submittedAt,
-    createdByUid: parentUid,
-    details: "Registration was submitted from a team invite.",
-    id: registrationId,
-    ownerUid: parentUid,
-    organizationId: invite.organizationId,
-    parentId,
-    parentUid,
-    parentName,
-    paymentRequirements: buildPaymentRequirements(
-      invite,
-      payload,
-      registrationId,
-      athleteId,
+    if (!isActiveRegistrationInvite(invite)) {
+      createSubmissionError(
+        "invalid-invite",
+        "This registration invite is not active.",
+        400,
+      );
+    }
+
+    const [parent, inviteOrganization, inviteTeam] = await Promise.all([
+      transaction.get<ParentGuardian>("parents", parentId),
+      transaction.get("organizations", invite.organizationId),
+      transaction.get<{ organizationId: string }>("teams", invite.teamId),
+    ]);
+
+    if (
+      !inviteOrganization ||
+      !inviteTeam ||
+      inviteTeam.organizationId !== invite.organizationId
+    ) {
+      createSubmissionError(
+        "invalid-invite-scope",
+        "This registration invite is not connected to a valid organization team.",
+        400,
+      );
+    }
+
+    const athleteId = createLiveRecordId("athlete", [
+      invite.teamId,
+      athleteName,
+    ]);
+    const registrationId = createLiveRecordId("registration", [
+      invite.teamId,
+      athleteName,
+    ]);
+    const parentName = getParentName(
+      normalizeNamePart(payload.parent.name),
+      parent,
+      session.user.displayName,
+    );
+
+    if (!parentName) {
+      createSubmissionError(
+        "missing-parent-name",
+        "Enter the parent or guardian name before submitting.",
+        400,
+      );
+    }
+
+    const parentNameParts = splitParentName(parentName);
+    const parentRecord: ParentGuardian = {
+      athleteIds: uniqueStringList([...(parent?.athleteIds ?? []), athleteId]),
+      createdAt: parent?.createdAt ?? submittedAt,
+      createdByUid: parent?.createdByUid ?? parentUid,
+      email:
+        normalizeText(payload.parent.email) ||
+        parent?.email ||
+        session.user.email ||
+        "",
+      firstName: parentNameParts.firstName,
+      id: parentId,
+      lastName: parentNameParts.lastName,
+      name: parentName,
+      ownerUid: parentUid,
+      organizationIds: uniqueStringList([
+        ...(parent?.organizationIds ?? []),
+        invite.organizationId,
+      ]),
       parentId,
       parentUid,
-      submittedAt,
-    ),
-    registrationId,
-    requirements: buildRegistrationRequirements(invite, payload),
-    rosterStatus: "not_rostered",
-    source: "team-invite",
-    status: "Pending Review",
-    submittedDate: submittedAt,
-    teamId: invite.teamId,
-    updatedAt: submittedAt,
-  };
-  const athlete: Athlete = {
-    createdAt: submittedAt,
-    createdByUid: parentUid,
-    dateOfBirth: "",
-    firstName: athleteFirstName,
-    grade: normalizeText(payload.athlete.grade),
-    id: athleteId,
-    jerseySize: "",
-    lastName: athleteLastName,
-    name: athleteName,
-    organizationId: invite.organizationId,
-    ownerUid: parentUid,
-    parentId,
-    parentUid,
-    registrationId,
-    school: normalizeText(payload.athlete.school),
-    source: "team-invite",
-    teamId: invite.teamId,
-    upcomingEventIds: [],
-    updatedAt: submittedAt,
-  };
+      phone: normalizeText(payload.parent.phone) || parent?.phone || "",
+      source: parent?.source ?? "firebase-registration",
+      updatedAt: submittedAt,
+    };
+    const registration: Registration = {
+      athleteId,
+      athleteName,
+      createdAt: submittedAt,
+      createdByUid: parentUid,
+      details: "Registration was submitted from a team invite.",
+      id: registrationId,
+      inviteCode: invite.code,
+      ownerUid: parentUid,
+      organizationId: invite.organizationId,
+      parentId,
+      parentUid,
+      parentName,
+      paymentRequirements: buildPaymentRequirements(
+        invite,
+        payload,
+        registrationId,
+        athleteId,
+        parentId,
+        parentUid,
+        submittedAt,
+      ),
+      registrationId,
+      requirements: buildRegistrationRequirements(invite, payload),
+      rosterStatus: "not_rostered",
+      source: "team-invite",
+      status: "Pending Review",
+      submittedDate: submittedAt,
+      teamId: invite.teamId,
+      updatedAt: submittedAt,
+    };
+    const athlete: Athlete = {
+      createdAt: submittedAt,
+      createdByUid: parentUid,
+      dateOfBirth: "",
+      firstName: athleteFirstName,
+      grade: normalizeText(payload.athlete.grade),
+      id: athleteId,
+      jerseySize: "",
+      lastName: athleteLastName,
+      name: athleteName,
+      organizationId: invite.organizationId,
+      ownerUid: parentUid,
+      parentId,
+      parentUid,
+      registrationId,
+      school: normalizeText(payload.athlete.school),
+      source: "team-invite",
+      teamId: invite.teamId,
+      upcomingEventIds: [],
+      updatedAt: submittedAt,
+    };
 
-  console.info("Parent registration live identity resolved.", {
-    athleteId,
+    transaction.set("parents", parentId, parentRecord);
+    transaction.create("athletes", athleteId, athlete);
+    transaction.create("registrations", registrationId, registration);
+
+    return {
+      athleteId,
+      athleteName,
+      parentId,
+      parentName,
+      parentUid,
+      registrationId,
+      source: "firestore" as const,
+      status: registration.status,
+      teamId: invite.teamId,
+    };
+  });
+
+  console.info("Parent registration committed atomically.", {
+    athleteId: result.athleteId,
     hasParentUid: Boolean(parentUid),
     parentId,
-    registrationId,
-    teamId: invite.teamId,
+    registrationId: result.registrationId,
+    teamId: result.teamId,
   });
 
-  if (parent) {
-    await repositories.parents.update(parentId, parentRecord, {
-      actor,
-      reason: "Parent submitted team invite registration.",
-    });
-  } else {
-    await repositories.parents.create(parentRecord, {
-      actor,
-      reason: "Parent submitted team invite registration.",
-    });
-  }
-  await repositories.athletes.create(athlete, {
-    actor,
-    reason: "Parent submitted team invite registration.",
-  });
-  await repositories.registrations.create(registration, {
-    actor,
-    reason: "Parent submitted team invite registration.",
-  });
-
-  return {
-    athleteId,
-    athleteName,
-    parentId,
-    parentName,
-    parentUid,
-    registrationId,
-    source: "firestore",
-    status: registration.status,
-  };
+  return result;
 }

@@ -2,6 +2,7 @@ import type { AccessRole } from "../data/accessControl";
 import type { Athlete } from "../data/athletes";
 import type { AttendanceEntry } from "../data/attendance";
 import type { Coach } from "../data/coaches";
+import type { BackendCollection } from "../data/backendSchema";
 import type { DocumentRequirement } from "../data/documents";
 import type { GameDayEvent } from "../data/events";
 import type { GameAlert } from "../data/gameAlerts";
@@ -51,6 +52,38 @@ export type RepositoryListOptions = {
   limit?: number;
   scope?: QueryScope;
 };
+
+export interface RepositoryTransaction {
+  create<TRecord extends object>(
+    collectionName: BackendCollection,
+    id: string,
+    record: TRecord,
+  ): void;
+  get<TRecord extends object>(
+    collectionName: BackendCollection,
+    id: string,
+    idKey?: string,
+  ): Promise<TRecord | null>;
+  list<TRecord extends object>(
+    collectionName: BackendCollection,
+    options?: RepositoryListOptions,
+    idKey?: string,
+  ): Promise<TRecord[]>;
+  set<TRecord extends object>(
+    collectionName: BackendCollection,
+    id: string,
+    record: TRecord,
+  ): void;
+  update<TRecord extends object>(
+    collectionName: BackendCollection,
+    id: string,
+    patch: Partial<TRecord>,
+  ): void;
+}
+
+export type RepositoryTransactionCallback<TResult> = (
+  transaction: RepositoryTransaction,
+) => Promise<TResult>;
 
 export interface ReadRepository<TRecord, TKey = string> {
   getById(id: TKey, scope?: QueryScope): Promise<TRecord | null>;

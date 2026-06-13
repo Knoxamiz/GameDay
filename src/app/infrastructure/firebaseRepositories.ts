@@ -1,6 +1,9 @@
 import type { Athlete } from "../data/athletes";
 import type { AttendanceEntry } from "../data/attendance";
-import { backendCollections } from "../data/backendSchema";
+import {
+  backendCollections,
+  type BackendCollection,
+} from "../data/backendSchema";
 import type { Coach } from "../data/coaches";
 import type { DocumentRequirement } from "../data/documents";
 import type { GameDayEvent } from "../data/events";
@@ -37,6 +40,8 @@ import type {
   RegistrationInviteRepository,
   RegistrationRepository,
   RepositoryListOptions,
+  RepositoryTransaction,
+  RepositoryTransactionCallback,
   RideShareRepository,
   TeamRepository,
   TransportationRepository,
@@ -86,6 +91,27 @@ type FirestoreCollectionReference = FirestoreQuery & {
 
 type FirestoreDatabase = {
   collection: (collectionName: string) => FirestoreCollectionReference;
+  runTransaction: <TResult>(
+    callback: (transaction: FirestoreTransaction) => Promise<TResult>,
+  ) => Promise<TResult>;
+};
+
+type FirestoreTransaction = {
+  create: (
+    reference: FirestoreDocumentReference,
+    data: Record<string, unknown>,
+  ) => FirestoreTransaction;
+  get(reference: FirestoreDocumentReference): Promise<FirestoreDocumentSnapshot>;
+  get(reference: FirestoreQuery): Promise<FirestoreQuerySnapshot>;
+  set: (
+    reference: FirestoreDocumentReference,
+    data: Record<string, unknown>,
+    options?: { merge: boolean },
+  ) => FirestoreTransaction;
+  update: (
+    reference: FirestoreDocumentReference,
+    data: Record<string, unknown>,
+  ) => FirestoreTransaction;
 };
 
 type FirestoreAdminModule = {
@@ -311,6 +337,95 @@ class FirestoreAthleteRepository
   listByTeamId(teamId: string) {
     return this.list({ scope: { teamId } });
   }
+}
+
+function getTransactionDocumentReference(
+  database: FirestoreDatabase,
+  collectionName: BackendCollection,
+  id: string,
+) {
+  const documentId = normalizeFirestoreDocumentId(id);
+
+  if (!documentId) {
+    throw new Error("A valid Firestore document id is required.");
+  }
+
+  return database.collection(collectionName).doc(documentId);
+}
+
+export async function runFirestoreTransaction<TResult>(
+  callback: RepositoryTransactionCallback<TResult>,
+) {
+  const database = await getFirestoreDatabase();
+
+  if (!database) {
+    throw new FirebaseSdkNotInstalledError("firebase-admin");
+  }
+
+  return database.runTransaction(async (firestoreTransaction) => {
+    const repositoryTransaction: RepositoryTransaction = {
+      create<TRecord extends object>(
+        collectionName: BackendCollection,
+        id: string,
+        record: TRecord,
+      ) {
+        firestoreTransaction.create(
+          getTransactionDocumentReference(database, collectionName, id),
+          record as Record<string, unknown>,
+        );
+      },
+      async get<TRecord extends object>(
+        collectionName: BackendCollection,
+        id: string,
+        idKey = "id",
+      ) {
+        const snapshot = await firestoreTransaction.get(
+          getTransactionDocumentReference(database, collectionName, id),
+        );
+
+        return getSnapshotRecord<TRecord>(snapshot, idKey);
+      },
+      async list<TRecord extends object>(
+        collectionName: BackendCollection,
+        options?: RepositoryListOptions,
+        idKey = "id",
+      ) {
+        const collection = database.collection(collectionName);
+        const scopedQuery = applyScope(collection, options?.scope);
+        const query = options?.limit
+          ? scopedQuery.limit(options.limit)
+          : scopedQuery;
+        const snapshot = await firestoreTransaction.get(query);
+
+        return snapshot.docs
+          .map((document) => getSnapshotRecord<TRecord>(document, idKey))
+          .filter((record): record is TRecord => Boolean(record));
+      },
+      set<TRecord extends object>(
+        collectionName: BackendCollection,
+        id: string,
+        record: TRecord,
+      ) {
+        firestoreTransaction.set(
+          getTransactionDocumentReference(database, collectionName, id),
+          record as Record<string, unknown>,
+          { merge: false },
+        );
+      },
+      update<TRecord extends object>(
+        collectionName: BackendCollection,
+        id: string,
+        record: Partial<TRecord>,
+      ) {
+        firestoreTransaction.update(
+          getTransactionDocumentReference(database, collectionName, id),
+          record as Record<string, unknown>,
+        );
+      },
+    };
+
+    return callback(repositoryTransaction);
+  });
 }
 
 class FirestoreCoachRepository

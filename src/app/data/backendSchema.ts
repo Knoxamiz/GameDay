@@ -89,6 +89,7 @@ export const backendRelationships: BackendRelationship[] = [
       "parentId",
       "parentUid",
       "ownerUid",
+      "inviteCode",
       "rosterStatus",
     ],
     to: "athletes",

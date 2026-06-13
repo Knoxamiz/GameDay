@@ -1,7 +1,10 @@
 import { cookies, headers } from "next/headers";
 import { type AuthSessionSource } from "../infrastructure/auth";
 import { getFirebaseAdminConfig } from "../infrastructure/firebase";
-import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
+import {
+  createFirestoreRepositories,
+  runFirestoreTransaction,
+} from "../infrastructure/firebaseRepositories";
 import {
   canManageOrganization,
   canUseAdminSetup,
@@ -388,13 +391,8 @@ async function createProvisionedOrganization(
     );
   }
 
-  const repositories = createFirestoreRepositories();
   const organizationId = await getAvailableOrganizationId(name);
   const now = new Date().toISOString();
-  const actor = getAdminActor({
-    ...scope,
-    organizationIds: uniqueStringList([...scope.organizationIds, organizationId]),
-  });
   const organization: Organization = {
     adminIds: uniqueStringList([session.claims.adminId]),
     adminUids: [session.user.id],
@@ -426,13 +424,29 @@ async function createProvisionedOrganization(
     updatedAt: now,
   };
 
-  await repositories.organizations.create(organization, {
-    actor,
-    reason: "Admin provisioned a new organization.",
-  });
-  await repositories.organizationMemberships.create(membership, {
-    actor,
-    reason: "Admin provisioned owner organization membership.",
+  await runFirestoreTransaction(async (transaction) => {
+    const [existingOrganization, existingMembership] = await Promise.all([
+      transaction.get<Organization>("organizations", organization.id),
+      transaction.get<OrganizationMembership>(
+        "organizationMemberships",
+        membership.id,
+      ),
+    ]);
+
+    if (existingOrganization || existingMembership) {
+      createSetupError(
+        "organization-id-unavailable",
+        "Choose a more specific organization name.",
+        409,
+      );
+    }
+
+    transaction.create("organizations", organization.id, organization);
+    transaction.create(
+      "organizationMemberships",
+      membership.id,
+      membership,
+    );
   });
 
   console.info("Organization provisioned.", {
@@ -512,9 +526,50 @@ async function createOrUpdateOrganization(
       reason: "Admin updated organization setup.",
     });
   } else {
-    await repositories.organizations.create(organization, {
-      actor,
-      reason: "Admin created organization setup.",
+    const membership: OrganizationMembership = {
+      createdAt: now,
+      createdByUid: session.user.id,
+      email: session.user.email ?? "",
+      id: getMembershipId(organizationId, session.user.id),
+      organizationId,
+      role: "owner",
+      status: "active",
+      uid: session.user.id,
+      updatedAt: now,
+    };
+
+    await runFirestoreTransaction(async (transaction) => {
+      const [existingOrganization, existingMembership] = await Promise.all([
+        transaction.get<Organization>("organizations", organizationId),
+        transaction.get<OrganizationMembership>(
+          "organizationMemberships",
+          membership.id,
+        ),
+      ]);
+
+      if (existingOrganization) {
+        createSetupError(
+          "organization-already-exists",
+          "This organization was created by another request. Refresh and try again.",
+          409,
+        );
+      }
+
+      transaction.create("organizations", organizationId, organization);
+
+      if (existingMembership) {
+        transaction.set("organizationMemberships", membership.id, {
+          ...membership,
+          createdAt: existingMembership.createdAt,
+          createdByUid: existingMembership.createdByUid,
+        });
+      } else {
+        transaction.create(
+          "organizationMemberships",
+          membership.id,
+          membership,
+        );
+      }
     });
   }
 
@@ -546,17 +601,6 @@ async function createTeam(
 
   assertManagedOrganization(scope, organizationId);
 
-  const repositories = createFirestoreRepositories();
-  const organization = await repositories.organizations.getById(organizationId);
-
-  if (!organization) {
-    createSetupError(
-      "organization-required",
-      "Create the organization before creating teams.",
-      400,
-    );
-  }
-
   const now = new Date().toISOString();
   const team: Team = {
     ageGroup: division,
@@ -578,9 +622,29 @@ async function createTeam(
     updatedAt: now,
   };
 
-  await repositories.teams.create(team, {
-    actor: getAdminActor(scope),
-    reason: "Admin created team setup.",
+  await runFirestoreTransaction(async (transaction) => {
+    const [organization, existingTeam] = await Promise.all([
+      transaction.get<Organization>("organizations", organizationId),
+      transaction.get<Team>("teams", team.id),
+    ]);
+
+    if (!organization) {
+      createSetupError(
+        "organization-required",
+        "Create the organization before creating teams.",
+        400,
+      );
+    }
+
+    if (existingTeam) {
+      createSetupError(
+        "team-already-exists",
+        "A team with this name and season already exists.",
+        409,
+      );
+    }
+
+    transaction.create("teams", team.id, team);
   });
 
   return {
@@ -601,55 +665,6 @@ function getNameParts(name: string) {
 
 function getCoachIdFromEmail(email: string) {
   return `coach-${slugifyIdentityPart(email)}`;
-}
-
-async function updateTeamCoachHelpers({
-  assignedTeamIds,
-  coachId,
-  organizationId,
-  scope,
-  status,
-  updatedAt,
-}: {
-  assignedTeamIds: string[];
-  coachId: string;
-  organizationId: string;
-  scope: AdminOrganizationScope;
-  status: CoachAssignmentStatus;
-  updatedAt: string;
-}) {
-  const repositories = createFirestoreRepositories();
-  const activeAssignedTeamIds = new Set(
-    status === "Active" ? assignedTeamIds : [],
-  );
-  const organizationTeams =
-    await repositories.teams.listByOrganizationId(organizationId);
-
-  await Promise.all(
-    organizationTeams.map(async (team) => {
-      const currentCoachIds = Array.isArray(team.coachIds) ? team.coachIds : [];
-      const nextCoachIds = uniqueStringList([
-        ...currentCoachIds.filter((teamCoachId) => teamCoachId !== coachId),
-        activeAssignedTeamIds.has(team.id) ? coachId : undefined,
-      ]);
-
-      if (hasSameMembers(currentCoachIds, nextCoachIds)) {
-        return;
-      }
-
-      await repositories.teams.update(
-        team.id,
-        {
-          coachIds: nextCoachIds,
-          updatedAt,
-        },
-        {
-          actor: getAdminActor(scope),
-          reason: "Admin updated coach assignment helper fields.",
-        },
-      );
-    }),
-  );
 }
 
 async function createOrUpdateCoachAssignment(
@@ -674,98 +689,138 @@ async function createOrUpdateCoachAssignment(
 
   assertManagedOrganization(scope, organizationId);
 
-  const repositories = createFirestoreRepositories();
-  const [organization, currentCoachByEmail, teams] = await Promise.all([
-    repositories.organizations.getById(organizationId),
-    repositories.coaches.getByEmail(email),
-    Promise.all(teamIds.map((teamId) => repositories.teams.getById(teamId))),
-  ]);
-
-  if (!organization) {
-    createSetupError(
-      "organization-required",
-      "Create the organization before assigning coaches.",
-      400,
-    );
-  }
-
-  const validTeams = teams.filter((team): team is Team => Boolean(team));
-
-  if (
-    validTeams.length !== teamIds.length ||
-    validTeams.some((team) => team.organizationId !== organizationId)
-  ) {
-    createSetupError(
-      "coach-team-scope-invalid",
-      "Coaches can only be assigned to teams inside this organization.",
-      403,
-    );
-  }
-
   const generatedCoachId = getCoachIdFromEmail(email);
-  const currentCoach =
-    currentCoachByEmail ?? (await repositories.coaches.getById(generatedCoachId));
-  const coachId = currentCoach?.id ?? generatedCoachId;
-  const currentCoachTeams = currentCoach?.teamIds.length
-    ? await Promise.all(
-        currentCoach.teamIds.map((teamId) => repositories.teams.getById(teamId)),
-      )
-    : [];
-  const otherOrganizationTeamIds = currentCoachTeams
-    .filter(
-      (team): team is Team =>
-        Boolean(team && team.organizationId !== organizationId),
-    )
-    .map((team) => team.id);
-  const organizationIds = uniqueStringList([
-    ...(currentCoach?.organizationIds ?? []),
-    currentCoach?.organizationId,
-    organizationId,
-  ]);
-  const coachTeamIds = uniqueStringList([
-    ...otherOrganizationTeamIds,
-    ...(status === "Active" ? teamIds : []),
-  ]);
   const { firstName, lastName } = getNameParts(name);
   const now = new Date().toISOString();
-  const coach: Coach = {
-    coachId: currentCoach?.coachId ?? coachId,
-    createdAt: currentCoach?.createdAt ?? now,
-    createdByUid: currentCoach?.createdByUid ?? session.user.id,
-    email,
-    firstName,
-    id: coachId,
-    lastName,
-    name,
-    organizationId,
-    organizationIds,
-    phone: currentCoach?.phone ?? "",
-    role: "coach",
-    status,
-    teamIds: coachTeamIds,
-    updatedAt: now,
-    ...(uid || currentCoach?.uid ? { uid: uid || currentCoach?.uid } : {}),
-  };
+  const coach = await runFirestoreTransaction(async (transaction) => {
+    const [organization, coachesByEmail, generatedCoach, organizationTeams] =
+      await Promise.all([
+        transaction.get<Organization>("organizations", organizationId),
+        transaction.list<Coach>("coaches", {
+          limit: 2,
+          scope: { email },
+        }),
+        transaction.get<Coach>("coaches", generatedCoachId),
+        transaction.list<Team>("teams", {
+          scope: { organizationId },
+        }),
+      ]);
 
-  if (currentCoach) {
-    await repositories.coaches.update(coach.id, coach, {
-      actor: getAdminActor(scope),
-      reason: "Admin updated coach assignment.",
-    });
-  } else {
-    await repositories.coaches.create(coach, {
-      actor: getAdminActor(scope),
-      reason: "Admin created coach assignment.",
-    });
-  }
+    if (!organization) {
+      createSetupError(
+        "organization-required",
+        "Create the organization before assigning coaches.",
+        400,
+      );
+    }
 
-  await updateTeamCoachHelpers({
-    assignedTeamIds: teamIds,
-    coachId,
-    organizationId,
-    scope,
-    status,
-    updatedAt: now,
+    if (coachesByEmail.length > 1) {
+      createSetupError(
+        "coach-email-conflict",
+        "Multiple coach records use this email. Resolve them before assigning teams.",
+        409,
+      );
+    }
+
+    const currentCoachByEmail = coachesByEmail[0] ?? null;
+
+    if (
+      !currentCoachByEmail &&
+      generatedCoach &&
+      generatedCoach.email.toLowerCase() !== email
+    ) {
+      createSetupError(
+        "coach-id-conflict",
+        "This coach email conflicts with an existing coach record.",
+        409,
+      );
+    }
+
+    const currentCoach = currentCoachByEmail ?? generatedCoach;
+    const coachId = currentCoach?.id ?? generatedCoachId;
+    const organizationTeamMap = new Map(
+      organizationTeams.map((team) => [team.id, team]),
+    );
+    const validTeams = teamIds
+      .map((teamId) => organizationTeamMap.get(teamId))
+      .filter((team): team is Team => Boolean(team));
+
+    if (
+      validTeams.length !== teamIds.length ||
+      validTeams.some((team) => team.organizationId !== organizationId)
+    ) {
+      createSetupError(
+        "coach-team-scope-invalid",
+        "Coaches can only be assigned to teams inside this organization.",
+        403,
+      );
+    }
+
+    const externalTeamIds = (currentCoach?.teamIds ?? []).filter(
+      (teamId) => !organizationTeamMap.has(teamId),
+    );
+    const externalTeams = await Promise.all(
+      externalTeamIds.map((teamId) => transaction.get<Team>("teams", teamId)),
+    );
+    const otherOrganizationTeamIds = externalTeams
+      .filter(
+        (team): team is Team =>
+          Boolean(team && team.organizationId !== organizationId),
+      )
+      .map((team) => team.id);
+    const organizationIds = uniqueStringList([
+      ...(currentCoach?.organizationIds ?? []),
+      currentCoach?.organizationId,
+      organizationId,
+    ]);
+    const coachTeamIds = uniqueStringList([
+      ...otherOrganizationTeamIds,
+      ...(status === "Active" ? teamIds : []),
+    ]);
+    const nextCoach: Coach = {
+      coachId: currentCoach?.coachId ?? coachId,
+      createdAt: currentCoach?.createdAt ?? now,
+      createdByUid: currentCoach?.createdByUid ?? session.user.id,
+      email,
+      firstName,
+      id: coachId,
+      lastName,
+      name,
+      organizationId,
+      organizationIds,
+      phone: currentCoach?.phone ?? "",
+      role: "coach",
+      status,
+      teamIds: coachTeamIds,
+      updatedAt: now,
+      ...(uid || currentCoach?.uid ? { uid: uid || currentCoach?.uid } : {}),
+    };
+    const activeAssignedTeamIds = new Set(
+      status === "Active" ? teamIds : [],
+    );
+
+    if (currentCoach) {
+      transaction.set("coaches", nextCoach.id, nextCoach);
+    } else {
+      transaction.create("coaches", nextCoach.id, nextCoach);
+    }
+
+    organizationTeams.forEach((team) => {
+      const currentCoachIds = Array.isArray(team.coachIds) ? team.coachIds : [];
+      const nextCoachIds = uniqueStringList([
+        ...currentCoachIds.filter((teamCoachId) => teamCoachId !== coachId),
+        activeAssignedTeamIds.has(team.id) ? coachId : undefined,
+      ]);
+
+      if (!hasSameMembers(currentCoachIds, nextCoachIds)) {
+        transaction.update<Team>("teams", team.id, {
+          coachIds: nextCoachIds,
+          updatedAt: now,
+        });
+      }
+    });
+
+    return nextCoach;
   });
 
   console.info("Coach assignment saved.", {
@@ -802,20 +857,6 @@ async function createRegistrationInvite(
 
   assertManagedOrganization(scope, organizationId);
 
-  const repositories = createFirestoreRepositories();
-  const [organization, team] = await Promise.all([
-    repositories.organizations.getById(organizationId),
-    repositories.teams.getById(teamId),
-  ]);
-
-  if (!organization || !team || team.organizationId !== organizationId) {
-    createSetupError(
-      "team-required",
-      "Create a team for this organization before opening registration.",
-      400,
-    );
-  }
-
   const now = new Date().toISOString();
   const code = createLiveRecordId("invite", [
     organizationId,
@@ -826,22 +867,51 @@ async function createRegistrationInvite(
     code,
     createdAt: now,
     createdByUid: session.user.id,
-    description: `Registration offering for ${team.name}.`,
+    description: "Registration offering for an organization team.",
     documentRequirements: documentRequirementTemplates,
     id: `registration-invite-${code}`,
     inviteUrl: `/join/${code}`,
     organizationId,
     paymentRequirements: payload.includePayment ? paymentRequirementTemplates : [],
-    qrLabel: `${team.name} Registration Link`,
+    qrLabel: `${title} Registration Link`,
     status,
     teamId,
     title,
     updatedAt: now,
   };
 
-  await repositories.registrationInvites.create(invite, {
-    actor: getAdminActor(scope),
-    reason: "Admin created registration invite setup.",
+  await runFirestoreTransaction(async (transaction) => {
+    const [organization, team, existingInvite] = await Promise.all([
+      transaction.get<Organization>("organizations", organizationId),
+      transaction.get<Team>("teams", teamId),
+      transaction.get<RegistrationInvite>(
+        "registrationInvites",
+        invite.code,
+        "code",
+      ),
+    ]);
+
+    if (!organization || !team || team.organizationId !== organizationId) {
+      createSetupError(
+        "team-required",
+        "Create a team for this organization before opening registration.",
+        400,
+      );
+    }
+
+    if (existingInvite) {
+      createSetupError(
+        "registration-invite-already-exists",
+        "A registration invite with these details already exists.",
+        409,
+      );
+    }
+
+    transaction.create("registrationInvites", invite.code, {
+      ...invite,
+      description: `Registration offering for ${team.name}.`,
+      qrLabel: `${team.name} Registration Link`,
+    });
   });
 
   return {

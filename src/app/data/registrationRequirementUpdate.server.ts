@@ -318,6 +318,9 @@ export async function uploadParentRegistrationRequirementDocument(
     registration.id,
     requirementLabel,
   );
+  const previousStoragePath = registration.requirements.find(
+    (requirement) => requirement.label === requirementLabel,
+  )?.storagePath;
   const storage = new FirebaseDocumentStorageAdapter();
   const storedDocument = await storage.uploadDocument(
     {
@@ -336,37 +339,77 @@ export async function uploadParentRegistrationRequirementDocument(
     },
     actor,
   );
-  const requirements = updateRequirementUploadMetadata(
-    registration.requirements,
-    requirementLabel,
-    {
-      contentType: storedDocument.contentType,
-      fileName: storedDocument.originalFileName,
-      status: "Uploaded",
-      storagePath: storedDocument.storagePath,
-      uploadedAt: storedDocument.uploadedAt,
-    },
-  );
-
-  if (!requirements) {
-    createRequirementError(
-      "requirement-not-found",
-      "Could not find this registration requirement.",
-      404,
+  try {
+    const requirements = updateRequirementUploadMetadata(
+      registration.requirements,
+      requirementLabel,
+      {
+        contentType: storedDocument.contentType,
+        fileName: storedDocument.originalFileName,
+        status: "Uploaded",
+        storagePath: storedDocument.storagePath,
+        uploadedAt: storedDocument.uploadedAt,
+      },
     );
+
+    if (!requirements) {
+      createRequirementError(
+        "requirement-not-found",
+        "Could not find this registration requirement.",
+        404,
+      );
+    }
+
+    await repositories.registrations.update(
+      registrationId,
+      {
+        requirements,
+        updatedAt: storedDocument.uploadedAt,
+      },
+      {
+        actor,
+        reason: "Parent uploaded a registration document.",
+      },
+    );
+  } catch (error) {
+    await storage.deleteDocument(storedDocument.storagePath, actor).catch(
+      (cleanupError) => {
+        console.error("Could not remove an uncommitted registration upload.", {
+          message:
+            cleanupError instanceof Error
+              ? cleanupError.message
+              : "Unknown cleanup error",
+          name:
+            cleanupError instanceof Error
+              ? cleanupError.name
+              : typeof cleanupError,
+          registrationId,
+        });
+      },
+    );
+    throw error;
   }
 
-  await repositories.registrations.update(
-    registrationId,
-    {
-      requirements,
-      updatedAt: storedDocument.uploadedAt,
-    },
-    {
-      actor,
-      reason: "Parent uploaded a registration document.",
-    },
-  );
+  if (
+    previousStoragePath &&
+    previousStoragePath !== storedDocument.storagePath
+  ) {
+    await storage.deleteDocument(previousStoragePath, actor).catch(
+      (cleanupError) => {
+        console.warn("Could not remove a superseded registration upload.", {
+          message:
+            cleanupError instanceof Error
+              ? cleanupError.message
+              : "Unknown cleanup error",
+          name:
+            cleanupError instanceof Error
+              ? cleanupError.name
+              : typeof cleanupError,
+          registrationId,
+        });
+      },
+    );
+  }
 
   return {
     source: "firestore",
