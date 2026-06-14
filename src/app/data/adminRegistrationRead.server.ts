@@ -4,6 +4,7 @@ import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import type { AuthSessionSource } from "../infrastructure/auth";
 import {
+  canManageOrganization,
   isAdminRoleSession,
   resolveAdminOrganizationScope,
 } from "./adminOrganizationScope.server";
@@ -115,7 +116,9 @@ function getEmptyAdminRegistrationReadModel(): AdminRegistrationReadModel {
   };
 }
 
-export async function getAdminRegistrationReadModel(): Promise<AdminRegistrationReadModel> {
+export async function getAdminRegistrationReadModel(
+  activeOrganizationId?: string,
+): Promise<AdminRegistrationReadModel> {
   if (!getFirebaseAdminConfig()) {
     return getEmptyAdminRegistrationReadModel();
   }
@@ -131,26 +134,24 @@ export async function getAdminRegistrationReadModel(): Promise<AdminRegistration
     const repositories = createFirestoreRepositories();
     const scope = await resolveAdminOrganizationScope(session);
 
-    if (scope.organizationIds.length === 0) {
+    const organizationId = activeOrganizationId?.trim();
+
+    if (!organizationId || !canManageOrganization(scope, organizationId)) {
       return getEmptyAdminRegistrationReadModel();
     }
 
-    const registrationLists = await Promise.all(
-      scope.organizationIds.map((organizationId) =>
-        repositories.registrations.listByOrganizationId(organizationId),
-      ),
-    );
+    const registrations =
+      await repositories.registrations.listByOrganizationId(organizationId);
     const registrationsById = new Map<string, Registration>();
 
-    registrationLists
-      .flat()
+    registrations
       .map(normalizeRegistration)
       .forEach((registration) => {
         registrationsById.set(registration.id, registration);
       });
 
     return {
-      organizationIds: scope.organizationIds,
+      organizationIds: [organizationId],
       registrations: [...registrationsById.values()],
       source: "firestore",
     };

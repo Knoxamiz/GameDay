@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type {
   GameDayEventStatus,
   GameDayEventType,
@@ -8,8 +8,8 @@ import type {
 import type { Team } from "../data/teams";
 
 type AdminEventFormProps = {
+  activeOrganizationId: string;
   canCreateEvents: boolean;
-  organizationIds: string[];
   teams: Team[];
 };
 
@@ -64,13 +64,10 @@ function toIsoDateTime(value: string) {
 }
 
 export default function AdminEventForm({
+  activeOrganizationId,
   canCreateEvents,
-  organizationIds,
   teams,
 }: AdminEventFormProps) {
-  const primaryOrganizationId =
-    organizationIds[0] ?? teams[0]?.organizationId ?? "";
-  const [organizationId, setOrganizationId] = useState(primaryOrganizationId);
   const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
   const [title, setTitle] = useState("");
   const [type, setType] = useState<GameDayEventType>("practice");
@@ -83,9 +80,8 @@ export default function AdminEventForm({
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const availableTeams = useMemo(
-    () => teams.filter((team) => team.organizationId === organizationId),
-    [organizationId, teams],
+  const availableTeams = teams.filter(
+    (team) => team.organizationId === activeOrganizationId,
   );
 
   function toggleTeam(teamId: string) {
@@ -104,11 +100,12 @@ export default function AdminEventForm({
     try {
       const response = await fetch("/api/admin/events", {
         body: JSON.stringify({
+          activeOrganizationId,
           address,
           endsAt: toIsoDateTime(endsAt),
           locationName,
           notes,
-          organizationId,
+          organizationId: activeOrganizationId,
           startsAt: toIsoDateTime(startsAt),
           status,
           teamIds: selectedTeamIds,
@@ -170,26 +167,6 @@ export default function AdminEventForm({
         </p>
       ) : (
         <div className="mt-4 space-y-3">
-          <label className="block">
-            <span className="text-sm font-semibold text-slate-300">
-              Organization
-            </span>
-            <select
-              className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
-              onChange={(event) => {
-                setOrganizationId(event.target.value);
-                setSelectedTeamIds([]);
-              }}
-              value={organizationId}
-            >
-              {organizationIds.map((id) => (
-                <option key={id} value={id}>
-                  {id}
-                </option>
-              ))}
-            </select>
-          </label>
-
           <fieldset className="rounded-xl bg-slate-800 p-3">
             <legend className="text-sm font-semibold text-slate-300">
               Teams

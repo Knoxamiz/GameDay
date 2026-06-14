@@ -1,15 +1,28 @@
 import BottomNav from "../../components/BottomNav";
 import { redirect } from "next/navigation";
+import AdminOrganizationSelector from "../../components/AdminOrganizationSelector";
 import MvpNav from "../../components/MvpNav";
 import RegistrationReviewBoard from "../../components/RegistrationReviewBoard";
 import { getAdminRegistrationReadModel } from "../../data/adminRegistrationRead.server";
+import {
+  getRequestedOrganizationId,
+  withActiveOrganization,
+} from "../../data/activeOrganization";
+import { resolveActiveAdminOrganizationContext } from "../../data/adminOrganizationScope.server";
 import { getCurrentAuthSession } from "../../data/currentUser.server";
-import { getOrganizationContext } from "../../data/organizationContext.server";
 import { getLandingRouteForClaims } from "../../infrastructure/auth";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminRegistrationsPage() {
+type AdminRegistrationsPageProps = {
+  searchParams?: Promise<{
+    organizationId?: string | string[];
+  }>;
+};
+
+export default async function AdminRegistrationsPage({
+  searchParams,
+}: AdminRegistrationsPageProps) {
   const session = await getCurrentAuthSession();
 
   if (!session) {
@@ -20,15 +33,27 @@ export default async function AdminRegistrationsPage() {
     redirect(getLandingRouteForClaims(session.claims));
   }
 
-  const registrationReadModel = await getAdminRegistrationReadModel();
-  const organizationContext = await getOrganizationContext(
-    registrationReadModel.organizationIds,
+  const requestedOrganizationId = getRequestedOrganizationId(
+    (await searchParams)?.organizationId,
   );
+  const activeContext = await resolveActiveAdminOrganizationContext(
+    session,
+    requestedOrganizationId,
+  );
+  const registrationReadModel = await getAdminRegistrationReadModel(
+    activeContext.activeOrganizationId,
+  );
+  const organizationContext = activeContext.activeOrganization
+    ? { count: 1, label: activeContext.activeOrganization.name }
+    : undefined;
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav organizationContext={organizationContext} />
+        <MvpNav
+          activeOrganizationId={activeContext.activeOrganizationId}
+          organizationContext={organizationContext}
+        />
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <h1 className="text-3xl font-bold">Registration Review</h1>
@@ -37,17 +62,26 @@ export default async function AdminRegistrationsPage() {
           </p>
         </div>
 
-        <RegistrationReviewBoard
-          registrations={registrationReadModel.registrations}
-          source={registrationReadModel.source}
+        <AdminOrganizationSelector
+          action="/admin/registrations"
+          activeOrganizationId={activeContext.activeOrganizationId}
+          organizations={activeContext.organizations}
         />
+
+        {activeContext.activeOrganizationId && (
+          <RegistrationReviewBoard
+            activeOrganizationId={activeContext.activeOrganizationId}
+            registrations={registrationReadModel.registrations}
+            source={registrationReadModel.source}
+          />
+        )}
 
         <BottomNav
           items={[
-            { href: "/admin", label: "Home" },
-            { href: "/teams", label: "Teams" },
-            { href: "/admin/registrations", label: "Registration" },
-            { href: "/events", label: "Schedule" },
+            { href: withActiveOrganization("/admin", activeContext.activeOrganizationId), label: "Home" },
+            { href: withActiveOrganization("/teams", activeContext.activeOrganizationId), label: "Teams" },
+            { href: withActiveOrganization("/admin/registrations", activeContext.activeOrganizationId), label: "Registration" },
+            { href: withActiveOrganization("/events", activeContext.activeOrganizationId), label: "Schedule" },
           ]}
         />
       </section>

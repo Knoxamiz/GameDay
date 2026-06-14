@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { withActiveOrganization } from "../data/activeOrganization";
 import { summarizeAttendanceEntries } from "../data/attendance";
 import { summarizeDocumentRequirements } from "../data/documents";
 import {
@@ -29,6 +30,7 @@ import TeamReadinessSummary from "./TeamReadinessSummary";
 import TransportationSummaryCard from "./TransportationSummaryCard";
 
 type TeamDetailsProps = {
+  activeOrganizationId?: string;
   teamId: string;
   role?: MvpNavRole;
 };
@@ -40,6 +42,7 @@ function isDefined<TValue>(
 }
 
 export default async function TeamDetails({
+  activeOrganizationId,
   teamId,
   role = "shared",
 }: TeamDetailsProps) {
@@ -58,7 +61,10 @@ export default async function TeamDetails({
     notFound();
   }
 
-  const scopedSchedule = await getEventScheduleReadModel(role);
+  const scopedSchedule = await getEventScheduleReadModel(
+    role,
+    activeOrganizationId,
+  );
   const organizationContext = await getOrganizationContext(
     scopedSchedule.organizationIds,
   );
@@ -197,10 +203,16 @@ export default async function TeamDetails({
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav organizationContext={organizationContext} />
+        <MvpNav
+          activeOrganizationId={activeOrganizationId}
+          organizationContext={organizationContext}
+        />
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-          <Link href={"/teams"} className="text-2xl font-bold">
+          <Link
+            href={withActiveOrganization("/teams", activeOrganizationId)}
+            className="text-2xl font-bold"
+          >
             &larr; {teamDetails.name}
           </Link>
         </div>
@@ -240,7 +252,10 @@ export default async function TeamDetails({
                 )}
               </div>
               <Link
-                href={`/events/${nextEvent.id}`}
+                href={withActiveOrganization(
+                  `/events/${nextEvent.id}`,
+                  activeOrganizationId,
+                )}
                 className="mt-4 block w-full rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
               >
                 View Event
@@ -253,7 +268,10 @@ export default async function TeamDetails({
 
         {nextEvent && (
           <TeamReadinessSummary
-            actionHref={`/events/${nextEvent.id}`}
+            actionHref={withActiveOrganization(
+              `/events/${nextEvent.id}`,
+              activeOrganizationId,
+            )}
             attendanceEntries={attendanceEntries}
             eventId={nextEvent.id}
             registrations={teamRegistrations}
@@ -287,7 +305,10 @@ export default async function TeamDetails({
           <AttendanceSummaryCard
             eventId={nextEvent.id}
             entries={attendanceEntries}
-            actionHref={`/events/${nextEvent.id}`}
+            actionHref={withActiveOrganization(
+              `/events/${nextEvent.id}`,
+              activeOrganizationId,
+            )}
             showDetails={false}
           />
         )}
@@ -301,7 +322,10 @@ export default async function TeamDetails({
           <TransportationSummaryCard
             eventId={nextEvent.id}
             entries={transportationEntries}
-            actionHref={`/events/${nextEvent.id}`}
+            actionHref={withActiveOrganization(
+              `/events/${nextEvent.id}`,
+              activeOrganizationId,
+            )}
             showDetails={false}
           />
         )}
@@ -334,7 +358,10 @@ export default async function TeamDetails({
             {upcomingEvents.map((event) => (
               <Link
                 key={event.id}
-                href={`/events/${event.id}`}
+                href={withActiveOrganization(
+                  `/events/${event.id}`,
+                  activeOrganizationId,
+                )}
                 className="block rounded-xl bg-slate-800 p-4"
               >
                 {getEventShortDateLabel(event)} {event.type}

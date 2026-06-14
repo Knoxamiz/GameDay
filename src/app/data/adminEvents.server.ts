@@ -43,6 +43,7 @@ export type AdminEventResult = {
 };
 
 type AdminEventWriteOptions = {
+  activeOrganizationId?: string;
   sessionSource: AuthSessionSource;
 };
 
@@ -164,6 +165,7 @@ export async function createAdminEvent(
   const scope = await requireAdminEventSession(options.sessionSource);
   const session = scope.session;
   const organizationId = normalizeText(payload.organizationId);
+  const activeOrganizationId = normalizeText(options.activeOrganizationId);
   const title = normalizeText(payload.title);
   const locationName = normalizeText(payload.locationName);
   const teamIds = uniqueStringList(payload.teamIds);
@@ -175,6 +177,14 @@ export async function createAdminEvent(
       "invalid-event",
       "Organization, team, title, and location are required.",
       400,
+    );
+  }
+
+  if (!activeOrganizationId || activeOrganizationId !== organizationId) {
+    createAdminEventError(
+      "active-organization-mismatch",
+      "Create events only inside the active organization.",
+      403,
     );
   }
 

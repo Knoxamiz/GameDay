@@ -1,15 +1,29 @@
 import BottomNav from "../../components/BottomNav";
 import { redirect } from "next/navigation";
+import AdminOrganizationSelector from "../../components/AdminOrganizationSelector";
 import AdminSetupPanel from "../../components/AdminSetupPanel";
 import MvpNav from "../../components/MvpNav";
 import SessionControls from "../../components/SessionControls";
 import { getAdminSetupReadModel } from "../../data/adminSetup.server";
+import {
+  getRequestedOrganizationId,
+  withActiveOrganization,
+} from "../../data/activeOrganization";
+import { resolveActiveAdminOrganizationContext } from "../../data/adminOrganizationScope.server";
 import { getCurrentAuthSession } from "../../data/currentUser.server";
 import { getLandingRouteForClaims } from "../../infrastructure/auth";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminSetupPage() {
+type AdminSetupPageProps = {
+  searchParams?: Promise<{
+    organizationId?: string | string[];
+  }>;
+};
+
+export default async function AdminSetupPage({
+  searchParams,
+}: AdminSetupPageProps) {
   const session = await getCurrentAuthSession();
 
   if (!session) {
@@ -20,21 +34,30 @@ export default async function AdminSetupPage() {
     redirect(getLandingRouteForClaims(session.claims));
   }
 
-  const setup = await getAdminSetupReadModel();
-  const organizationContext =
-    setup.organizations.length > 0
+  const requestedOrganizationId = getRequestedOrganizationId(
+    (await searchParams)?.organizationId,
+  );
+  const activeContext = await resolveActiveAdminOrganizationContext(
+    session,
+    requestedOrganizationId,
+  );
+  const setup = await getAdminSetupReadModel(
+    activeContext.activeOrganizationId,
+  );
+  const organizationContext = activeContext.activeOrganization
       ? {
-          count: setup.organizations.length,
-          label: setup.organizations
-            .map((organization) => organization.name)
-            .join(", "),
+          count: 1,
+          label: activeContext.activeOrganization.name,
         }
       : undefined;
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav organizationContext={organizationContext} />
+        <MvpNav
+          activeOrganizationId={activeContext.activeOrganizationId}
+          organizationContext={organizationContext}
+        />
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <h1 className="text-3xl font-bold">Setup</h1>
@@ -45,22 +68,54 @@ export default async function AdminSetupPage() {
 
         <SessionControls role="admin" />
 
-        <AdminSetupPanel
-          canCreateOrganization={setup.canCreateOrganization}
-          canManageSetup={setup.canManageSetup}
-          coaches={setup.coaches}
-          organizationIds={setup.organizationIds}
-          organizations={setup.organizations}
-          registrationInvites={setup.registrationInvites}
-          teams={setup.teams}
+        <AdminOrganizationSelector
+          action="/admin/setup"
+          activeOrganizationId={activeContext.activeOrganizationId}
+          organizations={activeContext.organizations}
         />
+
+        {!activeContext.requiresSelection && (
+          <AdminSetupPanel
+            activeOrganizationId={activeContext.activeOrganizationId}
+            canCreateOrganization={setup.canCreateOrganization}
+            canManageSetup={setup.canManageSetup}
+            coaches={setup.coaches}
+            organizations={setup.organizations}
+            registrationInvites={setup.registrationInvites}
+            teams={setup.teams}
+          />
+        )}
 
         <BottomNav
           items={[
-            { href: "/admin", label: "Home" },
-            { href: "/admin/setup", label: "Setup" },
-            { href: "/admin/registrations", label: "Registration" },
-            { href: "/events", label: "Schedule" },
+            {
+              href: withActiveOrganization(
+                "/admin",
+                activeContext.activeOrganizationId,
+              ),
+              label: "Home",
+            },
+            {
+              href: withActiveOrganization(
+                "/admin/setup",
+                activeContext.activeOrganizationId,
+              ),
+              label: "Setup",
+            },
+            {
+              href: withActiveOrganization(
+                "/admin/registrations",
+                activeContext.activeOrganizationId,
+              ),
+              label: "Registration",
+            },
+            {
+              href: withActiveOrganization(
+                "/events",
+                activeContext.activeOrganizationId,
+              ),
+              label: "Schedule",
+            },
           ]}
         />
       </section>

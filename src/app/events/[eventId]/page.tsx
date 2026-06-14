@@ -1,5 +1,7 @@
 import EventDetails from "../../components/EventDetails";
 import { redirect } from "next/navigation";
+import { getRequestedOrganizationId } from "../../data/activeOrganization";
+import { resolveActiveAdminOrganizationContext } from "../../data/adminOrganizationScope.server";
 import { getCurrentAuthSession } from "../../data/currentUser.server";
 
 type EventDetailsPageProps = {
@@ -7,6 +9,7 @@ type EventDetailsPageProps = {
     eventId: string;
   }>;
   searchParams?: Promise<{
+    organizationId?: string | string[];
     view?: string | string[];
   }>;
 };
@@ -26,10 +29,29 @@ export default async function EventDetailsPage({
   }
 
   const role = session.claims.role;
+  const activeContext =
+    role === "admin"
+      ? await resolveActiveAdminOrganizationContext(
+          session,
+          getRequestedOrganizationId(resolvedSearchParams?.organizationId),
+        )
+      : undefined;
+
+  if (role === "admin" && !activeContext?.activeOrganizationId) {
+    redirect("/events");
+  }
+
   const view = Array.isArray(resolvedSearchParams?.view)
     ? resolvedSearchParams?.view[0]
     : resolvedSearchParams?.view;
   const mode = view === "ride-share" ? "ride-share" : "full";
 
-  return <EventDetails eventId={eventId} mode={mode} role={role} />;
+  return (
+    <EventDetails
+      activeOrganizationId={activeContext?.activeOrganizationId}
+      eventId={eventId}
+      mode={mode}
+      role={role}
+    />
+  );
 }

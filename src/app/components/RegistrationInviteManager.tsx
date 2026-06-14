@@ -272,7 +272,10 @@ export default function RegistrationInviteManager({
 
     try {
       const response = await fetch("/api/admin/setup", {
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          activeOrganizationId: organizationId,
+          ...payload,
+        }),
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         method: "POST",

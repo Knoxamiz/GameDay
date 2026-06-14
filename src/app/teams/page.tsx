@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import AdminOrganizationSelector from "../components/AdminOrganizationSelector";
 import MvpNav from "../components/MvpNav";
+import {
+  getRequestedOrganizationId,
+  withActiveOrganization,
+} from "../data/activeOrganization";
+import { resolveActiveAdminOrganizationContext } from "../data/adminOrganizationScope.server";
 import { getCurrentAuthSession } from "../data/currentUser.server";
 import {
   getEventShortDateLabel,
@@ -19,7 +25,13 @@ function isDefined<TValue>(
   return Boolean(value);
 }
 
-export default async function TeamsHome() {
+type TeamsHomeProps = {
+  searchParams?: Promise<{
+    organizationId?: string | string[];
+  }>;
+};
+
+export default async function TeamsHome({ searchParams }: TeamsHomeProps) {
   const session = await getCurrentAuthSession();
 
   if (!session) {
@@ -27,10 +39,21 @@ export default async function TeamsHome() {
   }
 
   const role = session.claims.role;
-  const schedule = await getEventScheduleReadModel(role);
-  const organizationContext = await getOrganizationContext(
-    schedule.organizationIds,
+  const requestedOrganizationId = getRequestedOrganizationId(
+    (await searchParams)?.organizationId,
   );
+  const activeContext =
+    role === "admin"
+      ? await resolveActiveAdminOrganizationContext(
+          session,
+          requestedOrganizationId,
+        )
+      : undefined;
+  const activeOrganizationId = activeContext?.activeOrganizationId;
+  const schedule = await getEventScheduleReadModel(role, activeOrganizationId);
+  const organizationContext = activeContext?.activeOrganization
+    ? { count: 1, label: activeContext.activeOrganization.name }
+    : await getOrganizationContext(schedule.organizationIds);
   const repositories = schedule.source === "firestore"
     ? createFirestoreRepositories()
     : null;
@@ -78,7 +101,10 @@ export default async function TeamsHome() {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav organizationContext={organizationContext} />
+        <MvpNav
+          activeOrganizationId={activeOrganizationId}
+          organizationContext={organizationContext}
+        />
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <h1 className="text-3xl font-bold">Teams</h1>
@@ -87,11 +113,20 @@ export default async function TeamsHome() {
           </p>
         </div>
 
+        {activeContext && (
+          <AdminOrganizationSelector
+            action="/teams"
+            activeOrganizationId={activeOrganizationId}
+            organizations={activeContext.organizations}
+          />
+        )}
+
         <div className="mt-6 space-y-4">
           {visibleTeams.length === 0 && (
             <p className="rounded-2xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300">
-              No teams are available for your current organization and role
-              scope.
+              {activeContext?.requiresSelection
+                ? "Choose an organization to view its teams."
+                : "No teams are available for your current organization and role scope."}
             </p>
           )}
           {visibleTeams.map((team) => {
@@ -110,7 +145,10 @@ export default async function TeamsHome() {
             return (
               <Link
                 key={team.id}
-                href={`/teams/${team.id}`}
+                href={withActiveOrganization(
+                  `/teams/${team.id}`,
+                  activeOrganizationId,
+                )}
                 className="block rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg"
               >
                 <div className="flex items-start justify-between gap-3">

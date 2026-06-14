@@ -101,6 +101,7 @@ export type AdminSetupResult = {
 };
 
 type AdminSetupWriteOptions = {
+  activeOrganizationId?: string;
   sessionSource: AuthSessionSource;
 };
 
@@ -354,7 +355,9 @@ function getOrganizationStatus({
   };
 }
 
-export async function getAdminSetupReadModel(): Promise<AdminSetupReadModel> {
+export async function getAdminSetupReadModel(
+  activeOrganizationId?: string,
+): Promise<AdminSetupReadModel> {
   if (!getFirebaseAdminConfig()) {
     return emptyReadModel();
   }
@@ -381,43 +384,35 @@ export async function getAdminSetupReadModel(): Promise<AdminSetupReadModel> {
       };
     }
 
+    const organizationId = normalizeText(activeOrganizationId);
+
+    if (!organizationId || !canManageOrganization(scope, organizationId)) {
+      return {
+        ...emptyReadModel(),
+        canCreateOrganization: false,
+        organizationMemberships: scope.memberships,
+        scopeSource: scope.source,
+        source: "firestore",
+      };
+    }
+
     const repositories = createFirestoreRepositories();
-    const organizationIds = scope.organizationIds;
-    const [organizations, teamLists, coachLists, inviteLists] = await Promise.all([
-      Promise.all(
-        organizationIds.map((organizationId) =>
-          repositories.organizations.getById(organizationId),
-        ),
-      ),
-      Promise.all(
-        organizationIds.map((organizationId) =>
-          repositories.teams.listByOrganizationId(organizationId),
-        ),
-      ),
-      Promise.all(
-        organizationIds.map((organizationId) =>
-          repositories.coaches.listByOrganizationId(organizationId),
-        ),
-      ),
-      Promise.all(
-        organizationIds.map((organizationId) =>
-          repositories.registrationInvites.listByOrganizationId(organizationId),
-        ),
-      ),
+    const [organization, teams, coaches, registrationInvites] = await Promise.all([
+      repositories.organizations.getById(organizationId),
+      repositories.teams.listByOrganizationId(organizationId),
+      repositories.coaches.listByOrganizationId(organizationId),
+      repositories.registrationInvites.listByOrganizationId(organizationId),
     ]);
 
     return {
       canCreateOrganization: true,
       canManageSetup: true,
-      coaches: uniqueById(coachLists.flat()),
-      organizationIds,
+      coaches: uniqueById(coaches),
+      organizationIds: [organizationId],
       organizationMemberships: scope.memberships,
-      organizations: organizations.filter(
-        (organization): organization is Organization => Boolean(organization),
-      ),
+      organizations: organization ? [organization] : [],
       registrationInvites: uniqueById(
-        inviteLists
-          .flat()
+        registrationInvites
           .map(normalizeRegistrationInvite)
           .filter(
             (invite): invite is NormalizedRegistrationInvite => Boolean(invite),
@@ -425,7 +420,7 @@ export async function getAdminSetupReadModel(): Promise<AdminSetupReadModel> {
       ),
       scopeSource: scope.source,
       source: "firestore",
-      teams: uniqueById(teamLists.flat()),
+      teams: uniqueById(teams),
     };
   } catch (error) {
     console.warn("Could not load admin setup data.", {
@@ -1054,6 +1049,7 @@ async function createRegistrationInvite(
 
 async function updateRegistrationInvite(
   scope: AdminOrganizationScope,
+  activeOrganizationId: string,
   payload: Extract<
     AdminSetupPayload,
     { actionType: "registration-invite-update" }
@@ -1087,6 +1083,14 @@ async function updateRegistrationInvite(
     }
 
     assertManagedOrganization(scope, invite.organizationId);
+
+    if (invite.organizationId !== activeOrganizationId) {
+      createSetupError(
+        "active-organization-mismatch",
+        "This registration invite is outside the active organization.",
+        403,
+      );
+    }
 
     if (invite.status === "archived" && payload.operation !== "archive") {
       createSetupError(
@@ -1201,6 +1205,30 @@ export async function createAdminSetupRecord(
     return createProvisionedOrganization(scope, payload);
   }
 
+  const activeOrganizationId = normalizeText(options.activeOrganizationId);
+
+  if (
+    !activeOrganizationId ||
+    !canManageOrganization(scope, activeOrganizationId)
+  ) {
+    createSetupError(
+      "active-organization-required",
+      "Choose an organization you manage before changing setup.",
+      403,
+    );
+  }
+
+  if (
+    "organizationId" in payload &&
+    payload.organizationId !== activeOrganizationId
+  ) {
+    createSetupError(
+      "active-organization-mismatch",
+      "This setup change is outside the active organization.",
+      403,
+    );
+  }
+
   if (payload.actionType === "organization") {
     return createOrUpdateOrganization(scope, payload);
   }
@@ -1217,5 +1245,5 @@ export async function createAdminSetupRecord(
     return createRegistrationInvite(scope, payload);
   }
 
-  return updateRegistrationInvite(scope, payload);
+  return updateRegistrationInvite(scope, activeOrganizationId, payload);
 }

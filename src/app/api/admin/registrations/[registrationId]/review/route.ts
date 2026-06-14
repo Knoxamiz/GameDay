@@ -154,6 +154,7 @@ export async function PATCH(
 
   try {
     const result = await updateAdminRegistrationReview(payload, {
+      activeOrganizationId: getText(body?.activeOrganizationId),
       sessionSource: {
         authorizationHeader: request.headers.get("authorization") ?? undefined,
         cookieHeader: request.headers.get("cookie") ?? undefined,

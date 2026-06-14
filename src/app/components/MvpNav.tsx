@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { AccessRole } from "../data/accessControl";
+import { withActiveOrganization } from "../data/activeOrganization";
 import { getCurrentAuthSession } from "../data/currentUser.server";
 import { getLandingRouteForClaims } from "../infrastructure/auth";
 
@@ -11,6 +12,7 @@ type OrganizationContext = {
 };
 
 type MvpNavProps = {
+  activeOrganizationId?: string;
   organizationContext?: OrganizationContext;
 };
 
@@ -58,12 +60,20 @@ const utilityItemsByRole: Record<
 };
 
 export default async function MvpNav({
+  activeOrganizationId,
   organizationContext,
 }: MvpNavProps = {}) {
   const session = await getCurrentAuthSession();
   const role: MvpNavRole = session?.claims.role ?? "shared";
   const utilityItems = utilityItemsByRole[role];
-  const homeHref = session ? getLandingRouteForClaims(session.claims) : "/";
+  const homeHref = session
+    ? role === "admin"
+      ? withActiveOrganization(
+          getLandingRouteForClaims(session.claims),
+          activeOrganizationId,
+        )
+      : getLandingRouteForClaims(session.claims)
+    : "/";
 
   return (
     <nav className="mb-4 space-y-2 text-sm font-semibold">
@@ -86,7 +96,11 @@ export default async function MvpNav({
         {utilityItems.map((item) => (
           <Link
             key={item.href}
-            href={item.href}
+            href={
+              role === "admin"
+                ? withActiveOrganization(item.href, activeOrganizationId)
+                : item.href
+            }
             className="min-h-11 shrink-0 rounded-full bg-slate-900 px-4 py-3 text-slate-300"
           >
             {item.label}

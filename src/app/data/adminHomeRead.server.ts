@@ -4,6 +4,7 @@ import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import {
+  canManageOrganization,
   resolveAdminOrganizationScope,
   isAdminRoleSession,
 } from "./adminOrganizationScope.server";
@@ -95,7 +96,9 @@ function buildEmptyAdminHomeReadModel(
   };
 }
 
-export async function getAdminHomeReadModel(): Promise<AdminHomeReadModel> {
+export async function getAdminHomeReadModel(
+  activeOrganizationId?: string,
+): Promise<AdminHomeReadModel> {
   if (!getFirebaseAdminConfig()) {
     return buildEmptyAdminHomeReadModel();
   }
@@ -110,52 +113,27 @@ export async function getAdminHomeReadModel(): Promise<AdminHomeReadModel> {
 
     const repositories = createFirestoreRepositories();
     const scope = await resolveAdminOrganizationScope(session);
-    const organizationIds = scope.organizationIds;
+    const organizationId = activeOrganizationId?.trim();
 
-    if (organizationIds.length === 0) {
+    if (!organizationId || !canManageOrganization(scope, organizationId)) {
       return buildEmptyAdminHomeReadModel();
     }
 
     const [
-      organizations,
-      teamLists,
-      coachLists,
-      eventLists,
-      registrationLists,
-      communicationLists,
+      organization,
+      teams,
+      coaches,
+      events,
+      registrations,
+      communications,
     ] = await Promise.all([
-      Promise.all(
-        organizationIds.map((organizationId) =>
-          repositories.organizations.getById(organizationId),
-        ),
-      ),
-      Promise.all(
-        organizationIds.map((organizationId) =>
-          repositories.teams.listByOrganizationId(organizationId),
-        ),
-      ),
-      Promise.all(
-        organizationIds.map((organizationId) =>
-          repositories.coaches.listByOrganizationId(organizationId),
-        ),
-      ),
-      Promise.all(
-        organizationIds.map((organizationId) =>
-          repositories.events.listByOrganizationId(organizationId),
-        ),
-      ),
-      Promise.all(
-        organizationIds.map((organizationId) =>
-          repositories.registrations.listByOrganizationId(organizationId),
-        ),
-      ),
-      Promise.all(
-        organizationIds.map((organizationId) =>
-          repositories.messages.listByAudience({ organizationId }),
-        ),
-      ),
+      repositories.organizations.getById(organizationId),
+      repositories.teams.listByOrganizationId(organizationId),
+      repositories.coaches.listByOrganizationId(organizationId),
+      repositories.events.listByOrganizationId(organizationId),
+      repositories.registrations.listByOrganizationId(organizationId),
+      repositories.messages.listByAudience({ organizationId }),
     ]);
-    const events = uniqueById(eventLists.flat());
     const [attendanceLists, transportationLists] = await Promise.all([
       Promise.all(
         events.map((event) => repositories.attendance.listByEventId(event.id)),
@@ -167,21 +145,16 @@ export async function getAdminHomeReadModel(): Promise<AdminHomeReadModel> {
       ),
     ]);
 
-    const organizationRecords = organizations.filter(
-      (organization): organization is Organization => Boolean(organization),
-    );
-
     return {
       attendanceEntries: uniqueById(attendanceLists.flat()),
-      communications: uniqueById(communicationLists.flat()),
-      coaches: uniqueById(coachLists.flat()),
+      communications: uniqueById(communications),
+      coaches: uniqueById(coaches),
       events,
-      organization:
-        organizationRecords[0] ?? getOrganizationShell(organizationIds[0]),
-      organizations: organizationRecords,
-      registrations: uniqueById(registrationLists.flat()),
+      organization: organization ?? getOrganizationShell(organizationId),
+      organizations: [organization ?? getOrganizationShell(organizationId)],
+      registrations: uniqueById(registrations),
       source: "firestore",
-      teams: uniqueById(teamLists.flat()),
+      teams: uniqueById(teams),
       transportationEntries: uniqueById(transportationLists.flat()),
     };
   } catch (error) {

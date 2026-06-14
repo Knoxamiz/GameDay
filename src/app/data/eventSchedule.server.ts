@@ -8,6 +8,7 @@ import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import {
+  canManageOrganization,
   canUseAdminSetup,
   resolveAdminOrganizationScope,
 } from "./adminOrganizationScope.server";
@@ -148,26 +149,19 @@ function sortScheduleEvents(events: GameDayEvent[]) {
 
 async function getAdminScheduleReadModel(
   session: AuthSession,
+  activeOrganizationId?: string,
 ): Promise<EventScheduleReadModel> {
   const repositories = createFirestoreRepositories();
   const adminScope = await resolveAdminOrganizationScope(session);
-  const organizationIds = adminScope.organizationIds;
+  const organizationId = activeOrganizationId?.trim();
 
-  if (organizationIds.length === 0) {
+  if (!organizationId || !canManageOrganization(adminScope, organizationId)) {
     return emptyScheduleReadModel("admin");
   }
 
-  const [teamLists, eventLists] = await Promise.all([
-    Promise.all(
-      organizationIds.map((organizationId) =>
-        repositories.teams.listByOrganizationId(organizationId),
-      ),
-    ),
-    Promise.all(
-      organizationIds.map((organizationId) =>
-        repositories.events.listByOrganizationId(organizationId),
-      ),
-    ),
+  const [teams, events] = await Promise.all([
+    repositories.teams.listByOrganizationId(organizationId),
+    repositories.events.listByOrganizationId(organizationId),
   ]);
 
   return {
@@ -175,14 +169,12 @@ async function getAdminScheduleReadModel(
       hasCapability(session.claims, "manage-organization") &&
       canUseAdminSetup(adminScope),
     events: sortScheduleEvents(
-      eventLists.flat().filter((event) =>
-        eventIsInOrganizationScope(event, organizationIds),
-      ),
+      events.filter((event) => event.organizationId === organizationId),
     ),
-    organizationIds,
+    organizationIds: [organizationId],
     role: "admin",
     source: "firestore",
-    teams: uniqueById(teamLists.flat()),
+    teams: uniqueById(teams),
   };
 }
 
@@ -276,6 +268,7 @@ async function getParentScheduleReadModel(
 
 export async function getEventScheduleReadModel(
   role: EventScheduleRole,
+  activeOrganizationId?: string,
 ): Promise<EventScheduleReadModel> {
   if (!getFirebaseAdminConfig()) {
     return emptyScheduleReadModel(role);
@@ -289,7 +282,7 @@ export async function getEventScheduleReadModel(
     }
 
     if (role === "admin") {
-      return getAdminScheduleReadModel(session);
+      return getAdminScheduleReadModel(session, activeOrganizationId);
     }
 
     if (role === "coach") {
@@ -313,8 +306,9 @@ export async function getEventScheduleReadModel(
 export async function getScopedEventDetailsReadModel(
   eventId: string,
   role: EventScheduleRole,
+  activeOrganizationId?: string,
 ): Promise<ScopedEventDetailsReadModel | null> {
-  const schedule = await getEventScheduleReadModel(role);
+  const schedule = await getEventScheduleReadModel(role, activeOrganizationId);
   const event = schedule.events.find((scheduleEvent) => scheduleEvent.id === eventId);
 
   if (!event) {

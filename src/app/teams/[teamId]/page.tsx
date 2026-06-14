@@ -1,10 +1,15 @@
 import TeamDetails from "../../components/TeamDetails";
 import { redirect } from "next/navigation";
+import { getRequestedOrganizationId } from "../../data/activeOrganization";
+import { resolveActiveAdminOrganizationContext } from "../../data/adminOrganizationScope.server";
 import { getCurrentAuthSession } from "../../data/currentUser.server";
 
 type TeamDetailsPageProps = {
   params: Promise<{
     teamId: string;
+  }>;
+  searchParams?: Promise<{
+    organizationId?: string | string[];
   }>;
 };
 
@@ -12,6 +17,7 @@ export const dynamic = "force-dynamic";
 
 export default async function TeamDetailsPage({
   params,
+  searchParams,
 }: TeamDetailsPageProps) {
   const { teamId } = await params;
   const session = await getCurrentAuthSession();
@@ -20,5 +26,24 @@ export default async function TeamDetailsPage({
     redirect("/login");
   }
 
-  return <TeamDetails teamId={teamId} role={session.claims.role} />;
+  const role = session.claims.role;
+  const activeContext =
+    role === "admin"
+      ? await resolveActiveAdminOrganizationContext(
+          session,
+          getRequestedOrganizationId((await searchParams)?.organizationId),
+        )
+      : undefined;
+
+  if (role === "admin" && !activeContext?.activeOrganizationId) {
+    redirect("/teams");
+  }
+
+  return (
+    <TeamDetails
+      activeOrganizationId={activeContext?.activeOrganizationId}
+      role={role}
+      teamId={teamId}
+    />
+  );
 }

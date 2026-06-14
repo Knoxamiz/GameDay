@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { withActiveOrganization } from "../data/activeOrganization";
 import {
   getEventDateLabel,
   getEventLocationLabel,
@@ -19,17 +20,23 @@ import RideShareBoard from "./RideShareBoard";
 import TransportationSummaryCard from "./TransportationSummaryCard";
 
 type EventDetailsProps = {
+  activeOrganizationId?: string;
   eventId: string;
   mode?: "full" | "ride-share";
   role?: MvpNavRole;
 };
 
 export default async function EventDetails({
+  activeOrganizationId,
   eventId,
   mode = "full",
   role = "shared",
 }: EventDetailsProps) {
-  const eventReadModel = await getScopedEventDetailsReadModel(eventId, role);
+  const eventReadModel = await getScopedEventDetailsReadModel(
+    eventId,
+    role,
+    activeOrganizationId,
+  );
 
   if (!eventReadModel) {
     notFound();
@@ -122,28 +129,40 @@ export default async function EventDetails({
   const eventAnnouncements = eventMessages.map((message) => message.content);
   const eventChat = eventMessages.map((message) => message.subject);
   const eventNotes = getEventNotes(eventDetails);
-  const eventActionHref = `/events/${eventDetails.id}`;
-  const rideShareHref = `/events/${eventDetails.id}?view=ride-share`;
+  const eventActionHref = withActiveOrganization(
+    `/events/${eventDetails.id}`,
+    activeOrganizationId,
+  );
+  const rideShareHref = withActiveOrganization(
+    `/events/${eventDetails.id}?view=ride-share`,
+    activeOrganizationId,
+  );
   const registrationActionHref =
     role === "admin"
-      ? "/admin/registrations"
+      ? withActiveOrganization(
+          "/admin/registrations",
+          activeOrganizationId,
+        )
       : role === "parent"
         ? "/registration"
         : team
-          ? `/teams/${team.id}`
+          ? withActiveOrganization(`/teams/${team.id}`, activeOrganizationId)
           : eventActionHref;
   const eventBackHref =
     role === "parent"
       ? "/parent"
       : team
-        ? `/teams/${team.id}`
-        : "/events";
+        ? withActiveOrganization(`/teams/${team.id}`, activeOrganizationId)
+        : withActiveOrganization("/events", activeOrganizationId);
 
   if (mode === "ride-share") {
     return (
       <main className="min-h-screen bg-slate-950 text-white">
         <section className="mx-auto max-w-md px-5 py-6">
-          <MvpNav organizationContext={organizationContext} />
+          <MvpNav
+            activeOrganizationId={activeOrganizationId}
+            organizationContext={organizationContext}
+          />
 
           <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
             <Link href={eventBackHref} className="text-2xl font-bold">
@@ -174,7 +193,10 @@ export default async function EventDetails({
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav organizationContext={organizationContext} />
+        <MvpNav
+          activeOrganizationId={activeOrganizationId}
+          organizationContext={organizationContext}
+        />
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <Link

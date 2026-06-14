@@ -179,6 +179,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const result = await createAdminSetupRecord(payload, {
+      activeOrganizationId: getText(body?.activeOrganizationId),
       sessionSource: {
         authorizationHeader: request.headers.get("authorization") ?? undefined,
         cookieHeader: request.headers.get("cookie") ?? undefined,

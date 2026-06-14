@@ -45,11 +45,13 @@ import {
 } from "./registrationStatusState";
 
 type RegistrationReviewBoardProps = {
+  activeOrganizationId: string;
   registrations: Registration[];
   source?: RegistrationReviewSource;
 };
 
 type RegistrationReviewCardProps = {
+  activeOrganizationId: string;
   onReviewError: (message: string | null) => void;
   onReviewSuccess: (message: string) => void;
   registration: Registration;
@@ -59,6 +61,7 @@ type RegistrationReviewCardProps = {
 type RegistrationReviewSource = "empty" | "firestore";
 
 type ReviewSyncOptions = {
+  activeOrganizationId: string;
   onError: (message: string | null) => void;
   onSuccess: () => void;
   payload: AdminRegistrationReviewPayload;
@@ -137,7 +140,10 @@ async function getResponseError(response: Response, fallback: string) {
   return typeof body?.error === "string" ? body.error : fallback;
 }
 
-async function syncAdminRegistrationReview(payload: AdminRegistrationReviewPayload) {
+async function syncAdminRegistrationReview(
+  payload: AdminRegistrationReviewPayload,
+  activeOrganizationId: string,
+) {
   if (!payload.registrationId) {
     return;
   }
@@ -145,7 +151,7 @@ async function syncAdminRegistrationReview(payload: AdminRegistrationReviewPaylo
   const response = await fetch(
     `/api/admin/registrations/${payload.registrationId}/review`,
     {
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ ...payload, activeOrganizationId }),
       credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
@@ -162,6 +168,7 @@ async function syncAdminRegistrationReview(payload: AdminRegistrationReviewPaylo
 }
 
 function saveAdminReviewChange({
+  activeOrganizationId,
   onError,
   onSuccess,
   payload,
@@ -174,7 +181,7 @@ function saveAdminReviewChange({
     return;
   }
 
-  void syncAdminRegistrationReview(payload)
+  void syncAdminRegistrationReview(payload, activeOrganizationId)
     .then(onSuccess)
     .catch((error) =>
       onError(
@@ -186,12 +193,14 @@ function saveAdminReviewChange({
 }
 
 function DocumentReviewSection({
+  activeOrganizationId,
   documents,
   onReviewError,
   onReviewSaved,
   registrationId,
   source,
 }: {
+  activeOrganizationId: string;
   documents: DocumentRequirement[];
   onReviewError: (message: string | null) => void;
   onReviewSaved: () => void;
@@ -245,6 +254,7 @@ function DocumentReviewSection({
                     type="button"
                     onClick={() => {
                       saveAdminReviewChange({
+                        activeOrganizationId,
                         onError: onReviewError,
                         onSuccess: onReviewSaved,
                         payload: {
@@ -276,12 +286,14 @@ function DocumentReviewSection({
 }
 
 function PaymentReviewSection({
+  activeOrganizationId,
   onReviewError,
   onReviewSaved,
   payments,
   registrationId,
   source,
 }: {
+  activeOrganizationId: string;
   onReviewError: (message: string | null) => void;
   onReviewSaved: () => void;
   payments: PaymentRequirement[];
@@ -335,6 +347,7 @@ function PaymentReviewSection({
                     type="button"
                     onClick={() => {
                       saveAdminReviewChange({
+                        activeOrganizationId,
                         onError: onReviewError,
                         onSuccess: onReviewSaved,
                         payload: {
@@ -398,6 +411,7 @@ function getRegistrationDocumentRequirements(
 }
 
 function RegistrationReviewCard({
+  activeOrganizationId,
   onReviewError,
   onReviewSuccess,
   registration,
@@ -467,6 +481,7 @@ function RegistrationReviewCard({
               type="button"
               onClick={() => {
                 saveAdminReviewChange({
+                  activeOrganizationId,
                   onError: onReviewError,
                   onSuccess: () => {
                     onReviewSuccess(
@@ -546,6 +561,7 @@ function RegistrationReviewCard({
                       type="button"
                       onClick={() => {
                         saveAdminReviewChange({
+                          activeOrganizationId,
                           onError: onReviewError,
                           onSuccess: () => router.refresh(),
                           payload: {
@@ -574,6 +590,7 @@ function RegistrationReviewCard({
       </div>
 
       <DocumentReviewSection
+        activeOrganizationId={activeOrganizationId}
         documents={documents}
         onReviewError={onReviewError}
         onReviewSaved={() => router.refresh()}
@@ -581,6 +598,7 @@ function RegistrationReviewCard({
         source={source}
       />
       <PaymentReviewSection
+        activeOrganizationId={activeOrganizationId}
         onReviewError={onReviewError}
         onReviewSaved={() => router.refresh()}
         payments={payments}
@@ -595,6 +613,7 @@ function RegistrationReviewCard({
             type="button"
             onClick={() => {
               saveAdminReviewChange({
+                activeOrganizationId,
                 onError: onReviewError,
                 onSuccess: () => router.refresh(),
                 payload: {
@@ -626,6 +645,7 @@ function RegistrationReviewCard({
 }
 
 export default function RegistrationReviewBoard({
+  activeOrganizationId,
   registrations,
   source = "empty",
 }: RegistrationReviewBoardProps) {
@@ -682,8 +702,14 @@ export default function RegistrationReviewBoard({
             {reviewError}
           </p>
         )}
+        {registrations.length === 0 && (
+          <p className="rounded-2xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300">
+            No registrations exist for the active organization.
+          </p>
+        )}
         {registrations.map((registration) => (
           <RegistrationReviewCard
+            activeOrganizationId={activeOrganizationId}
             key={registration.id}
             onReviewError={(message) => {
               setReviewMessage(null);

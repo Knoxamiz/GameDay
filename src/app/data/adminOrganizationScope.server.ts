@@ -9,6 +9,7 @@ import {
   canManageOrganizationMembership,
   type OrganizationMembership,
 } from "./organizationMemberships";
+import type { Organization } from "./organizations";
 
 export type AdminOrganizationScopeSource =
   | "claims"
@@ -33,12 +34,40 @@ export type AdminRecordActor = {
   teamIds: string[];
 };
 
+export type ActiveAdminOrganizationContext = {
+  activeOrganization?: Organization;
+  activeOrganizationId?: string;
+  organizations: Organization[];
+  requiresSelection: boolean;
+  scope: AdminOrganizationScope;
+};
+
 function normalizeText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
 function uniqueStringList(values: (string | undefined)[]) {
   return [...new Set(values.map(normalizeText).filter(Boolean))];
+}
+
+function getOrganizationShell(organizationId: string): Organization {
+  const name = organizationId
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
+
+  return {
+    id: organizationId,
+    name: name || organizationId,
+    organizationId,
+    status: {
+      activeTeams: 0,
+      coaches: 0,
+      registeredPlayers: 0,
+      upcomingEvents: 0,
+    },
+  };
 }
 
 function getScopeSource(
@@ -111,6 +140,41 @@ export function canManageOrganization(
   organizationId: string,
 ) {
   return scope.organizationIds.includes(organizationId);
+}
+
+export async function resolveActiveAdminOrganizationContext(
+  session: AuthSession,
+  requestedOrganizationId?: string,
+): Promise<ActiveAdminOrganizationContext> {
+  const scope = await resolveAdminOrganizationScope(session);
+  const repositories = createFirestoreRepositories();
+  const organizationRecords = await Promise.all(
+    scope.organizationIds.map((organizationId) =>
+      repositories.organizations.getById(organizationId),
+    ),
+  );
+  const organizations = scope.organizationIds.map(
+    (organizationId, index) =>
+      organizationRecords[index] ?? getOrganizationShell(organizationId),
+  );
+  const activeOrganizationId =
+    scope.organizationIds.length === 1
+      ? scope.organizationIds[0]
+      : requestedOrganizationId &&
+          scope.organizationIds.includes(requestedOrganizationId)
+        ? requestedOrganizationId
+        : undefined;
+
+  return {
+    activeOrganization: organizations.find(
+      (organization) => organization.id === activeOrganizationId,
+    ),
+    activeOrganizationId,
+    organizations,
+    requiresSelection:
+      scope.organizationIds.length > 1 && !activeOrganizationId,
+    scope,
+  };
 }
 
 export function canUseAdminSetup(scope: AdminOrganizationScope) {

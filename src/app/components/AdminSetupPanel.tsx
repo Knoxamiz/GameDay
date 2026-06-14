@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type { Coach, CoachAssignmentStatus } from "../data/coaches";
 import type { RegistrationInvite } from "../data/invites";
 import type { Organization } from "../data/organizations";
@@ -8,10 +8,10 @@ import type { Team } from "../data/teams";
 import RegistrationInviteManager from "./RegistrationInviteManager";
 
 type AdminSetupPanelProps = {
+  activeOrganizationId?: string;
   canCreateOrganization: boolean;
   canManageSetup: boolean;
   coaches: Coach[];
-  organizationIds: string[];
   organizations: Organization[];
   registrationInvites: RegistrationInvite[];
   teams: Team[];
@@ -36,18 +36,17 @@ function getOrganizationNameFromId(organizationId: string) {
 }
 
 export default function AdminSetupPanel({
+  activeOrganizationId,
   canCreateOrganization,
   canManageSetup,
   coaches,
-  organizationIds,
   organizations,
   registrationInvites,
   teams,
 }: AdminSetupPanelProps) {
-  const primaryOrganizationId = organizationIds[0] ?? organizations[0]?.id ?? "";
-  const [organizationId, setOrganizationId] = useState(primaryOrganizationId);
+  const organizationId = activeOrganizationId ?? "";
   const [organizationName, setOrganizationName] = useState(
-    organizations[0]?.name ?? getOrganizationNameFromId(primaryOrganizationId),
+    organizations[0]?.name ?? getOrganizationNameFromId(organizationId),
   );
   const [teamName, setTeamName] = useState("");
   const [teamDivision, setTeamDivision] = useState("");
@@ -63,13 +62,6 @@ export default function AdminSetupPanel({
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const claimedOrganizationOptions = useMemo(
-    () =>
-      organizationIds.length > 0
-        ? organizationIds
-        : organizations.map((organization) => organization.id),
-    [organizationIds, organizations],
-  );
   const activeTeams = teams.filter(
     (team) =>
       team.lifecycleStatus !== "Inactive" &&
@@ -88,18 +80,6 @@ export default function AdminSetupPanel({
     );
   }
 
-  function selectOrganization(nextOrganizationId: string) {
-    const selectedOrganization = organizations.find(
-      (organization) => organization.id === nextOrganizationId,
-    );
-
-    setOrganizationId(nextOrganizationId);
-    setOrganizationName(
-      selectedOrganization?.name ??
-        getOrganizationNameFromId(nextOrganizationId),
-    );
-  }
-
   async function saveSetup(payload: Record<string, unknown>) {
     setError(null);
     setMessage(null);
@@ -107,7 +87,7 @@ export default function AdminSetupPanel({
 
     try {
       const response = await fetch("/api/admin/setup", {
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ activeOrganizationId, ...payload }),
         credentials: "same-origin",
         headers: {
           "Content-Type": "application/json",
@@ -206,25 +186,12 @@ export default function AdminSetupPanel({
         </p>
         <h2 className="mt-2 text-xl font-bold">Organization</h2>
         <p className="mt-2 text-sm text-slate-300">
-          Create the real organization shell from the admin claim scope.
+          Manage the real organization record for the active context.
         </p>
         <div className="mt-4 space-y-3">
-          <label className="block">
-            <span className="text-sm font-semibold text-slate-300">
-              Organization ID
-            </span>
-            <select
-              className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
-              onChange={(event) => selectOrganization(event.target.value)}
-              value={organizationId}
-            >
-              {claimedOrganizationOptions.map((id) => (
-                <option key={id} value={id}>
-                  {id}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="rounded-xl bg-slate-800 p-3 text-sm text-slate-300">
+            Organization ID: {organizationId}
+          </div>
           <label className="block">
             <span className="text-sm font-semibold text-slate-300">Name</span>
             <input

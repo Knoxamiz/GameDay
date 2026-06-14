@@ -24,6 +24,7 @@ import type {
 } from "./registrations";
 
 type UpdateAdminRegistrationReviewOptions = {
+  activeOrganizationId?: string;
   sessionSource: AuthSessionSource;
 };
 
@@ -208,6 +209,18 @@ export async function updateAdminRegistrationReview(
   }
 
   const adminScope = await resolveAdminOrganizationScope(session);
+  const activeOrganizationId = normalizeText(options.activeOrganizationId);
+
+  if (
+    !activeOrganizationId ||
+    !canManageOrganization(adminScope, activeOrganizationId)
+  ) {
+    createReviewError(
+      "active-organization-required",
+      "Choose an organization you manage before reviewing registrations.",
+      403,
+    );
+  }
 
   const repositories = createFirestoreRepositories();
   const registration = await repositories.registrations.getById(registrationId);
@@ -217,6 +230,14 @@ export async function updateAdminRegistrationReview(
       "registration-not-found",
       "Could not find this registration.",
       404,
+    );
+  }
+
+  if (registration.organizationId !== activeOrganizationId) {
+    createReviewError(
+      "active-organization-mismatch",
+      "This registration is outside the active organization.",
+      403,
     );
   }
 

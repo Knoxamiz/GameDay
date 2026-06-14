@@ -4,6 +4,8 @@ import {
   getEventTeamIds,
   type GameDayEvent,
 } from "../data/events";
+import { getRequestedOrganizationId } from "../data/activeOrganization";
+import { resolveActiveAdminOrganizationContext } from "../data/adminOrganizationScope.server";
 import { getCurrentAuthSession } from "../data/currentUser.server";
 import { getEventScheduleReadModel } from "../data/eventSchedule.server";
 import type { Team } from "../data/teams";
@@ -73,10 +75,25 @@ function getCalendarEvent(
     .join("\r\n");
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await getCurrentAuthSession();
   const role = session?.claims.role ?? "shared";
-  const schedule = await getEventScheduleReadModel(role);
+  const activeOrganizationId =
+    session?.claims.role === "admin"
+      ? (
+          await resolveActiveAdminOrganizationContext(
+            session,
+            getRequestedOrganizationId(
+              new URL(request.url).searchParams.get("organizationId") ??
+                undefined,
+            ),
+          )
+        ).activeOrganizationId
+      : undefined;
+  const schedule = await getEventScheduleReadModel(
+    role,
+    activeOrganizationId,
+  );
   const events = schedule.events;
   const scheduledEvents = events.filter(hasCalendarTime);
   const teams = schedule.teams;
