@@ -62,12 +62,11 @@ function uniqueById<TRecord extends { id: string }>(records: TRecord[]) {
 }
 
 async function getCoachMessages(
-  coach: Coach,
   teamIds: string[],
   organizationIds: string[],
 ) {
   const repositories = createFirestoreRepositories();
-  const teamIdSet = new Set(teamIds.length > 0 ? teamIds : coach.teamIds);
+  const teamIdSet = new Set(teamIds);
   const [organizationMessageLists, teamMessageLists] = await Promise.all([
     Promise.all(
       organizationIds.map((organizationId) =>
@@ -155,6 +154,18 @@ async function getScopedCoachEvents(scope: CoachAssignmentScope) {
   ).sort(sortEventsByStartDate);
 }
 
+async function getScopedCoachEventsForTeams(
+  scope: CoachAssignmentScope,
+  teams: Team[],
+) {
+  const activeTeamIdSet = new Set(teams.map((team) => team.id));
+
+  return getScopedCoachEvents({
+    ...scope,
+    teamIds: scope.teamIds.filter((teamId) => activeTeamIdSet.has(teamId)),
+  });
+}
+
 async function getPrimaryCoachEvent(
   scope: CoachAssignmentScope,
   coachTeam: Team | undefined,
@@ -186,10 +197,11 @@ export async function getCoachHomeReadModel(): Promise<CoachHomeReadModel> {
 
     const repositories = createFirestoreRepositories();
     const coachScope = await resolveCoachAssignmentScope(session);
-    const [coachTeams, coachEvents] = await Promise.all([
-      getCoachAssignedTeams(coachScope),
-      getScopedCoachEvents(coachScope),
-    ]);
+    const coachTeams = await getCoachAssignedTeams(coachScope);
+    const coachEvents = await getScopedCoachEventsForTeams(
+      coachScope,
+      coachTeams,
+    );
     const coach = coachScope.coach;
     const coachTeam = coachTeams[0];
     const todayEvent = await getPrimaryCoachEvent(
@@ -206,7 +218,6 @@ export async function getCoachHomeReadModel(): Promise<CoachHomeReadModel> {
     ] =
       await Promise.all([
         getCoachMessages(
-          coach,
           coachTeams.map((team) => team.id),
           coachScope.organizationIds,
         ),

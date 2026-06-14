@@ -21,7 +21,7 @@ import {
   getEventTimeLabel,
 } from "../data/events";
 import { isCoachVisibleRosterRegistration } from "../data/registrations";
-import { getTeamsNeedingCoaches } from "../data/teams";
+import { getTeamsNeedingCoaches, isActiveTeam } from "../data/teams";
 import { getLandingRouteForClaims } from "../infrastructure/auth";
 
 export const dynamic = "force-dynamic";
@@ -75,7 +75,7 @@ export default async function AdminHome({ searchParams }: AdminHomeProps) {
     },
     {
       label: "Active Teams",
-      value: organizationTeams.length,
+      value: organizationTeams.filter(isActiveTeam).length,
     },
     {
       label: "Coaches",

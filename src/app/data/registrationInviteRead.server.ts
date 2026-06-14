@@ -10,7 +10,7 @@ import {
 } from "./invites";
 import type { Organization } from "./organizations";
 import type { Registration } from "./registrations";
-import type { Team } from "./teams";
+import { isActiveTeam, type Team } from "./teams";
 
 export type RegistrationInviteReadModel = {
   availability: RegistrationInviteAvailability;
@@ -60,7 +60,7 @@ async function buildInviteReadModel(
     organization &&
       team &&
       team.organizationId === normalizedInvite.organizationId &&
-      team.lifecycleStatus !== "Inactive",
+      isActiveTeam(team),
   );
 
   return {

@@ -24,6 +24,7 @@ import type {
   RegistrationSubmissionPayload,
   RegistrationSubmissionResult,
 } from "./registrationSubmission";
+import { isActiveTeam, type Team } from "./teams";
 import type { AuthSessionSource } from "../infrastructure/auth";
 import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
@@ -216,10 +217,7 @@ export async function submitParentRegistration(
     ] = await Promise.all([
       transaction.get<ParentGuardian>("parents", parentId),
       transaction.get("organizations", invite.organizationId),
-      transaction.get<{ lifecycleStatus?: string; organizationId: string }>(
-        "teams",
-        invite.teamId,
-      ),
+      transaction.get<Team>("teams", invite.teamId),
       transaction.list<Registration>("registrations", {
         scope: { registrationInviteId: invite.id },
       }),
@@ -231,7 +229,7 @@ export async function submitParentRegistration(
       inviteOrganization &&
         inviteTeam &&
         inviteTeam.organizationId === invite.organizationId &&
-        inviteTeam.lifecycleStatus !== "Inactive",
+        isActiveTeam(inviteTeam),
     );
     const registrationCount = new Set(
       [...registrationsByInviteId, ...registrationsByInviteCode].map(

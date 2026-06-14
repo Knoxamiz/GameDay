@@ -72,7 +72,14 @@ export const backendRelationships: BackendRelationship[] = [
   },
   {
     from: "teams",
-    keys: ["organizationId", "coachIds", "athleteIds", "eventIds"],
+    keys: [
+      "teamId",
+      "organizationId",
+      "status",
+      "coachIds",
+      "athleteIds",
+      "eventIds",
+    ],
     to: "events",
   },
   {
@@ -219,7 +226,13 @@ export const backendCollectionSpecs: Record<
     collection: "teams",
     indexes: [["organizationId"], ["coachIds"]],
     primaryKey: "id",
-    scopeKeys: ["organizationId", "coachIds", "athleteIds"],
+    scopeKeys: [
+      "teamId",
+      "organizationId",
+      "status",
+      "coachIds",
+      "athleteIds",
+    ],
     serverWritesRequired: true,
   },
   events: {

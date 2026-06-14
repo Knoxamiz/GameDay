@@ -184,13 +184,11 @@ async function getCoachScheduleReadModel(
   const repositories = createFirestoreRepositories();
   const coachScope = await resolveCoachAssignmentScope(session);
   const organizationIds = coachScope.organizationIds;
-  const teamIds = coachScope.teamIds;
-  const [teams, eventLists] = await Promise.all([
-    getCoachAssignedTeams(coachScope),
-    Promise.all(
-      teamIds.map((teamId) => repositories.events.listByTeamId(teamId)),
-    ),
-  ]);
+  const teams = await getCoachAssignedTeams(coachScope);
+  const teamIds = teams.map((team) => team.id);
+  const eventLists = await Promise.all(
+    teamIds.map((teamId) => repositories.events.listByTeamId(teamId)),
+  );
 
   return {
     canCreateEvents: false,

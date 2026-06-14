@@ -4,8 +4,9 @@ import { useState } from "react";
 import type { Coach, CoachAssignmentStatus } from "../data/coaches";
 import type { RegistrationInvite } from "../data/invites";
 import type { Organization } from "../data/organizations";
-import type { Team } from "../data/teams";
+import { isActiveTeam, type Team } from "../data/teams";
 import RegistrationInviteManager from "./RegistrationInviteManager";
+import TeamLifecycleManager from "./TeamLifecycleManager";
 
 type AdminSetupPanelProps = {
   activeOrganizationId?: string;
@@ -51,7 +52,7 @@ export default function AdminSetupPanel({
   const [teamName, setTeamName] = useState("");
   const [teamDivision, setTeamDivision] = useState("");
   const [teamSeason, setTeamSeason] = useState(getCurrentSeasonLabel());
-  const [teamStatus, setTeamStatus] = useState<"Active" | "Inactive">("Active");
+  const [teamStatus, setTeamStatus] = useState<"active" | "inactive">("active");
   const [coachName, setCoachName] = useState("");
   const [coachEmail, setCoachEmail] = useState("");
   const [coachUid, setCoachUid] = useState("");
@@ -63,9 +64,7 @@ export default function AdminSetupPanel({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const activeTeams = teams.filter(
-    (team) =>
-      team.lifecycleStatus !== "Inactive" &&
-      team.organizationId === organizationId,
+    (team) => team.organizationId === organizationId && isActiveTeam(team),
   );
   const activeTeamIdSet = new Set(activeTeams.map((team) => team.id));
   const selectedCoachTeamIds = coachTeamIds.filter((teamId) =>
@@ -270,13 +269,13 @@ export default function AdminSetupPanel({
                 className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
                 onChange={(event) =>
                   setTeamStatus(
-                    event.target.value === "Inactive" ? "Inactive" : "Active",
+                    event.target.value === "inactive" ? "inactive" : "active",
                   )
                 }
                 value={teamStatus}
               >
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
               </select>
             </label>
             <button
@@ -299,6 +298,11 @@ export default function AdminSetupPanel({
           </div>
         )}
       </section>
+
+      <TeamLifecycleManager
+        activeOrganizationId={organizationId}
+        teams={teams}
+      />
 
       <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">

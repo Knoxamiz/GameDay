@@ -14,7 +14,7 @@ import type { GameDayEvent } from "./events";
 import type { GameDayMessage } from "./messages";
 import type { Organization } from "./organizations";
 import type { Registration } from "./registrations";
-import type { Team } from "./teams";
+import { isArchivedTeam, type Team } from "./teams";
 import type { TransportationEntry } from "./transportation";
 
 export type AdminHomeReadModel = {
@@ -154,7 +154,7 @@ export async function getAdminHomeReadModel(
       organizations: [organization ?? getOrganizationShell(organizationId)],
       registrations: uniqueById(registrations),
       source: "firestore",
-      teams: uniqueById(teams),
+      teams: uniqueById(teams).filter((team) => !isArchivedTeam(team)),
       transportationEntries: uniqueById(transportationLists.flat()),
     };
   } catch (error) {

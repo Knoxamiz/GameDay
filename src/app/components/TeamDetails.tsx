@@ -14,6 +14,7 @@ import {
 import { getEventScheduleReadModel } from "../data/eventSchedule.server";
 import { getCurrentParentUser } from "../data/currentUser.server";
 import { getOrganizationContext } from "../data/organizationContext.server";
+import { getTeamStatusLabel } from "../data/teams";
 import { summarizePaymentRequirements } from "../data/payments";
 import {
   getDocumentRequirementsFromRegistrations,
@@ -198,7 +199,9 @@ export default async function TeamDetails({
             ]
           : []),
       ]
-    : teamDetails.status;
+    : Array.isArray(teamDetails.status)
+      ? teamDetails.status
+      : [getTeamStatusLabel(teamDetails)];
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">

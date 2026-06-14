@@ -44,8 +44,18 @@ function getOptionalPositiveInteger(value: unknown) {
     : Number.NaN;
 }
 
-function getTeamStatus(value: unknown): "Active" | "Inactive" {
-  return value === "Inactive" ? "Inactive" : "Active";
+function getTeamStatus(
+  value: unknown,
+): "active" | "inactive" | "archived" | null {
+  if (value === "active" || value === "inactive" || value === "archived") {
+    return value;
+  }
+
+  return null;
+}
+
+function getNewTeamStatus(value: unknown): "active" | "inactive" | null {
+  return value === "active" || value === "inactive" ? value : null;
 }
 
 function getCoachStatus(value: unknown): "Active" | "Inactive" {
@@ -84,13 +94,37 @@ function getSetupPayload(body: Record<string, unknown> | null) {
   }
 
   if (actionType === "team") {
+    const status = getNewTeamStatus(body.status);
+
+    if (!status) {
+      return null;
+    }
+
     return {
       actionType,
       division: getText(body.division),
       name: getText(body.name),
       organizationId: getText(body.organizationId),
       season: getText(body.season),
-      status: getTeamStatus(body.status),
+      status,
+    } satisfies AdminSetupPayload;
+  }
+
+  if (actionType === "team-update") {
+    const status = getTeamStatus(body.status);
+
+    if (!status) {
+      return null;
+    }
+
+    return {
+      actionType,
+      division: getText(body.division),
+      name: getText(body.name),
+      organizationId: getText(body.organizationId),
+      season: getText(body.season),
+      status,
+      teamId: getText(body.teamId),
     } satisfies AdminSetupPayload;
   }
 

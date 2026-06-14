@@ -7,7 +7,7 @@ import {
   type RegistrationInvite,
   type RegistrationInviteStatus,
 } from "../data/invites";
-import type { Team } from "../data/teams";
+import { isActiveTeam, type Team } from "../data/teams";
 
 type RegistrationInviteManagerProps = {
   organizationId: string;
@@ -234,7 +234,7 @@ export default function RegistrationInviteManager({
   const activeTeams = teams.filter(
     (team) =>
       team.organizationId === organizationId &&
-      team.lifecycleStatus !== "Inactive",
+      isActiveTeam(team),
   );
   const [inviteTeamId, setInviteTeamId] = useState(activeTeams[0]?.id ?? "");
   const [title, setTitle] = useState("");

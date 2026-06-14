@@ -5,7 +5,7 @@ import type {
   GameDayEventStatus,
   GameDayEventType,
 } from "../data/events";
-import type { Team } from "../data/teams";
+import { isActiveTeam, type Team } from "../data/teams";
 
 type AdminEventFormProps = {
   activeOrganizationId: string;
@@ -81,7 +81,8 @@ export default function AdminEventForm({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const availableTeams = teams.filter(
-    (team) => team.organizationId === activeOrganizationId,
+    (team) =>
+      team.organizationId === activeOrganizationId && isActiveTeam(team),
   );
 
   function toggleTeam(teamId: string) {

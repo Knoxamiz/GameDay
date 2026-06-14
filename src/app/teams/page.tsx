@@ -15,6 +15,7 @@ import {
 import { getEventScheduleReadModel } from "../data/eventSchedule.server";
 import { getOrganizationContext } from "../data/organizationContext.server";
 import { summarizeTransportationEntries } from "../data/transportation";
+import { getTeamStatusLabel, isArchivedTeam } from "../data/teams";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 
 export const dynamic = "force-dynamic";
@@ -57,7 +58,10 @@ export default async function TeamsHome({ searchParams }: TeamsHomeProps) {
   const repositories = schedule.source === "firestore"
     ? createFirestoreRepositories()
     : null;
-  const visibleTeams = schedule.teams;
+  const visibleTeams =
+    role === "admin"
+      ? schedule.teams.filter((team) => !isArchivedTeam(team))
+      : schedule.teams;
   const nextEvents = repositories
     ? (
         await Promise.all(
@@ -154,7 +158,7 @@ export default async function TeamsHome({ searchParams }: TeamsHomeProps) {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                      {team.label}
+                      {team.label} - {getTeamStatusLabel(team)}
                     </p>
                     <h2 className="mt-2 text-xl font-bold">{team.name}</h2>
                   </div>

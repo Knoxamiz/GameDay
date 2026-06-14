@@ -5,7 +5,7 @@ import {
   isActiveCoach,
   type Coach,
 } from "./coaches";
-import type { Team } from "./teams";
+import { isActiveTeam, type Team } from "./teams";
 
 export type CoachAssignmentScopeSource = "claims" | "empty" | "firestore";
 
@@ -141,7 +141,11 @@ export async function getCoachAssignedTeams(scope: CoachAssignmentScope) {
   return uniqueById(
     teams.filter(
       (team): team is Team =>
-        Boolean(team && scope.organizationIds.includes(team.organizationId)),
+        Boolean(
+          team &&
+            scope.organizationIds.includes(team.organizationId) &&
+            isActiveTeam(team),
+        ),
     ),
   );
 }

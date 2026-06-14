@@ -29,7 +29,12 @@ import {
 import type { OrganizationMembership } from "./organizationMemberships";
 import type { Organization } from "./organizations";
 import { isCoachVisibleRosterRegistration, type Registration } from "./registrations";
-import type { Team } from "./teams";
+import {
+  getTeamLifecycleStatus,
+  isActiveTeam,
+  type Team,
+  type TeamLifecycleStatus,
+} from "./teams";
 
 export type AdminSetupReadModel = {
   canCreateOrganization: boolean;
@@ -60,7 +65,16 @@ export type AdminSetupPayload =
       name: string;
       organizationId: string;
       season: string;
-      status: "Active" | "Inactive";
+      status: Exclude<TeamLifecycleStatus, "archived">;
+    }
+  | {
+      actionType: "team-update";
+      division: string;
+      name: string;
+      organizationId: string;
+      season: string;
+      status: TeamLifecycleStatus;
+      teamId: string;
     }
   | {
       actionType: "coach-assignment";
@@ -346,8 +360,7 @@ function getOrganizationStatus({
   teams: Team[];
 }) {
   return {
-    activeTeams: teams.filter((team) => team.lifecycleStatus !== "Inactive")
-      .length,
+    activeTeams: teams.filter(isActiveTeam).length,
     coaches: coaches.filter(isActiveCoach).length,
     registeredPlayers: registrations.filter(isCoachVisibleRosterRegistration)
       .length,
@@ -700,7 +713,7 @@ async function createTeam(
   const name = normalizeText(payload.name);
   const division = normalizeText(payload.division);
   const season = normalizeText(payload.season);
-  const lifecycleStatus = payload.status === "Inactive" ? "Inactive" : "Active";
+  const status = payload.status === "inactive" ? "inactive" : "active";
 
   if (!organizationId || !name || !division || !season) {
     createSetupError(
@@ -713,6 +726,7 @@ async function createTeam(
   assertManagedOrganization(scope, organizationId);
 
   const now = new Date().toISOString();
+  const teamId = createLiveRecordId("team", [organizationId, name, season]);
   const team: Team = {
     ageGroup: division,
     athleteIds: [],
@@ -721,15 +735,15 @@ async function createTeam(
     createdByUid: session.user.id,
     division,
     eventIds: [],
-    id: createLiveRecordId("team", [organizationId, name, season]),
+    id: teamId,
     label: division,
-    lifecycleStatus,
     name,
     organizationId,
     playerCount: 0,
     rosterPreviewIds: [],
     season,
-    status: [lifecycleStatus],
+    status,
+    teamId,
     updatedAt: now,
   };
 
@@ -761,6 +775,104 @@ async function createTeam(
   return {
     id: team.id,
     message: `Team created: ${team.name}`,
+    source: "firestore",
+  };
+}
+
+async function updateTeam(
+  scope: AdminOrganizationScope,
+  payload: Extract<AdminSetupPayload, { actionType: "team-update" }>,
+): Promise<AdminSetupResult> {
+  const organizationId = normalizeText(payload.organizationId);
+  const teamId = normalizeText(payload.teamId);
+  const name = normalizeText(payload.name);
+  const division = normalizeText(payload.division);
+  const season = normalizeText(payload.season);
+
+  if (!organizationId || !teamId || !name || !division || !season) {
+    createSetupError(
+      "invalid-team-update",
+      "Team, name, division, and season are required.",
+      400,
+    );
+  }
+
+  assertManagedOrganization(scope, organizationId);
+
+  const now = new Date().toISOString();
+  const nextTeam = await runFirestoreTransaction(async (transaction) => {
+    const [team, organizationTeams] = await Promise.all([
+      transaction.get<Team>("teams", teamId),
+      transaction.list<Team>("teams", { scope: { organizationId } }),
+    ]);
+
+    if (!team) {
+      createSetupError("team-not-found", "Team not found.", 404);
+    }
+
+    if (team.organizationId !== organizationId) {
+      createSetupError(
+        "team-organization-immutable",
+        "A team cannot be moved to another organization.",
+        403,
+      );
+    }
+
+    const duplicateTeam = organizationTeams.find(
+      (candidate) =>
+        candidate.id !== team.id &&
+        normalizeText(candidate.name).toLowerCase() === name.toLowerCase() &&
+        normalizeText(candidate.season).toLowerCase() === season.toLowerCase() &&
+        getTeamLifecycleStatus(candidate) !== "archived",
+    );
+
+    if (duplicateTeam) {
+      createSetupError(
+        "team-name-season-conflict",
+        "Another team with this name and season already exists.",
+        409,
+      );
+    }
+
+    const updatedTeam: Team = {
+      ...team,
+      ageGroup: division,
+      division,
+      label: division,
+      name,
+      season,
+      status: payload.status,
+      teamId: team.teamId ?? team.id,
+      updatedAt: now,
+    };
+
+    delete updatedTeam.lifecycleStatus;
+
+    if (payload.status === "archived") {
+      updatedTeam.archivedAt = team.archivedAt ?? now;
+      updatedTeam.archivedByUid =
+        team.archivedByUid ?? scope.session.user.id;
+    } else {
+      delete updatedTeam.archivedAt;
+      delete updatedTeam.archivedByUid;
+    }
+
+    transaction.set("teams", team.id, updatedTeam);
+    return updatedTeam;
+  });
+
+  console.info("Team lifecycle updated.", {
+    organizationId,
+    status: getTeamLifecycleStatus(nextTeam),
+    teamId: nextTeam.id,
+  });
+
+  return {
+    id: nextTeam.id,
+    message:
+      payload.status === "archived"
+        ? `Team archived: ${nextTeam.name}. Historical records were preserved.`
+        : `Team updated: ${nextTeam.name}`,
     source: "firestore",
   };
 }
@@ -858,11 +970,14 @@ async function createOrUpdateCoachAssignment(
 
     if (
       validTeams.length !== teamIds.length ||
-      validTeams.some((team) => team.organizationId !== organizationId)
+      validTeams.some(
+        (team) =>
+          team.organizationId !== organizationId || !isActiveTeam(team),
+      )
     ) {
       createSetupError(
         "coach-team-scope-invalid",
-        "Coaches can only be assigned to teams inside this organization.",
+        "Coaches can only be assigned to active teams inside this organization.",
         403,
       );
     }
@@ -1016,7 +1131,7 @@ async function createRegistrationInvite(
       !organization ||
       !team ||
       team.organizationId !== organizationId ||
-      team.lifecycleStatus === "Inactive"
+      !isActiveTeam(team)
     ) {
       createSetupError(
         "team-required",
@@ -1132,7 +1247,7 @@ async function updateRegistrationInvite(
       if (
         !team ||
         team.organizationId !== invite.organizationId ||
-        team.lifecycleStatus === "Inactive"
+        !isActiveTeam(team)
       ) {
         createSetupError(
           "registration-invite-team-required",
@@ -1235,6 +1350,10 @@ export async function createAdminSetupRecord(
 
   if (payload.actionType === "team") {
     return createTeam(scope, payload);
+  }
+
+  if (payload.actionType === "team-update") {
+    return updateTeam(scope, payload);
   }
 
   if (payload.actionType === "coach-assignment") {

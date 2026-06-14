@@ -20,7 +20,7 @@ import {
 } from "./events";
 import { createLiveRecordId } from "./liveIdentity";
 import type { Organization } from "./organizations";
-import type { Team } from "./teams";
+import { isActiveTeam, type Team } from "./teams";
 
 export type AdminEventPayload = {
   address?: string;
@@ -235,11 +235,14 @@ export async function createAdminEvent(
 
     if (
       validTeams.length !== teamIds.length ||
-      validTeams.some((team) => team.organizationId !== organizationId)
+      validTeams.some(
+        (team) =>
+          team.organizationId !== organizationId || !isActiveTeam(team),
+      )
     ) {
       createAdminEventError(
         "event-team-scope-invalid",
-        "Choose teams that belong to the selected organization.",
+        "Choose active teams that belong to the selected organization.",
         400,
       );
     }
