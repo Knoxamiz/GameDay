@@ -5,6 +5,7 @@ import {
   getEventDateLabel,
   getEventLocationLabel,
   getEventNotes,
+  getEventStatusLabel,
   getEventTeamIds,
   getEventTimeLabel,
 } from "../data/events";
@@ -44,6 +45,7 @@ export default async function EventDetails({
 
   const repositories = createFirestoreRepositories();
   const eventDetails = eventReadModel.event;
+  const eventUpdatesClosed = eventDetails.status !== "published";
   const organizationContext = await getOrganizationContext(
     eventReadModel.organizationIds,
   );
@@ -244,9 +246,25 @@ export default async function EventDetails({
 
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Status</h2>
-          <p className="mt-3 text-sm font-semibold text-green-300">
-            {eventDetails.status ?? "On Schedule"}
+          <p
+            className={`mt-3 text-sm font-semibold ${
+              eventDetails.status === "canceled"
+                ? "text-red-300"
+                : eventDetails.status === "draft"
+                  ? "text-yellow-200"
+                  : eventDetails.status === "archived"
+                    ? "text-slate-400"
+                    : "text-green-300"
+            }`}
+          >
+            {getEventStatusLabel(eventDetails)}
           </p>
+          {eventUpdatesClosed && (
+            <p className="mt-3 text-sm text-slate-300">
+              Attendance and transportation updates are closed for this event.
+              Existing responses remain available for history.
+            </p>
+          )}
           {eventDetails.updatedAt && (
             <>
               <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-400">

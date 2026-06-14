@@ -112,7 +112,6 @@ function assertOwnedEventContext({
 
   if (
     !event ||
-    event.status !== "published" ||
     event.organizationId !== registration.organizationId ||
     !eventHasTeamId(event, registration.teamId)
   ) {
@@ -120,6 +119,14 @@ function assertOwnedEventContext({
       "event-not-in-registration-scope",
       "This event is not available for the athlete's registered team.",
       403,
+    );
+  }
+
+  if (event.status !== "published") {
+    createOperationError(
+      "event-updates-closed",
+      "Attendance and transportation updates are closed for this event.",
+      409,
     );
   }
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import AdminOrganizationSelector from "../components/AdminOrganizationSelector";
 import AdminEventForm from "../components/AdminEventForm";
+import AdminEventLifecycleManager from "../components/AdminEventLifecycleManager";
 import MvpNav from "../components/MvpNav";
 import { summarizeAttendanceEntries } from "../data/attendance";
 import {
@@ -13,8 +14,10 @@ import { getCurrentAuthSession } from "../data/currentUser.server";
 import {
   getEventDateLabel,
   getEventLocationLabel,
+  getEventStatusLabel,
   getEventTeamIds,
   getEventTimeLabel,
+  isArchivedEvent,
 } from "../data/events";
 import { getEventScheduleReadModel } from "../data/eventSchedule.server";
 import { getOrganizationContext } from "../data/organizationContext.server";
@@ -55,7 +58,10 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
   const repositories = schedule.source === "firestore"
     ? createFirestoreRepositories()
     : null;
-  const visibleEvents = schedule.events;
+  const visibleEvents =
+    role === "admin"
+      ? schedule.events.filter((event) => !isArchivedEvent(event))
+      : schedule.events;
   const [attendanceLists, transportationLists] = repositories
     ? await Promise.all([
         Promise.all(
@@ -117,11 +123,20 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
         )}
 
         {role === "admin" && activeOrganizationId && (
-          <AdminEventForm
-            activeOrganizationId={activeOrganizationId}
-            canCreateEvents={schedule.canCreateEvents}
-            teams={schedule.teams}
-          />
+          <>
+            <AdminEventForm
+              activeOrganizationId={activeOrganizationId}
+              canCreateEvents={schedule.canCreateEvents}
+              teams={schedule.teams}
+            />
+            {schedule.canCreateEvents && (
+              <AdminEventLifecycleManager
+                activeOrganizationId={activeOrganizationId}
+                events={schedule.events}
+                teams={schedule.teams}
+              />
+            )}
+          </>
         )}
 
         <div className="mt-6 space-y-4">
@@ -145,6 +160,7 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
               transportationByEventId.get(event.id) ?? [],
             );
             const hasTransportationIssue = transportation.needsRide > 0;
+            const showsLifecycleStatus = event.status !== "published";
 
             return (
               <Link
@@ -164,12 +180,20 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
                   </div>
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                      hasTransportationIssue
+                      event.status === "canceled"
                         ? "bg-red-500/20 text-red-300"
-                        : "bg-blue-500/20 text-blue-300"
+                        : event.status === "draft"
+                          ? "bg-yellow-500/20 text-yellow-200"
+                          : hasTransportationIssue
+                            ? "bg-red-500/20 text-red-300"
+                            : "bg-blue-500/20 text-blue-300"
                     }`}
                   >
-                    {hasTransportationIssue ? "Ride Help" : "On Track"}
+                    {showsLifecycleStatus
+                      ? getEventStatusLabel(event)
+                      : hasTransportationIssue
+                        ? "Ride Help"
+                        : "On Track"}
                   </span>
                 </div>
 

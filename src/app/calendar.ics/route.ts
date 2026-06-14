@@ -2,6 +2,7 @@ import {
   getEventLocationLabel,
   getEventNotes,
   getEventTeamIds,
+  isEventVisibleToNonAdmin,
   type GameDayEvent,
 } from "../data/events";
 import { getRequestedOrganizationId } from "../data/activeOrganization";
@@ -95,7 +96,9 @@ export async function GET(request: Request) {
     activeOrganizationId,
   );
   const events = schedule.events;
-  const scheduledEvents = events.filter(hasCalendarTime);
+  const scheduledEvents = events
+    .filter(isEventVisibleToNonAdmin)
+    .filter(hasCalendarTime);
   const teams = schedule.teams;
   const teamById = new Map(teams.map((team) => [team.id, team]));
   const calendarName = `GameDay ${

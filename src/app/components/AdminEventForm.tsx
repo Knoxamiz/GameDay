@@ -19,6 +19,11 @@ type AdminEventResponse = {
   message?: string;
 };
 
+type CreateEventStatus = Exclude<
+  GameDayEventStatus,
+  "archived" | "canceled"
+>;
+
 const eventTypeOptions: { label: string; value: GameDayEventType }[] = [
   { label: "Practice", value: "practice" },
   { label: "Game", value: "game" },
@@ -27,10 +32,9 @@ const eventTypeOptions: { label: string; value: GameDayEventType }[] = [
   { label: "Other", value: "other" },
 ];
 
-const eventStatusOptions: { label: string; value: GameDayEventStatus }[] = [
+const eventStatusOptions: { label: string; value: CreateEventStatus }[] = [
   { label: "Published", value: "published" },
   { label: "Draft", value: "draft" },
-  { label: "Canceled", value: "canceled" },
 ];
 
 function toDateTimeLocal(date: Date) {
@@ -76,7 +80,7 @@ export default function AdminEventForm({
   const [locationName, setLocationName] = useState("");
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
-  const [status, setStatus] = useState<GameDayEventStatus>("published");
+  const [status, setStatus] = useState<CreateEventStatus>("published");
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -162,9 +166,9 @@ export default function AdminEventForm({
         </p>
       )}
 
-      {teams.length === 0 ? (
+      {availableTeams.length === 0 ? (
         <p className="mt-4 rounded-xl bg-slate-800 p-3 text-sm text-slate-300">
-          Create a team before adding events.
+          Create or activate a team before adding events.
         </p>
       ) : (
         <div className="mt-4 space-y-3">
@@ -222,7 +226,7 @@ export default function AdminEventForm({
               <select
                 className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
                 onChange={(event) =>
-                  setStatus(event.target.value as GameDayEventStatus)
+                  setStatus(event.target.value as CreateEventStatus)
                 }
                 value={status}
               >

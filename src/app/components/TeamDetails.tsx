@@ -9,6 +9,9 @@ import {
   getEventLocationLabel,
   getEventShortDateLabel,
   getEventTimeLabel,
+  isArchivedEvent,
+  isEventVisibleToNonAdmin,
+  isPublishedEvent,
   sortEventsByStartDate,
 } from "../data/events";
 import { getEventScheduleReadModel } from "../data/eventSchedule.server";
@@ -121,12 +124,17 @@ export default async function TeamDetails({
   const rosterPreview = roster.slice(0, 4);
   const visibleAthleteIdSet = new Set(roster.map((athlete) => athlete.id));
   const teamEvents = (await repositories.events.listByTeamId(teamDetails.id))
-    .filter((event) => event.status !== "draft")
+    .filter((event) =>
+      role === "admin"
+        ? !isArchivedEvent(event)
+        : isEventVisibleToNonAdmin(event),
+    )
     .sort(sortEventsByStartDate);
   const nextEvent =
-    nextEventRecord && eventHasTeamId(nextEventRecord, teamDetails.id)
+    isPublishedEvent(nextEventRecord) &&
+    eventHasTeamId(nextEventRecord, teamDetails.id)
       ? nextEventRecord
-      : teamEvents[0];
+      : teamEvents.find(isPublishedEvent);
   const documentSummary = summarizeDocumentRequirements(
     getDocumentRequirementsFromRegistrations(teamRegistrations),
   );

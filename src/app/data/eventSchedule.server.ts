@@ -19,6 +19,7 @@ import {
 import {
   eventHasTeamId,
   getEventTeamIds,
+  isEventVisibleToNonAdmin,
   sortEventsByStartDate,
   type GameDayEvent,
 } from "./events";
@@ -100,10 +101,6 @@ function isRoleSession(
   }
 
   return Boolean(getLiveParentId(session));
-}
-
-function eventIsVisibleToNonAdmin(event: GameDayEvent) {
-  return event.status !== "draft";
 }
 
 function eventIsInOrganizationScope(
@@ -195,7 +192,7 @@ async function getCoachScheduleReadModel(
     events: sortScheduleEvents(
       eventLists
         .flat()
-        .filter(eventIsVisibleToNonAdmin)
+        .filter(isEventVisibleToNonAdmin)
         .filter((event) => eventIsInOrganizationScope(event, organizationIds))
         .filter((event) => eventIsInTeamScope(event, teamIds)),
     ),
@@ -214,6 +211,9 @@ function getOwnedParentRegistrations(
   return registrations.filter(
     (registration) =>
       registration.parentId === parentId &&
+      registration.rosterStatus !== "inactive" &&
+      registration.status !== "Rejected" &&
+      registration.status !== "Waitlisted" &&
       (registration.ownerUid === session.user.id ||
         registration.parentUid === session.user.id ||
         !registration.ownerUid),
@@ -253,7 +253,7 @@ async function getParentScheduleReadModel(
     events: sortScheduleEvents(
       eventLists
         .flat()
-        .filter(eventIsVisibleToNonAdmin)
+        .filter(isEventVisibleToNonAdmin)
         .filter((event) => eventIsInOrganizationScope(event, organizationIds))
         .filter((event) => eventIsInTeamScope(event, teamIds)),
     ),

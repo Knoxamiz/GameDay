@@ -5,7 +5,11 @@ export type GameDayEventType =
   | "meeting"
   | "other";
 
-export type GameDayEventStatus = "draft" | "published" | "canceled";
+export type GameDayEventStatus =
+  | "draft"
+  | "published"
+  | "canceled"
+  | "archived";
 
 export type GameDayEvent = {
   id: string;
@@ -17,6 +21,10 @@ export type GameDayEvent = {
   endsAt: string;
   locationName: string;
   address?: string;
+  archivedAt?: string;
+  archivedByUid?: string;
+  canceledAt?: string;
+  canceledByUid?: string;
   createdAt: string;
   createdByUid: string;
   notes?: string | string[];
@@ -72,6 +80,24 @@ export function getEventTeamIds(event: GameDayEvent) {
 
 export function eventHasTeamId(event: GameDayEvent, teamId: string) {
   return getEventTeamIds(event).includes(teamId);
+}
+
+export function isEventVisibleToNonAdmin(event: GameDayEvent) {
+  return event.status === "published" || event.status === "canceled";
+}
+
+export function isPublishedEvent(
+  event: GameDayEvent | null | undefined,
+): event is GameDayEvent {
+  return event?.status === "published";
+}
+
+export function isArchivedEvent(event: GameDayEvent) {
+  return event.status === "archived";
+}
+
+export function getEventStatusLabel(event: GameDayEvent) {
+  return `${event.status.charAt(0).toUpperCase()}${event.status.slice(1)}`;
 }
 
 export function getEventPrimaryTeamId(event: GameDayEvent) {

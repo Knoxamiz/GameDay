@@ -13,6 +13,7 @@ import {
   getEventDateLabel,
   getEventLocationLabel,
   getEventTimeLabel,
+  isPublishedEvent,
 } from "../data/events";
 import { getEventScheduleReadModel } from "../data/eventSchedule.server";
 import { getOrganizationContext } from "../data/organizationContext.server";
@@ -55,7 +56,10 @@ export default async function ParentHome() {
   const nextEventByAthleteId = new Map(
     parentAthletes.map((athlete) => [
       athlete.id,
-      schedule.events.find((event) => eventHasTeamId(event, athlete.teamId)),
+      schedule.events.find(
+        (event) =>
+          isPublishedEvent(event) && eventHasTeamId(event, athlete.teamId),
+      ),
     ]),
   );
   const repositories = createFirestoreRepositories();

@@ -12,6 +12,8 @@ import {
 import type { Coach } from "./coaches";
 import {
   eventHasTeamId,
+  isEventVisibleToNonAdmin,
+  isPublishedEvent,
   sortEventsByStartDate,
   type GameDayEvent,
 } from "./events";
@@ -137,7 +139,7 @@ function isEventInCoachScope(
 ) {
   return Boolean(
     event &&
-      event.status !== "draft" &&
+      isEventVisibleToNonAdmin(event) &&
       scope.teamIds.some((teamId) => eventHasTeamId(event, teamId)) &&
       scope.organizationIds.includes(event.organizationId),
   );
@@ -177,9 +179,9 @@ async function getPrimaryCoachEvent(
       (await repositories.events.getById(coachTeam.nextEventId))
     : undefined;
 
-  return isEventInCoachScope(scope, nextEvent)
+  return isEventInCoachScope(scope, nextEvent) && isPublishedEvent(nextEvent)
     ? (nextEvent ?? undefined)
-    : coachEvents[0];
+    : coachEvents.find(isPublishedEvent);
 }
 
 export async function getCoachHomeReadModel(): Promise<CoachHomeReadModel> {
