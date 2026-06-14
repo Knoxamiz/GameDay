@@ -2,9 +2,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import ParentAthleteCard from "../components/ParentAthleteCard";
 import BottomNav from "../components/BottomNav";
-import MvpNav, { getRoleHref } from "../components/MvpNav";
+import MvpNav from "../components/MvpNav";
 import SessionControls from "../components/SessionControls";
-import { getCurrentParentUser } from "../data/currentUser.server";
+import {
+  getCurrentAuthSession,
+  getCurrentParentUser,
+} from "../data/currentUser.server";
 import {
   eventHasTeamId,
   getEventDateLabel,
@@ -12,20 +15,32 @@ import {
   getEventTimeLabel,
 } from "../data/events";
 import { getEventScheduleReadModel } from "../data/eventSchedule.server";
+import { getOrganizationContext } from "../data/organizationContext.server";
 import {
   getParentAthleteRegistrationReadModel,
   getRegistrationByAthlete,
 } from "../data/parentAthleteRegistration.server";
 import { getRegistrationRosterStatus } from "../data/registrations";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
+import { getLandingRouteForClaims } from "../infrastructure/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function ParentHome() {
+  const session = await getCurrentAuthSession();
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  if (session.claims.role !== "parent") {
+    redirect(getLandingRouteForClaims(session.claims));
+  }
+
   const currentUser = await getCurrentParentUser();
 
   if (currentUser.source !== "firebase-session") {
-    redirect("/login?role=parent");
+    redirect("/login");
   }
   const {
     athletes: parentAthletes,
@@ -33,6 +48,9 @@ export default async function ParentHome() {
     registrations,
   } = await getParentAthleteRegistrationReadModel(currentUser.parentId);
   const schedule = await getEventScheduleReadModel("parent");
+  const organizationContext = await getOrganizationContext(
+    schedule.organizationIds,
+  );
   const teamsById = new Map(schedule.teams.map((team) => [team.id, team]));
   const nextEventByAthleteId = new Map(
     parentAthletes.map((athlete) => [
@@ -58,7 +76,7 @@ export default async function ParentHome() {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav role="parent" />
+        <MvpNav organizationContext={organizationContext} />
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <h1 className="text-3xl font-bold">GameDay</h1>
@@ -143,7 +161,7 @@ export default async function ParentHome() {
                 } for your registered athletes.`}
           </p>
           <Link
-            href={getRoleHref("/events", "parent")}
+            href={"/events"}
             className="mt-4 block w-full rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
           >
             View Schedule
@@ -153,7 +171,7 @@ export default async function ParentHome() {
         <BottomNav
           items={[
             { href: "/parent", label: "Home" },
-            { href: getRoleHref("/events", "parent"), label: "Schedule" },
+            { href: "/events", label: "Schedule" },
             { href: "/registration", label: "Registration" },
           ]}
         />

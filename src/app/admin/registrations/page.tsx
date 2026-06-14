@@ -1,25 +1,34 @@
 import BottomNav from "../../components/BottomNav";
 import { redirect } from "next/navigation";
-import MvpNav, { getRoleHref } from "../../components/MvpNav";
+import MvpNav from "../../components/MvpNav";
 import RegistrationReviewBoard from "../../components/RegistrationReviewBoard";
 import { getAdminRegistrationReadModel } from "../../data/adminRegistrationRead.server";
 import { getCurrentAuthSession } from "../../data/currentUser.server";
+import { getOrganizationContext } from "../../data/organizationContext.server";
+import { getLandingRouteForClaims } from "../../infrastructure/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminRegistrationsPage() {
   const session = await getCurrentAuthSession();
 
-  if (session?.claims.role !== "admin") {
-    redirect("/login?role=admin");
+  if (!session) {
+    redirect("/login");
+  }
+
+  if (session.claims.role !== "admin") {
+    redirect(getLandingRouteForClaims(session.claims));
   }
 
   const registrationReadModel = await getAdminRegistrationReadModel();
+  const organizationContext = await getOrganizationContext(
+    registrationReadModel.organizationIds,
+  );
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav role="admin" />
+        <MvpNav organizationContext={organizationContext} />
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <h1 className="text-3xl font-bold">Registration Review</h1>
@@ -36,9 +45,9 @@ export default async function AdminRegistrationsPage() {
         <BottomNav
           items={[
             { href: "/admin", label: "Home" },
-            { href: getRoleHref("/teams", "admin"), label: "Teams" },
+            { href: "/teams", label: "Teams" },
             { href: "/admin/registrations", label: "Registration" },
-            { href: getRoleHref("/events", "admin"), label: "Schedule" },
+            { href: "/events", label: "Schedule" },
           ]}
         />
       </section>

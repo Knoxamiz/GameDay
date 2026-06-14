@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import AdminReadinessBoard from "../components/AdminReadinessBoard";
 import AttendanceConcernAction from "../components/AttendanceConcernAction";
 import BottomNav from "../components/BottomNav";
-import MvpNav, { getRoleHref } from "../components/MvpNav";
+import MvpNav from "../components/MvpNav";
 import RegistrationAdminActionLinks from "../components/RegistrationAdminActionLinks";
 import SessionControls from "../components/SessionControls";
 import TransportationIssueAction from "../components/TransportationIssueAction";
@@ -16,14 +16,19 @@ import {
 } from "../data/events";
 import { isCoachVisibleRosterRegistration } from "../data/registrations";
 import { getTeamsNeedingCoaches } from "../data/teams";
+import { getLandingRouteForClaims } from "../infrastructure/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminHome() {
   const session = await getCurrentAuthSession();
 
-  if (session?.claims.role !== "admin") {
-    redirect("/login?role=admin");
+  if (!session) {
+    redirect("/login");
+  }
+
+  if (session.claims.role !== "admin") {
+    redirect(getLandingRouteForClaims(session.claims));
   }
 
   const {
@@ -70,12 +75,20 @@ export default async function AdminHome() {
       ? "No Organization Yet"
       : adminOrganizations.length > 1
       ? `${adminOrganizations.length} Organizations`
-      : organization.name;
+       : organization.name;
+  const organizationContext = hasAdminOrganizations
+    ? {
+        count: adminOrganizations.length,
+        label: adminOrganizations
+          .map((adminOrganization) => adminOrganization.name)
+          .join(", "),
+      }
+    : undefined;
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav role="admin" />
+        <MvpNav organizationContext={organizationContext} />
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <h1 className="text-3xl font-bold">GameDay - Admin</h1>
@@ -83,7 +96,9 @@ export default async function AdminHome() {
 
         <SessionControls role="admin" />
 
-        <p className="mt-5 text-slate-300">{organizationLabel}</p>
+        <p className="mt-5 text-slate-300">
+          Organization scope: {organizationLabel}
+        </p>
 
         {!hasAdminOrganizations && (
           <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300">
@@ -122,7 +137,7 @@ export default async function AdminHome() {
             </Link>
             {hasAdminOrganizations && (
               <Link
-                href={getRoleHref("/events", "admin")}
+                href={"/events"}
                 className="block rounded-xl bg-slate-800 p-4 font-semibold text-white"
               >
                 Create Schedule Event
@@ -131,7 +146,7 @@ export default async function AdminHome() {
             {teamsNeedingCoaches.map((team) => (
               <Link
                 key={team.id}
-                href={getRoleHref(`/teams/${team.id}`, "admin")}
+                href={`/teams/${team.id}`}
                 className="block rounded-xl bg-slate-800 p-4 font-semibold text-white"
               >
                 {team.name} Needs Coach
@@ -139,11 +154,11 @@ export default async function AdminHome() {
             ))}
             <AttendanceConcernAction
               entries={adminAttendanceEntries}
-              href={getRoleHref("/events", "admin")}
+              href={"/events"}
             />
             <TransportationIssueAction
               entries={transportationEntries}
-              href={getRoleHref("/events", "admin")}
+              href={"/events"}
             />
           </div>
         </div>
@@ -172,7 +187,7 @@ export default async function AdminHome() {
               return (
                 <Link
                   key={event.id}
-                  href={getRoleHref(`/events/${event.id}`, "admin")}
+                  href={`/events/${event.id}`}
                   className="block rounded-xl bg-slate-800 p-4"
                 >
                   <p className="font-semibold">{event.title}</p>
@@ -189,7 +204,7 @@ export default async function AdminHome() {
             })}
           </div>
           <Link
-            href={getRoleHref("/events", "admin")}
+            href={"/events"}
             className="mt-4 block w-full rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
           >
             View Schedule
@@ -208,9 +223,9 @@ export default async function AdminHome() {
         <BottomNav
           items={[
             { href: "/admin", label: "Home" },
-            { href: getRoleHref("/teams", "admin"), label: "Teams" },
+            { href: "/teams", label: "Teams" },
             { href: "/admin/registrations", label: "Registration" },
-            { href: getRoleHref("/events", "admin"), label: "Schedule" },
+            { href: "/events", label: "Schedule" },
           ]}
         />
       </section>

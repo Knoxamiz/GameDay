@@ -1,12 +1,12 @@
 import EventDetails from "../../components/EventDetails";
-import { getMvpNavRole } from "../../components/MvpNav";
+import { redirect } from "next/navigation";
+import { getCurrentAuthSession } from "../../data/currentUser.server";
 
 type EventDetailsPageProps = {
   params: Promise<{
     eventId: string;
   }>;
   searchParams?: Promise<{
-    role?: string | string[];
     view?: string | string[];
   }>;
 };
@@ -19,7 +19,13 @@ export default async function EventDetailsPage({
 }: EventDetailsPageProps) {
   const { eventId } = await params;
   const resolvedSearchParams = await searchParams;
-  const role = getMvpNavRole(resolvedSearchParams?.role);
+  const session = await getCurrentAuthSession();
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  const role = session.claims.role;
   const view = Array.isArray(resolvedSearchParams?.view)
     ? resolvedSearchParams?.view[0]
     : resolvedSearchParams?.view;

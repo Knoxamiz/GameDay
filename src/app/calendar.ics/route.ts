@@ -4,8 +4,8 @@ import {
   getEventTeamIds,
   type GameDayEvent,
 } from "../data/events";
+import { getCurrentAuthSession } from "../data/currentUser.server";
 import { getEventScheduleReadModel } from "../data/eventSchedule.server";
-import { getScheduleRole } from "../data/schedule";
 import type { Team } from "../data/teams";
 
 export const dynamic = "force-dynamic";
@@ -73,10 +73,9 @@ function getCalendarEvent(
     .join("\r\n");
 }
 
-export async function GET(request: Request) {
-  const role = getScheduleRole(
-    new URL(request.url).searchParams.get("role") ?? undefined,
-  );
+export async function GET() {
+  const session = await getCurrentAuthSession();
+  const role = session?.claims.role ?? "shared";
   const schedule = await getEventScheduleReadModel(role);
   const events = schedule.events;
   const scheduledEvents = events.filter(hasCalendarTime);

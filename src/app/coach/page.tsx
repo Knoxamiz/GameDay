@@ -2,13 +2,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import AttendanceSummaryCard from "../components/AttendanceSummaryCard";
 import BottomNav from "../components/BottomNav";
-import MvpNav, { getRoleHref } from "../components/MvpNav";
+import MvpNav from "../components/MvpNav";
 import RegistrationConcernAction from "../components/RegistrationConcernAction";
 import SessionControls from "../components/SessionControls";
 import TeamReadinessSummary from "../components/TeamReadinessSummary";
 import TransportationSummaryCard from "../components/TransportationSummaryCard";
 import { getCoachHomeReadModel } from "../data/coachRead.server";
 import { getCurrentAuthSession } from "../data/currentUser.server";
+import { getOrganizationContext } from "../data/organizationContext.server";
 import {
   getEventDateLabel,
   getEventLocationLabel,
@@ -18,14 +19,19 @@ import {
   getRegistrationRosterStatus,
   getRosterStatusLabel,
 } from "../data/registrations";
+import { getLandingRouteForClaims } from "../infrastructure/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function CoachHome() {
   const session = await getCurrentAuthSession();
 
-  if (session?.claims.role !== "coach") {
-    redirect("/login?role=coach");
+  if (!session) {
+    redirect("/login");
+  }
+
+  if (session.claims.role !== "coach") {
+    redirect(getLandingRouteForClaims(session.claims));
   }
 
   const {
@@ -39,12 +45,16 @@ export default async function CoachHome() {
     todayEvent,
     transportationEntries,
   } = await getCoachHomeReadModel();
+  const organizationContext = await getOrganizationContext([
+    ...coachTeams.map((team) => team.organizationId),
+    ...(currentCoach.organizationIds ?? []),
+  ]);
   const coachTeamById = new Map(coachTeams.map((team) => [team.id, team]));
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav role="coach" />
+        <MvpNav organizationContext={organizationContext} />
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <h1 className="text-3xl font-bold">GameDay - Coach</h1>
@@ -70,7 +80,7 @@ export default async function CoachHome() {
               {coachTeams.map((team) => (
                 <Link
                   key={team.id}
-                  href={getRoleHref(`/teams/${team.id}`, "coach")}
+                  href={`/teams/${team.id}`}
                   className="block rounded-xl bg-slate-800 p-3 font-semibold text-white"
                 >
                   {team.name}
@@ -148,7 +158,7 @@ export default async function CoachHome() {
           </div>
           {todayEvent && (
             <Link
-              href={getRoleHref(`/events/${todayEvent.id}`, "coach")}
+              href={`/events/${todayEvent.id}`}
               className="mt-4 block w-full rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
             >
               View Event
@@ -158,7 +168,7 @@ export default async function CoachHome() {
 
         {todayEvent && (
           <TeamReadinessSummary
-            actionHref={getRoleHref(`/events/${todayEvent.id}`, "coach")}
+            actionHref={`/events/${todayEvent.id}`}
             attendanceEntries={attendanceEntries}
             eventId={todayEvent.id}
             registrations={coachTeamRegistrations}
@@ -170,7 +180,7 @@ export default async function CoachHome() {
           <AttendanceSummaryCard
             eventId={todayEvent.id}
             entries={attendanceEntries}
-            actionHref={getRoleHref(`/events/${todayEvent.id}`, "coach")}
+            actionHref={`/events/${todayEvent.id}`}
             actionLabel="Take Attendance"
             showDetails={false}
             title="Team Status"
@@ -181,7 +191,7 @@ export default async function CoachHome() {
           <TransportationSummaryCard
             eventId={todayEvent.id}
             entries={transportationEntries}
-            actionHref={getRoleHref(`/events/${todayEvent.id}`, "coach")}
+            actionHref={`/events/${todayEvent.id}`}
             showDetails={false}
           />
         )}
@@ -191,7 +201,7 @@ export default async function CoachHome() {
           <div className="mt-3 space-y-3 text-sm">
             {coachTeam && (
               <RegistrationConcernAction
-                href={getRoleHref(`/teams/${coachTeam.id}`, "coach")}
+                href={`/teams/${coachTeam.id}`}
                 registrations={coachTeamRegistrations}
               />
             )}
@@ -206,11 +216,11 @@ export default async function CoachHome() {
         <BottomNav
           items={[
             { href: "/coach", label: "Home" },
-            { href: getRoleHref("/events", "coach"), label: "Schedule" },
+            { href: "/events", label: "Schedule" },
             {
               href: coachTeam
-                ? getRoleHref(`/teams/${coachTeam.id}`, "coach")
-                : getRoleHref("/teams", "coach"),
+                ? `/teams/${coachTeam.id}`
+                : "/teams",
               label: "Team",
             },
           ]}

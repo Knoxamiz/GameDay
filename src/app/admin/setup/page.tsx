@@ -1,26 +1,40 @@
 import BottomNav from "../../components/BottomNav";
 import { redirect } from "next/navigation";
 import AdminSetupPanel from "../../components/AdminSetupPanel";
-import MvpNav, { getRoleHref } from "../../components/MvpNav";
+import MvpNav from "../../components/MvpNav";
 import SessionControls from "../../components/SessionControls";
 import { getAdminSetupReadModel } from "../../data/adminSetup.server";
 import { getCurrentAuthSession } from "../../data/currentUser.server";
+import { getLandingRouteForClaims } from "../../infrastructure/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminSetupPage() {
   const session = await getCurrentAuthSession();
 
-  if (session?.claims.role !== "admin") {
-    redirect("/login?role=admin");
+  if (!session) {
+    redirect("/login");
+  }
+
+  if (session.claims.role !== "admin") {
+    redirect(getLandingRouteForClaims(session.claims));
   }
 
   const setup = await getAdminSetupReadModel();
+  const organizationContext =
+    setup.organizations.length > 0
+      ? {
+          count: setup.organizations.length,
+          label: setup.organizations
+            .map((organization) => organization.name)
+            .join(", "),
+        }
+      : undefined;
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav role="admin" />
+        <MvpNav organizationContext={organizationContext} />
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <h1 className="text-3xl font-bold">Setup</h1>
@@ -46,7 +60,7 @@ export default async function AdminSetupPage() {
             { href: "/admin", label: "Home" },
             { href: "/admin/setup", label: "Setup" },
             { href: "/admin/registrations", label: "Registration" },
-            { href: getRoleHref("/events", "admin"), label: "Schedule" },
+            { href: "/events", label: "Schedule" },
           ]}
         />
       </section>

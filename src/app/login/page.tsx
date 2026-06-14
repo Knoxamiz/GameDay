@@ -1,38 +1,32 @@
+import { redirect } from "next/navigation";
 import MvpNav from "../components/MvpNav";
 import ParentLoginForm from "../components/ParentLoginForm";
+import { getCurrentAuthSession } from "../data/currentUser.server";
+import { getLandingRouteForClaims } from "../infrastructure/auth";
 
-const loginRoles = ["parent", "coach", "admin"] as const;
+export const dynamic = "force-dynamic";
 
-type LoginRole = (typeof loginRoles)[number];
+export default async function LoginPage() {
+  const session = await getCurrentAuthSession();
 
-type LoginPageProps = {
-  searchParams?: Promise<{
-    role?: string | string[];
-  }>;
-};
-
-function getLoginRole(value?: string | string[]): LoginRole {
-  const role = Array.isArray(value) ? value[0] : value;
-
-  return loginRoles.includes(role as LoginRole) ? (role as LoginRole) : "parent";
-}
-
-export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const initialRole = getLoginRole((await searchParams)?.role);
+  if (session) {
+    redirect(getLandingRouteForClaims(session.claims));
+  }
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav role={initialRole} />
+        <MvpNav />
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <h1 className="text-3xl font-bold">GameDay</h1>
           <p className="mt-3 text-sm text-slate-300">
-            Sign in with your parent, coach, or admin account.
+            Sign in with your GameDay account. Your verified account role
+            determines the dashboard and navigation you can access.
           </p>
         </div>
 
-        <ParentLoginForm key={initialRole} initialRole={initialRole} />
+        <ParentLoginForm />
       </section>
     </main>
   );

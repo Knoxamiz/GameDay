@@ -1,6 +1,7 @@
 import Link from "next/link";
 import JoinRegistrationFlow from "../components/JoinRegistrationFlow";
 import MvpNav from "../components/MvpNav";
+import { getOrganizationContext } from "../data/organizationContext.server";
 import { getParentRegistrationInviteReadModels } from "../data/registrationInviteRead.server";
 
 export const dynamic = "force-dynamic";
@@ -8,11 +9,16 @@ export const dynamic = "force-dynamic";
 export default async function RegistrationHome() {
   const inviteModels = await getParentRegistrationInviteReadModels();
   const primaryInvite = inviteModels.length === 1 ? inviteModels[0] : undefined;
+  const organizationContext = await getOrganizationContext(
+    inviteModels
+      .map((model) => model.organization?.id)
+      .filter((organizationId): organizationId is string => Boolean(organizationId)),
+  );
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav role="parent" />
+        <MvpNav organizationContext={organizationContext} />
 
         {primaryInvite?.invite ? (
           <JoinRegistrationFlow

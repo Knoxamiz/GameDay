@@ -89,13 +89,13 @@ export default function AthleteReadinessCard({
     transportationStatus,
   });
   const readinessActions = buildReadinessActions(readiness, {
-    attendanceHref: eventId ? `/events/${eventId}?role=parent` : undefined,
+    attendanceHref: eventId ? `/events/${eventId}` : undefined,
     documentsHref: `/athletes/${athleteId}`,
     paymentsHref: `/athletes/${athleteId}`,
     registrationHref: "/registration",
     scheduleHref: "/parent",
     transportationHref: eventId
-      ? `/events/${eventId}?role=parent&view=ride-share`
+      ? `/events/${eventId}?view=ride-share`
       : undefined,
   });
 

@@ -166,60 +166,6 @@ export async function signInFirebaseUserWithEmailPassword(
   };
 }
 
-export async function signInFirebaseParentWithEmailPassword(
-  credentials: AuthCredentials,
-) {
-  const result = await signInFirebaseUserWithEmailPassword(credentials);
-
-  if (!result) {
-    return null;
-  }
-
-  const { session } = result;
-
-  if (session.claims.role !== "parent") {
-    throw new Error("This login path currently supports parent users only.");
-  }
-
-  return result;
-}
-
-export async function signInFirebaseAdminWithEmailPassword(
-  credentials: AuthCredentials,
-) {
-  const result = await signInFirebaseUserWithEmailPassword(credentials);
-
-  if (!result) {
-    return null;
-  }
-
-  const { session } = result;
-
-  if (session.claims.role !== "admin") {
-    throw new Error("Admin login requires an admin role claim.");
-  }
-
-  return result;
-}
-
-export async function signInFirebaseCoachWithEmailPassword(
-  credentials: AuthCredentials,
-) {
-  const result = await signInFirebaseUserWithEmailPassword(credentials);
-
-  if (!result) {
-    return null;
-  }
-
-  const { session } = result;
-
-  if (session.claims.role !== "coach") {
-    throw new Error("Coach login requires a coach role claim.");
-  }
-
-  return result;
-}
-
 export async function requireFirebaseClientAuthAdapter() {
   const adapter = await createFirebaseClientAuthAdapter();
 

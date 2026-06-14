@@ -1,12 +1,10 @@
 import TeamDetails from "../../components/TeamDetails";
-import { getMvpNavRole } from "../../components/MvpNav";
+import { redirect } from "next/navigation";
+import { getCurrentAuthSession } from "../../data/currentUser.server";
 
 type TeamDetailsPageProps = {
   params: Promise<{
     teamId: string;
-  }>;
-  searchParams?: Promise<{
-    role?: string | string[];
   }>;
 };
 
@@ -14,10 +12,13 @@ export const dynamic = "force-dynamic";
 
 export default async function TeamDetailsPage({
   params,
-  searchParams,
 }: TeamDetailsPageProps) {
   const { teamId } = await params;
-  const role = getMvpNavRole((await searchParams)?.role);
+  const session = await getCurrentAuthSession();
 
-  return <TeamDetails teamId={teamId} role={role} />;
+  if (!session) {
+    redirect("/login");
+  }
+
+  return <TeamDetails teamId={teamId} role={session.claims.role} />;
 }

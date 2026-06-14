@@ -1,21 +1,15 @@
 import Link from "next/link";
-import MvpNav, {
-  getMvpNavRole,
-  getRoleHref,
-} from "../components/MvpNav";
+import { redirect } from "next/navigation";
+import MvpNav from "../components/MvpNav";
+import { getCurrentAuthSession } from "../data/currentUser.server";
 import {
   getEventShortDateLabel,
   getEventTimeLabel,
 } from "../data/events";
 import { getEventScheduleReadModel } from "../data/eventSchedule.server";
+import { getOrganizationContext } from "../data/organizationContext.server";
 import { summarizeTransportationEntries } from "../data/transportation";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
-
-type TeamsHomeProps = {
-  searchParams?: Promise<{
-    role?: string | string[];
-  }>;
-};
 
 export const dynamic = "force-dynamic";
 
@@ -25,9 +19,18 @@ function isDefined<TValue>(
   return Boolean(value);
 }
 
-export default async function TeamsHome({ searchParams }: TeamsHomeProps) {
-  const role = getMvpNavRole((await searchParams)?.role);
+export default async function TeamsHome() {
+  const session = await getCurrentAuthSession();
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  const role = session.claims.role;
   const schedule = await getEventScheduleReadModel(role);
+  const organizationContext = await getOrganizationContext(
+    schedule.organizationIds,
+  );
   const repositories = schedule.source === "firestore"
     ? createFirestoreRepositories()
     : null;
@@ -75,7 +78,7 @@ export default async function TeamsHome({ searchParams }: TeamsHomeProps) {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav role={role} />
+        <MvpNav organizationContext={organizationContext} />
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <h1 className="text-3xl font-bold">Teams</h1>
@@ -87,9 +90,8 @@ export default async function TeamsHome({ searchParams }: TeamsHomeProps) {
         <div className="mt-6 space-y-4">
           {visibleTeams.length === 0 && (
             <p className="rounded-2xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300">
-              {role === "shared"
-                ? "Sign in as a parent, coach, or admin to view teams."
-                : "No teams available for this view."}
+              No teams are available for your current organization and role
+              scope.
             </p>
           )}
           {visibleTeams.map((team) => {
@@ -108,7 +110,7 @@ export default async function TeamsHome({ searchParams }: TeamsHomeProps) {
             return (
               <Link
                 key={team.id}
-                href={getRoleHref(`/teams/${team.id}`, role)}
+                href={`/teams/${team.id}`}
                 className="block rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg"
               >
                 <div className="flex items-start justify-between gap-3">

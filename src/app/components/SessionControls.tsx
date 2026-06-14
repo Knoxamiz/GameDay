@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { createFirebaseClientAuthAdapter } from "../infrastructure/firebaseClientAuth";
 
@@ -56,12 +55,9 @@ export default function SessionControls({ role }: SessionControlsProps) {
           <p className="font-semibold text-white">
             {getRoleLabel(role)} Account
           </p>
-          <Link
-            className="mt-1 inline-block font-semibold text-blue-300"
-            href={`/login?role=${role}`}
-          >
-            Back to sign in
-          </Link>
+          <p className="mt-1 text-slate-400">
+            Access is based on your verified GameDay session.
+          </p>
         </div>
 
         <button

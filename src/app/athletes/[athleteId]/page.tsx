@@ -5,6 +5,7 @@ import MvpNav from "../../components/MvpNav";
 import RegistrationRequirementsChecklist from "../../components/RegistrationRequirementsChecklist";
 import { getCurrentParentUser } from "../../data/currentUser.server";
 import type { DocumentRequirement } from "../../data/documents";
+import { getOrganizationContext } from "../../data/organizationContext.server";
 import { getAthleteRegistrationReadModel } from "../../data/parentAthleteRegistration.server";
 import type { RegistrationRequirement } from "../../data/registrations";
 
@@ -69,11 +70,14 @@ export default async function AthleteDetailsPage({
     athlete.teamId,
     registrationRequirements,
   );
+  const organizationContext = await getOrganizationContext(
+    organizationId ? [organizationId] : [],
+  );
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav role="parent" />
+        <MvpNav organizationContext={organizationContext} />
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <Link href="/parent" className="text-2xl font-bold">

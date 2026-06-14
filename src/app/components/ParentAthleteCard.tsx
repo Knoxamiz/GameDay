@@ -339,7 +339,7 @@ export default function ParentAthleteCard({
           )}
           {nextEvent && (
             <Link
-              href={`/events/${nextEvent.id}?role=parent&view=ride-share`}
+              href={`/events/${nextEvent.id}?view=ride-share`}
               className="block rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
             >
               Ride Share

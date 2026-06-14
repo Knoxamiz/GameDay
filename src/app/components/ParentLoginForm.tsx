@@ -1,12 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
-import {
-  createFirebaseClientAuthAdapter,
-  signInFirebaseAdminWithEmailPassword,
-  signInFirebaseCoachWithEmailPassword,
-  signInFirebaseParentWithEmailPassword,
-} from "../infrastructure/firebaseClientAuth";
+import { FormEvent, useState } from "react";
+import { signInFirebaseUserWithEmailPassword } from "../infrastructure/firebaseClientAuth";
 
 type LoginRole = "parent" | "coach" | "admin";
 
@@ -19,85 +14,11 @@ type SessionResponse = {
   status?: "signed-in" | "signed-out";
 };
 
-type SignedInSessionResponse = SessionResponse & {
-  role: LoginRole;
-  status: "signed-in";
-};
-
-type ParentLoginFormProps = {
-  initialRole?: LoginRole;
-};
-
-function getRoleLabel(role: LoginRole) {
-  if (role === "admin") {
-    return "Admin";
-  }
-
-  return role === "coach" ? "Coach" : "Parent";
-}
-
-function getRoleRoute(role: LoginRole) {
-  if (role === "admin") {
-    return "/admin";
-  }
-
-  return role === "coach" ? "/coach" : "/parent";
-}
-
-function isSignedInSession(
-  session: SessionResponse | null,
-): session is SignedInSessionResponse {
-  return Boolean(
-    session?.status === "signed-in" &&
-      (session.role === "parent" ||
-        session.role === "coach" ||
-        session.role === "admin"),
-  );
-}
-
-export default function ParentLoginForm({
-  initialRole = "parent",
-}: ParentLoginFormProps) {
+export default function ParentLoginForm() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<LoginRole>(initialRole);
-  const [session, setSession] = useState<SessionResponse | null>(null);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadSession() {
-      setIsCheckingSession(true);
-
-      try {
-        const response = await fetch("/api/session", { cache: "no-store" });
-        const body = (await response.json().catch(() => null)) as
-          | SessionResponse
-          | null;
-
-        if (isMounted && response.ok) {
-          setSession(body);
-        }
-      } catch {
-        if (isMounted) {
-          setSession(null);
-        }
-      } finally {
-        if (isMounted) {
-          setIsCheckingSession(false);
-        }
-      }
-    }
-
-    loadSession();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -105,12 +26,10 @@ export default function ParentLoginForm({
     setIsSubmitting(true);
 
     try {
-      const loginResult =
-        role === "admin"
-          ? await signInFirebaseAdminWithEmailPassword({ email, password })
-          : role === "coach"
-            ? await signInFirebaseCoachWithEmailPassword({ email, password })
-            : await signInFirebaseParentWithEmailPassword({ email, password });
+      const loginResult = await signInFirebaseUserWithEmailPassword({
+        email,
+        password,
+      });
 
       if (!loginResult) {
         throw new Error("Firebase client login is not configured.");
@@ -135,7 +54,11 @@ export default function ParentLoginForm({
         | SessionResponse
         | null;
 
-      window.location.assign(body?.landingRoute ?? getRoleRoute(role));
+      if (!body?.landingRoute || !body.role) {
+        throw new Error("GameDay could not determine this account's role.");
+      }
+
+      window.location.assign(body.landingRoute);
     } catch (loginError) {
       setError(
         loginError instanceof Error
@@ -147,142 +70,51 @@ export default function ParentLoginForm({
     }
   }
 
-  async function handleLogout() {
-    setError(null);
-    setIsSubmitting(true);
-
-    try {
-      const response = await fetch("/api/session", {
-        credentials: "same-origin",
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Could not clear GameDay session.");
-      }
-
-      const adapter = await createFirebaseClientAuthAdapter();
-      await adapter?.logout();
-      setEmail("");
-      setPassword("");
-      setSession({ status: "signed-out" });
-    } catch (logoutError) {
-      setError(
-        logoutError instanceof Error
-          ? logoutError.message
-          : "Could not sign out.",
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  const signedInSession = isSignedInSession(session) ? session : null;
-
   return (
     <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
       <h2 className="text-xl font-bold">Sign in to GameDay</h2>
       <p className="mt-2 text-sm text-slate-400">
-        Parent, coach, and admin accounts use Firebase.
+        Firebase verifies your account and opens the role assigned to it.
       </p>
 
-      {isCheckingSession && (
-        <p className="mt-4 rounded-xl bg-slate-800 p-3 text-sm font-semibold text-slate-300">
-          Checking current sign-in...
-        </p>
-      )}
+      <form className="mt-5 space-y-4" onSubmit={handleLogin}>
+        <label className="block">
+          <span className="text-sm font-semibold text-slate-300">Email</span>
+          <input
+            autoComplete="email"
+            className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
+            onChange={(event) => setEmail(event.target.value)}
+            required
+            type="email"
+            value={email}
+          />
+        </label>
+        <label className="block">
+          <span className="text-sm font-semibold text-slate-300">Password</span>
+          <input
+            autoComplete="current-password"
+            className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
+            onChange={(event) => setPassword(event.target.value)}
+            required
+            type="password"
+            value={password}
+          />
+        </label>
 
-      {signedInSession ? (
-        <div className="mt-5 space-y-3">
-          <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-4 text-sm text-blue-100">
-            <p className="font-semibold">
-              Signed in as {getRoleLabel(signedInSession.role)}
-            </p>
-            {signedInSession.email && (
-              <p className="mt-1 text-blue-100/80">{signedInSession.email}</p>
-            )}
-          </div>
+        {error && (
+          <p className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm font-semibold text-red-300">
+            {error}
+          </p>
+        )}
 
-          <a
-            className="block w-full rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
-            href={signedInSession.landingRoute ?? getRoleRoute(signedInSession.role)}
-          >
-            Continue to {getRoleLabel(signedInSession.role)}
-          </a>
-
-          <button
-            className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={isSubmitting}
-            onClick={handleLogout}
-            type="button"
-          >
-            {isSubmitting ? "Signing Out..." : "Sign Out to Switch Role"}
-          </button>
-        </div>
-      ) : (
-        <form className="mt-5 space-y-4" onSubmit={handleLogin}>
-          <fieldset>
-            <legend className="text-sm font-semibold text-slate-300">
-              Account type
-            </legend>
-            <div className="mt-2 grid grid-cols-3 gap-2 text-sm font-semibold">
-              {(["parent", "coach", "admin"] as const).map((option) => (
-                <button
-                  className={`rounded-xl border px-4 py-3 ${
-                    role === option
-                      ? "border-blue-500 bg-blue-500/20 text-blue-200"
-                      : "border-slate-700 bg-slate-950 text-slate-300"
-                  }`}
-                  key={option}
-                  onClick={() => setRole(option)}
-                  type="button"
-                >
-                  {getRoleLabel(option)}
-                </button>
-              ))}
-            </div>
-          </fieldset>
-
-          <label className="block">
-            <span className="text-sm font-semibold text-slate-300">Email</span>
-            <input
-              autoComplete="email"
-              className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
-              onChange={(event) => setEmail(event.target.value)}
-              required
-              type="email"
-              value={email}
-            />
-          </label>
-          <label className="block">
-            <span className="text-sm font-semibold text-slate-300">Password</span>
-            <input
-              autoComplete="current-password"
-              className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              type="password"
-              value={password}
-            />
-          </label>
-
-          {error && (
-            <p className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm font-semibold text-red-300">
-              {error}
-            </p>
-          )}
-
-          <button
-            className="w-full rounded-xl bg-blue-500 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={isSubmitting}
-            type="submit"
-          >
-            {isSubmitting
-              ? "Signing In..."
-              : `Sign in as ${getRoleLabel(role)}`}
-          </button>
-        </form>
-      )}
+        <button
+          className="w-full rounded-xl bg-blue-500 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={isSubmitting}
+          type="submit"
+        >
+          {isSubmitting ? "Signing In..." : "Sign In"}
+        </button>
+      </form>
     </div>
   );
 }

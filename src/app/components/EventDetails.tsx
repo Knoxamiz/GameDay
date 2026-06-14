@@ -9,11 +9,12 @@ import {
 } from "../data/events";
 import { getScopedEventDetailsReadModel } from "../data/eventSchedule.server";
 import { getCurrentParentUser } from "../data/currentUser.server";
+import { getOrganizationContext } from "../data/organizationContext.server";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import AttendanceSummaryCard from "./AttendanceSummaryCard";
 import EventReadinessSummary from "./EventReadinessSummary";
 import GameAlertPanel from "./GameAlertPanel";
-import MvpNav, { getRoleHref, type MvpNavRole } from "./MvpNav";
+import MvpNav, { type MvpNavRole } from "./MvpNav";
 import RideShareBoard from "./RideShareBoard";
 import TransportationSummaryCard from "./TransportationSummaryCard";
 
@@ -36,6 +37,9 @@ export default async function EventDetails({
 
   const repositories = createFirestoreRepositories();
   const eventDetails = eventReadModel.event;
+  const organizationContext = await getOrganizationContext(
+    eventReadModel.organizationIds,
+  );
   const eventTeams = getEventTeamIds(eventDetails)
     .map((teamId) => eventReadModel.teams.find((team) => team.id === teamId))
     .filter(Boolean);
@@ -118,31 +122,28 @@ export default async function EventDetails({
   const eventAnnouncements = eventMessages.map((message) => message.content);
   const eventChat = eventMessages.map((message) => message.subject);
   const eventNotes = getEventNotes(eventDetails);
-  const eventActionHref = getRoleHref(`/events/${eventDetails.id}`, role);
-  const rideShareHref = getRoleHref(
-    `/events/${eventDetails.id}?view=ride-share`,
-    role,
-  );
+  const eventActionHref = `/events/${eventDetails.id}`;
+  const rideShareHref = `/events/${eventDetails.id}?view=ride-share`;
   const registrationActionHref =
     role === "admin"
       ? "/admin/registrations"
       : role === "parent"
         ? "/registration"
         : team
-          ? getRoleHref(`/teams/${team.id}`, role)
+          ? `/teams/${team.id}`
           : eventActionHref;
   const eventBackHref =
     role === "parent"
       ? "/parent"
       : team
-        ? getRoleHref(`/teams/${team.id}`, role)
-        : getRoleHref("/events", role);
+        ? `/teams/${team.id}`
+        : "/events";
 
   if (mode === "ride-share") {
     return (
       <main className="min-h-screen bg-slate-950 text-white">
         <section className="mx-auto max-w-md px-5 py-6">
-          <MvpNav role={role} />
+          <MvpNav organizationContext={organizationContext} />
 
           <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
             <Link href={eventBackHref} className="text-2xl font-bold">
@@ -173,7 +174,7 @@ export default async function EventDetails({
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav role={role} />
+        <MvpNav organizationContext={organizationContext} />
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <Link

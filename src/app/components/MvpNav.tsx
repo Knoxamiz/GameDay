@@ -1,135 +1,93 @@
 import Link from "next/link";
+import type { AccessRole } from "../data/accessControl";
+import { getCurrentAuthSession } from "../data/currentUser.server";
+import { getLandingRouteForClaims } from "../infrastructure/auth";
 
-export type MvpNavRole = "parent" | "coach" | "admin" | "shared";
+export type MvpNavRole = AccessRole | "shared";
 
-type MvpNavProps = {
-  role?: MvpNavRole;
+type OrganizationContext = {
+  count: number;
+  label: string;
 };
 
-const mvpNavRoles: MvpNavRole[] = ["parent", "coach", "admin", "shared"];
+type MvpNavProps = {
+  organizationContext?: OrganizationContext;
+};
 
-export function getMvpNavRole(value?: string | string[]): MvpNavRole {
-  const role = Array.isArray(value) ? value[0] : value;
-
-  return role && mvpNavRoles.includes(role as MvpNavRole)
-    ? (role as MvpNavRole)
-    : "shared";
-}
-
-export function getRoleHref(href: string, role: MvpNavRole) {
-  if (role === "shared") {
-    return href;
+function getRoleLabel(role: MvpNavRole) {
+  if (role === "admin") {
+    return "Admin / Owner";
   }
 
-  return `${href}${href.includes("?") ? "&" : "?"}role=${role}`;
-}
+  if (role === "coach") {
+    return "Coach";
+  }
 
-const roleItems = [
-  {
-    href: "/parent",
-    label: "Parent",
-    role: "parent",
-  },
-  {
-    href: "/coach",
-    label: "Coach",
-    role: "coach",
-  },
-  {
-    href: "/admin",
-    label: "Admin",
-    role: "admin",
-  },
-] as const;
+  if (role === "parent") {
+    return "Parent";
+  }
+
+  return "Signed Out";
+}
 
 const utilityItemsByRole: Record<
   MvpNavRole,
   { href: string; label: string }[]
 > = {
   parent: [
-    {
-      href: "/parent",
-      label: "Athletes",
-    },
-    {
-      href: "/events",
-      label: "Schedule",
-    },
-    {
-      href: "/registration",
-      label: "Registration",
-    },
+    { href: "/parent", label: "Athletes" },
+    { href: "/events", label: "Schedule" },
+    { href: "/registration", label: "Registration" },
   ],
   coach: [
-    {
-      href: "/events",
-      label: "Schedule",
-    },
-    {
-      href: "/coach",
-      label: "My Team",
-    },
-    {
-      href: "/teams",
-      label: "Teams",
-    },
+    { href: "/coach", label: "My Team" },
+    { href: "/events", label: "Schedule" },
+    { href: "/teams", label: "Teams" },
   ],
   admin: [
-    {
-      href: "/admin/setup",
-      label: "Setup",
-    },
-    {
-      href: "/teams",
-      label: "Teams",
-    },
-    {
-      href: "/admin/registrations",
-      label: "Registration",
-    },
-    {
-      href: "/events",
-      label: "Schedule",
-    },
+    { href: "/admin", label: "Home" },
+    { href: "/admin/setup", label: "Setup" },
+    { href: "/teams", label: "Teams" },
+    { href: "/admin/registrations", label: "Registration" },
+    { href: "/events", label: "Schedule" },
   ],
   shared: [
-    {
-      href: "/events",
-      label: "Schedule",
-    },
-    {
-      href: "/teams",
-      label: "Teams",
-    },
+    { href: "/", label: "Home" },
+    { href: "/login", label: "Sign In" },
   ],
 };
 
-export default function MvpNav({ role = "shared" }: MvpNavProps = {}) {
+export default async function MvpNav({
+  organizationContext,
+}: MvpNavProps = {}) {
+  const session = await getCurrentAuthSession();
+  const role: MvpNavRole = session?.claims.role ?? "shared";
   const utilityItems = utilityItemsByRole[role];
+  const homeHref = session ? getLandingRouteForClaims(session.claims) : "/";
 
   return (
     <nav className="mb-4 space-y-2 text-sm font-semibold">
-      <div className="grid grid-cols-3 gap-2 text-center">
-        {roleItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`min-h-11 rounded-full border px-3 py-3 ${
-              item.role === role
-                ? "border-blue-500 bg-blue-500/20 text-blue-200"
-                : "border-slate-800 bg-slate-900 text-slate-200"
-            }`}
-          >
-            {item.label}
-          </Link>
-        ))}
+      <div className="flex items-start justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900 px-4 py-3">
+        <Link className="text-base font-bold text-white" href={homeHref}>
+          GameDay
+        </Link>
+        <div className="text-right">
+          <p className="text-blue-300">{getRoleLabel(role)} Account</p>
+          {organizationContext && (
+            <p className="mt-1 text-xs font-medium text-slate-400">
+              {organizationContext.count === 1
+                ? `Current organization: ${organizationContext.label}`
+                : `Organization access: ${organizationContext.label}`}
+            </p>
+          )}
+        </div>
       </div>
       <div className="flex gap-2 overflow-x-auto pb-1">
         {utilityItems.map((item) => (
           <Link
             key={item.href}
-            href={getRoleHref(item.href, role)}
-            className="min-h-11 shrink-0 rounded-full bg-slate-900 px-4 py-3 text-slate-400"
+            href={item.href}
+            className="min-h-11 shrink-0 rounded-full bg-slate-900 px-4 py-3 text-slate-300"
           >
             {item.label}
           </Link>

@@ -1,10 +1,9 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import AdminEventForm from "../components/AdminEventForm";
-import MvpNav, {
-  getMvpNavRole,
-  getRoleHref,
-} from "../components/MvpNav";
+import MvpNav from "../components/MvpNav";
 import { summarizeAttendanceEntries } from "../data/attendance";
+import { getCurrentAuthSession } from "../data/currentUser.server";
 import {
   getEventDateLabel,
   getEventLocationLabel,
@@ -12,20 +11,24 @@ import {
   getEventTimeLabel,
 } from "../data/events";
 import { getEventScheduleReadModel } from "../data/eventSchedule.server";
+import { getOrganizationContext } from "../data/organizationContext.server";
 import { summarizeTransportationEntries } from "../data/transportation";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 
-type EventsHomeProps = {
-  searchParams?: Promise<{
-    role?: string | string[];
-  }>;
-};
-
 export const dynamic = "force-dynamic";
 
-export default async function EventsHome({ searchParams }: EventsHomeProps) {
-  const role = getMvpNavRole((await searchParams)?.role);
+export default async function EventsHome() {
+  const session = await getCurrentAuthSession();
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  const role = session.claims.role;
   const schedule = await getEventScheduleReadModel(role);
+  const organizationContext = await getOrganizationContext(
+    schedule.organizationIds,
+  );
   const repositories = schedule.source === "firestore"
     ? createFirestoreRepositories()
     : null;
@@ -61,7 +64,7 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav role={role} />
+        <MvpNav organizationContext={organizationContext} />
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
           <h1 className="text-3xl font-bold">Schedule</h1>
@@ -69,7 +72,7 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
             Upcoming practices, tournaments, and meetings.
           </p>
           <a
-            href={getRoleHref("/calendar.ics", role)}
+            href={"/calendar.ics"}
             className="mt-4 block w-full rounded-xl bg-blue-500 py-3 text-center text-sm font-semibold text-white"
           >
             Subscribe Calendar
@@ -87,9 +90,8 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
         <div className="mt-6 space-y-4">
           {visibleEvents.length === 0 && (
             <p className="rounded-2xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300">
-              {role === "shared"
-                ? "Sign in as a parent, coach, or admin to view a scoped schedule."
-                : "No events scheduled for this view."}
+              No events are scheduled for your current organization and team
+              scope.
             </p>
           )}
           {visibleEvents.map((event) => {
@@ -109,7 +111,7 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
             return (
               <Link
                 key={event.id}
-                href={getRoleHref(`/events/${event.id}`, role)}
+                href={`/events/${event.id}`}
                 className="block rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg"
               >
                 <div className="flex items-start justify-between gap-3">

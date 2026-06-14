@@ -19,7 +19,13 @@ export default async function JoinInvitePage({ params }: JoinInvitePageProps) {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav role="parent" />
+        <MvpNav
+          organizationContext={
+            organization
+              ? { count: 1, label: organization.name }
+              : undefined
+          }
+        />
         {availability.available && invite ? (
           <JoinRegistrationFlow
             invite={invite}

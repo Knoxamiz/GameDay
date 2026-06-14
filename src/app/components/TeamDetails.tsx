@@ -12,6 +12,7 @@ import {
 } from "../data/events";
 import { getEventScheduleReadModel } from "../data/eventSchedule.server";
 import { getCurrentParentUser } from "../data/currentUser.server";
+import { getOrganizationContext } from "../data/organizationContext.server";
 import { summarizePaymentRequirements } from "../data/payments";
 import {
   getDocumentRequirementsFromRegistrations,
@@ -22,7 +23,7 @@ import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import AttendanceRosterCard from "./AttendanceRosterCard";
 import AttendanceSummaryCard from "./AttendanceSummaryCard";
-import MvpNav, { getRoleHref, type MvpNavRole } from "./MvpNav";
+import MvpNav, { type MvpNavRole } from "./MvpNav";
 import RegistrationRosterCard from "./RegistrationRosterCard";
 import TeamReadinessSummary from "./TeamReadinessSummary";
 import TransportationSummaryCard from "./TransportationSummaryCard";
@@ -58,6 +59,9 @@ export default async function TeamDetails({
   }
 
   const scopedSchedule = await getEventScheduleReadModel(role);
+  const organizationContext = await getOrganizationContext(
+    scopedSchedule.organizationIds,
+  );
   const canReadTeam = scopedSchedule.teams.some((team) => team.id === teamId);
 
   if (!canReadTeam) {
@@ -193,10 +197,10 @@ export default async function TeamDetails({
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav role={role} />
+        <MvpNav organizationContext={organizationContext} />
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-          <Link href={getRoleHref("/teams", role)} className="text-2xl font-bold">
+          <Link href={"/teams"} className="text-2xl font-bold">
             &larr; {teamDetails.name}
           </Link>
         </div>
@@ -236,7 +240,7 @@ export default async function TeamDetails({
                 )}
               </div>
               <Link
-                href={getRoleHref(`/events/${nextEvent.id}`, role)}
+                href={`/events/${nextEvent.id}`}
                 className="mt-4 block w-full rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
               >
                 View Event
@@ -249,7 +253,7 @@ export default async function TeamDetails({
 
         {nextEvent && (
           <TeamReadinessSummary
-            actionHref={getRoleHref(`/events/${nextEvent.id}`, role)}
+            actionHref={`/events/${nextEvent.id}`}
             attendanceEntries={attendanceEntries}
             eventId={nextEvent.id}
             registrations={teamRegistrations}
@@ -283,7 +287,7 @@ export default async function TeamDetails({
           <AttendanceSummaryCard
             eventId={nextEvent.id}
             entries={attendanceEntries}
-            actionHref={getRoleHref(`/events/${nextEvent.id}`, role)}
+            actionHref={`/events/${nextEvent.id}`}
             showDetails={false}
           />
         )}
@@ -297,7 +301,7 @@ export default async function TeamDetails({
           <TransportationSummaryCard
             eventId={nextEvent.id}
             entries={transportationEntries}
-            actionHref={getRoleHref(`/events/${nextEvent.id}`, role)}
+            actionHref={`/events/${nextEvent.id}`}
             showDetails={false}
           />
         )}
@@ -330,7 +334,7 @@ export default async function TeamDetails({
             {upcomingEvents.map((event) => (
               <Link
                 key={event.id}
-                href={getRoleHref(`/events/${event.id}`, role)}
+                href={`/events/${event.id}`}
                 className="block rounded-xl bg-slate-800 p-4"
               >
                 {getEventShortDateLabel(event)} {event.type}

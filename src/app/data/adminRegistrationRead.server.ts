@@ -24,6 +24,7 @@ import {
 export type AdminRegistrationReadSource = "empty" | "firestore";
 
 export type AdminRegistrationReadModel = {
+  organizationIds: string[];
   registrations: Registration[];
   source: AdminRegistrationReadSource;
 };
@@ -108,6 +109,7 @@ function normalizeRegistration(registration: Registration): Registration {
 
 function getEmptyAdminRegistrationReadModel(): AdminRegistrationReadModel {
   return {
+    organizationIds: [],
     registrations: [],
     source: "empty",
   };
@@ -148,6 +150,7 @@ export async function getAdminRegistrationReadModel(): Promise<AdminRegistration
       });
 
     return {
+      organizationIds: scope.organizationIds,
       registrations: [...registrationsById.values()],
       source: "firestore",
     };
