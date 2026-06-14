@@ -14,7 +14,12 @@ import {
   type AdminOrganizationScope,
   type AdminOrganizationScopeSource,
 } from "./adminOrganizationScope.server";
-import { isActiveCoach, type Coach, type CoachAssignmentStatus } from "./coaches";
+import {
+  isActiveCoachAssignment,
+  type CoachAssignment,
+  type CoachAssignmentStatus,
+} from "./coachAssignmentRecords";
+import type { Coach } from "./coaches";
 import {
   normalizeRegistrationInvite,
   type NormalizedRegistrationInvite,
@@ -39,6 +44,7 @@ import {
 export type AdminSetupReadModel = {
   canCreateOrganization: boolean;
   canManageSetup: boolean;
+  coachAssignments: CoachAssignment[];
   coaches: Coach[];
   organizationIds: string[];
   organizationMemberships: OrganizationMembership[];
@@ -78,6 +84,8 @@ export type AdminSetupPayload =
     }
   | {
       actionType: "coach-assignment";
+      assignmentId?: string;
+      coachId?: string;
       email: string;
       name: string;
       organizationId: string;
@@ -270,6 +278,7 @@ function emptyReadModel(
   return {
     canCreateOrganization: false,
     canManageSetup: false,
+    coachAssignments: [],
     coaches: [],
     organizationIds,
     organizationMemberships: [],
@@ -349,19 +358,19 @@ function assertManagedOrganization(
 }
 
 function getOrganizationStatus({
-  coaches,
+  coachAssignments,
   events,
   registrations,
   teams,
 }: {
-  coaches: Coach[];
+  coachAssignments: CoachAssignment[];
   events: number;
   registrations: Registration[];
   teams: Team[];
 }) {
   return {
     activeTeams: teams.filter(isActiveTeam).length,
-    coaches: coaches.filter(isActiveCoach).length,
+    coaches: coachAssignments.filter(isActiveCoachAssignment).length,
     registeredPlayers: registrations.filter(isCoachVisibleRosterRegistration)
       .length,
     upcomingEvents: events,
@@ -410,17 +419,26 @@ export async function getAdminSetupReadModel(
     }
 
     const repositories = createFirestoreRepositories();
-    const [organization, teams, coaches, registrationInvites] = await Promise.all([
-      repositories.organizations.getById(organizationId),
-      repositories.teams.listByOrganizationId(organizationId),
-      repositories.coaches.listByOrganizationId(organizationId),
-      repositories.registrationInvites.listByOrganizationId(organizationId),
-    ]);
+    const [organization, teams, coachAssignments, registrationInvites] =
+      await Promise.all([
+        repositories.organizations.getById(organizationId),
+        repositories.teams.listByOrganizationId(organizationId),
+        repositories.coachAssignments.listByOrganizationId(organizationId),
+        repositories.registrationInvites.listByOrganizationId(organizationId),
+      ]);
+    const coaches = await Promise.all(
+      uniqueStringList(
+        coachAssignments.map((assignment) => assignment.coachId),
+      ).map((coachId) => repositories.coaches.getById(coachId)),
+    );
 
     return {
       canCreateOrganization: true,
       canManageSetup: true,
-      coaches: uniqueById(coaches),
+      coachAssignments: uniqueById(coachAssignments),
+      coaches: uniqueById(
+        coaches.filter((coach): coach is Coach => Boolean(coach)),
+      ),
       organizationIds: [organizationId],
       organizationMemberships: scope.memberships,
       organizations: organization ? [organization] : [],
@@ -529,7 +547,7 @@ async function createProvisionedOrganization(
     ownerUids: [session.user.id],
     slug: getSlugFromId(organizationId),
     status: getOrganizationStatus({
-      coaches: [],
+      coachAssignments: [],
       events: 0,
       registrations: [],
       teams: [],
@@ -605,10 +623,10 @@ async function createOrUpdateOrganization(
   assertManagedOrganization(scope, organizationId);
 
   const repositories = createFirestoreRepositories();
-  const [currentOrganization, teams, coaches, events, registrations] = await Promise.all([
+  const [currentOrganization, teams, coachAssignments, events, registrations] = await Promise.all([
     repositories.organizations.getById(organizationId),
     repositories.teams.listByOrganizationId(organizationId),
-    repositories.coaches.listByOrganizationId(organizationId),
+    repositories.coachAssignments.listByOrganizationId(organizationId),
     repositories.events.listByOrganizationId(organizationId),
     repositories.registrations.listByOrganizationId(organizationId),
   ]);
@@ -635,7 +653,7 @@ async function createOrUpdateOrganization(
     ]),
     slug: currentOrganization?.slug ?? getSlugFromId(organizationId),
     status: getOrganizationStatus({
-      coaches,
+      coachAssignments,
       events: events.length,
       registrations,
       teams,
@@ -890,16 +908,24 @@ function getCoachIdFromEmail(email: string) {
   return `coach-${slugifyIdentityPart(email)}`;
 }
 
+function getCoachAssignmentId(organizationId: string, coachId: string) {
+  return `coach-assignment-${normalizeDocumentIdSegment(
+    organizationId,
+  )}-${normalizeDocumentIdSegment(coachId)}`;
+}
+
 async function createOrUpdateCoachAssignment(
   scope: AdminOrganizationScope,
   payload: Extract<AdminSetupPayload, { actionType: "coach-assignment" }>,
 ): Promise<AdminSetupResult> {
   const session = scope.session;
   const organizationId = normalizeText(payload.organizationId);
+  const requestedAssignmentId = normalizeText(payload.assignmentId);
+  const requestedCoachId = normalizeText(payload.coachId);
   const email = normalizeText(payload.email).toLowerCase();
   const name = normalizeText(payload.name);
   const uid = normalizeText(payload.uid);
-  const status = payload.status === "Inactive" ? "Inactive" : "Active";
+  const status = payload.status;
   const teamIds = uniqueStringList(payload.teamIds);
 
   if (!organizationId || !email || !name || teamIds.length === 0) {
@@ -915,18 +941,41 @@ async function createOrUpdateCoachAssignment(
   const generatedCoachId = getCoachIdFromEmail(email);
   const { firstName, lastName } = getNameParts(name);
   const now = new Date().toISOString();
-  const coach = await runFirestoreTransaction(async (transaction) => {
-    const [organization, coachesByEmail, generatedCoach, organizationTeams] =
+  const assignment = await runFirestoreTransaction(async (transaction) => {
+    const [
+      organization,
+      coachesByEmail,
+      coachesByUid,
+      generatedCoach,
+      organizationTeams,
+      requestedAssignment,
+      requestedCoach,
+    ] =
       await Promise.all([
         transaction.get<Organization>("organizations", organizationId),
         transaction.list<Coach>("coaches", {
           limit: 2,
           scope: { email },
         }),
+        uid
+          ? transaction.list<Coach>("coaches", {
+              limit: 2,
+              scope: { uid },
+            })
+          : [],
         transaction.get<Coach>("coaches", generatedCoachId),
         transaction.list<Team>("teams", {
           scope: { organizationId },
         }),
+        requestedAssignmentId
+          ? transaction.get<CoachAssignment>(
+              "coachAssignments",
+              requestedAssignmentId,
+            )
+          : null,
+        requestedCoachId
+          ? transaction.get<Coach>("coaches", requestedCoachId)
+          : null,
       ]);
 
     if (!organization) {
@@ -945,6 +994,45 @@ async function createOrUpdateCoachAssignment(
       );
     }
 
+    if (coachesByUid.length > 1) {
+      createSetupError(
+        "coach-uid-conflict",
+        "Multiple coach records use this Firebase UID. Resolve them before assigning teams.",
+        409,
+      );
+    }
+
+    if (requestedAssignmentId && !requestedAssignment) {
+      createSetupError(
+        "coach-assignment-not-found",
+        "Coach assignment not found.",
+        404,
+      );
+    }
+
+    if (
+      requestedAssignment &&
+      requestedAssignment.organizationId !== organizationId
+    ) {
+      createSetupError(
+        "coach-assignment-organization-mismatch",
+        "A coach assignment cannot be moved to another organization.",
+        403,
+      );
+    }
+
+    if (
+      requestedAssignment &&
+      requestedCoachId &&
+      requestedAssignment.coachId !== requestedCoachId
+    ) {
+      createSetupError(
+        "coach-assignment-identity-mismatch",
+        "A coach assignment cannot be moved to another coach profile.",
+        409,
+      );
+    }
+
     const currentCoachByEmail = coachesByEmail[0] ?? null;
 
     if (
@@ -959,8 +1047,26 @@ async function createOrUpdateCoachAssignment(
       );
     }
 
-    const currentCoach = currentCoachByEmail ?? generatedCoach;
-    const coachId = currentCoach?.id ?? generatedCoachId;
+    const currentCoach = requestedCoach ?? currentCoachByEmail ?? generatedCoach;
+    const coachId = requestedAssignment?.coachId ?? currentCoach?.id ?? generatedCoachId;
+    const currentCoachByUid = coachesByUid[0] ?? null;
+
+    if (currentCoachByEmail && currentCoachByEmail.id !== coachId) {
+      createSetupError(
+        "coach-email-conflict",
+        "This email belongs to another coach profile.",
+        409,
+      );
+    }
+
+    if (currentCoachByUid && currentCoachByUid.id !== coachId) {
+      createSetupError(
+        "coach-uid-conflict",
+        "This Firebase UID belongs to another coach profile.",
+        409,
+      );
+    }
+
     const organizationTeamMap = new Map(
       organizationTeams.map((team) => [team.id, team]),
     );
@@ -968,41 +1074,79 @@ async function createOrUpdateCoachAssignment(
       .map((teamId) => organizationTeamMap.get(teamId))
       .filter((team): team is Team => Boolean(team));
 
+    const [existingAssignments, organizationAssignments] = await Promise.all([
+      transaction.list<CoachAssignment>("coachAssignments", {
+        scope: { coachId },
+      }),
+      transaction.list<CoachAssignment>("coachAssignments", {
+        scope: { organizationId },
+      }),
+    ]);
+    const currentAssignment =
+      requestedAssignment ??
+      existingAssignments.find(
+        (candidate) => candidate.organizationId === organizationId,
+      );
+    const hasAssignmentsOutsideOrganization = existingAssignments.some(
+      (candidate) => candidate.organizationId !== organizationId,
+    );
+    const changesSharedIdentity = Boolean(
+      currentCoach &&
+        (normalizeText(currentCoach.name) !== name ||
+          normalizeText(currentCoach.email).toLowerCase() !== email ||
+          (uid && normalizeText(currentCoach.uid) !== uid)),
+    );
+
+    if (hasAssignmentsOutsideOrganization && changesSharedIdentity) {
+      createSetupError(
+        "shared-coach-identity-immutable",
+        "This coach also belongs to another organization. Update only this organization's assignment, or use a platform identity workflow to change shared profile details.",
+        409,
+      );
+    }
+
+    const teamIdsChanged = !hasSameMembers(
+      currentAssignment?.teamIds ?? [],
+      teamIds,
+    );
+    const requiresActiveTeams = status === "active" || teamIdsChanged;
+
     if (
       validTeams.length !== teamIds.length ||
       validTeams.some(
         (team) =>
-          team.organizationId !== organizationId || !isActiveTeam(team),
+          team.organizationId !== organizationId ||
+          (requiresActiveTeams && !isActiveTeam(team)),
       )
     ) {
       createSetupError(
         "coach-team-scope-invalid",
-        "Coaches can only be assigned to active teams inside this organization.",
+        requiresActiveTeams
+          ? "Coaches can only be assigned to active teams inside this organization."
+          : "Coaches can only be assigned to teams inside this organization.",
         403,
       );
     }
 
-    const externalTeamIds = (currentCoach?.teamIds ?? []).filter(
-      (teamId) => !organizationTeamMap.has(teamId),
+    const legacyTeams = await Promise.all(
+      (currentCoach?.teamIds ?? []).map((teamId) =>
+        transaction.get<Team>("teams", teamId),
+      ),
     );
-    const externalTeams = await Promise.all(
-      externalTeamIds.map((teamId) => transaction.get<Team>("teams", teamId)),
-    );
-    const otherOrganizationTeamIds = externalTeams
-      .filter(
-        (team): team is Team =>
-          Boolean(team && team.organizationId !== organizationId),
-      )
-      .map((team) => team.id);
-    const organizationIds = uniqueStringList([
-      ...(currentCoach?.organizationIds ?? []),
-      currentCoach?.organizationId,
-      organizationId,
-    ]);
-    const coachTeamIds = uniqueStringList([
-      ...otherOrganizationTeamIds,
-      ...(status === "Active" ? teamIds : []),
-    ]);
+    const legacyTeamsByOrganization = new Map<string, string[]>();
+
+    legacyTeams
+      .filter((team): team is Team => Boolean(team))
+      .forEach((team) => {
+        legacyTeamsByOrganization.set(
+          team.organizationId,
+          uniqueStringList([
+            ...(legacyTeamsByOrganization.get(team.organizationId) ?? []),
+            team.id,
+          ]),
+        );
+      });
+
     const nextCoach: Coach = {
       coachId: currentCoach?.coachId ?? coachId,
       createdAt: currentCoach?.createdAt ?? now,
@@ -1012,18 +1156,34 @@ async function createOrUpdateCoachAssignment(
       id: coachId,
       lastName,
       name,
-      organizationId,
-      organizationIds,
       phone: currentCoach?.phone ?? "",
       role: "coach",
-      status,
-      teamIds: coachTeamIds,
       updatedAt: now,
       ...(uid || currentCoach?.uid ? { uid: uid || currentCoach?.uid } : {}),
     };
-    const activeAssignedTeamIds = new Set(
-      status === "Active" ? teamIds : [],
-    );
+    const assignmentId = getCoachAssignmentId(organizationId, coachId);
+    const nextAssignment: CoachAssignment = {
+      coachId,
+      createdAt: currentAssignment?.createdAt ?? now,
+      createdByUid: currentAssignment?.createdByUid ?? session.user.id,
+      email,
+      id: currentAssignment?.id ?? assignmentId,
+      organizationId,
+      role: currentAssignment?.role ?? "coach",
+      status,
+      teamIds,
+      updatedAt: now,
+      ...(uid || currentCoach?.uid ? { uid: uid || currentCoach?.uid } : {}),
+    };
+
+    if (status === "archived") {
+      nextAssignment.archivedAt = currentAssignment?.archivedAt ?? now;
+      nextAssignment.archivedByUid =
+        currentAssignment?.archivedByUid ?? session.user.id;
+    } else {
+      delete nextAssignment.archivedAt;
+      delete nextAssignment.archivedByUid;
+    }
 
     if (currentCoach) {
       transaction.set("coaches", nextCoach.id, nextCoach);
@@ -1031,12 +1191,61 @@ async function createOrUpdateCoachAssignment(
       transaction.create("coaches", nextCoach.id, nextCoach);
     }
 
+    legacyTeamsByOrganization.forEach((legacyTeamIds, legacyOrganizationId) => {
+      if (
+        legacyOrganizationId === organizationId ||
+        existingAssignments.some(
+          (candidate) => candidate.organizationId === legacyOrganizationId,
+        )
+      ) {
+        return;
+      }
+
+      const migratedAssignment: CoachAssignment = {
+        coachId,
+        createdAt: currentCoach?.createdAt ?? now,
+        createdByUid: currentCoach?.createdByUid ?? session.user.id,
+        email,
+        id: getCoachAssignmentId(legacyOrganizationId, coachId),
+        organizationId: legacyOrganizationId,
+        role: "coach",
+        status: currentCoach?.status === "Inactive" ? "inactive" : "active",
+        teamIds: legacyTeamIds,
+        updatedAt: now,
+        ...(uid || currentCoach?.uid ? { uid: uid || currentCoach?.uid } : {}),
+      };
+
+      transaction.create(
+        "coachAssignments",
+        migratedAssignment.id,
+        migratedAssignment,
+      );
+    });
+
+    if (currentAssignment) {
+      transaction.set("coachAssignments", nextAssignment.id, nextAssignment);
+    } else {
+      transaction.create("coachAssignments", nextAssignment.id, nextAssignment);
+    }
+
+    const finalOrganizationAssignments = [
+      ...organizationAssignments.filter(
+        (candidate) => candidate.id !== nextAssignment.id,
+      ),
+      nextAssignment,
+    ];
+
     organizationTeams.forEach((team) => {
       const currentCoachIds = Array.isArray(team.coachIds) ? team.coachIds : [];
-      const nextCoachIds = uniqueStringList([
-        ...currentCoachIds.filter((teamCoachId) => teamCoachId !== coachId),
-        activeAssignedTeamIds.has(team.id) ? coachId : undefined,
-      ]);
+      const nextCoachIds = uniqueStringList(
+        finalOrganizationAssignments
+          .filter(
+            (candidate) =>
+              isActiveCoachAssignment(candidate) &&
+              candidate.teamIds.includes(team.id),
+          )
+          .map((candidate) => candidate.coachId),
+      );
 
       if (!hasSameMembers(currentCoachIds, nextCoachIds)) {
         transaction.update<Team>("teams", team.id, {
@@ -1046,19 +1255,23 @@ async function createOrUpdateCoachAssignment(
       }
     });
 
-    return nextCoach;
+    return nextAssignment;
   });
 
   console.info("Coach assignment saved.", {
-    coachId: coach.id,
+    assignmentId: assignment.id,
+    coachId: assignment.coachId,
     organizationId,
     status,
     teamCount: teamIds.length,
   });
 
   return {
-    id: coach.id,
-    message: `Coach assignment saved: ${coach.name}`,
+    id: assignment.id,
+    message:
+      assignment.status === "archived"
+        ? `Coach assignment archived: ${name}`
+        : `Coach assignment saved: ${name}`,
     source: "firestore",
   };
 }

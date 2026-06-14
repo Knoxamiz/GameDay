@@ -1,17 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import type { Coach, CoachAssignmentStatus } from "../data/coaches";
+import type {
+  CoachAssignment,
+  CoachAssignmentStatus,
+} from "../data/coachAssignmentRecords";
+import type { Coach } from "../data/coaches";
 import type { RegistrationInvite } from "../data/invites";
 import type { Organization } from "../data/organizations";
 import { isActiveTeam, type Team } from "../data/teams";
 import RegistrationInviteManager from "./RegistrationInviteManager";
 import TeamLifecycleManager from "./TeamLifecycleManager";
+import CoachAssignmentLifecycleManager from "./CoachAssignmentLifecycleManager";
 
 type AdminSetupPanelProps = {
   activeOrganizationId?: string;
   canCreateOrganization: boolean;
   canManageSetup: boolean;
+  coachAssignments: CoachAssignment[];
   coaches: Coach[];
   organizations: Organization[];
   registrationInvites: RegistrationInvite[];
@@ -40,6 +46,7 @@ export default function AdminSetupPanel({
   activeOrganizationId,
   canCreateOrganization,
   canManageSetup,
+  coachAssignments,
   coaches,
   organizations,
   registrationInvites,
@@ -57,7 +64,7 @@ export default function AdminSetupPanel({
   const [coachEmail, setCoachEmail] = useState("");
   const [coachUid, setCoachUid] = useState("");
   const [coachStatus, setCoachStatus] =
-    useState<CoachAssignmentStatus>("Active");
+    useState<Exclude<CoachAssignmentStatus, "archived">>("active");
   const [coachTeamIds, setCoachTeamIds] = useState<string[]>([]);
   const [newOrganizationName, setNewOrganizationName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -358,13 +365,13 @@ export default function AdminSetupPanel({
                 className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
                 onChange={(event) =>
                   setCoachStatus(
-                    event.target.value === "Inactive" ? "Inactive" : "Active",
+                    event.target.value === "inactive" ? "inactive" : "active",
                   )
                 }
                 value={coachStatus}
               >
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
               </select>
             </label>
             <fieldset className="space-y-2">
@@ -407,6 +414,13 @@ export default function AdminSetupPanel({
         )}
       </section>
 
+      <CoachAssignmentLifecycleManager
+        activeOrganizationId={organizationId}
+        assignments={coachAssignments}
+        coaches={coaches}
+        teams={teams}
+      />
+
       <RegistrationInviteManager
         organizationId={organizationId}
         registrationInvites={registrationInvites}
@@ -418,7 +432,7 @@ export default function AdminSetupPanel({
         <div className="mt-3 space-y-2 text-sm text-slate-300">
           <p>{organizations.length} organization record(s)</p>
           <p>{teams.length} team record(s)</p>
-          <p>{coaches.length} coach assignment(s)</p>
+          <p>{coachAssignments.length} coach assignment(s)</p>
           <p>{registrationInvites.length} registration invite(s)</p>
         </div>
       </section>

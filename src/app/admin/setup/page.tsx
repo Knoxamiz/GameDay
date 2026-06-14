@@ -79,6 +79,7 @@ export default async function AdminSetupPage({
             activeOrganizationId={activeContext.activeOrganizationId}
             canCreateOrganization={setup.canCreateOrganization}
             canManageSetup={setup.canManageSetup}
+            coachAssignments={setup.coachAssignments}
             coaches={setup.coaches}
             organizations={setup.organizations}
             registrationInvites={setup.registrationInvites}

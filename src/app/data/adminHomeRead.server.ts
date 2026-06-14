@@ -9,6 +9,7 @@ import {
   isAdminRoleSession,
 } from "./adminOrganizationScope.server";
 import type { AttendanceEntry } from "./attendance";
+import { isActiveCoachAssignment } from "./coachAssignmentRecords";
 import type { Coach } from "./coaches";
 import type { GameDayEvent } from "./events";
 import type { GameDayMessage } from "./messages";
@@ -122,18 +123,25 @@ export async function getAdminHomeReadModel(
     const [
       organization,
       teams,
-      coaches,
+      coachAssignments,
       events,
       registrations,
       communications,
     ] = await Promise.all([
       repositories.organizations.getById(organizationId),
       repositories.teams.listByOrganizationId(organizationId),
-      repositories.coaches.listByOrganizationId(organizationId),
+      repositories.coachAssignments.listByOrganizationId(organizationId),
       repositories.events.listByOrganizationId(organizationId),
       repositories.registrations.listByOrganizationId(organizationId),
       repositories.messages.listByAudience({ organizationId }),
     ]);
+    const coaches = (
+      await Promise.all(
+        uniqueById(
+          coachAssignments.filter(isActiveCoachAssignment),
+        ).map((assignment) => repositories.coaches.getById(assignment.coachId)),
+      )
+    ).filter((coach): coach is Coach => Boolean(coach));
     const [attendanceLists, transportationLists] = await Promise.all([
       Promise.all(
         events.map((event) => repositories.attendance.listByEventId(event.id)),

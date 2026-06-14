@@ -5,6 +5,7 @@ import {
   type BackendCollection,
 } from "../data/backendSchema";
 import type { Coach } from "../data/coaches";
+import type { CoachAssignment } from "../data/coachAssignmentRecords";
 import type { DocumentRequirement } from "../data/documents";
 import type { GameDayEvent } from "../data/events";
 import type { GameAlert } from "../data/gameAlerts";
@@ -26,6 +27,7 @@ import type {
   AthleteRepository,
   AttendanceRepository,
   CoachRepository,
+  CoachAssignmentRepository,
   DocumentRequirementRepository,
   EventRepository,
   GameAlertRepository,
@@ -488,6 +490,30 @@ class FirestoreEventRepository
   }
 }
 
+class FirestoreCoachAssignmentRepository
+  extends FirestoreCollectionRepository<CoachAssignment>
+  implements CoachAssignmentRepository {
+  listByCoachId(coachId: string) {
+    return this.list({ scope: { coachId } });
+  }
+
+  listByEmail(email: string) {
+    return this.list({ scope: { email } });
+  }
+
+  listByOrganizationId(organizationId: string) {
+    return this.list({ scope: { organizationId } });
+  }
+
+  listByTeamId(teamId: string) {
+    return this.listWhere("teamIds", arrayContainsOperator, teamId);
+  }
+
+  listByUid(uid: string) {
+    return this.list({ scope: { uid } });
+  }
+}
+
 class FirestoreRegistrationRepository
   extends FirestoreCollectionRepository<Registration>
   implements RegistrationRepository {
@@ -649,6 +675,9 @@ export function createFirestoreRepositories(): GameDayRepositories {
   return {
     athletes: new FirestoreAthleteRepository("athletes"),
     attendance: new FirestoreAttendanceRepository("attendance"),
+    coachAssignments: new FirestoreCoachAssignmentRepository(
+      "coachAssignments",
+    ),
     coaches: new FirestoreCoachRepository("coaches"),
     documentRequirements: new FirestoreDocumentRequirementRepository(
       "documentRequirements",

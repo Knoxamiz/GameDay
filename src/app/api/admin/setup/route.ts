@@ -58,8 +58,14 @@ function getNewTeamStatus(value: unknown): "active" | "inactive" | null {
   return value === "active" || value === "inactive" ? value : null;
 }
 
-function getCoachStatus(value: unknown): "Active" | "Inactive" {
-  return value === "Inactive" ? "Inactive" : "Active";
+function getCoachStatus(
+  value: unknown,
+): "active" | "inactive" | "archived" | null {
+  if (value === "active" || value === "inactive" || value === "archived") {
+    return value;
+  }
+
+  return null;
 }
 
 function getStringList(value: unknown) {
@@ -129,12 +135,20 @@ function getSetupPayload(body: Record<string, unknown> | null) {
   }
 
   if (actionType === "coach-assignment") {
+    const status = getCoachStatus(body.status);
+
+    if (!status) {
+      return null;
+    }
+
     return {
       actionType,
+      assignmentId: getText(body.assignmentId),
+      coachId: getText(body.coachId),
       email: getText(body.email),
       name: getText(body.name),
       organizationId: getText(body.organizationId),
-      status: getCoachStatus(body.status),
+      status,
       teamIds: getStringList(body.teamIds),
       uid: getText(body.uid),
     } satisfies AdminSetupPayload;

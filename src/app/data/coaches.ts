@@ -1,4 +1,4 @@
-export type CoachAssignmentStatus = "Active" | "Inactive";
+export type LegacyCoachAssignmentStatus = "Active" | "Inactive";
 
 export type Coach = {
   id: string;
@@ -9,11 +9,13 @@ export type Coach = {
   name: string;
   email: string;
   phone: string;
-  organizationId: string;
+  // Legacy assignment fields remain readable until each coach is migrated to
+  // organization-scoped coachAssignments records.
+  organizationId?: string;
   organizationIds?: string[];
   role?: "coach";
-  status?: CoachAssignmentStatus;
-  teamIds: string[];
+  status?: LegacyCoachAssignmentStatus;
+  teamIds?: string[];
   createdAt?: string;
   createdByUid?: string;
   updatedAt?: string;
@@ -66,7 +68,9 @@ export function getCoachOrganizationIds(coach: Coach) {
     ...new Set([
       ...(Array.isArray(coach.organizationIds) ? coach.organizationIds : []),
       coach.organizationId,
-    ].filter(Boolean)),
+    ].filter((organizationId): organizationId is string =>
+      Boolean(organizationId),
+    )),
   ];
 }
 

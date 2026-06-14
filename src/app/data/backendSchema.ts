@@ -4,6 +4,7 @@ export type BackendCollection =
   | "parents"
   | "athletes"
   | "coaches"
+  | "coachAssignments"
   | "teams"
   | "events"
   | "registrations"
@@ -36,6 +37,7 @@ export const backendCollections: BackendCollection[] = [
   "parents",
   "athletes",
   "coaches",
+  "coachAssignments",
   "teams",
   "events",
   "registrations",
@@ -67,7 +69,12 @@ export const backendRelationships: BackendRelationship[] = [
   },
   {
     from: "coaches",
-    keys: ["coachId", "uid", "email", "organizationIds", "teamIds", "status"],
+    keys: ["coachId", "uid", "email"],
+    to: "coachAssignments",
+  },
+  {
+    from: "coachAssignments",
+    keys: ["coachId", "uid", "email", "organizationId", "teamIds", "status"],
     to: "teams",
   },
   {
@@ -201,12 +208,18 @@ export const backendCollectionSpecs: Record<
   },
   coaches: {
     collection: "coaches",
+    indexes: [["coachId"], ["uid"], ["email"]],
+    primaryKey: "id",
+    scopeKeys: ["coachId", "uid", "email"],
+    serverWritesRequired: true,
+  },
+  coachAssignments: {
+    collection: "coachAssignments",
     indexes: [
       ["coachId"],
       ["uid"],
       ["email"],
       ["organizationId"],
-      ["organizationIds"],
       ["teamIds"],
       ["status"],
     ],
@@ -216,7 +229,6 @@ export const backendCollectionSpecs: Record<
       "uid",
       "email",
       "organizationId",
-      "organizationIds",
       "teamIds",
       "status",
     ],

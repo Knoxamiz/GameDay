@@ -2,6 +2,7 @@ import type { AccessRole } from "../data/accessControl";
 import type { Athlete } from "../data/athletes";
 import type { AttendanceEntry } from "../data/attendance";
 import type { Coach } from "../data/coaches";
+import type { CoachAssignment } from "../data/coachAssignmentRecords";
 import type { BackendCollection } from "../data/backendSchema";
 import type { DocumentRequirement } from "../data/documents";
 import type { GameDayEvent } from "../data/events";
@@ -129,6 +130,15 @@ export interface CoachRepository extends MutableRepository<Coach> {
   listByTeamId(teamId: string): Promise<Coach[]>;
 }
 
+export interface CoachAssignmentRepository
+  extends MutableRepository<CoachAssignment> {
+  listByCoachId(coachId: string): Promise<CoachAssignment[]>;
+  listByEmail(email: string): Promise<CoachAssignment[]>;
+  listByOrganizationId(organizationId: string): Promise<CoachAssignment[]>;
+  listByTeamId(teamId: string): Promise<CoachAssignment[]>;
+  listByUid(uid: string): Promise<CoachAssignment[]>;
+}
+
 export interface TeamRepository extends MutableRepository<Team> {
   listByCoachId(coachId: string): Promise<Team[]>;
   listByOrganizationId(organizationId: string): Promise<Team[]>;
@@ -197,6 +207,7 @@ export interface RegistrationInviteRepository
 export type GameDayRepositories = {
   athletes: AthleteRepository;
   attendance: AttendanceRepository;
+  coachAssignments: CoachAssignmentRepository;
   coaches: CoachRepository;
   documentRequirements: DocumentRequirementRepository;
   events: EventRepository;
