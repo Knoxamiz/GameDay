@@ -618,9 +618,21 @@ class FirestoreGameAlertRepository
 class FirestoreRegistrationInviteRepository
   extends FirestoreCollectionRepository<RegistrationInvite>
   implements RegistrationInviteRepository {
-  getByCode(code: string) {
+  async getByCode(code: string) {
+    const exactInvite = await this.getById(code);
+
+    if (exactInvite) {
+      return exactInvite;
+    }
+
+    const invites = await this.list({ limit: 1, scope: { inviteCode: code } });
+
+    if (invites[0]) {
+      return invites[0];
+    }
+
     return this.list({ limit: 1, scope: { code } }).then(
-      (invites) => invites[0] ?? null,
+      (legacyInvites) => legacyInvites[0] ?? null,
     );
   }
 
@@ -656,7 +668,7 @@ export function createFirestoreRepositories(): GameDayRepositories {
     ),
     registrationInvites: new FirestoreRegistrationInviteRepository(
       "registrationInvites",
-      "code",
+      "inviteCode",
     ),
     registrations: new FirestoreRegistrationRepository("registrations"),
     rideShareMatches: new FirestoreRideShareRepository("rideShareMatches"),

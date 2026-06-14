@@ -1,100 +1,136 @@
 import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
+import { getCurrentParentUser } from "./currentUser.server";
+import {
+  getRegistrationInviteAvailability,
+  normalizeRegistrationInvite,
+  type NormalizedRegistrationInvite,
+  type RegistrationInvite,
+  type RegistrationInviteAvailability,
+} from "./invites";
 import type { Organization } from "./organizations";
+import type { Registration } from "./registrations";
 import type { Team } from "./teams";
-import type { RegistrationInvite } from "./invites";
 
 export type RegistrationInviteReadModel = {
-  invite?: RegistrationInvite;
+  availability: RegistrationInviteAvailability;
+  invite?: NormalizedRegistrationInvite;
   organization?: Organization;
   source: "empty" | "firestore";
   team?: Team;
 };
 
-const emptyOrganizationStatus = {
-  activeTeams: 0,
-  coaches: 0,
-  registeredPlayers: 0,
-  upcomingEvents: 0,
-};
-
-function getOrganizationShell(organizationId: string): Organization {
-  return {
-    id: organizationId,
-    name: organizationId,
-    organizationId,
-    status: emptyOrganizationStatus,
-  };
+function uniqueById<TRecord extends { id: string }>(records: TRecord[]) {
+  return [...new Map(records.map((record) => [record.id, record])).values()];
 }
 
-function normalizeInvite(invite: RegistrationInvite | null | undefined) {
-  if (!invite || invite.status !== "Active") {
-    return undefined;
-  }
+async function getInviteRegistrationCount(invite: NormalizedRegistrationInvite) {
+  const repositories = createFirestoreRepositories();
+  const [byInviteId, byInviteCode] = await Promise.all([
+    repositories.registrations.list({
+      scope: { registrationInviteId: invite.id },
+    }),
+    repositories.registrations.list({
+      scope: { inviteCode: invite.inviteCode },
+    }),
+  ]);
 
-  return {
-    ...invite,
-    documentRequirements: Array.isArray(invite.documentRequirements)
-      ? invite.documentRequirements
-      : [],
-    paymentRequirements: Array.isArray(invite.paymentRequirements)
-      ? invite.paymentRequirements
-      : [],
-  };
+  return uniqueById([...byInviteId, ...byInviteCode]).length;
 }
 
 async function buildInviteReadModel(
   invite: RegistrationInvite | null | undefined,
 ): Promise<RegistrationInviteReadModel> {
-  const activeInvite = normalizeInvite(invite);
+  const normalizedInvite = normalizeRegistrationInvite(invite);
 
-  if (!activeInvite) {
-    return { source: "empty" };
+  if (!normalizedInvite) {
+    return {
+      availability: { available: false, reason: "missing" },
+      source: "empty",
+    };
   }
 
   const repositories = createFirestoreRepositories();
-  const [organization, team] = await Promise.all([
-    repositories.organizations.getById(activeInvite.organizationId),
-    repositories.teams.getById(activeInvite.teamId),
+  const [organization, team, registrationCount] = await Promise.all([
+    repositories.organizations.getById(normalizedInvite.organizationId),
+    repositories.teams.getById(normalizedInvite.teamId),
+    getInviteRegistrationCount(normalizedInvite),
   ]);
+  const scopeIsValid = Boolean(
+    organization &&
+      team &&
+      team.organizationId === normalizedInvite.organizationId &&
+      team.lifecycleStatus !== "Inactive",
+  );
 
   return {
-    invite: activeInvite,
-    organization:
-      organization ?? getOrganizationShell(activeInvite.organizationId),
+    availability: getRegistrationInviteAvailability(normalizedInvite, {
+      registrationCount,
+      scopeIsValid,
+    }),
+    invite: normalizedInvite,
+    organization: organization ?? undefined,
     source: "firestore",
     team: team ?? undefined,
   };
 }
 
-export async function getPrimaryRegistrationInviteReadModel(): Promise<RegistrationInviteReadModel> {
+export async function getParentRegistrationInviteReadModels(): Promise<
+  RegistrationInviteReadModel[]
+> {
   if (!getFirebaseAdminConfig()) {
-    return { source: "empty" };
+    return [];
   }
 
   try {
-    const repositories = createFirestoreRepositories();
-    const activeInvites = await repositories.registrationInvites.list({
-      limit: 2,
-      scope: { status: "Active" },
-    });
-    const activeInvite =
-      activeInvites.length === 1 ? activeInvites[0] : undefined;
+    const parent = await getCurrentParentUser();
 
-    if (activeInvites.length > 1) {
-      console.warn("Multiple active registration invites found for /registration.", {
-        inviteCount: activeInvites.length,
-      });
+    if (parent.source !== "firebase-session" || !parent.parentUid) {
+      return [];
     }
 
-    return buildInviteReadModel(activeInvite);
+    const repositories = createFirestoreRepositories();
+    const [ownedRegistrations, parentRegistrations] = await Promise.all([
+      repositories.registrations.list({
+        scope: { ownerUid: parent.parentUid },
+      }),
+      repositories.registrations.list({
+        scope: { parentId: parent.parentId },
+      }),
+    ]);
+    const registrations = uniqueById<Registration>([
+      ...ownedRegistrations,
+      ...parentRegistrations,
+    ]);
+    const teamIds = [
+      ...new Set([
+        ...registrations.map((registration) => registration.teamId),
+      ]),
+    ].filter(Boolean);
+    const inviteLists = await Promise.all(
+      teamIds.map((teamId) =>
+        repositories.registrationInvites.listByTeamId(teamId),
+      ),
+    );
+    const inviteModels = await Promise.all(
+      uniqueById(
+        inviteLists
+          .flat()
+          .map(normalizeRegistrationInvite)
+          .filter(
+            (invite): invite is NormalizedRegistrationInvite => Boolean(invite),
+          ),
+      ).map(buildInviteReadModel),
+    );
+
+    return inviteModels.filter((model) => model.availability.available);
   } catch (error) {
-    console.warn("Could not load live registration invites.", {
+    console.warn("Could not load parent-scoped registration invites.", {
       message: error instanceof Error ? error.message : "Unknown error",
       name: error instanceof Error ? error.name : typeof error,
     });
 
-    return { source: "empty" };
+    return [];
   }
 }
 
@@ -102,7 +138,10 @@ export async function getRegistrationInviteReadModelByCode(
   inviteCode: string,
 ): Promise<RegistrationInviteReadModel> {
   if (!getFirebaseAdminConfig()) {
-    return { source: "empty" };
+    return {
+      availability: { available: false, reason: "service-unavailable" },
+      source: "empty",
+    };
   }
 
   try {
@@ -117,6 +156,9 @@ export async function getRegistrationInviteReadModelByCode(
       name: error instanceof Error ? error.name : typeof error,
     });
 
-    return { source: "empty" };
+    return {
+      availability: { available: false, reason: "service-unavailable" },
+      source: "empty",
+    };
   }
 }

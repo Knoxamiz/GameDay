@@ -11,12 +11,37 @@ function getText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function getBoolean(value: unknown) {
-  return typeof value === "boolean" ? value : false;
+function getInviteStatus(value: unknown): "closed" | "draft" | "open" {
+  if (value === "open" || value === "Active") {
+    return "open";
+  }
+
+  if (value === "closed" || value === "Paused") {
+    return "closed";
+  }
+
+  return "draft";
 }
 
-function getInviteStatus(value: unknown): "Active" | "Paused" {
-  return value === "Paused" ? "Paused" : "Active";
+function getInviteOperation(
+  value: unknown,
+): "archive" | "close" | "open" | "update" {
+  if (value === "archive" || value === "close" || value === "open") {
+    return value;
+  }
+
+  return "update";
+}
+
+function getOptionalPositiveInteger(value: unknown) {
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+
+  const parsedValue = Number(value);
+  return Number.isInteger(parsedValue) && parsedValue > 0
+    ? parsedValue
+    : Number.NaN;
 }
 
 function getTeamStatus(value: unknown): "Active" | "Inactive" {
@@ -84,9 +109,26 @@ function getSetupPayload(body: Record<string, unknown> | null) {
   if (actionType === "registration-invite") {
     return {
       actionType,
-      includePayment: getBoolean(body.includePayment),
+      closesAt: getText(body.closesAt),
+      description: getText(body.description),
+      maxAthletes: getOptionalPositiveInteger(body.maxAthletes),
+      opensAt: getText(body.opensAt),
       organizationId: getText(body.organizationId),
       status: getInviteStatus(body.status),
+      teamId: getText(body.teamId),
+      title: getText(body.title),
+    } satisfies AdminSetupPayload;
+  }
+
+  if (actionType === "registration-invite-update") {
+    return {
+      actionType,
+      closesAt: getText(body.closesAt),
+      description: getText(body.description),
+      inviteCode: getText(body.inviteCode),
+      maxAthletes: getOptionalPositiveInteger(body.maxAthletes),
+      opensAt: getText(body.opensAt),
+      operation: getInviteOperation(body.operation),
       teamId: getText(body.teamId),
       title: getText(body.title),
     } satisfies AdminSetupPayload;

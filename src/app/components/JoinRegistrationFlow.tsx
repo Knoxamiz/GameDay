@@ -183,7 +183,7 @@ export default function JoinRegistrationFlow({
         lastName: form.athleteLastName,
         school: form.school,
       },
-      inviteCode: invite.code,
+      inviteCode: invite.inviteCode,
       parent: {
         email: form.parentEmail,
         name: form.parentName,
@@ -336,6 +336,9 @@ export default function JoinRegistrationFlow({
           {organization?.name ?? invite.organizationId}
         </p>
         <p className="mt-1 text-sm text-slate-400">{team?.name ?? "Team TBD"}</p>
+        {invite.description && (
+          <p className="mt-3 text-sm text-slate-300">{invite.description}</p>
+        )}
       </div>
 
       <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">

@@ -15,8 +15,12 @@ import {
   type AdminOrganizationScopeSource,
 } from "./adminOrganizationScope.server";
 import { isActiveCoach, type Coach, type CoachAssignmentStatus } from "./coaches";
-import { documentRequirementTemplates } from "./documents";
-import type { RegistrationInvite } from "./invites";
+import {
+  normalizeRegistrationInvite,
+  type NormalizedRegistrationInvite,
+  type RegistrationInvite,
+  type RegistrationInviteStatus,
+} from "./invites";
 import {
   createLiveRecordId,
   normalizeDocumentIdSegment,
@@ -24,7 +28,6 @@ import {
 } from "./liveIdentity";
 import type { OrganizationMembership } from "./organizationMemberships";
 import type { Organization } from "./organizations";
-import { paymentRequirementTemplates } from "./payments";
 import { isCoachVisibleRosterRegistration, type Registration } from "./registrations";
 import type { Team } from "./teams";
 
@@ -70,9 +73,23 @@ export type AdminSetupPayload =
     }
   | {
       actionType: "registration-invite";
-      includePayment: boolean;
+      closesAt: string;
+      description: string;
+      maxAthletes?: number;
+      opensAt: string;
       organizationId: string;
-      status: "Active" | "Paused";
+      status: Exclude<RegistrationInviteStatus, "archived">;
+      teamId: string;
+      title: string;
+    }
+  | {
+      actionType: "registration-invite-update";
+      closesAt: string;
+      description: string;
+      inviteCode: string;
+      maxAthletes?: number;
+      opensAt: string;
+      operation: "archive" | "close" | "open" | "update";
       teamId: string;
       title: string;
     };
@@ -116,6 +133,98 @@ async function getAuthSessionSource(): Promise<AuthSessionSource> {
 
 function normalizeText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizeOptionalDate(value: unknown, fieldLabel: string) {
+  const normalizedValue = normalizeText(value);
+
+  if (!normalizedValue) {
+    return undefined;
+  }
+
+  const parsedDate = new Date(normalizedValue);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    createSetupError(
+      "invalid-registration-invite-date",
+      `${fieldLabel} must be a valid date and time.`,
+      400,
+    );
+  }
+
+  return parsedDate.toISOString();
+}
+
+function normalizeOptionalMaxAthletes(value: unknown) {
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+
+  const maxAthletes = Number(value);
+
+  if (!Number.isInteger(maxAthletes) || maxAthletes <= 0) {
+    createSetupError(
+      "invalid-registration-invite-capacity",
+      "Athlete limit must be a positive whole number.",
+      400,
+    );
+  }
+
+  return maxAthletes;
+}
+
+function validateInviteSchedule(opensAt?: string, closesAt?: string) {
+  if (opensAt && closesAt && Date.parse(closesAt) <= Date.parse(opensAt)) {
+    createSetupError(
+      "invalid-registration-invite-schedule",
+      "Close time must be after open time.",
+      400,
+    );
+  }
+}
+
+function buildCanonicalInviteRecord(
+  invite: NormalizedRegistrationInvite,
+  values: {
+    archivedAt?: string;
+    archivedByUid?: string;
+    closesAt?: string;
+    description: string;
+    documentRequirements: RegistrationInvite["documentRequirements"];
+    maxAthletes?: number;
+    opensAt?: string;
+    paymentRequirements: RegistrationInvite["paymentRequirements"];
+    status: RegistrationInviteStatus;
+    teamId: string;
+    title: string;
+    updatedAt: string;
+    updatedByUid: string;
+  },
+): RegistrationInvite {
+  return {
+    ...(values.archivedAt ? { archivedAt: values.archivedAt } : {}),
+    ...(values.archivedByUid
+      ? { archivedByUid: values.archivedByUid }
+      : {}),
+    ...(values.closesAt ? { closesAt: values.closesAt } : {}),
+    ...(invite.createdAt ? { createdAt: invite.createdAt } : {}),
+    ...(invite.createdByUid ? { createdByUid: invite.createdByUid } : {}),
+    description: values.description,
+    documentRequirements: values.documentRequirements,
+    id: invite.id,
+    inviteCode: invite.inviteCode,
+    inviteUrl: `/join/${invite.inviteCode}`,
+    ...(values.maxAthletes ? { maxAthletes: values.maxAthletes } : {}),
+    ...(values.opensAt ? { opensAt: values.opensAt } : {}),
+    organizationId: invite.organizationId,
+    paymentRequirements: values.paymentRequirements,
+    qrLabel: `${values.title} Registration Link`,
+    status: values.status,
+    teamId: values.teamId,
+    title: values.title,
+    updatedAt: values.updatedAt,
+    updatedByUid: values.updatedByUid,
+  };
 }
 
 function getSlugFromId(value: string) {
@@ -306,7 +415,14 @@ export async function getAdminSetupReadModel(): Promise<AdminSetupReadModel> {
       organizations: organizations.filter(
         (organization): organization is Organization => Boolean(organization),
       ),
-      registrationInvites: uniqueById(inviteLists.flat()),
+      registrationInvites: uniqueById(
+        inviteLists
+          .flat()
+          .map(normalizeRegistrationInvite)
+          .filter(
+            (invite): invite is NormalizedRegistrationInvite => Boolean(invite),
+          ),
+      ),
       scopeSource: scope.source,
       source: "firestore",
       teams: uniqueById(teamLists.flat()),
@@ -845,7 +961,13 @@ async function createRegistrationInvite(
   const organizationId = normalizeText(payload.organizationId);
   const teamId = normalizeText(payload.teamId);
   const title = normalizeText(payload.title);
-  const status = payload.status === "Paused" ? "Paused" : "Active";
+  const description = normalizeText(payload.description);
+  const status = payload.status;
+  const opensAt = normalizeOptionalDate(payload.opensAt, "Open time");
+  const closesAt = normalizeOptionalDate(payload.closesAt, "Close time");
+  const maxAthletes = normalizeOptionalMaxAthletes(payload.maxAthletes);
+
+  validateInviteSchedule(opensAt, closesAt);
 
   if (!organizationId || !teamId || !title) {
     createSetupError(
@@ -858,26 +980,30 @@ async function createRegistrationInvite(
   assertManagedOrganization(scope, organizationId);
 
   const now = new Date().toISOString();
-  const code = createLiveRecordId("invite", [
+  const inviteCode = createLiveRecordId("invite", [
     organizationId,
     teamId,
     slugifyIdentityPart(title),
   ]);
   const invite: RegistrationInvite = {
-    code,
+    ...(closesAt ? { closesAt } : {}),
     createdAt: now,
     createdByUid: session.user.id,
-    description: "Registration offering for an organization team.",
-    documentRequirements: documentRequirementTemplates,
-    id: `registration-invite-${code}`,
-    inviteUrl: `/join/${code}`,
+    description,
+    documentRequirements: [],
+    id: `registration-invite-${inviteCode}`,
+    inviteCode,
+    inviteUrl: `/join/${inviteCode}`,
+    ...(maxAthletes ? { maxAthletes } : {}),
+    ...(opensAt ? { opensAt } : {}),
     organizationId,
-    paymentRequirements: payload.includePayment ? paymentRequirementTemplates : [],
+    paymentRequirements: [],
     qrLabel: `${title} Registration Link`,
     status,
     teamId,
     title,
     updatedAt: now,
+    updatedByUid: session.user.id,
   };
 
   await runFirestoreTransaction(async (transaction) => {
@@ -886,12 +1012,17 @@ async function createRegistrationInvite(
       transaction.get<Team>("teams", teamId),
       transaction.get<RegistrationInvite>(
         "registrationInvites",
-        invite.code,
-        "code",
+        invite.inviteCode,
+        "inviteCode",
       ),
     ]);
 
-    if (!organization || !team || team.organizationId !== organizationId) {
+    if (
+      !organization ||
+      !team ||
+      team.organizationId !== organizationId ||
+      team.lifecycleStatus === "Inactive"
+    ) {
       createSetupError(
         "team-required",
         "Create a team for this organization before opening registration.",
@@ -907,16 +1038,153 @@ async function createRegistrationInvite(
       );
     }
 
-    transaction.create("registrationInvites", invite.code, {
+    transaction.create("registrationInvites", invite.inviteCode, {
       ...invite,
-      description: `Registration offering for ${team.name}.`,
+      description: description || `Registration offering for ${team.name}.`,
       qrLabel: `${team.name} Registration Link`,
     });
   });
 
   return {
-    id: invite.code,
+    id: invite.inviteCode,
     message: `Registration invite created: ${invite.title}`,
+    source: "firestore",
+  };
+}
+
+async function updateRegistrationInvite(
+  scope: AdminOrganizationScope,
+  payload: Extract<
+    AdminSetupPayload,
+    { actionType: "registration-invite-update" }
+  >,
+): Promise<AdminSetupResult> {
+  const inviteCode = normalizeText(payload.inviteCode);
+
+  if (!inviteCode) {
+    createSetupError(
+      "registration-invite-required",
+      "Choose a registration invite.",
+      400,
+    );
+  }
+
+  const now = new Date().toISOString();
+  const nextInvite = await runFirestoreTransaction(async (transaction) => {
+    const storedInvite = await transaction.get<RegistrationInvite>(
+      "registrationInvites",
+      inviteCode,
+      "inviteCode",
+    );
+    const invite = normalizeRegistrationInvite(storedInvite);
+
+    if (!invite) {
+      createSetupError(
+        "registration-invite-not-found",
+        "Registration invite not found.",
+        404,
+      );
+    }
+
+    assertManagedOrganization(scope, invite.organizationId);
+
+    if (invite.status === "archived" && payload.operation !== "archive") {
+      createSetupError(
+        "registration-invite-archived",
+        "Archived registration invites cannot be changed.",
+        409,
+      );
+    }
+
+    const isUpdate = payload.operation === "update";
+    const teamId = invite.teamId;
+    const title = isUpdate ? normalizeText(payload.title) : invite.title;
+    const description = isUpdate
+      ? normalizeText(payload.description)
+      : invite.description ?? "";
+    const opensAt = isUpdate
+      ? normalizeOptionalDate(payload.opensAt, "Open time")
+      : invite.opensAt;
+    const closesAt = isUpdate
+      ? normalizeOptionalDate(payload.closesAt, "Close time")
+      : invite.closesAt;
+    const maxAthletes = isUpdate
+      ? normalizeOptionalMaxAthletes(payload.maxAthletes)
+      : invite.maxAthletes;
+
+    if (!teamId || !title) {
+      createSetupError(
+        "invalid-registration-invite",
+        "Team and title are required.",
+        400,
+      );
+    }
+
+    if (payload.operation === "update" || payload.operation === "open") {
+      validateInviteSchedule(opensAt, closesAt);
+
+      const team = await transaction.get<Team>("teams", teamId);
+
+      if (
+        !team ||
+        team.organizationId !== invite.organizationId ||
+        team.lifecycleStatus === "Inactive"
+      ) {
+        createSetupError(
+          "registration-invite-team-required",
+          "Choose an active team in this organization.",
+          400,
+        );
+      }
+    }
+
+    const status: RegistrationInviteStatus =
+      payload.operation === "open"
+        ? "open"
+        : payload.operation === "close"
+          ? "closed"
+          : payload.operation === "archive"
+            ? "archived"
+            : invite.status;
+    const updatedInvite = buildCanonicalInviteRecord(invite, {
+      ...(status === "archived" ? { archivedAt: now } : {}),
+      ...(status === "archived"
+        ? { archivedByUid: scope.session.user.id }
+        : {}),
+      closesAt,
+      description,
+      documentRequirements: invite.documentRequirements,
+      maxAthletes,
+      opensAt,
+      paymentRequirements: invite.paymentRequirements,
+      status,
+      teamId,
+      title,
+      updatedAt: now,
+      updatedByUid: scope.session.user.id,
+    });
+
+    transaction.set("registrationInvites", inviteCode, updatedInvite);
+    return updatedInvite;
+  });
+
+  console.info("Registration invite lifecycle updated.", {
+    inviteCode: nextInvite.inviteCode,
+    operation: payload.operation,
+    organizationId: nextInvite.organizationId,
+    status: nextInvite.status,
+  });
+
+  return {
+    id: nextInvite.inviteCode,
+    message:
+      payload.operation === "archive"
+        ? `Registration invite archived: ${nextInvite.title}`
+        : payload.operation === "open"
+          ? `Registration invite opened: ${nextInvite.title}`
+          : payload.operation === "close"
+            ? `Registration invite closed: ${nextInvite.title}`
+            : `Registration invite updated: ${nextInvite.title}`,
     source: "firestore",
   };
 }
@@ -945,5 +1213,9 @@ export async function createAdminSetupRecord(
     return createOrUpdateCoachAssignment(scope, payload);
   }
 
-  return createRegistrationInvite(scope, payload);
+  if (payload.actionType === "registration-invite") {
+    return createRegistrationInvite(scope, payload);
+  }
+
+  return updateRegistrationInvite(scope, payload);
 }

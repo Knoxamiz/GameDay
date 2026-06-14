@@ -1,5 +1,10 @@
 import type { Athlete } from "./athletes";
-import type { RegistrationInvite } from "./invites";
+import {
+  getRegistrationInviteAvailability,
+  getRegistrationInviteUnavailableMessage,
+  normalizeRegistrationInvite,
+  type RegistrationInvite,
+} from "./invites";
 import {
   createLiveRecordId,
   getLiveParentId,
@@ -78,12 +83,6 @@ function createSubmissionError(
   status = 400,
 ): never {
   throw new RegistrationSubmissionError(reason, message, status);
-}
-
-function isActiveRegistrationInvite(
-  invite: RegistrationInvite | null | undefined,
-): invite is RegistrationInvite {
-  return Boolean(invite?.status === "Active");
 }
 
 function buildRegistrationRequirements(
@@ -193,35 +192,62 @@ export async function submitParentRegistration(
   const athleteName = `${athleteFirstName} ${athleteLastName}`;
   const submittedAt = getSubmittedDate();
   const result = await runFirestoreTransaction(async (transaction) => {
-    const invites = await transaction.list<RegistrationInvite>(
+    const storedInvite = await transaction.get<RegistrationInvite>(
       "registrationInvites",
-      { limit: 2, scope: { code: inviteCode } },
-      "code",
+      inviteCode,
+      "inviteCode",
     );
-    const invite = invites.length === 1 ? invites[0] : null;
+    const invite = normalizeRegistrationInvite(storedInvite);
 
-    if (!isActiveRegistrationInvite(invite)) {
+    if (!invite) {
       createSubmissionError(
         "invalid-invite",
-        "This registration invite is not active.",
+        "This registration invite could not be found.",
         400,
       );
     }
 
-    const [parent, inviteOrganization, inviteTeam] = await Promise.all([
+    const [
+      parent,
+      inviteOrganization,
+      inviteTeam,
+      registrationsByInviteId,
+      registrationsByInviteCode,
+    ] = await Promise.all([
       transaction.get<ParentGuardian>("parents", parentId),
       transaction.get("organizations", invite.organizationId),
-      transaction.get<{ organizationId: string }>("teams", invite.teamId),
+      transaction.get<{ lifecycleStatus?: string; organizationId: string }>(
+        "teams",
+        invite.teamId,
+      ),
+      transaction.list<Registration>("registrations", {
+        scope: { registrationInviteId: invite.id },
+      }),
+      transaction.list<Registration>("registrations", {
+        scope: { inviteCode: invite.inviteCode },
+      }),
     ]);
+    const inviteScopeIsValid = Boolean(
+      inviteOrganization &&
+        inviteTeam &&
+        inviteTeam.organizationId === invite.organizationId &&
+        inviteTeam.lifecycleStatus !== "Inactive",
+    );
+    const registrationCount = new Set(
+      [...registrationsByInviteId, ...registrationsByInviteCode].map(
+        (registration) => registration.id,
+      ),
+    ).size;
+    const availability = getRegistrationInviteAvailability(invite, {
+      now: new Date(submittedAt),
+      registrationCount,
+      scopeIsValid: inviteScopeIsValid,
+    });
 
-    if (
-      !inviteOrganization ||
-      !inviteTeam ||
-      inviteTeam.organizationId !== invite.organizationId
-    ) {
+    if (!availability.available) {
       createSubmissionError(
-        "invalid-invite-scope",
-        "This registration invite is not connected to a valid organization team.",
+        `invite-${availability.reason}`,
+        getRegistrationInviteUnavailableMessage(availability.reason),
         400,
       );
     }
@@ -280,7 +306,7 @@ export async function submitParentRegistration(
       createdByUid: parentUid,
       details: "Registration was submitted from a team invite.",
       id: registrationId,
-      inviteCode: invite.code,
+      inviteCode: invite.inviteCode,
       ownerUid: parentUid,
       organizationId: invite.organizationId,
       parentId,
@@ -295,6 +321,7 @@ export async function submitParentRegistration(
         parentUid,
         submittedAt,
       ),
+      registrationInviteId: invite.id,
       registrationId,
       requirements: buildRegistrationRequirements(invite, payload),
       rosterStatus: "not_rostered",

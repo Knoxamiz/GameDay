@@ -27,6 +27,8 @@ export type QueryScope = {
   ownerUid?: string;
   parentId?: string;
   parentUid?: string;
+  inviteCode?: string;
+  registrationInviteId?: string;
   registrationId?: string;
   role?: string;
   rosterStatus?: string;

@@ -54,6 +54,7 @@ export type Registration = {
   createdByUid?: string;
   ownerUid?: string;
   paymentRequirements?: PaymentRequirement[];
+  registrationInviteId?: string;
   registrationId?: string;
   reviewedAt?: string;
   reviewedBy?: string;
