@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   isDocumentBlocked,
@@ -29,18 +30,9 @@ import {
   type RegistrationRequirement,
   type RegistrationRequirementStatus,
 } from "../data/registrations";
-import {
-  saveDocumentRequirementStatus,
-  useDocumentRequirements,
-} from "./documentRequirementState";
-import {
-  savePaymentRequirementStatus,
-  usePaymentRequirements,
-} from "./paymentRequirementState";
-import {
-  saveRegistrationRequirementStatus,
-  useRegistrationRequirements,
-} from "./registrationRequirementState";
+import { useDocumentRequirements } from "./documentRequirementState";
+import { usePaymentRequirements } from "./paymentRequirementState";
+import { useRegistrationRequirements } from "./registrationRequirementState";
 
 type RegistrationRequirementsChecklistProps = {
   athleteId: string;
@@ -109,6 +101,7 @@ export default function RegistrationRequirementsChecklist({
   registrationId,
   requirements,
 }: RegistrationRequirementsChecklistProps) {
+  const router = useRouter();
   const [uploadingRequirementId, setUploadingRequirementId] = useState<
     string | null
   >(null);
@@ -208,7 +201,6 @@ export default function RegistrationRequirementsChecklist({
     requirementId: string,
     requirementLabel: string,
     file: File,
-    saveLocalStatus: () => void,
   ) {
     if (
       !athleteId ||
@@ -245,7 +237,7 @@ export default function RegistrationRequirementsChecklist({
         );
       }
 
-      saveLocalStatus();
+      router.refresh();
     } catch (error) {
       setActionError(
         error instanceof Error ? error.message : "Could not upload document.",
@@ -331,11 +323,6 @@ export default function RegistrationRequirementsChecklist({
                           requirement.id,
                           requirement.label,
                           file,
-                          () =>
-                            saveDocumentRequirementStatus(
-                              requirement.id,
-                              "Uploaded",
-                            ),
                         );
                       }
                     }}
@@ -398,12 +385,7 @@ export default function RegistrationRequirementsChecklist({
                       requirement.required,
                       "Submitted",
                     )
-                      .then(() =>
-                        savePaymentRequirementStatus(
-                          requirement.id,
-                          "Submitted",
-                        ),
-                      )
+                      .then(() => router.refresh())
                       .catch((error) =>
                         setActionError(
                           error instanceof Error
@@ -481,12 +463,6 @@ export default function RegistrationRequirementsChecklist({
                           requirement.label,
                           requirement.label,
                           file,
-                          () =>
-                            saveRegistrationRequirementStatus(
-                              registrationId,
-                              requirement.label,
-                              "Uploaded",
-                            ),
                         );
                       }
                     }}

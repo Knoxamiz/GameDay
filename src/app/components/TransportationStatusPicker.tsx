@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { isDocumentOpen, type DocumentRequirement } from "../data/documents";
 import { isPaymentOpen, type PaymentRequirement } from "../data/payments";
 import type { RegistrationRequirement } from "../data/registrations";
@@ -7,10 +9,6 @@ import type { TransportationStatus } from "../data/transportation";
 import { useDocumentRequirements } from "./documentRequirementState";
 import { usePaymentRequirements } from "./paymentRequirementState";
 import { useRegistrationRequirements } from "./registrationRequirementState";
-import {
-  saveTransportationStatus,
-  useTransportationStatus,
-} from "./transportationStatusState";
 
 type TransportationStatusPickerProps = {
   athleteId: string;
@@ -33,11 +31,10 @@ export default function TransportationStatusPicker({
   registrationRequirements,
   options,
 }: TransportationStatusPickerProps) {
-  const selectedStatus = useTransportationStatus(
-    athleteId,
-    eventId,
-    initialStatus,
-  );
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const selectedStatus = initialStatus;
   const requirements = useRegistrationRequirements(
     registrationId,
     registrationRequirements,
@@ -63,6 +60,36 @@ export default function TransportationStatusPicker({
     missingRequirementLabels.length === 0 &&
     openDocumentLabels.length === 0 &&
     openPaymentLabels.length === 0;
+
+  function updateTransportation(status: TransportationStatus) {
+    setError(null);
+    startTransition(async () => {
+      try {
+        const response = await fetch(`/api/events/${eventId}/transportation`, {
+          body: JSON.stringify({ athleteId, status }),
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          method: "PATCH",
+        });
+
+        if (!response.ok) {
+          const body = (await response.json().catch(() => null)) as {
+            error?: unknown;
+          } | null;
+          setError(
+            typeof body?.error === "string"
+              ? body.error
+              : "Could not update transportation.",
+          );
+          return;
+        }
+
+        router.refresh();
+      } catch {
+        setError("Could not update transportation. Please try again.");
+      }
+    });
+  }
 
   return (
     <>
@@ -107,14 +134,13 @@ export default function TransportationStatusPicker({
               <button
                 key={option}
                 type="button"
-                onClick={() => {
-                  saveTransportationStatus(athleteId, eventId, option);
-                }}
+                disabled={isPending}
+                onClick={() => updateTransportation(option)}
                 className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm font-semibold ${
                   isSelected
                     ? "border-blue-300 bg-blue-500/20 text-blue-100"
                     : "border-slate-700 bg-slate-900 text-slate-300"
-                }`}
+                } disabled:cursor-not-allowed disabled:opacity-60`}
               >
                 <span
                   className={`h-4 w-4 rounded-full border ${
@@ -128,6 +154,9 @@ export default function TransportationStatusPicker({
             );
           })}
         </div>
+        {error && (
+          <p className="mt-3 text-sm font-semibold text-red-300">{error}</p>
+        )}
       </div>
     </>
   );

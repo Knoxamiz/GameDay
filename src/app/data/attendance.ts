@@ -4,8 +4,16 @@ export type AttendanceEntry = {
   id: string;
   eventId: string;
   athleteId?: string;
+  createdAt?: string;
+  createdByUid?: string;
   name: string;
+  organizationId?: string;
+  ownerUid?: string;
+  parentId?: string;
+  parentUid?: string;
   status: AttendanceStatus;
+  teamId?: string;
+  updatedAt?: string;
   count?: number;
 };
 

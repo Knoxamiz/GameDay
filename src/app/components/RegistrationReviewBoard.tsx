@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import type { AdminRegistrationReviewPayload } from "../data/adminRegistrationReview";
 import {
   isDocumentBlocked,
@@ -33,23 +34,12 @@ import {
   type Registration,
   type RegistrationRequirementStatus,
   type RegistrationStatus,
-  type RosterStatus,
 } from "../data/registrations";
-import {
-  saveDocumentRequirementStatus,
-  useDocumentRequirements,
-} from "./documentRequirementState";
-import {
-  savePaymentRequirementStatus,
-  usePaymentRequirements,
-} from "./paymentRequirementState";
+import { useDocumentRequirements } from "./documentRequirementState";
+import { usePaymentRequirements } from "./paymentRequirementState";
 import RegistrationStatusBadge from "./RegistrationStatusBadge";
+import { useRegistrationRequirements } from "./registrationRequirementState";
 import {
-  saveRegistrationRequirementStatus,
-  useRegistrationRequirements,
-} from "./registrationRequirementState";
-import {
-  saveRegistrationStatus,
   useRegistrationStatus,
   useRegistrationSummary,
 } from "./registrationStatusState";
@@ -180,7 +170,7 @@ function saveAdminReviewChange({
   onError(null);
 
   if (source !== "firestore") {
-    onSuccess();
+    onError("Live registration review is not available.");
     return;
   }
 
@@ -198,11 +188,13 @@ function saveAdminReviewChange({
 function DocumentReviewSection({
   documents,
   onReviewError,
+  onReviewSaved,
   registrationId,
   source,
 }: {
   documents: DocumentRequirement[];
   onReviewError: (message: string | null) => void;
+  onReviewSaved: () => void;
   registrationId: string;
   source: RegistrationReviewSource;
 }) {
@@ -254,8 +246,7 @@ function DocumentReviewSection({
                     onClick={() => {
                       saveAdminReviewChange({
                         onError: onReviewError,
-                        onSuccess: () =>
-                          saveDocumentRequirementStatus(document.id, option),
+                        onSuccess: onReviewSaved,
                         payload: {
                           actionType: "requirement-status",
                           registrationId,
@@ -286,11 +277,13 @@ function DocumentReviewSection({
 
 function PaymentReviewSection({
   onReviewError,
+  onReviewSaved,
   payments,
   registrationId,
   source,
 }: {
   onReviewError: (message: string | null) => void;
+  onReviewSaved: () => void;
   payments: PaymentRequirement[];
   registrationId: string;
   source: RegistrationReviewSource;
@@ -343,8 +336,7 @@ function PaymentReviewSection({
                     onClick={() => {
                       saveAdminReviewChange({
                         onError: onReviewError,
-                        onSuccess: () =>
-                          savePaymentRequirementStatus(payment.id, option),
+                        onSuccess: onReviewSaved,
                         payload: {
                           actionType: "payment-status",
                           amountDue: payment.amountDue,
@@ -411,10 +403,9 @@ function RegistrationReviewCard({
   registration,
   source,
 }: RegistrationReviewCardProps) {
+  const router = useRouter();
   const status = useRegistrationStatus(registration.id, registration.status);
-  const [rosterStatus, setRosterStatus] = useState<RosterStatus>(
-    getRegistrationRosterStatus(registration),
-  );
+  const rosterStatus = getRegistrationRosterStatus(registration);
   const requirements = useRegistrationRequirements(
     registration.id,
     registration.requirements,
@@ -478,12 +469,12 @@ function RegistrationReviewCard({
                 saveAdminReviewChange({
                   onError: onReviewError,
                   onSuccess: () => {
-                    setRosterStatus(option);
                     onReviewSuccess(
                       `${registration.athleteName ?? registration.athleteId} is ${getRosterStatusLabel(
                         option,
                       ).toLowerCase()}.`,
                     );
+                    router.refresh();
                   },
                   payload: {
                     actionType: "roster-status",
@@ -556,12 +547,7 @@ function RegistrationReviewCard({
                       onClick={() => {
                         saveAdminReviewChange({
                           onError: onReviewError,
-                          onSuccess: () =>
-                            saveRegistrationRequirementStatus(
-                              registration.id,
-                              requirement.label,
-                              option,
-                            ),
+                          onSuccess: () => router.refresh(),
                           payload: {
                             actionType: "requirement-status",
                             registrationId: registration.id,
@@ -590,11 +576,13 @@ function RegistrationReviewCard({
       <DocumentReviewSection
         documents={documents}
         onReviewError={onReviewError}
+        onReviewSaved={() => router.refresh()}
         registrationId={registration.id}
         source={source}
       />
       <PaymentReviewSection
         onReviewError={onReviewError}
+        onReviewSaved={() => router.refresh()}
         payments={payments}
         registrationId={registration.id}
         source={source}
@@ -608,7 +596,7 @@ function RegistrationReviewCard({
             onClick={() => {
               saveAdminReviewChange({
                 onError: onReviewError,
-                onSuccess: () => saveRegistrationStatus(registration.id, option),
+                onSuccess: () => router.refresh(),
                 payload: {
                   actionType: "registration-status",
                   registrationId: registration.id,
@@ -643,30 +631,6 @@ export default function RegistrationReviewBoard({
 }: RegistrationReviewBoardProps) {
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [reviewMessage, setReviewMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (source !== "firestore") {
-      return;
-    }
-
-    registrations.forEach((registration) => {
-      saveRegistrationStatus(registration.id, registration.status);
-      registration.requirements.forEach((requirement) => {
-        saveRegistrationRequirementStatus(
-          registration.id,
-          requirement.label,
-          requirement.status,
-        );
-        saveDocumentRequirementStatus(
-          `${registration.id}-${requirement.label.toLowerCase().replaceAll(" ", "-")}`,
-          requirement.status,
-        );
-      });
-      registration.paymentRequirements?.forEach((requirement) => {
-        savePaymentRequirementStatus(requirement.id, requirement.status);
-      });
-    });
-  }, [registrations, source]);
 
   const summary = useRegistrationSummary(registrations);
   const documents = useDocumentRequirements(

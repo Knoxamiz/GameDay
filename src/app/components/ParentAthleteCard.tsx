@@ -18,7 +18,10 @@ import {
 } from "../data/registrations";
 import { buildAthleteReadiness } from "../data/readiness";
 import { buildReadinessActions } from "../data/readinessActions";
-import type { TransportationStatus } from "../data/transportation";
+import {
+  transportationOptions,
+  type TransportationStatus,
+} from "../data/transportation";
 import AttendanceStatusPicker from "./AttendanceStatusPicker";
 import ReadinessActionList from "./ReadinessActionList";
 import ReadinessBadge from "./ReadinessBadge";
@@ -28,6 +31,7 @@ import { usePaymentRequirements } from "./paymentRequirementState";
 import { useRegistrationRequirements } from "./registrationRequirementState";
 import { useRegistrationStatus } from "./registrationStatusState";
 import { useTransportationStatus } from "./transportationStatusState";
+import TransportationStatusPicker from "./TransportationStatusPicker";
 
 type ParentAthleteCardProps = {
   athleteId: string;
@@ -275,6 +279,16 @@ export default function ParentAthleteCard({
               eventId={nextEvent.id}
               initialStatus={initialAttendanceStatus}
               compact
+            />
+            <TransportationStatusPicker
+              athleteId={athleteId}
+              documentRequirements={documentRequirements}
+              eventId={nextEvent.id}
+              initialStatus={initialTransportationStatus}
+              options={transportationOptions}
+              paymentRequirements={paymentRequirements}
+              registrationId={registrationId}
+              registrationRequirements={requirements}
             />
             <ReadinessActionList
               actions={readinessActions}

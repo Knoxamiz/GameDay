@@ -17,6 +17,7 @@ import {
   getRegistrationByAthlete,
 } from "../data/parentAthleteRegistration.server";
 import { getRegistrationRosterStatus } from "../data/registrations";
+import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,25 @@ export default async function ParentHome() {
   } = await getParentAthleteRegistrationReadModel(currentUser.parentId);
   const schedule = await getEventScheduleReadModel("parent");
   const teamsById = new Map(schedule.teams.map((team) => [team.id, team]));
+  const nextEventByAthleteId = new Map(
+    parentAthletes.map((athlete) => [
+      athlete.id,
+      schedule.events.find((event) => eventHasTeamId(event, athlete.teamId)),
+    ]),
+  );
+  const repositories = createFirestoreRepositories();
+  const [attendanceEntries, transportationEntries] = await Promise.all([
+    Promise.all(
+      parentAthletes.map((athlete) =>
+        repositories.attendance.listByAthleteId(athlete.id),
+      ),
+    ).then((entryLists) => entryLists.flat()),
+    Promise.all(
+      parentAthletes.map((athlete) =>
+        repositories.transportation.listByAthleteId(athlete.id),
+      ),
+    ).then((entryLists) => entryLists.flat()),
+  ]);
   const parentAnnouncements: { content: string; id: string }[] = [];
 
   return (
@@ -60,6 +80,19 @@ export default async function ParentHome() {
               athlete,
               registrations,
             );
+            const nextEvent = nextEventByAthleteId.get(athlete.id);
+            const attendanceStatus =
+              attendanceEntries.find(
+                (entry) =>
+                  entry.athleteId === athlete.id &&
+                  entry.eventId === nextEvent?.id,
+              )?.status ?? "Unknown";
+            const transportationStatus =
+              transportationEntries.find(
+                (entry) =>
+                  entry.athleteId === athlete.id &&
+                  entry.eventId === nextEvent?.id,
+              )?.status ?? "Unknown";
 
             return (
               <ParentAthleteCard
@@ -67,18 +100,20 @@ export default async function ParentHome() {
                 athleteId={athlete.id}
                 athleteName={athlete.name}
                 teamName={teamsById.get(athlete.teamId)?.name ?? athlete.teamId}
-                nextEvent={schedule.events
-                  .filter((event) => eventHasTeamId(event, athlete.teamId))
-                  .map((event) => ({
-                    date: getEventDateLabel(event),
-                    directionsUrl: "",
-                    id: event.id,
-                    location: getEventLocationLabel(event),
-                    time: getEventTimeLabel(event),
-                    title: event.title,
-                  }))[0]}
-                initialTransportationStatus="Unknown"
-                initialAttendanceStatus="Unknown"
+                nextEvent={
+                  nextEvent
+                    ? {
+                        date: getEventDateLabel(nextEvent),
+                        directionsUrl: "",
+                        id: nextEvent.id,
+                        location: getEventLocationLabel(nextEvent),
+                        time: getEventTimeLabel(nextEvent),
+                        title: nextEvent.title,
+                      }
+                    : undefined
+                }
+                initialTransportationStatus={transportationStatus}
+                initialAttendanceStatus={attendanceStatus}
                 paymentRequirements={registration?.paymentRequirements ?? []}
                 registrationId={registration?.id ?? athlete.registrationId}
                 registrationRequirements={registration?.requirements ?? []}
