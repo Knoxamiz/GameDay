@@ -23,6 +23,7 @@ import {
   getDocumentRequirementsFromRegistrations,
   getPaymentRequirementsFromRegistrations,
 } from "../data/registrationDerivedRequirements";
+import { isParentEventEligibleRegistration } from "../data/registrations";
 import { summarizeTransportationEntries } from "../data/transportation";
 import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
@@ -91,6 +92,7 @@ export default async function TeamDetails({
           registrations.filter(
             (registration) =>
               registration.teamId === teamDetails.id &&
+              isParentEventEligibleRegistration(registration) &&
               registration.parentId === parentUser.parentId &&
               (registration.ownerUid === parentUser.parentUid ||
                 registration.parentUid === parentUser.parentUid ||

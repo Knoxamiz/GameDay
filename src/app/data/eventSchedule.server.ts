@@ -24,7 +24,10 @@ import {
   type GameDayEvent,
 } from "./events";
 import { getLiveParentId } from "./liveIdentity";
-import type { Registration } from "./registrations";
+import {
+  isParentEventEligibleRegistration,
+  type Registration,
+} from "./registrations";
 import type { Team } from "./teams";
 
 export type EventScheduleRole = "admin" | "coach" | "parent" | "shared";
@@ -211,9 +214,7 @@ function getOwnedParentRegistrations(
   return registrations.filter(
     (registration) =>
       registration.parentId === parentId &&
-      registration.rosterStatus !== "inactive" &&
-      registration.status !== "Rejected" &&
-      registration.status !== "Waitlisted" &&
+      isParentEventEligibleRegistration(registration) &&
       (registration.ownerUid === session.user.id ||
         registration.parentUid === session.user.id ||
         !registration.ownerUid),

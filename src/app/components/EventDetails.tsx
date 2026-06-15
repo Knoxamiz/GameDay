@@ -12,6 +12,7 @@ import {
 import { getScopedEventDetailsReadModel } from "../data/eventSchedule.server";
 import { getCurrentParentUser } from "../data/currentUser.server";
 import { getOrganizationContext } from "../data/organizationContext.server";
+import { isParentEventEligibleRegistration } from "../data/registrations";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import AttendanceSummaryCard from "./AttendanceSummaryCard";
 import EventReadinessSummary from "./EventReadinessSummary";
@@ -68,6 +69,7 @@ export default async function EventDetails({
     ? (await repositories.registrations.listByParentId(parentUser.parentId)).filter(
         (registration) =>
           eventTeamIds.includes(registration.teamId) &&
+          isParentEventEligibleRegistration(registration) &&
           registration.parentId === parentUser.parentId &&
           (registration.ownerUid === parentUser.parentUid ||
             registration.parentUid === parentUser.parentUid ||

@@ -240,6 +240,16 @@ export function isCoachVisibleRosterRegistration(registration: Registration) {
   );
 }
 
+export function isParentEventEligibleRegistration(
+  registration: Registration,
+) {
+  return (
+    getRegistrationRosterStatus(registration) !== "inactive" &&
+    registration.status !== "Rejected" &&
+    registration.status !== "Waitlisted"
+  );
+}
+
 export function isRequirementMissing(requirement: RegistrationRequirement) {
   return requirement.status === "Missing";
 }

@@ -9,8 +9,11 @@ import {
 import { resolveActiveAdminOrganizationContext } from "../data/adminOrganizationScope.server";
 import { getCurrentAuthSession } from "../data/currentUser.server";
 import {
+  eventHasTeamId,
   getEventShortDateLabel,
   getEventTimeLabel,
+  isPublishedEvent,
+  sortEventsByStartDate,
 } from "../data/events";
 import { getEventScheduleReadModel } from "../data/eventSchedule.server";
 import { getOrganizationContext } from "../data/organizationContext.server";
@@ -62,19 +65,20 @@ export default async function TeamsHome({ searchParams }: TeamsHomeProps) {
     role === "admin"
       ? schedule.teams.filter((team) => !isArchivedTeam(team))
       : schedule.teams;
-  const nextEvents = repositories
-    ? (
-        await Promise.all(
-          visibleTeams
-            .map((team) => team.nextEventId)
-            .filter((eventId): eventId is string => Boolean(eventId))
-            .map((eventId) => repositories.events.getById(eventId)),
-        )
-      ).filter(isDefined)
-    : [];
-  const nextEventsById = new Map(
-    nextEvents.map((event) => [event.id, event]),
+  const nextEventByTeamId = new Map(
+    visibleTeams.map((team) => [
+      team.id,
+      schedule.events
+        .filter(isPublishedEvent)
+        .filter((event) => eventHasTeamId(event, team.id))
+        .sort(sortEventsByStartDate)[0],
+    ]),
   );
+  const nextEvents = [...new Map(
+    [...nextEventByTeamId.values()]
+      .filter(isDefined)
+      .map((event) => [event.id, event]),
+  ).values()];
   const [transportationLists, rosteredRegistrationLists] = repositories
     ? await Promise.all([
         Promise.all(
@@ -134,9 +138,7 @@ export default async function TeamsHome({ searchParams }: TeamsHomeProps) {
             </p>
           )}
           {visibleTeams.map((team) => {
-            const nextEvent = team.nextEventId
-              ? nextEventsById.get(team.nextEventId)
-              : undefined;
+            const nextEvent = nextEventByTeamId.get(team.id);
             const transportation = nextEvent
               ? summarizeTransportationEntries(
                   nextEvent.id,

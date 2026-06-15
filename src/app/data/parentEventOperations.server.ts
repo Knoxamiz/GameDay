@@ -10,7 +10,10 @@ import {
 } from "./attendance";
 import { eventHasTeamId, type GameDayEvent } from "./events";
 import { getLiveParentId, getLiveParentUid } from "./liveIdentity";
-import type { Registration } from "./registrations";
+import {
+  isParentEventEligibleRegistration,
+  type Registration,
+} from "./registrations";
 import {
   transportationStatusValues,
   type TransportationEntry,
@@ -100,6 +103,7 @@ function assertOwnedEventContext({
     !registration ||
     registration.athleteId !== athlete.id ||
     registration.parentId !== parentId ||
+    !isParentEventEligibleRegistration(registration) ||
     (registration.ownerUid && registration.ownerUid !== parentUid) ||
     (registration.parentUid && registration.parentUid !== parentUid)
   ) {
