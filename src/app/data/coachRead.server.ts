@@ -13,25 +13,36 @@ import type { Coach } from "./coaches";
 import {
   eventHasTeamId,
   isEventVisibleToNonAdmin,
-  isPublishedEvent,
+  isUpcomingEvent,
   sortEventsByStartDate,
   type GameDayEvent,
 } from "./events";
-import type { GameDayMessage } from "./messages";
+import type { Organization } from "./organizations";
 import type { Registration } from "./registrations";
 import type { Team } from "./teams";
 import type { TransportationEntry } from "./transportation";
 
-export type CoachHomeReadSource = "empty" | "firestore";
+export type CoachHomeReadSource = "empty" | "error" | "firestore";
+
+export type CoachTeamHomeCard = {
+  attendanceEntries: AttendanceEntry[];
+  events: GameDayEvent[];
+  nextEvent?: GameDayEvent;
+  organization?: Organization;
+  registrations: Registration[];
+  team: Team;
+  transportationEntries: TransportationEntry[];
+};
 
 export type CoachHomeReadModel = {
   attendanceEntries: AttendanceEntry[];
   coach: Coach;
-  coachMessages: GameDayMessage[];
+  coachTeamCards: CoachTeamHomeCard[];
   coachRosterRegistrations: Registration[];
   coachTeam?: Team;
   coachTeamRegistrations: Registration[];
   coachTeams: Team[];
+  errorMessage?: string;
   source: CoachHomeReadSource;
   todayEvent?: GameDayEvent;
   transportationEntries: TransportationEntry[];
@@ -63,31 +74,12 @@ function uniqueById<TRecord extends { id: string }>(records: TRecord[]) {
   return [...new Map(records.map((record) => [record.id, record])).values()];
 }
 
-async function getCoachMessages(
-  teamIds: string[],
-  organizationIds: string[],
-) {
-  const repositories = createFirestoreRepositories();
-  const teamIdSet = new Set(teamIds);
-  const [organizationMessageLists, teamMessageLists] = await Promise.all([
-    Promise.all(
-      organizationIds.map((organizationId) =>
-        repositories.messages.listByAudience({ organizationId }),
-      ),
-    ),
-    Promise.all(
-      [...teamIdSet].map((teamId) => repositories.messages.listByTeamId(teamId)),
-    ),
-  ]);
-
-  return uniqueById([...organizationMessageLists.flat(), ...teamMessageLists.flat()])
-    .filter((message) => message.audience.includes("coach"))
-    .filter((message) => !message.teamId || teamIdSet.has(message.teamId))
-    .sort((first, second) => second.timestamp.localeCompare(first.timestamp));
-}
-
 function getEmptyCoachHomeReadModel(
   session?: AuthSession | null,
+  options: {
+    errorMessage?: string;
+    source?: CoachHomeReadSource;
+  } = {},
 ): CoachHomeReadModel {
   const coach = session ? getSessionCoachFallback(session) : {
     email: "",
@@ -103,11 +95,12 @@ function getEmptyCoachHomeReadModel(
   return {
     attendanceEntries: [],
     coach,
-    coachMessages: [],
+    coachTeamCards: [],
     coachRosterRegistrations: [],
     coachTeamRegistrations: [],
     coachTeams: [],
-    source: "empty",
+    errorMessage: options.errorMessage,
+    source: options.source ?? "empty",
     transportationEntries: [],
   };
 }
@@ -168,20 +161,28 @@ async function getScopedCoachEventsForTeams(
   });
 }
 
-async function getPrimaryCoachEvent(
-  scope: CoachAssignmentScope,
-  coachTeam: Team | undefined,
+function getCoachTeamEvents(
   coachEvents: GameDayEvent[],
-): Promise<GameDayEvent | undefined> {
-  const repositories = createFirestoreRepositories();
-  const nextEvent = coachTeam?.nextEventId
-    ? coachEvents.find((event) => event.id === coachTeam.nextEventId) ??
-      (await repositories.events.getById(coachTeam.nextEventId))
+  team: Team,
+  now = new Date(),
+) {
+  return coachEvents.filter(
+    (event) =>
+      event.organizationId === team.organizationId &&
+      eventHasTeamId(event, team.id) &&
+      isUpcomingEvent(event, now),
+  );
+}
+
+function getPrimaryCoachTeamEvent(
+  team: Team,
+  teamEvents: GameDayEvent[],
+): GameDayEvent | undefined {
+  const pinnedEvent = team.nextEventId
+    ? teamEvents.find((event) => event.id === team.nextEventId)
     : undefined;
 
-  return isEventInCoachScope(scope, nextEvent) && isPublishedEvent(nextEvent)
-    ? (nextEvent ?? undefined)
-    : coachEvents.find(isPublishedEvent);
+  return pinnedEvent ?? teamEvents[0];
 }
 
 export async function getCoachHomeReadModel(): Promise<CoachHomeReadModel> {
@@ -205,41 +206,82 @@ export async function getCoachHomeReadModel(): Promise<CoachHomeReadModel> {
       coachTeams,
     );
     const coach = coachScope.coach;
-    const coachTeam = coachTeams[0];
-    const todayEvent = await getPrimaryCoachEvent(
-      coachScope,
-      coachTeam,
-      coachEvents,
+    const organizationIds = uniqueById(
+      coachTeams.map((team) => ({
+        id: team.organizationId,
+      })),
+    ).map((organization) => organization.id);
+    const organizations = await Promise.all(
+      organizationIds.map((organizationId) =>
+        repositories.organizations.getById(organizationId),
+      ),
     );
-    const [
-      coachMessages,
-      coachRosterRegistrationLists,
-      coachTeamRegistrations,
-      attendanceEntries,
-      transportationEntries,
-    ] =
-      await Promise.all([
-        getCoachMessages(
-          coachTeams.map((team) => team.id),
-          coachScope.organizationIds,
-        ),
-        Promise.all(
-          coachTeams.map((team) =>
-            repositories.registrations.listRosteredByTeamId(team.id),
-          ),
-        ),
-        coachTeam ? repositories.registrations.listRosteredByTeamId(coachTeam.id) : [],
-        todayEvent ? repositories.attendance.listByEventId(todayEvent.id) : [],
-        todayEvent
-          ? repositories.transportation.listByEventId(todayEvent.id)
-          : [],
-      ]);
+    const organizationById = new Map(
+      organizations.flatMap((organization) =>
+        organization ? [[organization.id, organization]] : [],
+      ),
+    );
+    const coachTeamCards = await Promise.all(
+      coachTeams.map(async (team) => {
+        const teamEvents = getCoachTeamEvents(coachEvents, team);
+        const nextEvent = getPrimaryCoachTeamEvent(team, teamEvents);
+        const registrations =
+          await repositories.registrations.listRosteredByTeamId(team.id);
+        const rosteredAthleteIdSet = new Set(
+          registrations.map((registration) => registration.athleteId),
+        );
+        const [attendanceEntries, transportationEntries] = nextEvent
+          ? await Promise.all([
+              repositories.attendance
+                .listByEventId(nextEvent.id)
+                .then((entries) =>
+                  entries.filter(
+                    (entry) =>
+                      entry.athleteId &&
+                      rosteredAthleteIdSet.has(entry.athleteId),
+                  ),
+                ),
+              repositories.transportation
+                .listByEventId(nextEvent.id)
+                .then((entries) =>
+                  entries.filter(
+                    (entry) =>
+                      entry.athleteId &&
+                      rosteredAthleteIdSet.has(entry.athleteId),
+                  ),
+                ),
+            ])
+          : [[], []];
+
+        return {
+          attendanceEntries,
+          events: teamEvents,
+          nextEvent,
+          organization: organizationById.get(team.organizationId),
+          registrations,
+          team,
+          transportationEntries,
+        };
+      }),
+    );
+    const coachTeam = coachTeamCards[0]?.team;
+    const todayEvent = coachTeamCards[0]?.nextEvent;
+    const coachRosterRegistrations = uniqueById(
+      coachTeamCards.flatMap((card) => card.registrations),
+    );
+    const coachTeamRegistrations = coachTeamCards[0]?.registrations ?? [];
+    const attendanceEntries = coachTeamCards.flatMap(
+      (card) => card.attendanceEntries,
+    );
+    const transportationEntries = coachTeamCards.flatMap(
+      (card) => card.transportationEntries,
+    );
 
     return {
       attendanceEntries,
       coach,
-      coachMessages,
-      coachRosterRegistrations: uniqueById(coachRosterRegistrationLists.flat()),
+      coachTeamCards,
+      coachRosterRegistrations,
       coachTeam,
       coachTeamRegistrations,
       coachTeams,
@@ -253,6 +295,9 @@ export async function getCoachHomeReadModel(): Promise<CoachHomeReadModel> {
       name: error instanceof Error ? error.name : typeof error,
     });
 
-    return getEmptyCoachHomeReadModel();
+    return getEmptyCoachHomeReadModel(null, {
+      errorMessage: "Could not load coach dashboard data. Please try again.",
+      source: "error",
+    });
   }
 }

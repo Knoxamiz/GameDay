@@ -4,11 +4,7 @@ import {
   isActiveCoachAssignment,
   type CoachAssignment,
 } from "./coachAssignmentRecords";
-import {
-  getCoachOrganizationIds,
-  isActiveCoach,
-  type Coach,
-} from "./coaches";
+import type { Coach } from "./coaches";
 import { isActiveTeam, type Team } from "./teams";
 
 export type CoachAssignmentScopeSource =
@@ -229,15 +225,11 @@ export async function resolveCoachAssignmentScope(
   const firestoreCoach = await findFirestoreCoachForSession(session);
 
   if (firestoreCoach) {
-    const organizationIds = getCoachOrganizationIds(firestoreCoach);
-
     return {
       coach: firestoreCoach,
-      organizationIds,
+      organizationIds: [],
       source: "legacy-coach",
-      teamIds: isActiveCoach(firestoreCoach)
-        ? uniqueStringList(firestoreCoach.teamIds ?? [])
-        : [],
+      teamIds: [],
     };
   }
 
@@ -245,9 +237,9 @@ export async function resolveCoachAssignmentScope(
 
   return {
     coach: fallbackCoach,
-    organizationIds: uniqueStringList(session.claims.organizationIds),
+    organizationIds: [],
     source: "claims",
-    teamIds: uniqueStringList(session.claims.teamIds),
+    teamIds: [],
   };
 }
 
