@@ -56,6 +56,12 @@ function getEventEndValue(event: GameDayEvent) {
   return event.endsAt || event.endDateTime || "";
 }
 
+function getEventTimestamp(value: string) {
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime()) ? null : date.getTime();
+}
+
 function formatDateTime(value: string, options: Intl.DateTimeFormatOptions) {
   const date = new Date(value);
 
@@ -90,6 +96,14 @@ export function isPublishedEvent(
   event: GameDayEvent | null | undefined,
 ): event is GameDayEvent {
   return event?.status === "published";
+}
+
+export function isUpcomingEvent(event: GameDayEvent, now = new Date()) {
+  const eventEndTime = getEventTimestamp(getEventEndValue(event));
+  const eventStartTime = getEventTimestamp(getEventStartValue(event));
+  const comparisonTime = eventEndTime ?? eventStartTime;
+
+  return comparisonTime !== null && comparisonTime >= now.getTime();
 }
 
 export function isArchivedEvent(event: GameDayEvent) {

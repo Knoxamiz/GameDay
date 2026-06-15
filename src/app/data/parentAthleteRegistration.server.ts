@@ -4,10 +4,11 @@ import { athletes, type Athlete } from "./athletes";
 import type { ParentGuardian } from "./parents";
 import type { Registration } from "./registrations";
 
-export type ParentAthleteRegistrationSource = "empty" | "firestore";
+export type ParentAthleteRegistrationSource = "empty" | "error" | "firestore";
 
 export type ParentAthleteRegistrationReadModel = {
   athletes: Athlete[];
+  errorMessage?: string;
   parent: ParentGuardian;
   registrations: Registration[];
   source: ParentAthleteRegistrationSource;
@@ -25,6 +26,10 @@ export type AthleteRegistrationReadOptions = {
   parentUid?: string;
 };
 
+export type ParentAthleteRegistrationReadOptions = {
+  parentUid?: string;
+};
+
 function normalizeModelId(id: string) {
   const trimmedId = id.trim();
 
@@ -37,11 +42,16 @@ function shouldUseFirestore() {
 
 function buildLiveEmptyParentReadModel(
   parentId: string,
+  options: {
+    errorMessage?: string;
+    source?: ParentAthleteRegistrationSource;
+  } = {},
 ): ParentAthleteRegistrationReadModel {
   const safeParentId = parentId || "live-parent";
 
   return {
     athletes: [],
+    errorMessage: options.errorMessage,
     parent: {
       athleteIds: [],
       email: "",
@@ -53,7 +63,7 @@ function buildLiveEmptyParentReadModel(
       phone: "",
     },
     registrations: [],
-    source: "empty",
+    source: options.source ?? "empty",
   };
 }
 
@@ -70,6 +80,7 @@ export function getRegistrationByAthlete(
 
 export async function getParentAthleteRegistrationReadModel(
   parentId?: string,
+  options: ParentAthleteRegistrationReadOptions = {},
 ): Promise<ParentAthleteRegistrationReadModel> {
   if (!shouldUseFirestore()) {
     return buildLiveEmptyParentReadModel(parentId ?? "");
@@ -93,19 +104,39 @@ export async function getParentAthleteRegistrationReadModel(
       repositories.athletes.listByParentId(parent.id),
       repositories.registrations.listByParentId(parent.id),
     ]);
+    const normalizedParentUid = normalizeModelId(options.parentUid ?? "");
+    const ownedAthletes = normalizedParentUid
+      ? firestoreAthletes.filter(
+          (athlete) =>
+            (!athlete.ownerUid || athlete.ownerUid === normalizedParentUid) &&
+            (!athlete.parentUid || athlete.parentUid === normalizedParentUid),
+        )
+      : firestoreAthletes;
+    const ownedRegistrations = normalizedParentUid
+      ? firestoreRegistrations.filter(
+          (registration) =>
+            (!registration.ownerUid ||
+              registration.ownerUid === normalizedParentUid) &&
+            (!registration.parentUid ||
+              registration.parentUid === normalizedParentUid),
+        )
+      : firestoreRegistrations;
 
     return {
-      athletes: firestoreAthletes,
+      athletes: ownedAthletes,
       parent,
-      registrations: firestoreRegistrations,
+      registrations: ownedRegistrations,
       source: "firestore",
     };
   } catch (error) {
-    console.warn("Falling back to empty live parent data.", {
+    console.warn("Could not load live parent dashboard data.", {
       message: error instanceof Error ? error.message : "Unknown error",
       name: error instanceof Error ? error.name : typeof error,
     });
-    return buildLiveEmptyParentReadModel(normalizedParentId);
+    return buildLiveEmptyParentReadModel(normalizedParentId, {
+      errorMessage: "Could not load parent dashboard data. Please try again.",
+      source: "error",
+    });
   }
 }
 

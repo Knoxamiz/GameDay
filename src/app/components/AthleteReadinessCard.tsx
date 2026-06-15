@@ -94,9 +94,7 @@ export default function AthleteReadinessCard({
     paymentsHref: `/athletes/${athleteId}`,
     registrationHref: "/registration",
     scheduleHref: "/parent",
-    transportationHref: eventId
-      ? `/events/${eventId}?view=ride-share`
-      : undefined,
+    transportationHref: eventId ? `/events/${eventId}` : undefined,
   });
 
   return (

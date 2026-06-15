@@ -2,29 +2,30 @@
 
 import Link from "next/link";
 import type { AttendanceStatus } from "../data/attendance";
-import { summarizeDocumentRequirements, type DocumentRequirement } from "../data/documents";
+import type { DocumentRequirement } from "../data/documents";
+import type { GameDayEventStatus } from "../data/events";
 import {
   summarizePaymentRequirements,
   type PaymentRequirement,
 } from "../data/payments";
+import {
+  getParentNextAction,
+  getParentRegistrationStatusLabel,
+  getParentRequirementCountLabel,
+  getParentRequirementSummary,
+  getParentRosterStatusLabel,
+  type ParentNextActionTone,
+} from "../data/parentDashboard";
 import type {
   RegistrationRequirement,
   RegistrationStatus,
   RosterStatus,
 } from "../data/registrations";
 import {
-  getRosterStatusLabel,
-  summarizeRegistrationRequirements,
-} from "../data/registrations";
-import { buildAthleteReadiness } from "../data/readiness";
-import { buildReadinessActions } from "../data/readinessActions";
-import {
   transportationOptions,
   type TransportationStatus,
 } from "../data/transportation";
 import AttendanceStatusPicker from "./AttendanceStatusPicker";
-import ReadinessActionList from "./ReadinessActionList";
-import ReadinessBadge from "./ReadinessBadge";
 import { useAttendanceStatus } from "./attendanceStatusState";
 import { useDocumentRequirements } from "./documentRequirementState";
 import { usePaymentRequirements } from "./paymentRequirementState";
@@ -36,15 +37,18 @@ import TransportationStatusPicker from "./TransportationStatusPicker";
 type ParentAthleteCardProps = {
   athleteId: string;
   athleteName: string;
-  teamName?: string;
+  hasPendingLifecycleRequest: boolean;
+  hasRegistration: boolean;
   nextEvent?: {
-    id: string;
-    title: string;
     date: string;
-    time: string;
-    location: string;
     directionsUrl: string;
+    id: string;
+    location: string;
+    status: GameDayEventStatus;
+    time: string;
+    title: string;
   };
+  organizationName?: string;
   initialAttendanceStatus: AttendanceStatus;
   initialTransportationStatus: TransportationStatus;
   paymentRequirements?: PaymentRequirement[];
@@ -52,6 +56,8 @@ type ParentAthleteCardProps = {
   registrationRequirements: RegistrationRequirement[];
   registrationStatus: RegistrationStatus;
   rosterStatus: RosterStatus;
+  teamDetail?: string;
+  teamName?: string;
 };
 
 function getDocumentRequirementsFromRegistration(
@@ -73,11 +79,95 @@ function getDocumentRequirementsFromRegistration(
   }));
 }
 
+function getActionToneClasses(tone: ParentNextActionTone) {
+  if (tone === "ready") {
+    return "border-blue-500/40 bg-blue-500/10 text-blue-100";
+  }
+
+  if (tone === "blocked") {
+    return "border-red-500/40 bg-red-500/10 text-red-100";
+  }
+
+  if (tone === "attention") {
+    return "border-yellow-500/40 bg-yellow-500/10 text-yellow-100";
+  }
+
+  return "border-slate-700 bg-slate-950 text-slate-200";
+}
+
+function getRegistrationTone(status: RegistrationStatus) {
+  if (status === "Approved") {
+    return "text-blue-300";
+  }
+
+  if (status === "Rejected" || status === "Withdrawn" || status === "Inactive") {
+    return "text-red-300";
+  }
+
+  return "text-yellow-200";
+}
+
+function getRosterTone(status: RosterStatus) {
+  if (status === "rostered") {
+    return "text-blue-300";
+  }
+
+  if (status === "inactive") {
+    return "text-red-300";
+  }
+
+  return "text-yellow-200";
+}
+
+function getRequirementTone(open: number, blocked: number, needsReview: number) {
+  if (blocked > 0) {
+    return "text-red-300";
+  }
+
+  if (open > 0 || needsReview > 0) {
+    return "text-yellow-200";
+  }
+
+  return "text-blue-300";
+}
+
+function getEventStatusTone(status: GameDayEventStatus) {
+  if (status === "canceled") {
+    return "bg-red-500/20 text-red-300";
+  }
+
+  return "bg-blue-500/20 text-blue-300";
+}
+
+function getPaymentLabel(paymentRequirements: PaymentRequirement[]) {
+  const summary = summarizePaymentRequirements(paymentRequirements);
+
+  if (paymentRequirements.length === 0) {
+    return "No payment due";
+  }
+
+  if (summary.blocked > 0) {
+    return "Needs fix";
+  }
+
+  if (summary.missing > 0) {
+    return "Payment pending";
+  }
+
+  if (summary.needsReview > 0) {
+    return "Waiting review";
+  }
+
+  return "Ready";
+}
+
 export default function ParentAthleteCard({
   athleteId,
   athleteName,
-  teamName,
+  hasPendingLifecycleRequest,
+  hasRegistration,
   nextEvent,
+  organizationName,
   initialAttendanceStatus,
   initialTransportationStatus,
   paymentRequirements: initialPaymentRequirements = [],
@@ -85,6 +175,8 @@ export default function ParentAthleteCard({
   registrationRequirements,
   registrationStatus,
   rosterStatus,
+  teamDetail,
+  teamName,
 }: ParentAthleteCardProps) {
   const nextEventId = nextEvent?.id;
   const attendanceStatus = useAttendanceStatus(
@@ -115,165 +207,168 @@ export default function ParentAthleteCard({
   const paymentRequirements = usePaymentRequirements(
     initialPaymentRequirements,
   );
-  const registrationRequirementSummary =
-    summarizeRegistrationRequirements(requirements);
-  const documentSummary = summarizeDocumentRequirements(documentRequirements);
-  const paymentSummary = summarizePaymentRequirements(paymentRequirements);
-  const hasTransportationReady = transportationStatus !== "Unknown";
-  const hasRegistrationReady =
-    currentRegistrationStatus === "Approved" &&
-    registrationRequirementSummary.open === 0 &&
-    documentSummary.open === 0 &&
-    paymentSummary.open === 0;
-  const registrationLabel =
-    registrationRequirementSummary.open > 0
-      ? `${currentRegistrationStatus}, ${registrationRequirementSummary.open} Open`
-      : currentRegistrationStatus;
-  const registrationTone =
-    hasRegistrationReady
-      ? "font-semibold text-blue-300"
-      : registrationRequirementSummary.needsReview > 0 &&
-          registrationRequirementSummary.missing === 0 &&
-          registrationRequirementSummary.blocked === 0
-        ? "font-semibold text-yellow-200"
-        : "font-semibold text-red-300";
-  const readiness = buildAthleteReadiness({
+  const requirementSummary = getParentRequirementSummary(
+    requirements,
+    paymentRequirements,
+    currentRegistrationStatus,
+    rosterStatus,
+    Boolean(nextEvent),
+  );
+  const nextAction = getParentNextAction({
     attendanceStatus,
-    documentRequirements,
-    hasUpcomingEvent: Boolean(nextEvent),
+    athleteHref: `/athletes/${athleteId}`,
+    eventHref: nextEvent ? `/events/${nextEvent.id}` : undefined,
+    hasPendingLifecycleRequest,
+    hasRegistration,
+    nextEvent: nextEvent ? { status: nextEvent.status } : undefined,
     paymentRequirements,
     registrationStatus: currentRegistrationStatus,
     requirements,
+    rosterStatus,
     transportationStatus,
   });
-  const readinessActions = buildReadinessActions(readiness, {
-    attendanceHref: `/athletes/${athleteId}`,
-    documentsHref: `/athletes/${athleteId}`,
-    paymentsHref: `/athletes/${athleteId}`,
-    registrationHref: `/athletes/${athleteId}`,
-    scheduleHref: "/parent",
-    transportationHref: `/athletes/${athleteId}`,
-  });
+  const eventUpdatesAllowed = Boolean(
+    nextEvent &&
+      nextEvent.status === "published" &&
+      currentRegistrationStatus === "Approved" &&
+      rosterStatus === "rostered",
+  );
+  const requirementTone = getRequirementTone(
+    requirementSummary.open,
+    requirementSummary.documentsBlocked + requirementSummary.paymentsBlocked,
+    requirementSummary.documentsNeedsReview +
+      requirementSummary.paymentsNeedsReview,
+  );
+  const paymentSummary = summarizePaymentRequirements(paymentRequirements);
 
   return (
-    <details className="group rounded-2xl border border-slate-800 bg-slate-900 shadow-lg">
-      <summary className="cursor-pointer list-none p-5 [&::-webkit-details-marker]:hidden">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h3 className="text-xl font-bold">{athleteName}</h3>
-            <p className="mt-1 text-sm text-slate-400">
-              {teamName ?? "No Upcoming Events"}
+    <article className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-xl font-bold">{athleteName}</h3>
+          <p className="mt-1 text-sm text-slate-400">
+            {[organizationName, teamName].filter(Boolean).join(" - ") ||
+              "Team pending"}
+          </p>
+          {teamDetail && (
+            <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              {teamDetail}
             </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {nextEvent && <ReadinessBadge category={readiness.category} />}
-            <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-300 group-open:hidden">
-              Open
-            </span>
-            <span className="hidden rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-300 group-open:inline">
-              Close
-            </span>
-          </div>
+          )}
         </div>
-      </summary>
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-semibold ${
+            nextAction.tone === "ready"
+              ? "bg-blue-500/20 text-blue-300"
+              : nextAction.tone === "blocked"
+                ? "bg-red-500/20 text-red-300"
+                : nextAction.tone === "attention"
+                  ? "bg-yellow-500/20 text-yellow-200"
+                  : "bg-slate-800 text-slate-300"
+          }`}
+        >
+          {nextAction.label}
+        </span>
+      </div>
 
-      <div className="px-5 pb-5">
-        {nextEvent ? (
-          <div className="rounded-xl bg-slate-800 p-4">
-            <p className="font-semibold">{nextEvent.title}</p>
-            {nextEvent.date && (
-              <p className="mt-2 text-sm text-slate-300">{nextEvent.date}</p>
-            )}
-            {nextEvent.time && (
-              <p className="mt-2 text-sm text-slate-300">{nextEvent.time}</p>
-            )}
-            {nextEvent.location && (
-              <p className="mt-1 text-sm text-slate-300">
-                {nextEvent.location}
+      <div
+        className={`mt-4 rounded-xl border p-4 ${getActionToneClasses(
+          nextAction.tone,
+        )}`}
+      >
+        <p className="text-xs font-semibold uppercase tracking-wide opacity-80">
+          Next action
+        </p>
+        <p className="mt-2 text-lg font-bold">{nextAction.label}</p>
+        <p className="mt-2 text-sm opacity-90">{nextAction.description}</p>
+        {nextAction.href && (
+          <Link
+            href={nextAction.href}
+            className="mt-4 block rounded-xl bg-blue-500 py-3 text-center text-sm font-semibold text-white"
+          >
+            {nextAction.label}
+          </Link>
+        )}
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+        <div className="rounded-xl bg-slate-800 p-3">
+          <p className="text-slate-400">Registration</p>
+          <p
+            className={`mt-1 font-semibold ${getRegistrationTone(
+              currentRegistrationStatus,
+            )}`}
+          >
+            {getParentRegistrationStatusLabel(currentRegistrationStatus)}
+          </p>
+        </div>
+        <div className="rounded-xl bg-slate-800 p-3">
+          <p className="text-slate-400">Roster</p>
+          <p className={`mt-1 font-semibold ${getRosterTone(rosterStatus)}`}>
+            {getParentRosterStatusLabel(rosterStatus)}
+          </p>
+        </div>
+        <div className="rounded-xl bg-slate-800 p-3">
+          <p className="text-slate-400">Requirements</p>
+          <p className={`mt-1 font-semibold ${requirementTone}`}>
+            {requirementSummary.label}
+          </p>
+          <p className="mt-1 text-xs text-slate-400">
+            {getParentRequirementCountLabel(requirementSummary)}
+          </p>
+        </div>
+        <div className="rounded-xl bg-slate-800 p-3">
+          <p className="text-slate-400">Payment</p>
+          <p
+            className={`mt-1 font-semibold ${getRequirementTone(
+              paymentSummary.open,
+              paymentSummary.blocked,
+              paymentSummary.needsReview,
+            )}`}
+          >
+            {getPaymentLabel(paymentRequirements)}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-xl bg-slate-800 p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              Next event
+            </p>
+            {nextEvent ? (
+              <>
+                <p className="mt-2 font-semibold">{nextEvent.title}</p>
+                <p className="mt-2 text-sm text-slate-300">{nextEvent.date}</p>
+                {nextEvent.time && (
+                  <p className="mt-1 text-sm text-slate-300">{nextEvent.time}</p>
+                )}
+                {nextEvent.location && (
+                  <p className="mt-2 text-sm text-slate-300">
+                    {nextEvent.location}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="mt-2 text-sm text-slate-300">
+                No upcoming event is scheduled for this athlete.
               </p>
             )}
-            <div className="mt-4 space-y-2 border-t border-slate-700 pt-4 text-sm">
-              <p className="flex justify-between gap-3 text-slate-300">
-                <span className="text-slate-400">Attendance</span>
-                <span
-                  className={
-                    attendanceStatus === "Attending"
-                      ? "font-semibold text-blue-300"
-                      : attendanceStatus === "Not Attending"
-                        ? "font-semibold text-red-300"
-                        : "font-semibold text-slate-300"
-                  }
-                >
-                  {attendanceStatus}
-                </span>
-              </p>
-              <p className="flex justify-between gap-3 text-slate-300">
-                <span className="text-slate-400">Transportation</span>
-                <span
-                  className={
-                    hasTransportationReady
-                      ? "font-semibold text-blue-300"
-                      : "font-semibold text-red-300"
-                  }
-                >
-                  {transportationStatus}
-                </span>
-              </p>
-              <p className="flex justify-between gap-3 text-slate-300">
-                <span className="text-slate-400">Registration</span>
-                <span className={registrationTone}>{registrationLabel}</span>
-              </p>
-              <p className="flex justify-between gap-3 text-slate-300">
-                <span className="text-slate-400">Roster</span>
-                <span
-                  className={
-                    rosterStatus === "rostered"
-                      ? "font-semibold text-blue-300"
-                      : rosterStatus === "inactive"
-                        ? "font-semibold text-red-300"
-                        : "font-semibold text-yellow-200"
-                  }
-                >
-                  {getRosterStatusLabel(rosterStatus)}
-                </span>
-              </p>
-              <p className="flex justify-between gap-3 text-slate-300">
-                <span className="text-slate-400">Documents</span>
-                <span
-                  className={
-                    documentSummary.open === 0
-                      ? "font-semibold text-blue-300"
-                      : documentSummary.needsReview > 0 &&
-                          documentSummary.missing === 0 &&
-                          documentSummary.blocked === 0
-                        ? "font-semibold text-yellow-200"
-                        : "font-semibold text-red-300"
-                  }
-                >
-                  {documentSummary.open === 0
-                    ? "Ready"
-                    : `${documentSummary.open} Open`}
-                </span>
-              </p>
-              <p className="flex justify-between gap-3 text-slate-300">
-                <span className="text-slate-400">Payment</span>
-                <span
-                  className={
-                    paymentSummary.open === 0
-                      ? "font-semibold text-blue-300"
-                      : paymentSummary.needsReview > 0 &&
-                          paymentSummary.missing === 0 &&
-                          paymentSummary.blocked === 0
-                        ? "font-semibold text-yellow-200"
-                        : "font-semibold text-red-300"
-                  }
-                >
-                  {paymentSummary.open === 0
-                    ? "Ready"
-                    : `${paymentSummary.open} Open`}
-                </span>
-              </p>
-            </div>
+          </div>
+          {nextEvent && (
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${getEventStatusTone(
+                nextEvent.status,
+              )}`}
+            >
+              {nextEvent.status === "canceled" ? "Canceled" : "Published"}
+            </span>
+          )}
+        </div>
+
+        {nextEvent && eventUpdatesAllowed && (
+          <>
             <AttendanceStatusPicker
               athleteId={athleteId}
               eventId={nextEvent.id}
@@ -290,71 +385,48 @@ export default function ParentAthleteCard({
               registrationId={registrationId}
               registrationRequirements={requirements}
             />
-            <ReadinessActionList
-              actions={readinessActions}
-              emptyText="Ready for the next event."
-              limit={2}
-            />
-          </div>
-        ) : (
-          <div className="rounded-xl bg-slate-800 p-4 text-sm text-slate-300">
-            <p>No upcoming event is set for this athlete.</p>
-            <div className="mt-4 space-y-2 border-t border-slate-700 pt-4">
-              <p className="flex justify-between gap-3">
-                <span className="text-slate-400">Registration</span>
-                <span className={registrationTone}>{registrationLabel}</span>
-              </p>
-              <p className="flex justify-between gap-3">
-                <span className="text-slate-400">Roster</span>
-                <span
-                  className={
-                    rosterStatus === "rostered"
-                      ? "font-semibold text-blue-300"
-                      : rosterStatus === "inactive"
-                        ? "font-semibold text-red-300"
-                        : "font-semibold text-yellow-200"
-                  }
-                >
-                  {getRosterStatusLabel(rosterStatus)}
-                </span>
-              </p>
-            </div>
-          </div>
+          </>
         )}
 
-        <div
-          className={`mt-4 grid gap-3 ${
-            nextEvent?.directionsUrl ? "grid-cols-2" : "grid-cols-1"
-          }`}
-        >
-          {nextEvent?.directionsUrl && (
-            <a
-              href={nextEvent.directionsUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="block rounded-xl border border-slate-700 bg-slate-900 py-3 text-center font-semibold text-white"
-            >
-              Directions
-            </a>
-          )}
-          {nextEvent && (
-            <Link
-              href={`/events/${nextEvent.id}?view=ride-share`}
-              className="block rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
-            >
-              Ride Share
-            </Link>
-          )}
-          <Link
-            href={`/athletes/${athleteId}`}
-            className={`block rounded-xl border border-slate-700 bg-slate-900 py-3 text-center font-semibold text-white ${
-              nextEvent?.directionsUrl ? "col-span-2" : ""
-            }`}
-          >
-            Athlete Details
-          </Link>
-        </div>
+        {nextEvent && !eventUpdatesAllowed && (
+          <p className="mt-4 rounded-xl border border-slate-700 bg-slate-950 p-3 text-sm text-slate-300">
+            {nextEvent.status === "canceled"
+              ? "Attendance and transportation updates are closed for this canceled event."
+              : "Attendance and transportation controls are available after this athlete is approved and rostered."}
+          </p>
+        )}
       </div>
-    </details>
+
+      <div
+        className={`mt-4 grid gap-3 ${
+          nextEvent ? "grid-cols-2" : "grid-cols-1"
+        }`}
+      >
+        {nextEvent && (
+          <Link
+            href={`/events/${nextEvent.id}`}
+            className="block rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
+          >
+            Event Details
+          </Link>
+        )}
+        <Link
+          href={`/athletes/${athleteId}`}
+          className="block rounded-xl border border-slate-700 bg-slate-900 py-3 text-center font-semibold text-white"
+        >
+          Athlete Details
+        </Link>
+        {nextEvent?.directionsUrl && (
+          <a
+            href={nextEvent.directionsUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="block rounded-xl border border-slate-700 bg-slate-900 py-3 text-center font-semibold text-white md:col-span-2"
+          >
+            Directions
+          </a>
+        )}
+      </div>
+    </article>
   );
 }
