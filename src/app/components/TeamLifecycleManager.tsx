@@ -11,6 +11,7 @@ import {
 
 type TeamLifecycleManagerProps = {
   activeOrganizationId: string;
+  embedded?: boolean;
   teams: Team[];
 };
 
@@ -44,14 +45,21 @@ function TeamLifecycleEditor({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-semibold text-white">{team.name}</p>
-          <p className="mt-1 break-all text-xs text-slate-400">
-            Team ID: {team.id}
+          <p className="mt-1 text-xs text-slate-400">
+            {team.division ?? team.ageGroup ?? team.label}
           </p>
         </div>
         <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-300">
           {getTeamStatusLabel(team)}
         </span>
       </div>
+
+      <details className="mt-3 text-xs text-slate-500">
+        <summary className="cursor-pointer font-semibold">
+          Technical details
+        </summary>
+        <p className="mt-2 break-all">Internal Team ID: {team.id}</p>
+      </details>
 
       <div className="mt-4 space-y-3">
         <label className="block">
@@ -123,6 +131,7 @@ function TeamLifecycleEditor({
 
 export default function TeamLifecycleManager({
   activeOrganizationId,
+  embedded = false,
   teams,
 }: TeamLifecycleManagerProps) {
   const [showArchived, setShowArchived] = useState(false);
@@ -167,12 +176,18 @@ export default function TeamLifecycleManager({
   }
 
   return (
-    <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+    <section
+      className={
+        embedded
+          ? ""
+          : "rounded-2xl border border-slate-800 bg-slate-900 p-5"
+      }
+    >
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold">Manage Teams</h2>
           <p className="mt-2 text-sm text-slate-300">
-            Edit team details or lifecycle status. Team IDs and organization ownership remain fixed.
+            Edit team details or lifecycle status. Technical ownership remains fixed.
           </p>
         </div>
         <label className="flex shrink-0 items-center gap-2 text-xs font-semibold text-slate-400">

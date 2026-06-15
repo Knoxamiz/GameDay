@@ -10,6 +10,7 @@ import {
 import { isActiveTeam, type Team } from "../data/teams";
 
 type RegistrationInviteManagerProps = {
+  embedded?: boolean;
   organizationId: string;
   registrationInvites: RegistrationInvite[];
   teams: Team[];
@@ -85,7 +86,9 @@ function InviteEditor({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="break-words font-semibold text-white">{invite.title}</p>
-          <p className="mt-1 break-all text-xs text-slate-400">{joinPath}</p>
+          <p className="mt-1 text-xs text-slate-400">
+            {teams.find((team) => team.id === invite.teamId)?.name ?? "Team invite"}
+          </p>
         </div>
         <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-300">
           {getStatusLabel(status)}
@@ -122,6 +125,14 @@ function InviteEditor({
           {copyMessage}
         </p>
       )}
+
+      <details className="mt-3 text-xs text-slate-500">
+        <summary className="cursor-pointer font-semibold">
+          Technical details
+        </summary>
+        <p className="mt-2 break-all">Join path: {joinPath}</p>
+        <p className="mt-1 break-all">Invite code: {invite.inviteCode}</p>
+      </details>
 
       {!isArchived && (
         <div className="mt-4 space-y-3 border-t border-slate-800 pt-4">
@@ -227,6 +238,7 @@ function InviteEditor({
 }
 
 export default function RegistrationInviteManager({
+  embedded = false,
   organizationId,
   registrationInvites,
   teams,
@@ -303,7 +315,11 @@ export default function RegistrationInviteManager({
 
   return (
     <section
-      className="rounded-2xl border border-slate-800 bg-slate-900 p-5"
+      className={
+        embedded
+          ? ""
+          : "rounded-2xl border border-slate-800 bg-slate-900 p-5"
+      }
       id="registration-invites"
     >
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">

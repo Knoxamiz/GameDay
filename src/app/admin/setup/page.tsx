@@ -1,15 +1,13 @@
-import BottomNav from "../../components/BottomNav";
 import { redirect } from "next/navigation";
-import AdminOrganizationSelector from "../../components/AdminOrganizationSelector";
+import AdminAppShell from "../../components/AdminAppShell";
 import AdminSetupChecklist from "../../components/AdminSetupChecklist";
-import AdminSetupPanel from "../../components/AdminSetupPanel";
-import MvpNav from "../../components/MvpNav";
-import SessionControls from "../../components/SessionControls";
+import AdminSetupPanel, {
+  type SetupSectionId,
+} from "../../components/AdminSetupPanel";
 import { getAdminSetupReadModel } from "../../data/adminSetup.server";
 import { buildAdminSetupChecklist } from "../../data/adminSetupChecklist";
 import {
   getRequestedOrganizationId,
-  withActiveOrganization,
 } from "../../data/activeOrganization";
 import {
   canAccessAdmin,
@@ -25,6 +23,24 @@ type AdminSetupPageProps = {
     organizationId?: string | string[];
   }>;
 };
+
+function getDefaultSetupSection(
+  stepId?: string,
+): SetupSectionId | undefined {
+  if (stepId === "organization") {
+    return "organization";
+  }
+
+  if (stepId === "team") {
+    return "teams";
+  }
+
+  if (stepId === "invite" || stepId === "registration-open") {
+    return "invites";
+  }
+
+  return undefined;
+}
 
 export default async function AdminSetupPage({
   searchParams,
@@ -57,90 +73,42 @@ export default async function AdminSetupPage({
     registrations: setup.registrations,
     teams: setup.teams,
   });
-  const organizationContext = activeContext.activeOrganization
-      ? {
-          count: 1,
-          label: activeContext.activeOrganization.name,
-        }
-      : undefined;
+  const defaultOpenSection = getDefaultSetupSection(
+    setupChecklist.nextRequiredStep?.id,
+  );
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav
+    <AdminAppShell
+      accountLabel={session.user.email}
+      activeOrganizationId={activeContext.activeOrganizationId}
+      activeOrganizationName={activeContext.activeOrganization?.name}
+      currentSection="setup"
+      description="See what is complete, take the next required action, and open management tools only when needed."
+      organizationSelectorAction="/admin/setup"
+      organizations={activeContext.organizations}
+      title="Setup"
+    >
+      {!activeContext.requiresSelection && (
+        <AdminSetupChecklist checklist={setupChecklist} />
+      )}
+
+      {!activeContext.requiresSelection && (
+        <AdminSetupPanel
           activeOrganizationId={activeContext.activeOrganizationId}
-          organizationContext={organizationContext}
+          canCreateOrganization={setup.canCreateOrganization}
+          canManageSetup={setup.canManageSetup}
+          coachAssignments={setup.coachAssignments}
+          coaches={setup.coaches}
+          defaultOpenSection={defaultOpenSection}
+          organizationManagementAuthority={
+            setup.organizationManagementAuthority
+          }
+          organizationMemberships={setup.organizationMemberships}
+          organizations={setup.organizations}
+          registrationInvites={setup.registrationInvites}
+          teams={setup.teams}
         />
-
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-          <h1 className="text-3xl font-bold">Setup</h1>
-          <p className="mt-3 text-sm text-slate-300">
-            Create the real organization, team, coach, and registration records.
-          </p>
-        </div>
-
-        <SessionControls role="admin" />
-
-        <AdminOrganizationSelector
-          action="/admin/setup"
-          activeOrganizationId={activeContext.activeOrganizationId}
-          organizations={activeContext.organizations}
-        />
-
-        {!activeContext.requiresSelection && (
-          <AdminSetupChecklist checklist={setupChecklist} />
-        )}
-
-        {!activeContext.requiresSelection && (
-          <AdminSetupPanel
-            activeOrganizationId={activeContext.activeOrganizationId}
-            canCreateOrganization={setup.canCreateOrganization}
-            canManageSetup={setup.canManageSetup}
-            coachAssignments={setup.coachAssignments}
-            coaches={setup.coaches}
-            organizationManagementAuthority={
-              setup.organizationManagementAuthority
-            }
-            organizationMemberships={setup.organizationMemberships}
-            organizations={setup.organizations}
-            registrationInvites={setup.registrationInvites}
-            teams={setup.teams}
-          />
-        )}
-
-        <BottomNav
-          items={[
-            {
-              href: withActiveOrganization(
-                "/admin",
-                activeContext.activeOrganizationId,
-              ),
-              label: "Home",
-            },
-            {
-              href: withActiveOrganization(
-                "/admin/setup",
-                activeContext.activeOrganizationId,
-              ),
-              label: "Setup",
-            },
-            {
-              href: withActiveOrganization(
-                "/admin/registrations",
-                activeContext.activeOrganizationId,
-              ),
-              label: "Registration",
-            },
-            {
-              href: withActiveOrganization(
-                "/events",
-                activeContext.activeOrganizationId,
-              ),
-              label: "Schedule",
-            },
-          ]}
-        />
-      </section>
-    </main>
+      )}
+    </AdminAppShell>
   );
 }

@@ -1,12 +1,9 @@
-import BottomNav from "../../components/BottomNav";
 import { redirect } from "next/navigation";
-import AdminOrganizationSelector from "../../components/AdminOrganizationSelector";
-import MvpNav from "../../components/MvpNav";
+import AdminAppShell from "../../components/AdminAppShell";
 import RegistrationReviewBoard from "../../components/RegistrationReviewBoard";
 import { getAdminRegistrationReadModel } from "../../data/adminRegistrationRead.server";
 import {
   getRequestedOrganizationId,
-  withActiveOrganization,
 } from "../../data/activeOrganization";
 import {
   canAccessAdmin,
@@ -46,48 +43,24 @@ export default async function AdminRegistrationsPage({
   const registrationReadModel = await getAdminRegistrationReadModel(
     activeContext.activeOrganizationId,
   );
-  const organizationContext = activeContext.activeOrganization
-    ? { count: 1, label: activeContext.activeOrganization.name }
-    : undefined;
-
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav
+    <AdminAppShell
+      accountLabel={session.user.email}
+      activeOrganizationId={activeContext.activeOrganizationId}
+      activeOrganizationName={activeContext.activeOrganization?.name}
+      currentSection="registration"
+      description="Review submitted registrations, resolve missing items, approve players, and manage roster status."
+      organizationSelectorAction="/admin/registrations"
+      organizations={activeContext.organizations}
+      title="Registration Review"
+    >
+      {activeContext.activeOrganizationId && (
+        <RegistrationReviewBoard
           activeOrganizationId={activeContext.activeOrganizationId}
-          organizationContext={organizationContext}
+          registrations={registrationReadModel.registrations}
+          source={registrationReadModel.source}
         />
-
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-          <h1 className="text-3xl font-bold">Registration Review</h1>
-          <p className="mt-3 text-sm text-slate-300">
-            Pending players, missing items, and approval readiness.
-          </p>
-        </div>
-
-        <AdminOrganizationSelector
-          action="/admin/registrations"
-          activeOrganizationId={activeContext.activeOrganizationId}
-          organizations={activeContext.organizations}
-        />
-
-        {activeContext.activeOrganizationId && (
-          <RegistrationReviewBoard
-            activeOrganizationId={activeContext.activeOrganizationId}
-            registrations={registrationReadModel.registrations}
-            source={registrationReadModel.source}
-          />
-        )}
-
-        <BottomNav
-          items={[
-            { href: withActiveOrganization("/admin", activeContext.activeOrganizationId), label: "Home" },
-            { href: withActiveOrganization("/teams", activeContext.activeOrganizationId), label: "Teams" },
-            { href: withActiveOrganization("/admin/registrations", activeContext.activeOrganizationId), label: "Registration" },
-            { href: withActiveOrganization("/events", activeContext.activeOrganizationId), label: "Schedule" },
-          ]}
-        />
-      </section>
-    </main>
+      )}
+    </AdminAppShell>
   );
 }

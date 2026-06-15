@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import AdminOrganizationSelector from "../components/AdminOrganizationSelector";
+import AdminAppShell from "../components/AdminAppShell";
 import AdminEventForm from "../components/AdminEventForm";
 import AdminEventLifecycleManager from "../components/AdminEventLifecycleManager";
 import MvpNav from "../components/MvpNav";
@@ -95,38 +95,16 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
     ]),
   );
 
-  return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav
-          activeOrganizationId={activeOrganizationId}
-          organizationContext={organizationContext}
-        />
-
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-          <h1 className="text-3xl font-bold">Schedule</h1>
-          <p className="mt-3 text-sm text-slate-300">
-            Upcoming practices, tournaments, and meetings.
-          </p>
+  const eventContent = (
+    <>
+        <div className="mt-5 flex justify-end">
           <a
-            href={withActiveOrganization(
-              "/calendar.ics",
-              activeOrganizationId,
-            )}
-            className="mt-4 block w-full rounded-xl bg-blue-500 py-3 text-center text-sm font-semibold text-white"
+            href={withActiveOrganization("/calendar.ics", activeOrganizationId)}
+            className="rounded-md border border-slate-700 px-4 py-2.5 text-sm font-semibold text-slate-200"
           >
             Subscribe Calendar
           </a>
         </div>
-
-        {activeContext && (
-          <AdminOrganizationSelector
-            action="/events"
-            activeOrganizationId={activeOrganizationId}
-            organizations={activeContext.organizations}
-          />
-        )}
-
         {role === "admin" && activeOrganizationId && (
           <>
             <AdminEventForm
@@ -144,9 +122,9 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
           </>
         )}
 
-        <div className="mt-6 space-y-4">
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
           {visibleEvents.length === 0 && (
-            <p className="rounded-2xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300">
+            <p className="rounded-lg border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300 lg:col-span-2">
               {activeContext?.requiresSelection
                 ? "Choose an organization to view its schedule."
                 : "No events are scheduled for your current organization and team scope."}
@@ -174,7 +152,7 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
                   `/events/${event.id}`,
                   activeOrganizationId,
                 )}
-                className="block rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg"
+                className="block rounded-lg border border-slate-800 bg-slate-900 p-5 shadow-lg"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -234,6 +212,37 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
             );
           })}
         </div>
+    </>
+  );
+
+  if (role === "admin" && activeContext) {
+    return (
+      <AdminAppShell
+        accountLabel={session.user.email}
+        activeOrganizationId={activeOrganizationId}
+        activeOrganizationName={activeContext.activeOrganization?.name}
+        currentSection="schedule"
+        description="Create, publish, and monitor practices, games, tournaments, and meetings."
+        organizationSelectorAction="/events"
+        organizations={activeContext.organizations}
+        title="Schedule"
+      >
+        {eventContent}
+      </AdminAppShell>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-slate-950 text-white">
+      <section className="mx-auto max-w-md px-5 py-6">
+        <MvpNav organizationContext={organizationContext} />
+        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
+          <h1 className="text-3xl font-bold">Schedule</h1>
+          <p className="mt-3 text-sm text-slate-300">
+            Upcoming practices, tournaments, and meetings.
+          </p>
+        </div>
+        {eventContent}
       </section>
     </main>
   );

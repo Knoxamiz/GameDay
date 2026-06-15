@@ -1,12 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type {
   CoachAssignment,
   CoachAssignmentStatus,
 } from "../data/coachAssignmentRecords";
+import { isActiveCoachAssignment } from "../data/coachAssignmentRecords";
 import type { Coach } from "../data/coaches";
-import type { RegistrationInvite } from "../data/invites";
+import {
+  getRegistrationInviteStatus,
+  type RegistrationInvite,
+} from "../data/invites";
 import type { OrganizationMembership } from "../data/organizationMemberships";
 import type { Organization } from "../data/organizations";
 import { isActiveTeam, type Team } from "../data/teams";
@@ -21,12 +25,21 @@ type AdminSetupPanelProps = {
   canManageSetup: boolean;
   coachAssignments: CoachAssignment[];
   coaches: Coach[];
+  defaultOpenSection?: SetupSectionId;
   organizationManagementAuthority: "admin" | "bootstrap-admin" | "owner" | null;
   organizationMemberships: OrganizationMembership[];
   organizations: Organization[];
   registrationInvites: RegistrationInvite[];
   teams: Team[];
 };
+
+export type SetupSectionId =
+  | "organization"
+  | "members"
+  | "teams"
+  | "coaches"
+  | "invites"
+  | "summary";
 
 type SetupResponse = {
   error?: string;
@@ -46,12 +59,56 @@ function getOrganizationNameFromId(organizationId: string) {
     .join(" ");
 }
 
+function SetupHubSection({
+  children,
+  description,
+  id,
+  isOpen,
+  label,
+  onToggle,
+  status,
+}: {
+  children: ReactNode;
+  description: string;
+  id: string;
+  isOpen: boolean;
+  label: string;
+  onToggle: () => void;
+  status: string;
+}) {
+  return (
+    <section className="rounded-lg border border-slate-800 bg-slate-900" id={id}>
+      <button
+        aria-expanded={isOpen}
+        className="flex w-full items-center justify-between gap-4 p-4 text-left"
+        onClick={onToggle}
+        type="button"
+      >
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="font-bold text-white">{label}</h2>
+            <span className="rounded-full bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-300">
+              {status}
+            </span>
+          </div>
+          <p className="mt-1 text-sm text-slate-400">{description}</p>
+        </div>
+        <span className="shrink-0 text-sm font-semibold text-blue-300">
+          {isOpen ? "Close" : "Manage"}
+        </span>
+      </button>
+      {isOpen && <div className="border-t border-slate-800 p-4">{children}</div>}
+    </section>
+  );
+}
+
 export default function AdminSetupPanel({
   activeOrganizationId,
   canCreateOrganization,
   canManageSetup,
   coachAssignments,
   coaches,
+  defaultOpenSection,
   organizationManagementAuthority,
   organizationMemberships,
   organizations,
@@ -76,6 +133,9 @@ export default function AdminSetupPanel({
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [openSection, setOpenSection] = useState<SetupSectionId | null>(
+    defaultOpenSection ?? null,
+  );
   const activeTeams = teams.filter(
     (team) => team.organizationId === organizationId && isActiveTeam(team),
   );
@@ -83,6 +143,38 @@ export default function AdminSetupPanel({
   const selectedCoachTeamIds = coachTeamIds.filter((teamId) =>
     activeTeamIdSet.has(teamId),
   );
+  const activeCoachAssignmentCount = coachAssignments.filter(
+    (assignment) =>
+      assignment.organizationId === organizationId &&
+      isActiveCoachAssignment(assignment),
+  ).length;
+  const currentInviteCount = registrationInvites.filter(
+    (invite) =>
+      invite.organizationId === organizationId &&
+      getRegistrationInviteStatus(invite) !== "archived",
+  ).length;
+
+  useEffect(() => {
+    const sectionByHash: Record<string, SetupSectionId> = {
+      "#coach-assignments": "coaches",
+      "#current-setup": "summary",
+      "#members": "members",
+      "#organization": "organization",
+      "#registration-invites": "invites",
+      "#team": "teams",
+    };
+    const openHashSection = () => {
+      const hashSection = sectionByHash[window.location.hash];
+
+      if (hashSection) {
+        setOpenSection(hashSection);
+      }
+    };
+
+    openHashSection();
+    window.addEventListener("hashchange", openHashSection);
+    return () => window.removeEventListener("hashchange", openHashSection);
+  }, []);
 
   function toggleCoachTeam(teamId: string) {
     setCoachTeamIds((currentTeamIds) =>
@@ -183,43 +275,42 @@ export default function AdminSetupPanel({
   }
 
   return (
-    <div className="mt-6 space-y-4">
+    <div className="mt-5 space-y-3">
       {message && (
-        <p className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-3 text-sm font-semibold text-blue-200">
+        <p className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-3 text-sm font-semibold text-blue-200">
           {message}
         </p>
       )}
       {error && (
-        <p className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm font-semibold text-red-300">
+        <p className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm font-semibold text-red-300">
           {error}
         </p>
       )}
 
-      <section
-        className="rounded-2xl border border-slate-800 bg-slate-900 p-5"
+      <SetupHubSection
+        description={`${organizationName} is the display name shown throughout GameDay.`}
         id="organization"
+        isOpen={openSection === "organization"}
+        label="Organization"
+        onToggle={() =>
+          setOpenSection(openSection === "organization" ? null : "organization")
+        }
+        status="Complete"
       >
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-          Step 1
-        </p>
-        <h2 className="mt-2 text-xl font-bold">Organization</h2>
-        <p className="mt-2 text-sm text-slate-300">
-          Manage the real organization record for the active context.
-        </p>
-        <div className="mt-4 space-y-3">
-          <div className="rounded-xl bg-slate-800 p-3 text-sm text-slate-300">
-            Organization ID: {organizationId}
-          </div>
+        <div className="max-w-xl space-y-3">
+          <p className="text-lg font-bold text-white">{organizationName}</p>
           <label className="block">
-            <span className="text-sm font-semibold text-slate-300">Name</span>
+            <span className="text-sm font-semibold text-slate-300">
+              Display Name
+            </span>
             <input
-              className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
+              className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
               onChange={(event) => setOrganizationName(event.target.value)}
               value={organizationName}
             />
           </label>
           <button
-            className="w-full rounded-xl bg-blue-500 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-md bg-blue-500 px-4 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isSaving}
             onClick={() =>
               void saveSetup({
@@ -232,235 +323,155 @@ export default function AdminSetupPanel({
           >
             Save Organization
           </button>
+          <details className="text-xs text-slate-500">
+            <summary className="cursor-pointer font-semibold">
+              Technical details
+            </summary>
+            <p className="mt-2 break-all">
+              Internal Organization ID: {organizationId}
+            </p>
+          </details>
         </div>
-      </section>
+      </SetupHubSection>
 
-      <OrganizationMembershipManager
-        activeOrganizationId={organizationId}
-        authority={organizationManagementAuthority}
-        memberships={organizationMemberships}
-      />
+      <SetupHubSection
+        description="Invite and manage owners, admins, coaches, and staff."
+        id="members"
+        isOpen={openSection === "members"}
+        label="Members"
+        onToggle={() =>
+          setOpenSection(openSection === "members" ? null : "members")
+        }
+        status={`${organizationMemberships.length} record${organizationMemberships.length === 1 ? "" : "s"}`}
+      >
+        <OrganizationMembershipManager
+          activeOrganizationId={organizationId}
+          authority={organizationManagementAuthority}
+          embedded
+          memberships={organizationMemberships}
+        />
+      </SetupHubSection>
 
-      <section
-        className="rounded-2xl border border-slate-800 bg-slate-900 p-5"
+      <SetupHubSection
+        description={
+          activeTeams.length > 0
+            ? `${activeTeams.length} active team${activeTeams.length === 1 ? "" : "s"} available for registration.`
+            : "Create an active team before opening registration."
+        }
         id="team"
+        isOpen={openSection === "teams"}
+        label="Teams"
+        onToggle={() =>
+          setOpenSection(openSection === "teams" ? null : "teams")
+        }
+        status={activeTeams.length > 0 ? "Complete" : "Next"}
       >
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-          Step 2
-        </p>
-        <h2 className="mt-2 text-xl font-bold">Team / Division</h2>
-        <p className="mt-2 text-sm text-slate-300">
-          Registration cannot open until a real team exists.
-        </p>
-        {organizations.length === 0 ? (
-          <p className="mt-4 rounded-xl bg-slate-800 p-3 text-sm text-slate-300">
-            Create the organization first.
-          </p>
-        ) : (
-          <div className="mt-4 space-y-3">
-            <label className="block">
-              <span className="text-sm font-semibold text-slate-300">
-                Team Name
-              </span>
-              <input
-                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
-                onChange={(event) => setTeamName(event.target.value)}
-                value={teamName}
-              />
-            </label>
-            <label className="block">
-              <span className="text-sm font-semibold text-slate-300">
-                Division
-              </span>
-              <input
-                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
-                onChange={(event) => setTeamDivision(event.target.value)}
-                placeholder="10U, 12U, High School"
-                value={teamDivision}
-              />
-            </label>
-            <label className="block">
-              <span className="text-sm font-semibold text-slate-300">
-                Season
-              </span>
-              <input
-                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
-                onChange={(event) => setTeamSeason(event.target.value)}
-                value={teamSeason}
-              />
-            </label>
-            <label className="block">
-              <span className="text-sm font-semibold text-slate-300">
-                Status
-              </span>
-              <select
-                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
-                onChange={(event) =>
-                  setTeamStatus(
-                    event.target.value === "inactive" ? "inactive" : "active",
-                  )
-                }
-                value={teamStatus}
-              >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </label>
-            <button
-              className="w-full rounded-xl bg-blue-500 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={isSaving}
-              onClick={() =>
-                void saveSetup({
-                  actionType: "team",
-                  division: teamDivision,
-                  name: teamName,
-                  organizationId,
-                  season: teamSeason,
-                  status: teamStatus,
-                })
-              }
-              type="button"
-            >
-              Create Team
-            </button>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div>
+            <h3 className="font-bold text-white">Create Team</h3>
+            <div className="mt-3 space-y-3">
+              <label className="block">
+                <span className="text-sm font-semibold text-slate-300">Team Name</span>
+                <input className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none" onChange={(event) => setTeamName(event.target.value)} value={teamName} />
+              </label>
+              <label className="block">
+                <span className="text-sm font-semibold text-slate-300">Division</span>
+                <input className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none" onChange={(event) => setTeamDivision(event.target.value)} placeholder="10U, 12U, High School" value={teamDivision} />
+              </label>
+              <label className="block">
+                <span className="text-sm font-semibold text-slate-300">Season</span>
+                <input className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none" onChange={(event) => setTeamSeason(event.target.value)} value={teamSeason} />
+              </label>
+              <label className="block">
+                <span className="text-sm font-semibold text-slate-300">Status</span>
+                <select className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-4 py-3 text-white" onChange={(event) => setTeamStatus(event.target.value === "inactive" ? "inactive" : "active")} value={teamStatus}>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </label>
+              <button className="rounded-md bg-blue-500 px-4 py-3 font-semibold text-white disabled:opacity-60" disabled={isSaving} onClick={() => void saveSetup({ actionType: "team", division: teamDivision, name: teamName, organizationId, season: teamSeason, status: teamStatus })} type="button">
+                Create Team
+              </button>
+            </div>
           </div>
-        )}
-      </section>
-
-      <TeamLifecycleManager
-        activeOrganizationId={organizationId}
-        teams={teams}
-      />
-
-      <section
-        className="rounded-2xl border border-slate-800 bg-slate-900 p-5"
-        id="coach-assignments"
-      >
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-          Step 3
-        </p>
-        <h2 className="mt-2 text-xl font-bold">Coach Assignment</h2>
-        <p className="mt-2 text-sm text-slate-300">
-          Assign a real coach account to one or more real teams.
-        </p>
-        {activeTeams.length === 0 ? (
-          <p className="mt-4 rounded-xl bg-slate-800 p-3 text-sm text-slate-300">
-            Create an active team first.
-          </p>
-        ) : (
-          <div className="mt-4 space-y-3">
-            <label className="block">
-              <span className="text-sm font-semibold text-slate-300">
-                Coach Name
-              </span>
-              <input
-                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
-                onChange={(event) => setCoachName(event.target.value)}
-                value={coachName}
-              />
-            </label>
-            <label className="block">
-              <span className="text-sm font-semibold text-slate-300">
-                Coach Email
-              </span>
-              <input
-                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
-                onChange={(event) => setCoachEmail(event.target.value)}
-                type="email"
-                value={coachEmail}
-              />
-            </label>
-            <label className="block">
-              <span className="text-sm font-semibold text-slate-300">
-                Firebase UID
-              </span>
-              <input
-                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
-                onChange={(event) => setCoachUid(event.target.value)}
-                placeholder="Optional"
-                value={coachUid}
-              />
-            </label>
-            <label className="block">
-              <span className="text-sm font-semibold text-slate-300">
-                Status
-              </span>
-              <select
-                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
-                onChange={(event) =>
-                  setCoachStatus(
-                    event.target.value === "inactive" ? "inactive" : "active",
-                  )
-                }
-                value={coachStatus}
-              >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </label>
-            <fieldset className="space-y-2">
-              <legend className="text-sm font-semibold text-slate-300">
-                Teams
-              </legend>
-              {activeTeams.map((team) => (
-                <label
-                  className="flex items-center justify-between gap-3 rounded-xl bg-slate-800 p-3 text-sm font-semibold text-slate-300"
-                  key={team.id}
-                >
-                  {team.name}
-                  <input
-                    checked={selectedCoachTeamIds.includes(team.id)}
-                    onChange={() => toggleCoachTeam(team.id)}
-                    type="checkbox"
-                  />
-                </label>
-              ))}
-            </fieldset>
-            <button
-              className="w-full rounded-xl bg-blue-500 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={isSaving}
-              onClick={() =>
-                void saveSetup({
-                  actionType: "coach-assignment",
-                  email: coachEmail,
-                  name: coachName,
-                  organizationId,
-                  status: coachStatus,
-                  teamIds: selectedCoachTeamIds,
-                  uid: coachUid,
-                })
-              }
-              type="button"
-            >
-              Save Coach Assignment
-            </button>
+          <div className="border-t border-slate-800 pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+            <TeamLifecycleManager activeOrganizationId={organizationId} embedded teams={teams} />
           </div>
-        )}
-      </section>
-
-      <CoachAssignmentLifecycleManager
-        activeOrganizationId={organizationId}
-        assignments={coachAssignments}
-        coaches={coaches}
-        teams={teams}
-      />
-
-      <RegistrationInviteManager
-        organizationId={organizationId}
-        registrationInvites={registrationInvites}
-        teams={teams}
-      />
-
-      <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-        <h2 className="text-lg font-bold">Current Setup</h2>
-        <div className="mt-3 space-y-2 text-sm text-slate-300">
-          <p>{organizations.length} organization record(s)</p>
-          <p>{teams.length} team record(s)</p>
-          <p>{organizationMemberships.length} membership record(s)</p>
-          <p>{coachAssignments.length} coach assignment(s)</p>
-          <p>{registrationInvites.length} registration invite(s)</p>
         </div>
-      </section>
+      </SetupHubSection>
+
+      <SetupHubSection
+        description={
+          activeCoachAssignmentCount > 0
+            ? `${activeCoachAssignmentCount} active assignment${activeCoachAssignmentCount === 1 ? "" : "s"}.`
+            : "Optional until a coach needs roster and event access."
+        }
+        id="coach-assignments"
+        isOpen={openSection === "coaches"}
+        label="Coach Assignments"
+        onToggle={() =>
+          setOpenSection(openSection === "coaches" ? null : "coaches")
+        }
+        status={activeCoachAssignmentCount > 0 ? "Complete" : "Optional"}
+      >
+        {activeTeams.length === 0 ? (
+          <p className="text-sm text-slate-300">Create an active team first.</p>
+        ) : (
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div>
+              <h3 className="font-bold text-white">Assign Coach</h3>
+              <div className="mt-3 space-y-3">
+                <label className="block"><span className="text-sm font-semibold text-slate-300">Coach Name</span><input className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none" onChange={(event) => setCoachName(event.target.value)} value={coachName} /></label>
+                <label className="block"><span className="text-sm font-semibold text-slate-300">Coach Email</span><input className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none" onChange={(event) => setCoachEmail(event.target.value)} type="email" value={coachEmail} /></label>
+                <label className="block"><span className="text-sm font-semibold text-slate-300">Status</span><select className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-4 py-3 text-white" onChange={(event) => setCoachStatus(event.target.value === "inactive" ? "inactive" : "active")} value={coachStatus}><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
+                <fieldset className="space-y-2"><legend className="text-sm font-semibold text-slate-300">Teams</legend>{activeTeams.map((team) => (<label className="flex items-center justify-between gap-3 rounded-md bg-slate-800 p-3 text-sm font-semibold text-slate-300" key={team.id}>{team.name}<input checked={selectedCoachTeamIds.includes(team.id)} onChange={() => toggleCoachTeam(team.id)} type="checkbox" /></label>))}</fieldset>
+                <details className="rounded-md border border-slate-800 bg-slate-950 p-3"><summary className="cursor-pointer text-sm font-semibold text-slate-300">Technical account linking</summary><label className="mt-3 block"><span className="text-sm font-semibold text-slate-300">Firebase UID</span><input className="mt-2 w-full rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none" onChange={(event) => setCoachUid(event.target.value)} placeholder="Optional" value={coachUid} /></label></details>
+                <button className="rounded-md bg-blue-500 px-4 py-3 font-semibold text-white disabled:opacity-60" disabled={isSaving} onClick={() => void saveSetup({ actionType: "coach-assignment", email: coachEmail, name: coachName, organizationId, status: coachStatus, teamIds: selectedCoachTeamIds, uid: coachUid })} type="button">Save Coach Assignment</button>
+              </div>
+            </div>
+            <div className="border-t border-slate-800 pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+              <CoachAssignmentLifecycleManager activeOrganizationId={organizationId} assignments={coachAssignments} coaches={coaches} embedded teams={teams} />
+            </div>
+          </div>
+        )}
+      </SetupHubSection>
+
+      <SetupHubSection
+        description={
+          currentInviteCount > 0
+            ? `${currentInviteCount} current invite${currentInviteCount === 1 ? "" : "s"}.`
+            : "Create an invite after an active team exists."
+        }
+        id="registration-invites"
+        isOpen={openSection === "invites"}
+        label="Registration Invites"
+        onToggle={() =>
+          setOpenSection(openSection === "invites" ? null : "invites")
+        }
+        status={currentInviteCount > 0 ? "Configured" : activeTeams.length > 0 ? "Next" : "Waiting"}
+      >
+        <RegistrationInviteManager embedded organizationId={organizationId} registrationInvites={registrationInvites} teams={teams} />
+      </SetupHubSection>
+
+      <SetupHubSection
+        description="A compact count of the real records in this organization."
+        id="current-setup"
+        isOpen={openSection === "summary"}
+        label="Current Setup Summary"
+        onToggle={() =>
+          setOpenSection(openSection === "summary" ? null : "summary")
+        }
+        status="Overview"
+      >
+        <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
+          {[{ label: "Organizations", value: organizations.length }, { label: "Teams", value: teams.length }, { label: "Members", value: organizationMemberships.length }, { label: "Coach assignments", value: coachAssignments.length }, { label: "Invites", value: registrationInvites.length }].map((item) => (
+            <div className="rounded-md bg-slate-950 p-3" key={item.label}>
+              <p className="text-2xl font-bold text-white">{item.value}</p>
+              <p className="mt-1 text-xs text-slate-400">{item.label}</p>
+            </div>
+          ))}
+        </div>
+      </SetupHubSection>
     </div>
   );
 }

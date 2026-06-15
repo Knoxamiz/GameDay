@@ -11,6 +11,7 @@ type MembershipAuthority = "admin" | "bootstrap-admin" | "owner";
 type OrganizationMembershipManagerProps = {
   activeOrganizationId: string;
   authority: MembershipAuthority | null;
+  embedded?: boolean;
   memberships: OrganizationMembership[];
 };
 
@@ -65,8 +66,8 @@ function MembershipEditor({
           <p className="break-all font-semibold text-white">
             {membership.email}
           </p>
-          <p className="mt-1 break-all text-xs text-slate-400">
-            {membership.uid ? `Firebase UID: ${membership.uid}` : "Not linked"}
+          <p className="mt-1 text-xs text-slate-400">
+            {membership.uid ? "Linked account" : "Not linked"}
           </p>
         </div>
         <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold capitalize text-slate-300">
@@ -98,17 +99,31 @@ function MembershipEditor({
         </label>
 
         {!membership.uid && !isRemoved && (
-          <label className="block">
-            <span className="text-sm font-semibold text-slate-300">
-              Firebase UID
-            </span>
-            <input
-              className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none"
-              onChange={(event) => setUid(event.target.value)}
-              placeholder="Required to activate"
-              value={uid}
-            />
-          </label>
+          <details className="rounded-md border border-slate-800 bg-slate-900 p-3">
+            <summary className="cursor-pointer text-sm font-semibold text-slate-300">
+              Technical account linking
+            </summary>
+            <label className="mt-3 block">
+              <span className="text-sm font-semibold text-slate-300">
+                Firebase UID
+              </span>
+              <input
+                className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
+                onChange={(event) => setUid(event.target.value)}
+                placeholder="Required to activate"
+                value={uid}
+              />
+            </label>
+          </details>
+        )}
+
+        {membership.uid && (
+          <details className="text-xs text-slate-500">
+            <summary className="cursor-pointer font-semibold">
+              Technical details
+            </summary>
+            <p className="mt-2 break-all">Firebase UID: {membership.uid}</p>
+          </details>
         )}
 
         {!isRemoved && !ownerRestricted && (
@@ -171,6 +186,7 @@ function MembershipEditor({
 export default function OrganizationMembershipManager({
   activeOrganizationId,
   authority,
+  embedded = false,
   memberships,
 }: OrganizationMembershipManagerProps) {
   const [email, setEmail] = useState("");
@@ -216,7 +232,13 @@ export default function OrganizationMembershipManager({
   }
 
   return (
-    <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+    <section
+      className={
+        embedded
+          ? ""
+          : "rounded-2xl border border-slate-800 bg-slate-900 p-5"
+      }
+    >
       <h2 className="text-xl font-bold">Organization Members</h2>
       <p className="mt-2 text-sm text-slate-300">
         Invite and manage access for the active organization. Owner and admin

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import AdminOrganizationSelector from "../components/AdminOrganizationSelector";
+import AdminAppShell from "../components/AdminAppShell";
 import MvpNav from "../components/MvpNav";
 import {
   getRequestedOrganizationId,
@@ -111,32 +111,10 @@ export default async function TeamsHome({ searchParams }: TeamsHomeProps) {
     ]),
   );
 
-  return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav
-          activeOrganizationId={activeOrganizationId}
-          organizationContext={organizationContext}
-        />
-
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-          <h1 className="text-3xl font-bold">Teams</h1>
-          <p className="mt-3 text-sm text-slate-300">
-            Roster, schedule, and readiness by team.
-          </p>
-        </div>
-
-        {activeContext && (
-          <AdminOrganizationSelector
-            action="/teams"
-            activeOrganizationId={activeOrganizationId}
-            organizations={activeContext.organizations}
-          />
-        )}
-
-        <div className="mt-6 space-y-4">
+  const teamList = (
+    <div className="mt-6 grid gap-4 lg:grid-cols-2">
           {visibleTeams.length === 0 && (
-            <p className="rounded-2xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300">
+            <p className="rounded-lg border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300 lg:col-span-2">
               {activeContext?.requiresSelection
                 ? "Choose an organization to view its teams."
                 : "No teams are available for your current organization and role scope."}
@@ -160,7 +138,7 @@ export default async function TeamsHome({ searchParams }: TeamsHomeProps) {
                   `/teams/${team.id}`,
                   activeOrganizationId,
                 )}
-                className="block rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg"
+                className="block rounded-lg border border-slate-800 bg-slate-900 p-5 shadow-lg"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -219,7 +197,37 @@ export default async function TeamsHome({ searchParams }: TeamsHomeProps) {
               </Link>
             );
           })}
+    </div>
+  );
+
+  if (role === "admin" && activeContext) {
+    return (
+      <AdminAppShell
+        accountLabel={session.user.email}
+        activeOrganizationId={activeOrganizationId}
+        activeOrganizationName={activeContext.activeOrganization?.name}
+        currentSection="teams"
+        description="Roster, schedule, and readiness by team."
+        organizationSelectorAction="/teams"
+        organizations={activeContext.organizations}
+        title="Teams"
+      >
+        {teamList}
+      </AdminAppShell>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-slate-950 text-white">
+      <section className="mx-auto max-w-md px-5 py-6">
+        <MvpNav organizationContext={organizationContext} />
+        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
+          <h1 className="text-3xl font-bold">Teams</h1>
+          <p className="mt-3 text-sm text-slate-300">
+            Roster, schedule, and readiness by team.
+          </p>
         </div>
+        {teamList}
       </section>
     </main>
   );

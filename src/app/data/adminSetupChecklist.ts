@@ -46,6 +46,7 @@ export type AdminSetupChecklistModel = {
   activeOrganizationId?: string;
   activeOrganizationName?: string;
   completedRequiredSteps: number;
+  nextRequiredStep?: AdminSetupChecklistStep;
   requiredStepCount: number;
   steps: AdminSetupChecklistStep[];
 };
@@ -252,6 +253,9 @@ export function buildAdminSetupChecklist({
     },
   ];
   const requiredSteps = steps.filter((step) => step.required);
+  const nextRequiredStep = requiredSteps.find(
+    (step) => step.status === "next",
+  );
 
   return {
     activeOrganizationId: organizationId,
@@ -259,6 +263,7 @@ export function buildAdminSetupChecklist({
     completedRequiredSteps: requiredSteps.filter(
       (step) => step.status === "complete",
     ).length,
+    nextRequiredStep,
     requiredStepCount: requiredSteps.length,
     steps,
   };

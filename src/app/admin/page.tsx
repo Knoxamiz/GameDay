@@ -1,13 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import AdminAppShell from "../components/AdminAppShell";
 import AdminReadinessBoard from "../components/AdminReadinessBoard";
-import AdminOrganizationSelector from "../components/AdminOrganizationSelector";
 import AdminSetupChecklist from "../components/AdminSetupChecklist";
 import AttendanceConcernAction from "../components/AttendanceConcernAction";
-import BottomNav from "../components/BottomNav";
-import MvpNav from "../components/MvpNav";
 import RegistrationAdminActionLinks from "../components/RegistrationAdminActionLinks";
-import SessionControls from "../components/SessionControls";
 import TransportationIssueAction from "../components/TransportationIssueAction";
 import { getAdminHomeReadModel } from "../data/adminHomeRead.server";
 import { buildAdminSetupChecklist } from "../data/adminSetupChecklist";
@@ -105,43 +102,17 @@ export default async function AdminHome({ searchParams }: AdminHomeProps) {
   const teamById = new Map(organizationTeams.map((team) => [team.id, team]));
   const hasAdminOrganizations = activeContext.organizations.length > 0;
   const hasActiveOrganization = Boolean(activeContext.activeOrganizationId);
-  const organizationLabel =
-    !hasAdminOrganizations
-      ? "No Organization Yet"
-      : activeContext.requiresSelection
-        ? "Choose an organization"
-        : organization.name;
-  const organizationContext = activeContext.activeOrganization
-    ? {
-        count: 1,
-        label: activeContext.activeOrganization.name,
-      }
-    : undefined;
-
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav
-          activeOrganizationId={activeContext.activeOrganizationId}
-          organizationContext={organizationContext}
-        />
-
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-          <h1 className="text-3xl font-bold">GameDay - Admin</h1>
-        </div>
-
-        <SessionControls role="admin" />
-
-        <p className="mt-5 text-slate-300">
-          Organization scope: {organizationLabel}
-        </p>
-
-        <AdminOrganizationSelector
-          action="/admin"
-          activeOrganizationId={activeContext.activeOrganizationId}
-          organizations={activeContext.organizations}
-        />
-
+    <AdminAppShell
+      accountLabel={session.user.email}
+      activeOrganizationId={activeContext.activeOrganizationId}
+      activeOrganizationName={activeContext.activeOrganization?.name}
+      currentSection="home"
+      description="Your organization setup, operational alerts, registration work, and upcoming schedule."
+      organizationSelectorAction="/admin"
+      organizations={activeContext.organizations}
+      title="Admin Home"
+    >
         {!activeContext.requiresSelection && (
           <AdminSetupChecklist checklist={setupChecklist} />
         )}
@@ -154,16 +125,15 @@ export default async function AdminHome({ searchParams }: AdminHomeProps) {
         )}
 
         {hasActiveOrganization && (
-          <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
+          <div className="mt-5 rounded-lg border border-slate-800 bg-slate-900 p-4">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
               Organization Status
             </h2>
-            <div className="mt-4 space-y-3">
+            <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
               {organizationStatus.map((status) => (
-                <div key={status.label} className="rounded-xl bg-slate-800 p-4">
-                  <p className="text-xl font-bold">
-                    {status.value} {status.label}
-                  </p>
+                <div key={status.label} className="rounded-md bg-slate-950 p-3">
+                  <p className="text-2xl font-bold">{status.value}</p>
+                  <p className="mt-1 text-xs text-slate-400">{status.label}</p>
                 </div>
               ))}
             </div>
@@ -302,15 +272,6 @@ export default async function AdminHome({ searchParams }: AdminHomeProps) {
           </div>
         )}
 
-        <BottomNav
-          items={[
-            { href: withActiveOrganization("/admin", activeContext.activeOrganizationId), label: "Home" },
-            { href: withActiveOrganization("/teams", activeContext.activeOrganizationId), label: "Teams" },
-            { href: withActiveOrganization("/admin/registrations", activeContext.activeOrganizationId), label: "Registration" },
-            { href: withActiveOrganization("/events", activeContext.activeOrganizationId), label: "Schedule" },
-          ]}
-        />
-      </section>
-    </main>
+    </AdminAppShell>
   );
 }

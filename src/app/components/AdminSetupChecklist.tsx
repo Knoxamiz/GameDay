@@ -46,9 +46,10 @@ export default function AdminSetupChecklist({
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
   const isRequiredSetupComplete =
     checklist.completedRequiredSteps === checklist.requiredStepCount;
+  const nextRequiredStep = checklist.nextRequiredStep;
 
   return (
-    <section className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+    <section className="mt-5 rounded-lg border border-slate-800 bg-slate-900 p-4 sm:p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
@@ -64,20 +65,48 @@ export default function AdminSetupChecklist({
           {checklist.completedRequiredSteps}/{checklist.requiredStepCount}
         </span>
       </div>
-      <p className="mt-2 text-sm text-slate-300">
-        {isRequiredSetupComplete
-          ? "Registration setup is ready. Operational steps can continue as your season develops."
-          : "Complete the required steps in order. Status changes only when real organization records exist."}
-      </p>
+      <div
+        className={`mt-4 rounded-lg border p-4 ${
+          nextRequiredStep
+            ? "border-yellow-500/30 bg-yellow-500/10"
+            : "border-blue-500/30 bg-blue-500/10"
+        }`}
+      >
+        <p className="text-xs font-semibold uppercase text-slate-400">
+          {nextRequiredStep ? "Next required action" : "Required setup"}
+        </p>
+        <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-bold text-white">
+              {nextRequiredStep?.label ?? "Registration setup is ready"}
+            </p>
+            <p className="mt-1 text-sm text-slate-300">
+              {nextRequiredStep?.description ??
+                "Operational steps can continue as your season develops."}
+            </p>
+          </div>
+          {nextRequiredStep?.actionHref && nextRequiredStep.actionLabel && (
+            <Link
+              className="shrink-0 rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white"
+              href={withActiveOrganization(
+                nextRequiredStep.actionHref,
+                checklist.activeOrganizationId,
+              )}
+            >
+              {nextRequiredStep.actionLabel}
+            </Link>
+          )}
+        </div>
+      </div>
 
-      <div className="mt-4 divide-y divide-slate-800 border-y border-slate-800">
+      <div className="mt-4 grid gap-2 sm:grid-cols-2">
         {checklist.steps.map((step) => (
-          <div className="py-4" key={step.id}>
-            <div className="flex items-start justify-between gap-3">
+          <div className="rounded-md border border-slate-800 bg-slate-950 p-3" key={step.id}>
+            <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="font-semibold text-white">{step.label}</p>
-                <p className="mt-1 text-sm text-slate-400">
-                  {step.description}
+                <p className="text-sm font-semibold text-white">{step.label}</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {step.count} real record{step.count === 1 ? "" : "s"}
                 </p>
               </div>
               <span
@@ -87,22 +116,10 @@ export default function AdminSetupChecklist({
               </span>
             </div>
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              {step.actionHref && step.actionLabel && (
-                <Link
-                  className="rounded-lg border border-slate-700 px-3 py-2 text-sm font-semibold text-slate-200"
-                  href={withActiveOrganization(
-                    step.actionHref,
-                    checklist.activeOrganizationId,
-                  )}
-                >
-                  {step.actionLabel}
-                </Link>
-              )}
-              {step.joinPath && (
-                <>
+            {step.joinPath && (
+              <div className="mt-3 flex flex-wrap gap-2 border-t border-slate-800 pt-3">
                   <button
-                    className="rounded-lg bg-blue-500 px-3 py-2 text-sm font-semibold text-white"
+                    className="rounded-md bg-blue-500 px-3 py-2 text-xs font-semibold text-white"
                     onClick={async () => {
                       try {
                         await navigator.clipboard.writeText(
@@ -118,15 +135,14 @@ export default function AdminSetupChecklist({
                     Copy Join Link
                   </button>
                   <Link
-                    className="rounded-lg border border-slate-700 px-3 py-2 text-sm font-semibold text-slate-200"
+                    className="rounded-md border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-200"
                     href={step.joinPath}
                     target="_blank"
                   >
                     View Join Page
                   </Link>
-                </>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -134,6 +150,11 @@ export default function AdminSetupChecklist({
       {copyMessage && (
         <p className="mt-3 text-sm font-semibold text-slate-300">
           {copyMessage}
+        </p>
+      )}
+      {!isRequiredSetupComplete && !nextRequiredStep && (
+        <p className="mt-3 text-sm text-yellow-200">
+          Required setup is waiting on an earlier dependency.
         </p>
       )}
     </section>

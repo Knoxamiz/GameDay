@@ -18,6 +18,7 @@ type CoachAssignmentLifecycleManagerProps = {
   activeOrganizationId: string;
   assignments: CoachAssignment[];
   coaches: Coach[];
+  embedded?: boolean;
   teams: Team[];
 };
 
@@ -68,9 +69,7 @@ function AssignmentEditor({
             <p className="font-semibold text-white">
               {coach?.name ?? assignment.email}
             </p>
-            <p className="mt-1 break-all text-xs text-slate-400">
-              Assignment ID: {assignment.id}
-            </p>
+            <p className="mt-1 text-xs text-slate-400">{assignment.email}</p>
           </div>
           <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-300">
             {getCoachAssignmentStatusLabel(assignment)}
@@ -96,16 +95,24 @@ function AssignmentEditor({
             value={email}
           />
         </label>
-        <label className="block">
-          <span className="text-sm font-semibold text-slate-300">
-            Firebase UID
-          </span>
-          <input
-            className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none"
-            onChange={(event) => setUid(event.target.value)}
-            value={uid}
-          />
-        </label>
+        <details className="rounded-md border border-slate-800 bg-slate-900 p-3">
+          <summary className="cursor-pointer text-sm font-semibold text-slate-300">
+            Technical details
+          </summary>
+          <p className="mt-3 break-all text-xs text-slate-500">
+            Internal Assignment ID: {assignment.id}
+          </p>
+          <label className="mt-3 block">
+            <span className="text-sm font-semibold text-slate-300">
+              Firebase UID
+            </span>
+            <input
+              className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
+              onChange={(event) => setUid(event.target.value)}
+              value={uid}
+            />
+          </label>
+        </details>
         <label className="block">
           <span className="text-sm font-semibold text-slate-300">Status</span>
           <select
@@ -184,6 +191,7 @@ export default function CoachAssignmentLifecycleManager({
   activeOrganizationId,
   assignments,
   coaches,
+  embedded = false,
   teams,
 }: CoachAssignmentLifecycleManagerProps) {
   const [showArchived, setShowArchived] = useState(false);
@@ -235,7 +243,13 @@ export default function CoachAssignmentLifecycleManager({
   }
 
   return (
-    <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+    <section
+      className={
+        embedded
+          ? ""
+          : "rounded-2xl border border-slate-800 bg-slate-900 p-5"
+      }
+    >
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold">Manage Coach Assignments</h2>

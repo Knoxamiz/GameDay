@@ -6,6 +6,7 @@ import { createFirebaseClientAuthAdapter } from "../infrastructure/firebaseClien
 type SessionControlsRole = "parent" | "coach" | "admin";
 
 type SessionControlsProps = {
+  compact?: boolean;
   role: SessionControlsRole;
 };
 
@@ -17,7 +18,10 @@ function getRoleLabel(role: SessionControlsRole) {
   return role === "coach" ? "Coach" : "Parent";
 }
 
-export default function SessionControls({ role }: SessionControlsProps) {
+export default function SessionControls({
+  compact = false,
+  role,
+}: SessionControlsProps) {
   const [error, setError] = useState<string | null>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -46,6 +50,26 @@ export default function SessionControls({ role }: SessionControlsProps) {
       );
       setIsSigningOut(false);
     }
+  }
+
+  if (compact) {
+    return (
+      <div className="text-right text-sm">
+        <button
+          className="rounded-md border border-slate-700 px-3 py-2 font-semibold text-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={isSigningOut}
+          onClick={handleSignOut}
+          type="button"
+        >
+          {isSigningOut ? "Signing Out..." : "Sign Out"}
+        </button>
+        {error && (
+          <p className="mt-2 max-w-xs text-left text-xs font-semibold text-red-300">
+            {error}
+          </p>
+        )}
+      </div>
+    );
   }
 
   return (
