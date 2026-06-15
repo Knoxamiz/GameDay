@@ -128,7 +128,10 @@ export default function AdminSetupPanel({
   if (!canManageSetup) {
     if (canCreateOrganization) {
       return (
-        <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+        <div
+          className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-5"
+          id="organization"
+        >
           <h2 className="text-xl font-bold">Create Organization</h2>
           <p className="mt-2 text-sm text-slate-300">
             Create a real organization and owner membership for this account.
@@ -192,7 +195,10 @@ export default function AdminSetupPanel({
         </p>
       )}
 
-      <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+      <section
+        className="rounded-2xl border border-slate-800 bg-slate-900 p-5"
+        id="organization"
+      >
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
           Step 1
         </p>
@@ -235,7 +241,10 @@ export default function AdminSetupPanel({
         memberships={organizationMemberships}
       />
 
-      <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+      <section
+        className="rounded-2xl border border-slate-800 bg-slate-900 p-5"
+        id="team"
+      >
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
           Step 2
         </p>
@@ -323,7 +332,10 @@ export default function AdminSetupPanel({
         teams={teams}
       />
 
-      <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+      <section
+        className="rounded-2xl border border-slate-800 bg-slate-900 p-5"
+        id="coach-assignments"
+      >
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
           Step 3
         </p>

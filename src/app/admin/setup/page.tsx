@@ -1,10 +1,12 @@
 import BottomNav from "../../components/BottomNav";
 import { redirect } from "next/navigation";
 import AdminOrganizationSelector from "../../components/AdminOrganizationSelector";
+import AdminSetupChecklist from "../../components/AdminSetupChecklist";
 import AdminSetupPanel from "../../components/AdminSetupPanel";
 import MvpNav from "../../components/MvpNav";
 import SessionControls from "../../components/SessionControls";
 import { getAdminSetupReadModel } from "../../data/adminSetup.server";
+import { buildAdminSetupChecklist } from "../../data/adminSetupChecklist";
 import {
   getRequestedOrganizationId,
   withActiveOrganization,
@@ -47,6 +49,14 @@ export default async function AdminSetupPage({
   const setup = await getAdminSetupReadModel(
     activeContext.activeOrganizationId,
   );
+  const setupChecklist = buildAdminSetupChecklist({
+    activeOrganization: setup.organizations[0],
+    coachAssignments: setup.coachAssignments,
+    events: setup.events,
+    registrationInvites: setup.registrationInvites,
+    registrations: setup.registrations,
+    teams: setup.teams,
+  });
   const organizationContext = activeContext.activeOrganization
       ? {
           count: 1,
@@ -76,6 +86,10 @@ export default async function AdminSetupPage({
           activeOrganizationId={activeContext.activeOrganizationId}
           organizations={activeContext.organizations}
         />
+
+        {!activeContext.requiresSelection && (
+          <AdminSetupChecklist checklist={setupChecklist} />
+        )}
 
         {!activeContext.requiresSelection && (
           <AdminSetupPanel

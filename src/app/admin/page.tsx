@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import AdminReadinessBoard from "../components/AdminReadinessBoard";
 import AdminOrganizationSelector from "../components/AdminOrganizationSelector";
+import AdminSetupChecklist from "../components/AdminSetupChecklist";
 import AttendanceConcernAction from "../components/AttendanceConcernAction";
 import BottomNav from "../components/BottomNav";
 import MvpNav from "../components/MvpNav";
@@ -9,6 +10,7 @@ import RegistrationAdminActionLinks from "../components/RegistrationAdminActionL
 import SessionControls from "../components/SessionControls";
 import TransportationIssueAction from "../components/TransportationIssueAction";
 import { getAdminHomeReadModel } from "../data/adminHomeRead.server";
+import { buildAdminSetupChecklist } from "../data/adminSetupChecklist";
 import {
   getRequestedOrganizationId,
   withActiveOrganization,
@@ -55,14 +57,25 @@ export default async function AdminHome({ searchParams }: AdminHomeProps) {
   }
   const {
     attendanceEntries,
+    coachAssignments,
     coaches: organizationCoaches,
     communications: adminCommunications,
     events: adminUpcomingEvents,
     organization,
+    organizationExists,
+    registrationInvites,
     registrations: organizationRegistrations,
     teams: organizationTeams,
     transportationEntries,
   } = await getAdminHomeReadModel(activeContext.activeOrganizationId);
+  const setupChecklist = buildAdminSetupChecklist({
+    activeOrganization: organizationExists ? organization : undefined,
+    coachAssignments,
+    events: adminUpcomingEvents,
+    registrationInvites,
+    registrations: organizationRegistrations,
+    teams: organizationTeams,
+  });
   const adminUpcomingEventIdSet = new Set(
     adminUpcomingEvents.map((event) => event.id),
   );
@@ -128,6 +141,10 @@ export default async function AdminHome({ searchParams }: AdminHomeProps) {
           activeOrganizationId={activeContext.activeOrganizationId}
           organizations={activeContext.organizations}
         />
+
+        {!activeContext.requiresSelection && (
+          <AdminSetupChecklist checklist={setupChecklist} />
+        )}
 
         {!hasAdminOrganizations && (
           <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300">

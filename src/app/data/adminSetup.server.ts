@@ -23,6 +23,7 @@ import {
   type CoachAssignmentStatus,
 } from "./coachAssignmentRecords";
 import type { Coach } from "./coaches";
+import type { GameDayEvent } from "./events";
 import {
   normalizeRegistrationInvite,
   type NormalizedRegistrationInvite,
@@ -53,11 +54,13 @@ export type AdminSetupReadModel = {
   canManageSetup: boolean;
   coachAssignments: CoachAssignment[];
   coaches: Coach[];
+  events: GameDayEvent[];
   organizationIds: string[];
   organizationManagementAuthority: OrganizationManagementAuthority | null;
   organizationMemberships: OrganizationMembership[];
   organizations: Organization[];
   registrationInvites: RegistrationInvite[];
+  registrations: Registration[];
   scopeSource: AdminOrganizationScopeSource;
   source: "empty" | "firestore";
   teams: Team[];
@@ -302,11 +305,13 @@ function emptyReadModel(
     canManageSetup: false,
     coachAssignments: [],
     coaches: [],
+    events: [],
     organizationIds,
     organizationManagementAuthority: null,
     organizationMemberships: [],
     organizations: [],
     registrationInvites: [],
+    registrations: [],
     scopeSource: "empty",
     source: "empty",
     teams: [],
@@ -447,6 +452,8 @@ export async function getAdminSetupReadModel(
       coachAssignments,
       registrationInvites,
       organizationMemberships,
+      events,
+      registrations,
     ] = await Promise.all([
       repositories.organizations.getById(organizationId),
       repositories.teams.listByOrganizationId(organizationId),
@@ -455,6 +462,8 @@ export async function getAdminSetupReadModel(
       repositories.organizationMemberships.listByOrganizationId(
         organizationId,
       ),
+      repositories.events.listByOrganizationId(organizationId),
+      repositories.registrations.listByOrganizationId(organizationId),
     ]);
     const coaches = await Promise.all(
       uniqueStringList(
@@ -469,6 +478,7 @@ export async function getAdminSetupReadModel(
       coaches: uniqueById(
         coaches.filter((coach): coach is Coach => Boolean(coach)),
       ),
+      events: uniqueById(events),
       organizationIds: [organizationId],
       organizationManagementAuthority: getOrganizationManagementAuthority(
         scope,
@@ -483,6 +493,7 @@ export async function getAdminSetupReadModel(
             (invite): invite is NormalizedRegistrationInvite => Boolean(invite),
           ),
       ),
+      registrations: uniqueById(registrations),
       scopeSource: scope.source,
       source: "firestore",
       teams: uniqueById(teams),

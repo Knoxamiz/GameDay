@@ -302,7 +302,10 @@ export default function RegistrationInviteManager({
   }
 
   return (
-    <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+    <section
+      className="rounded-2xl border border-slate-800 bg-slate-900 p-5"
+      id="registration-invites"
+    >
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
         Step 4
       </p>
