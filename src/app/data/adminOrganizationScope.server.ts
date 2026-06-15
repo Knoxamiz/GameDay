@@ -26,6 +26,11 @@ export type AdminOrganizationScope = {
   source: AdminOrganizationScopeSource;
 };
 
+export type OrganizationManagementAuthority =
+  | "admin"
+  | "bootstrap-admin"
+  | "owner";
+
 export type AdminRecordActor = {
   athleteIds: string[];
   id: string;
@@ -140,6 +145,23 @@ export function canManageOrganization(
   organizationId: string,
 ) {
   return scope.organizationIds.includes(organizationId);
+}
+
+export function getOrganizationManagementAuthority(
+  scope: AdminOrganizationScope,
+  organizationId: string,
+): OrganizationManagementAuthority | null {
+  const membership = scope.memberships.find(
+    (candidate) => candidate.organizationId === organizationId,
+  );
+
+  if (membership?.role === "owner" || membership?.role === "admin") {
+    return membership.role;
+  }
+
+  return scope.claimOrganizationIds.includes(organizationId)
+    ? "bootstrap-admin"
+    : null;
 }
 
 export async function resolveActiveAdminOrganizationContext(

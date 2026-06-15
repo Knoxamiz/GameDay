@@ -68,6 +68,32 @@ function getCoachStatus(
   return null;
 }
 
+function getMembershipRole(value: unknown) {
+  if (
+    value === "owner" ||
+    value === "admin" ||
+    value === "coach" ||
+    value === "staff"
+  ) {
+    return value;
+  }
+
+  return null;
+}
+
+function getMembershipOperation(value: unknown) {
+  if (
+    value === "activate" ||
+    value === "remove" ||
+    value === "suspend" ||
+    value === "update"
+  ) {
+    return value;
+  }
+
+  return null;
+}
+
 function getStringList(value: unknown) {
   return Array.isArray(value)
     ? value
@@ -96,6 +122,39 @@ function getSetupPayload(body: Record<string, unknown> | null) {
       actionType,
       name: getText(body.name),
       organizationId: getText(body.organizationId),
+    } satisfies AdminSetupPayload;
+  }
+
+  if (actionType === "organization-membership-invite") {
+    const role = getMembershipRole(body.role);
+
+    if (!role) {
+      return null;
+    }
+
+    return {
+      actionType,
+      email: getText(body.email),
+      organizationId: getText(body.organizationId),
+      role,
+    } satisfies AdminSetupPayload;
+  }
+
+  if (actionType === "organization-membership-update") {
+    const operation = getMembershipOperation(body.operation);
+    const role = getMembershipRole(body.role);
+
+    if (!operation || !role) {
+      return null;
+    }
+
+    return {
+      actionType,
+      membershipId: getText(body.membershipId),
+      operation,
+      organizationId: getText(body.organizationId),
+      role,
+      uid: getText(body.uid),
     } satisfies AdminSetupPayload;
   }
 

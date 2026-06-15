@@ -1,6 +1,7 @@
 import { cookies, headers } from "next/headers";
 import { type AuthSessionSource } from "../infrastructure/auth";
 import { getFirebaseAdminConfig } from "../infrastructure/firebase";
+import { getFirebaseAdminUser } from "../infrastructure/firebaseAuth";
 import {
   createFirestoreRepositories,
   runFirestoreTransaction,
@@ -9,10 +10,12 @@ import {
   canManageOrganization,
   canUseAdminSetup,
   getAdminActor,
+  getOrganizationManagementAuthority,
   resolveAdminOrganizationScope,
   verifyAdminRoleSession,
   type AdminOrganizationScope,
   type AdminOrganizationScopeSource,
+  type OrganizationManagementAuthority,
 } from "./adminOrganizationScope.server";
 import {
   isActiveCoachAssignment,
@@ -31,7 +34,11 @@ import {
   normalizeDocumentIdSegment,
   slugifyIdentityPart,
 } from "./liveIdentity";
-import type { OrganizationMembership } from "./organizationMemberships";
+import {
+  canManageOrganizationMembership,
+  type OrganizationMembership,
+  type OrganizationMembershipRole,
+} from "./organizationMemberships";
 import type { Organization } from "./organizations";
 import { isCoachVisibleRosterRegistration, type Registration } from "./registrations";
 import {
@@ -47,6 +54,7 @@ export type AdminSetupReadModel = {
   coachAssignments: CoachAssignment[];
   coaches: Coach[];
   organizationIds: string[];
+  organizationManagementAuthority: OrganizationManagementAuthority | null;
   organizationMemberships: OrganizationMembership[];
   organizations: Organization[];
   registrationInvites: RegistrationInvite[];
@@ -64,6 +72,20 @@ export type AdminSetupPayload =
       actionType: "organization";
       name: string;
       organizationId: string;
+    }
+  | {
+      actionType: "organization-membership-invite";
+      email: string;
+      organizationId: string;
+      role: OrganizationMembershipRole;
+    }
+  | {
+      actionType: "organization-membership-update";
+      membershipId: string;
+      operation: "activate" | "remove" | "suspend" | "update";
+      organizationId: string;
+      role: OrganizationMembershipRole;
+      uid?: string;
     }
   | {
       actionType: "team";
@@ -281,6 +303,7 @@ function emptyReadModel(
     coachAssignments: [],
     coaches: [],
     organizationIds,
+    organizationManagementAuthority: null,
     organizationMemberships: [],
     organizations: [],
     registrationInvites: [],
@@ -412,20 +435,27 @@ export async function getAdminSetupReadModel(
       return {
         ...emptyReadModel(),
         canCreateOrganization: false,
-        organizationMemberships: scope.memberships,
         scopeSource: scope.source,
         source: "firestore",
       };
     }
 
     const repositories = createFirestoreRepositories();
-    const [organization, teams, coachAssignments, registrationInvites] =
-      await Promise.all([
-        repositories.organizations.getById(organizationId),
-        repositories.teams.listByOrganizationId(organizationId),
-        repositories.coachAssignments.listByOrganizationId(organizationId),
-        repositories.registrationInvites.listByOrganizationId(organizationId),
-      ]);
+    const [
+      organization,
+      teams,
+      coachAssignments,
+      registrationInvites,
+      organizationMemberships,
+    ] = await Promise.all([
+      repositories.organizations.getById(organizationId),
+      repositories.teams.listByOrganizationId(organizationId),
+      repositories.coachAssignments.listByOrganizationId(organizationId),
+      repositories.registrationInvites.listByOrganizationId(organizationId),
+      repositories.organizationMemberships.listByOrganizationId(
+        organizationId,
+      ),
+    ]);
     const coaches = await Promise.all(
       uniqueStringList(
         coachAssignments.map((assignment) => assignment.coachId),
@@ -440,7 +470,11 @@ export async function getAdminSetupReadModel(
         coaches.filter((coach): coach is Coach => Boolean(coach)),
       ),
       organizationIds: [organizationId],
-      organizationMemberships: scope.memberships,
+      organizationManagementAuthority: getOrganizationManagementAuthority(
+        scope,
+        organizationId,
+      ),
+      organizationMemberships: uniqueById(organizationMemberships),
       organizations: organization ? [organization] : [],
       registrationInvites: uniqueById(
         registrationInvites
@@ -507,6 +541,459 @@ function getMembershipId(organizationId: string, uid: string) {
   return `organization-membership-${organizationId}-${uidSegment}`;
 }
 
+function normalizeEmail(value: unknown) {
+  return normalizeText(value).toLowerCase();
+}
+
+function getTransactionManagementAuthority(
+  scope: AdminOrganizationScope,
+  organizationId: string,
+  memberships: OrganizationMembership[],
+): OrganizationManagementAuthority | null {
+  const actorMemberships = memberships.filter(
+    (membership) => membership.uid === scope.session.user.id,
+  );
+  const activeActorMembership = actorMemberships.find(
+    canManageOrganizationMembership,
+  );
+
+  if (
+    activeActorMembership?.role === "owner" ||
+    activeActorMembership?.role === "admin"
+  ) {
+    return activeActorMembership.role;
+  }
+
+  if (actorMemberships.length > 0) {
+    return null;
+  }
+
+  return scope.claimOrganizationIds.includes(organizationId)
+    ? "bootstrap-admin"
+    : null;
+}
+
+function assertMembershipManagementAuthority(
+  authority: OrganizationManagementAuthority | null,
+): asserts authority is OrganizationManagementAuthority {
+  if (!authority) {
+    createSetupError(
+      "organization-membership-authority-required",
+      "Your organization membership no longer allows member management.",
+      403,
+    );
+  }
+}
+
+function assertOwnerRoleAuthority(
+  authority: OrganizationManagementAuthority,
+  currentRole: OrganizationMembershipRole | undefined,
+  nextRole: OrganizationMembershipRole,
+) {
+  if (
+    authority !== "owner" &&
+    (currentRole === "owner" || nextRole === "owner")
+  ) {
+    createSetupError(
+      "organization-owner-authority-required",
+      "Only an active organization owner can manage owner access.",
+      403,
+    );
+  }
+}
+
+function isActiveOwner(membership: OrganizationMembership) {
+  return (
+    membership.status === "active" &&
+    membership.role === "owner" &&
+    Boolean(membership.uid)
+  );
+}
+
+function isActiveManager(membership: OrganizationMembership) {
+  return Boolean(
+    canManageOrganizationMembership(membership) && membership.uid,
+  );
+}
+
+function assertMembershipContinuity(
+  currentMemberships: OrganizationMembership[],
+  currentMembership: OrganizationMembership,
+  nextMembership: OrganizationMembership,
+  actorUid: string,
+) {
+  const nextMemberships = currentMemberships.map((membership) =>
+    membership.id === nextMembership.id ? nextMembership : membership,
+  );
+
+  if (
+    isActiveOwner(currentMembership) &&
+    !isActiveOwner(nextMembership) &&
+    !nextMemberships.some(isActiveOwner)
+  ) {
+    createSetupError(
+      "last-active-owner-required",
+      "Add another active owner before changing the last active owner.",
+      409,
+    );
+  }
+
+  if (
+    currentMembership.uid === actorUid &&
+    isActiveManager(currentMembership) &&
+    !isActiveManager(nextMembership) &&
+    !nextMemberships.some(isActiveManager)
+  ) {
+    createSetupError(
+      "last-active-manager-required",
+      "Add another active owner or admin before removing your own access.",
+      409,
+    );
+  }
+}
+
+async function inviteOrganizationMembership(
+  scope: AdminOrganizationScope,
+  payload: Extract<
+    AdminSetupPayload,
+    { actionType: "organization-membership-invite" }
+  >,
+): Promise<AdminSetupResult> {
+  const organizationId = normalizeText(payload.organizationId);
+  const email = normalizeEmail(payload.email);
+
+  if (!organizationId || !email || !email.includes("@")) {
+    createSetupError(
+      "invalid-organization-membership-invite",
+      "A valid member email is required.",
+      400,
+    );
+  }
+
+  assertManagedOrganization(scope, organizationId);
+
+  const now = new Date().toISOString();
+  const membership: OrganizationMembership = {
+    createdAt: now,
+    createdByUid: scope.session.user.id,
+    email,
+    id: createLiveRecordId("organization-membership", [
+      organizationId,
+      email,
+    ]),
+    invitedByUid: scope.session.user.id,
+    organizationId,
+    role: payload.role,
+    status: "invited",
+    updatedAt: now,
+  };
+
+  await runFirestoreTransaction(async (transaction) => {
+    const memberships = await transaction.list<OrganizationMembership>(
+      "organizationMemberships",
+      { scope: { organizationId } },
+    );
+    const authority = getTransactionManagementAuthority(
+      scope,
+      organizationId,
+      memberships,
+    );
+
+    assertMembershipManagementAuthority(authority);
+    assertOwnerRoleAuthority(authority, undefined, membership.role);
+
+    if (
+      memberships.some(
+        (candidate) =>
+          normalizeEmail(candidate.email) === email &&
+          candidate.status !== "removed",
+      )
+    ) {
+      createSetupError(
+        "organization-membership-email-exists",
+        "This email already has a current membership record.",
+        409,
+      );
+    }
+
+    transaction.create(
+      "organizationMemberships",
+      membership.id,
+      membership,
+    );
+  });
+
+  console.info("Organization membership invited.", {
+    membershipId: membership.id,
+    organizationId,
+    role: membership.role,
+  });
+
+  return {
+    id: membership.id,
+    message: `Membership invited: ${membership.email}`,
+    source: "firestore",
+  };
+}
+
+async function getVerifiedMembershipUid(
+  membership: OrganizationMembership,
+  requestedUid: string,
+) {
+  const membershipUid = membership.uid ?? requestedUid;
+
+  if (membership.uid) {
+    if (requestedUid && requestedUid !== membership.uid) {
+      createSetupError(
+        "organization-membership-uid-immutable",
+        "An active membership cannot be linked to a different Firebase user.",
+        409,
+      );
+    }
+
+    if (membership.status === "suspended") {
+      return membership.uid;
+    }
+  }
+
+  if (!membershipUid) {
+    createSetupError(
+      "organization-membership-uid-required",
+      "Enter the invited user's Firebase UID before activating access.",
+      400,
+    );
+  }
+
+  let firebaseUser: Awaited<ReturnType<typeof getFirebaseAdminUser>>;
+
+  try {
+    firebaseUser = await getFirebaseAdminUser(membershipUid);
+  } catch (error) {
+    const code =
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      typeof error.code === "string"
+        ? error.code
+        : "";
+
+    if (code !== "auth/user-not-found") {
+      createSetupError(
+        "firebase-auth-unavailable",
+        "Firebase user verification is temporarily unavailable.",
+        503,
+      );
+    }
+
+    createSetupError(
+      "organization-membership-user-not-found",
+      "No Firebase user was found for that UID.",
+      400,
+    );
+  }
+
+  if (!firebaseUser) {
+    createSetupError(
+      "firebase-auth-unavailable",
+      "Firebase user verification is temporarily unavailable.",
+      503,
+    );
+  }
+
+  if (normalizeEmail(firebaseUser.email) !== normalizeEmail(membership.email)) {
+    createSetupError(
+      "organization-membership-email-mismatch",
+      "The Firebase user's email does not match this invitation.",
+      409,
+    );
+  }
+
+  return firebaseUser.uid;
+}
+
+async function updateOrganizationMembership(
+  scope: AdminOrganizationScope,
+  payload: Extract<
+    AdminSetupPayload,
+    { actionType: "organization-membership-update" }
+  >,
+): Promise<AdminSetupResult> {
+  const organizationId = normalizeText(payload.organizationId);
+  const membershipId = normalizeText(payload.membershipId);
+
+  if (!organizationId || !membershipId) {
+    createSetupError(
+      "invalid-organization-membership",
+      "Choose a valid organization membership.",
+      400,
+    );
+  }
+
+  assertManagedOrganization(scope, organizationId);
+
+  const repositories = createFirestoreRepositories();
+  const currentMembership =
+    await repositories.organizationMemberships.getById(membershipId);
+
+  if (
+    !currentMembership ||
+    currentMembership.organizationId !== organizationId
+  ) {
+    createSetupError(
+      "organization-membership-not-found",
+      "That membership does not exist in the active organization.",
+      404,
+    );
+  }
+
+  if (
+    payload.operation === "activate" &&
+    (currentMembership.status === "active" ||
+      currentMembership.status === "removed")
+  ) {
+    createSetupError(
+      currentMembership.status === "active"
+        ? "organization-membership-already-active"
+        : "organization-membership-removed",
+      currentMembership.status === "active"
+        ? "This membership is already active."
+        : "Removed memberships are retained for audit history and cannot be changed.",
+      409,
+    );
+  }
+
+  const requestedUid = normalizeText(payload.uid);
+  const verifiedUid =
+    payload.operation === "activate"
+      ? await getVerifiedMembershipUid(currentMembership, requestedUid)
+      : undefined;
+  const now = new Date().toISOString();
+  const nextMembership = await runFirestoreTransaction(async (transaction) => {
+    const memberships = await transaction.list<OrganizationMembership>(
+      "organizationMemberships",
+      { scope: { organizationId } },
+    );
+    const membership = memberships.find(
+      (candidate) => candidate.id === membershipId,
+    );
+
+    if (!membership) {
+      createSetupError(
+        "organization-membership-not-found",
+        "That membership no longer exists in the active organization.",
+        404,
+      );
+    }
+
+    const authority = getTransactionManagementAuthority(
+      scope,
+      organizationId,
+      memberships,
+    );
+
+    assertMembershipManagementAuthority(authority);
+    assertOwnerRoleAuthority(authority, membership.role, payload.role);
+
+    if (membership.status === "removed") {
+      createSetupError(
+        "organization-membership-removed",
+        "Removed memberships are retained for audit history and cannot be changed.",
+        409,
+      );
+    }
+
+    const updatedMembership: OrganizationMembership = {
+      ...membership,
+      role: payload.role,
+      updatedAt: now,
+    };
+
+    if (payload.operation === "activate") {
+      if (membership.status === "active") {
+        createSetupError(
+          "organization-membership-already-active",
+          "This membership is already active.",
+          409,
+        );
+      }
+
+      if (!verifiedUid) {
+        createSetupError(
+          "organization-membership-uid-required",
+          "A verified Firebase user is required before activation.",
+          400,
+        );
+      }
+
+      if (
+        memberships.some(
+          (candidate) =>
+            candidate.id !== membership.id &&
+            candidate.uid === verifiedUid &&
+            candidate.status !== "removed",
+        )
+      ) {
+        createSetupError(
+          "organization-membership-uid-exists",
+          "That Firebase user already has a current membership in this organization.",
+          409,
+        );
+      }
+
+      updatedMembership.acceptedAt = membership.acceptedAt ?? now;
+      updatedMembership.status = "active";
+      updatedMembership.uid = verifiedUid;
+      delete updatedMembership.suspendedAt;
+      delete updatedMembership.suspendedByUid;
+    } else if (payload.operation === "suspend") {
+      if (membership.status !== "active") {
+        createSetupError(
+          "organization-membership-not-active",
+          "Only an active membership can be suspended.",
+          409,
+        );
+      }
+
+      updatedMembership.status = "suspended";
+      updatedMembership.suspendedAt = now;
+      updatedMembership.suspendedByUid = scope.session.user.id;
+    } else if (payload.operation === "remove") {
+      updatedMembership.removedAt = now;
+      updatedMembership.removedByUid = scope.session.user.id;
+      updatedMembership.status = "removed";
+    }
+
+    assertMembershipContinuity(
+      memberships,
+      membership,
+      updatedMembership,
+      scope.session.user.id,
+    );
+
+    transaction.set(
+      "organizationMemberships",
+      updatedMembership.id,
+      updatedMembership,
+    );
+
+    return updatedMembership;
+  });
+
+  console.info("Organization membership lifecycle updated.", {
+    membershipId: nextMembership.id,
+    operation: payload.operation,
+    organizationId,
+    role: nextMembership.role,
+    status: nextMembership.status,
+  });
+
+  return {
+    id: nextMembership.id,
+    message: `Membership ${nextMembership.status}: ${nextMembership.email}`,
+    source: "firestore",
+  };
+}
+
 async function createProvisionedOrganization(
   scope: AdminOrganizationScope,
   payload: Extract<
@@ -555,6 +1042,7 @@ async function createProvisionedOrganization(
     updatedAt: now,
   };
   const membership: OrganizationMembership = {
+    acceptedAt: now,
     createdAt: now,
     createdByUid: session.user.id,
     email: session.user.email ?? "",
@@ -669,6 +1157,7 @@ async function createOrUpdateOrganization(
     });
   } else {
     const membership: OrganizationMembership = {
+      acceptedAt: now,
       createdAt: now,
       createdByUid: session.user.id,
       email: session.user.email ?? "",
@@ -1559,6 +2048,14 @@ export async function createAdminSetupRecord(
 
   if (payload.actionType === "organization") {
     return createOrUpdateOrganization(scope, payload);
+  }
+
+  if (payload.actionType === "organization-membership-invite") {
+    return inviteOrganizationMembership(scope, payload);
+  }
+
+  if (payload.actionType === "organization-membership-update") {
+    return updateOrganizationMembership(scope, payload);
   }
 
   if (payload.actionType === "team") {

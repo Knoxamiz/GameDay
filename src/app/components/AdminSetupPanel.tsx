@@ -7,11 +7,13 @@ import type {
 } from "../data/coachAssignmentRecords";
 import type { Coach } from "../data/coaches";
 import type { RegistrationInvite } from "../data/invites";
+import type { OrganizationMembership } from "../data/organizationMemberships";
 import type { Organization } from "../data/organizations";
 import { isActiveTeam, type Team } from "../data/teams";
 import RegistrationInviteManager from "./RegistrationInviteManager";
 import TeamLifecycleManager from "./TeamLifecycleManager";
 import CoachAssignmentLifecycleManager from "./CoachAssignmentLifecycleManager";
+import OrganizationMembershipManager from "./OrganizationMembershipManager";
 
 type AdminSetupPanelProps = {
   activeOrganizationId?: string;
@@ -19,6 +21,8 @@ type AdminSetupPanelProps = {
   canManageSetup: boolean;
   coachAssignments: CoachAssignment[];
   coaches: Coach[];
+  organizationManagementAuthority: "admin" | "bootstrap-admin" | "owner" | null;
+  organizationMemberships: OrganizationMembership[];
   organizations: Organization[];
   registrationInvites: RegistrationInvite[];
   teams: Team[];
@@ -48,6 +52,8 @@ export default function AdminSetupPanel({
   canManageSetup,
   coachAssignments,
   coaches,
+  organizationManagementAuthority,
+  organizationMemberships,
   organizations,
   registrationInvites,
   teams,
@@ -222,6 +228,12 @@ export default function AdminSetupPanel({
           </button>
         </div>
       </section>
+
+      <OrganizationMembershipManager
+        activeOrganizationId={organizationId}
+        authority={organizationManagementAuthority}
+        memberships={organizationMemberships}
+      />
 
       <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
@@ -432,6 +444,7 @@ export default function AdminSetupPanel({
         <div className="mt-3 space-y-2 text-sm text-slate-300">
           <p>{organizations.length} organization record(s)</p>
           <p>{teams.length} team record(s)</p>
+          <p>{organizationMemberships.length} membership record(s)</p>
           <p>{coachAssignments.length} coach assignment(s)</p>
           <p>{registrationInvites.length} registration invite(s)</p>
         </div>

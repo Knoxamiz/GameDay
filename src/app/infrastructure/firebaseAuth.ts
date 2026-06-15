@@ -17,7 +17,13 @@ type FirebaseDecodedToken = Record<string, unknown> & {
 };
 
 type FirebaseAdminAuth = {
+  getUser: (uid: string) => Promise<FirebaseUserRecord>;
   verifyIdToken: (token: string) => Promise<FirebaseDecodedToken>;
+};
+
+type FirebaseUserRecord = {
+  email?: string;
+  uid: string;
 };
 
 type FirebaseAdminAuthModule = {
@@ -34,6 +40,22 @@ async function loadFirebaseAdminAuthModule() {
 
     throw error;
   }
+}
+
+export async function getFirebaseAdminUser(uid: string) {
+  const app = await getFirebaseAdminApp();
+  const firebaseAdminAuth = await loadFirebaseAdminAuthModule();
+
+  if (!app || !firebaseAdminAuth) {
+    return null;
+  }
+
+  const user = await firebaseAdminAuth.getAuth(app).getUser(uid);
+
+  return {
+    email: user.email,
+    uid: user.uid,
+  };
 }
 
 function getBearerToken(source: AuthSessionSource) {
