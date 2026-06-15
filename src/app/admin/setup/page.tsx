@@ -60,8 +60,13 @@ export default async function AdminSetupPage({
   );
 
   if (!canAccessAdmin(activeContext.scope)) {
-    redirect(await getLandingRouteForSession(session));
+    redirect(await getLandingRouteForSession(session, session.claims.role));
   }
+
+  if (!activeContext.activeOrganizationId) {
+    redirect("/admin");
+  }
+
   const setup = await getAdminSetupReadModel(
     activeContext.activeOrganizationId,
   );

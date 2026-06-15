@@ -56,26 +56,6 @@ function uniqueStringList(values: (string | undefined)[]) {
   return [...new Set(values.map(normalizeText).filter(Boolean))];
 }
 
-function getOrganizationShell(organizationId: string): Organization {
-  const name = organizationId
-    .split(/[-_\s]+/)
-    .filter(Boolean)
-    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
-    .join(" ");
-
-  return {
-    id: organizationId,
-    name: name || organizationId,
-    organizationId,
-    status: {
-      activeTeams: 0,
-      coaches: 0,
-      registeredPlayers: 0,
-      upcomingEvents: 0,
-    },
-  };
-}
-
 function getScopeSource(
   claimOrganizationIds: string[],
   membershipOrganizationIds: string[],
@@ -183,15 +163,17 @@ export async function resolveActiveAdminOrganizationContext(
       repositories.organizations.getById(organizationId),
     ),
   );
-  const organizations = scope.organizationIds.map(
-    (organizationId, index) =>
-      organizationRecords[index] ?? getOrganizationShell(organizationId),
+  const organizations = organizationRecords.filter(
+    (organization): organization is Organization => Boolean(organization),
+  );
+  const realOrganizationIdSet = new Set(
+    organizations.map((organization) => organization.id),
   );
   const activeOrganizationId =
-    scope.organizationIds.length === 1
-      ? scope.organizationIds[0]
+    organizations.length === 1
+      ? organizations[0].id
       : requestedOrganizationId &&
-          scope.organizationIds.includes(requestedOrganizationId)
+          realOrganizationIdSet.has(requestedOrganizationId)
         ? requestedOrganizationId
         : undefined;
 
@@ -202,7 +184,7 @@ export async function resolveActiveAdminOrganizationContext(
     activeOrganizationId,
     organizations,
     requiresSelection:
-      scope.organizationIds.length > 1 && !activeOrganizationId,
+      organizations.length > 1 && !activeOrganizationId,
     scope,
   };
 }

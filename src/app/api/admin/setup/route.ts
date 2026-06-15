@@ -117,6 +117,27 @@ function getSetupPayload(body: Record<string, unknown> | null) {
     } satisfies AdminSetupPayload;
   }
 
+  if (actionType === "workspace-provisioning") {
+    const workspaceType =
+      body.workspaceType === "single_team"
+        ? "single_team"
+        : body.workspaceType === "organization"
+          ? "organization"
+          : null;
+
+    if (!workspaceType) {
+      return null;
+    }
+
+    return {
+      actionType,
+      division: getText(body.division),
+      name: getText(body.name),
+      season: getText(body.season),
+      workspaceType,
+    } satisfies AdminSetupPayload;
+  }
+
   if (actionType === "organization") {
     return {
       actionType,

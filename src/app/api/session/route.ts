@@ -8,16 +8,14 @@ import {
   firebaseSessionCookieName,
   FirebaseAdminAuthProvider,
 } from "../../infrastructure/firebaseAuth";
-import {
-  getRoleDefinition,
-  type AuthSession,
-} from "../../infrastructure/auth";
+import type { AuthSession } from "../../infrastructure/auth";
 import { getLiveParentId, getLiveParentUid } from "../../data/liveIdentity";
 import {
   OrganizationMembershipAcceptanceError,
   acceptOrganizationMembershipInvitations,
 } from "../../data/organizationMembershipAcceptance.server";
 import {
+  getLandingRouteForSession,
   resolveSessionAccessRole,
 } from "../../data/sessionAccess.server";
 
@@ -50,7 +48,7 @@ async function getSessionResponseBody(session: AuthSession) {
     adminId: session.claims.adminId,
     coachId: session.claims.coachId,
     email: session.user.email,
-    landingRoute: getRoleDefinition(role).landingRoute,
+    landingRoute: await getLandingRouteForSession(session, role),
     parentId:
       session.claims.role === "parent"
         ? getLiveParentId(session)

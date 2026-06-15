@@ -11,8 +11,12 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const session = await getCurrentAuthSession();
 
-  if (session && (await resolveSessionAccessRole(session)) !== "authenticated") {
-    redirect(await getLandingRouteForSession(session));
+  if (session) {
+    const role = await resolveSessionAccessRole(session);
+
+    if (role !== "authenticated") {
+      redirect(await getLandingRouteForSession(session, role));
+    }
   }
 
   return (

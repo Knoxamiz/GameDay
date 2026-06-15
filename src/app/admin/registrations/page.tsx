@@ -38,7 +38,7 @@ export default async function AdminRegistrationsPage({
   );
 
   if (!canAccessAdmin(activeContext.scope)) {
-    redirect(await getLandingRouteForSession(session));
+    redirect(await getLandingRouteForSession(session, session.claims.role));
   }
   const registrationReadModel = await getAdminRegistrationReadModel(
     activeContext.activeOrganizationId,

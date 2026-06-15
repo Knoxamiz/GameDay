@@ -40,7 +40,10 @@ import {
   type OrganizationMembership,
   type OrganizationMembershipRole,
 } from "./organizationMemberships";
-import type { Organization } from "./organizations";
+import type {
+  Organization,
+  OrganizationWorkspaceType,
+} from "./organizations";
 import { isCoachVisibleRosterRegistration, type Registration } from "./registrations";
 import {
   getTeamLifecycleStatus,
@@ -70,6 +73,13 @@ export type AdminSetupPayload =
   | {
       actionType: "organization-provisioning";
       name: string;
+    }
+  | {
+      actionType: "workspace-provisioning";
+      division?: string;
+      name: string;
+      season?: string;
+      workspaceType: OrganizationWorkspaceType;
     }
   | {
       actionType: "organization";
@@ -145,6 +155,8 @@ export type AdminSetupResult = {
   id: string;
   message: string;
   source: "firestore";
+  teamId?: string;
+  workspaceType?: OrganizationWorkspaceType;
 };
 
 type AdminSetupWriteOptions = {
@@ -1005,34 +1017,67 @@ async function updateOrganizationMembership(
   };
 }
 
-async function createProvisionedOrganization(
+async function createProvisionedWorkspace(
   scope: AdminOrganizationScope,
-  payload: Extract<
-    AdminSetupPayload,
-    { actionType: "organization-provisioning" }
-  >,
+  payload: {
+    division?: string;
+    name: string;
+    season?: string;
+    workspaceType: OrganizationWorkspaceType;
+  },
 ): Promise<AdminSetupResult> {
   const session = scope.session;
   const name = normalizeText(payload.name);
-
-  if (scope.organizationIds.length > 0) {
-    createSetupError(
-      "organization-provisioning-scope-exists",
-      "This account already has organization access.",
-      403,
-    );
-  }
+  const workspaceType =
+    payload.workspaceType === "single_team" ? "single_team" : "organization";
+  const division = normalizeText(payload.division);
+  const season = normalizeText(payload.season);
 
   if (!name) {
     createSetupError(
       "invalid-organization",
-      "Organization name is required.",
+      workspaceType === "single_team"
+        ? "Team name is required."
+        : "Organization name is required.",
+      400,
+    );
+  }
+
+  if (workspaceType === "single_team" && (!division || !season)) {
+    createSetupError(
+      "invalid-single-team-workspace",
+      "Team name, division, and season are required.",
       400,
     );
   }
 
   const organizationId = await getAvailableOrganizationId(name);
   const now = new Date().toISOString();
+  const teamId =
+    workspaceType === "single_team"
+      ? createLiveRecordId("team", [organizationId, name, season])
+      : undefined;
+  const team: Team | undefined = teamId
+    ? {
+        ageGroup: division,
+        athleteIds: [],
+        coachIds: [],
+        createdAt: now,
+        createdByUid: session.user.id,
+        division,
+        eventIds: [],
+        id: teamId,
+        label: division,
+        name,
+        organizationId,
+        playerCount: 0,
+        rosterPreviewIds: [],
+        season,
+        status: "active",
+        teamId,
+        updatedAt: now,
+      }
+    : undefined;
   const organization: Organization = {
     adminIds: uniqueStringList([session.claims.adminId]),
     adminUids: [session.user.id],
@@ -1048,9 +1093,10 @@ async function createProvisionedOrganization(
       coachAssignments: [],
       events: 0,
       registrations: [],
-      teams: [],
+      teams: team ? [team] : [],
     }),
     updatedAt: now,
+    workspaceType,
   };
   const membership: OrganizationMembership = {
     acceptedAt: now,
@@ -1066,18 +1112,48 @@ async function createProvisionedOrganization(
   };
 
   await runFirestoreTransaction(async (transaction) => {
-    const [existingOrganization, existingMembership] = await Promise.all([
+    const [existingOrganization, existingMembership, existingTeam, memberships] =
+      await Promise.all([
       transaction.get<Organization>("organizations", organization.id),
       transaction.get<OrganizationMembership>(
         "organizationMemberships",
         membership.id,
       ),
+      team
+        ? transaction.get<Team>("teams", team.id)
+        : Promise.resolve(null),
+      transaction.list<OrganizationMembership>("organizationMemberships", {
+        scope: { uid: session.user.id },
+      }),
     ]);
 
-    if (existingOrganization || existingMembership) {
+    const managerOrganizationIds = uniqueStringList([
+      ...scope.claimOrganizationIds,
+      ...memberships
+        .filter(canManageOrganizationMembership)
+        .map((candidate) => candidate.organizationId),
+    ]);
+    const managedOrganizations = await Promise.all(
+      managerOrganizationIds.map((managedOrganizationId) =>
+        transaction.get<Organization>(
+          "organizations",
+          managedOrganizationId,
+        ),
+      ),
+    );
+
+    if (managedOrganizations.some(Boolean)) {
+      createSetupError(
+        "workspace-provisioning-scope-exists",
+        "This account already manages a workspace.",
+        403,
+      );
+    }
+
+    if (existingOrganization || existingMembership || existingTeam) {
       createSetupError(
         "organization-id-unavailable",
-        "Choose a more specific organization name.",
+        "Choose a more specific workspace name.",
         409,
       );
     }
@@ -1088,19 +1164,43 @@ async function createProvisionedOrganization(
       membership.id,
       membership,
     );
+
+    if (team) {
+      transaction.create("teams", team.id, team);
+    }
   });
 
-  console.info("Organization provisioned.", {
+  console.info("Admin workspace provisioned.", {
     membershipId: membership.id,
     organizationId,
+    teamId,
     uid: session.user.id,
+    workspaceType,
   });
 
   return {
     id: organization.id,
-    message: `Organization created: ${organization.name}`,
+    message:
+      workspaceType === "single_team"
+        ? `Individual team workspace created: ${organization.name}`
+        : `Organization created: ${organization.name}`,
     source: "firestore",
+    teamId,
+    workspaceType,
   };
+}
+
+async function createProvisionedOrganization(
+  scope: AdminOrganizationScope,
+  payload: Extract<
+    AdminSetupPayload,
+    { actionType: "organization-provisioning" }
+  >,
+) {
+  return createProvisionedWorkspace(scope, {
+    name: payload.name,
+    workspaceType: "organization",
+  });
 }
 
 async function createOrUpdateOrganization(
@@ -1158,6 +1258,7 @@ async function createOrUpdateOrganization(
       teams,
     }),
     updatedAt: now,
+    workspaceType: currentOrganization?.workspaceType ?? "organization",
   };
   const actor = getAdminActor(scope);
 
@@ -1266,9 +1367,10 @@ async function createTeam(
   };
 
   await runFirestoreTransaction(async (transaction) => {
-    const [organization, existingTeam] = await Promise.all([
+    const [organization, existingTeam, organizationTeams] = await Promise.all([
       transaction.get<Organization>("organizations", organizationId),
       transaction.get<Team>("teams", team.id),
+      transaction.list<Team>("teams", { scope: { organizationId } }),
     ]);
 
     if (!organization) {
@@ -1283,6 +1385,17 @@ async function createTeam(
       createSetupError(
         "team-already-exists",
         "A team with this name and season already exists.",
+        409,
+      );
+    }
+
+    if (
+      organization.workspaceType === "single_team" &&
+      organizationTeams.length > 0
+    ) {
+      createSetupError(
+        "single-team-workspace-team-exists",
+        "This individual team workspace already has its team.",
         409,
       );
     }
@@ -2026,11 +2139,17 @@ export async function createAdminSetupRecord(
   options: AdminSetupWriteOptions,
 ): Promise<AdminSetupResult> {
   const scope = await requireAdminSetupScope(options.sessionSource, {
-    requireOrganizationScope: payload.actionType !== "organization-provisioning",
+    requireOrganizationScope:
+      payload.actionType !== "organization-provisioning" &&
+      payload.actionType !== "workspace-provisioning",
   });
 
   if (payload.actionType === "organization-provisioning") {
     return createProvisionedOrganization(scope, payload);
+  }
+
+  if (payload.actionType === "workspace-provisioning") {
+    return createProvisionedWorkspace(scope, payload);
   }
 
   const activeOrganizationId = normalizeText(options.activeOrganizationId);

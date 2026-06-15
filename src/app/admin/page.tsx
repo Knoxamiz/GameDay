@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import AdminAppShell from "../components/AdminAppShell";
 import AdminReadinessBoard from "../components/AdminReadinessBoard";
 import AdminSetupChecklist from "../components/AdminSetupChecklist";
+import AdminWorkspaceEntry from "../components/AdminWorkspaceEntry";
 import AttendanceConcernAction from "../components/AttendanceConcernAction";
 import RegistrationAdminActionLinks from "../components/RegistrationAdminActionLinks";
 import TransportationIssueAction from "../components/TransportationIssueAction";
@@ -14,6 +15,7 @@ import {
 } from "../data/activeOrganization";
 import {
   canAccessAdmin,
+  canUseAdminSetup,
   resolveActiveAdminOrganizationContext,
 } from "../data/adminOrganizationScope.server";
 import { getCurrentAuthSession } from "../data/currentUser.server";
@@ -50,8 +52,40 @@ export default async function AdminHome({ searchParams }: AdminHomeProps) {
   );
 
   if (!canAccessAdmin(activeContext.scope)) {
-    redirect(await getLandingRouteForSession(session));
+    return (
+      <AdminWorkspaceEntry
+        accountLabel={session.user.email}
+        blockedReturnHref={await getLandingRouteForSession(
+          session,
+          session.claims.role,
+        )}
+        canCreateWorkspace={false}
+        organizations={[]}
+      />
+    );
   }
+
+  if (activeContext.organizations.length === 1) {
+    const onlyOrganizationId = activeContext.organizations[0].id;
+
+    if (requestedOrganizationId !== onlyOrganizationId) {
+      redirect(withActiveOrganization("/admin", onlyOrganizationId));
+    }
+  }
+
+  if (!activeContext.activeOrganizationId) {
+    return (
+      <AdminWorkspaceEntry
+        accountLabel={session.user.email}
+        canCreateWorkspace={
+          activeContext.organizations.length === 0 &&
+          canUseAdminSetup(activeContext.scope)
+        }
+        organizations={activeContext.organizations}
+      />
+    );
+  }
+
   const {
     attendanceEntries,
     coachAssignments,

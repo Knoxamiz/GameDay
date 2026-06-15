@@ -13,6 +13,7 @@ import {
 } from "../data/invites";
 import type { OrganizationMembership } from "../data/organizationMemberships";
 import type { Organization } from "../data/organizations";
+import { getOrganizationWorkspaceType } from "../data/organizations";
 import { isActiveTeam, type Team } from "../data/teams";
 import RegistrationInviteManager from "./RegistrationInviteManager";
 import TeamLifecycleManager from "./TeamLifecycleManager";
@@ -139,6 +140,8 @@ export default function AdminSetupPanel({
   const activeTeams = teams.filter(
     (team) => team.organizationId === organizationId && isActiveTeam(team),
   );
+  const isSingleTeamWorkspace =
+    getOrganizationWorkspaceType(organizations[0]) === "single_team";
   const activeTeamIdSet = new Set(activeTeams.map((team) => team.id));
   const selectedCoachTeamIds = coachTeamIds.filter((teamId) =>
     activeTeamIdSet.has(teamId),
@@ -369,6 +372,12 @@ export default function AdminSetupPanel({
         <div className="grid gap-6 lg:grid-cols-2">
           <div>
             <h3 className="font-bold text-white">Create Team</h3>
+            {isSingleTeamWorkspace && teams.length > 0 ? (
+              <p className="mt-3 rounded-md bg-slate-950 p-3 text-sm text-slate-300">
+                This individual team workspace already has its team. Manage
+                that team instead of creating another one.
+              </p>
+            ) : (
             <div className="mt-3 space-y-3">
               <label className="block">
                 <span className="text-sm font-semibold text-slate-300">Team Name</span>
@@ -393,6 +402,7 @@ export default function AdminSetupPanel({
                 Create Team
               </button>
             </div>
+            )}
           </div>
           <div className="border-t border-slate-800 pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
             <TeamLifecycleManager activeOrganizationId={organizationId} embedded teams={teams} />

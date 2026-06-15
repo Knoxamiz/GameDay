@@ -76,13 +76,14 @@ export default async function MvpNav({
     ? await resolveSessionAccessRole(session)
     : "shared";
   const utilityItems = utilityItemsByRole[role];
+  const sessionRole = role === "shared" ? undefined : role;
   const homeHref = session
     ? role === "admin"
       ? withActiveOrganization(
-          await getLandingRouteForSession(session),
+          await getLandingRouteForSession(session, sessionRole),
           activeOrganizationId,
         )
-      : await getLandingRouteForSession(session)
+      : await getLandingRouteForSession(session, sessionRole)
     : "/";
 
   return (
