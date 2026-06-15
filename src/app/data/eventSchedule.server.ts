@@ -1,6 +1,5 @@
 import { cookies, headers } from "next/headers";
 import {
-  hasCapability,
   type AuthSession,
   type AuthSessionSource,
 } from "../infrastructure/auth";
@@ -8,6 +7,7 @@ import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import {
+  canAccessAdmin,
   canManageOrganization,
   canUseAdminSetup,
   resolveAdminOrganizationScope,
@@ -91,19 +91,13 @@ function isRoleSession(
     return false;
   }
 
-  if (session.claims.role !== role) {
-    return false;
-  }
-
-  if (role === "admin") {
-    return true;
-  }
-
   if (role === "coach") {
-    return true;
+    return session.claims.role === "coach";
   }
 
-  return Boolean(getLiveParentId(session));
+  return role === "parent"
+    ? session.claims.role === "parent" && Boolean(getLiveParentId(session))
+    : false;
 }
 
 function eventIsInOrganizationScope(
@@ -126,6 +120,15 @@ async function getVerifiedRoleSession(role: EventScheduleRole) {
   const session = await authProvider
     .verifySession(await getAuthSessionSource())
     .catch(() => null);
+
+  if (!session) {
+    return null;
+  }
+
+  if (role === "admin") {
+    const adminScope = await resolveAdminOrganizationScope(session);
+    return canAccessAdmin(adminScope) ? session : null;
+  }
 
   return isRoleSession(session, role) ? session : null;
 }
@@ -165,9 +168,7 @@ async function getAdminScheduleReadModel(
   ]);
 
   return {
-    canCreateEvents:
-      hasCapability(session.claims, "manage-organization") &&
-      canUseAdminSetup(adminScope),
+    canCreateEvents: canUseAdminSetup(adminScope),
     events: sortScheduleEvents(
       events.filter((event) => event.organizationId === organizationId),
     ),

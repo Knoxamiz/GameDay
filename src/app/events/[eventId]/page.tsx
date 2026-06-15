@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getRequestedOrganizationId } from "../../data/activeOrganization";
 import { resolveActiveAdminOrganizationContext } from "../../data/adminOrganizationScope.server";
 import { getCurrentAuthSession } from "../../data/currentUser.server";
+import { resolveSessionAccessRole } from "../../data/sessionAccess.server";
 
 type EventDetailsPageProps = {
   params: Promise<{
@@ -28,7 +29,11 @@ export default async function EventDetailsPage({
     redirect("/login");
   }
 
-  const role = session.claims.role;
+  const role = await resolveSessionAccessRole(session);
+
+  if (role === "authenticated") {
+    redirect("/login");
+  }
   const activeContext =
     role === "admin"
       ? await resolveActiveAdminOrganizationContext(

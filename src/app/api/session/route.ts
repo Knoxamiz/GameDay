@@ -9,10 +9,17 @@ import {
   FirebaseAdminAuthProvider,
 } from "../../infrastructure/firebaseAuth";
 import {
-  getLandingRouteForClaims,
+  getRoleDefinition,
   type AuthSession,
 } from "../../infrastructure/auth";
 import { getLiveParentId, getLiveParentUid } from "../../data/liveIdentity";
+import {
+  OrganizationMembershipAcceptanceError,
+  acceptOrganizationMembershipInvitations,
+} from "../../data/organizationMembershipAcceptance.server";
+import {
+  resolveSessionAccessRole,
+} from "../../data/sessionAccess.server";
 
 export const runtime = "nodejs";
 
@@ -32,37 +39,25 @@ function getCookieOptions(maxAge: number) {
   };
 }
 
-function isValidParentSession(
-  session: AuthSession | null,
-): session is AuthSession {
-  return Boolean(session?.claims.role === "parent" && getLiveParentUid(session));
-}
+async function getSessionResponseBody(session: AuthSession) {
+  const role = await resolveSessionAccessRole(session);
 
-function isValidAdminSession(
-  session: AuthSession | null,
-): session is AuthSession {
-  return session?.claims.role === "admin";
-}
+  if (role === "authenticated") {
+    return null;
+  }
 
-function isValidCoachSession(
-  session: AuthSession | null,
-): session is AuthSession {
-  return session?.claims.role === "coach";
-}
-
-function getSessionResponseBody(session: AuthSession) {
   return {
     adminId: session.claims.adminId,
     coachId: session.claims.coachId,
     email: session.user.email,
-    landingRoute: getLandingRouteForClaims(session.claims),
+    landingRoute: getRoleDefinition(role).landingRoute,
     parentId:
       session.claims.role === "parent"
         ? getLiveParentId(session)
         : session.claims.parentId,
     parentUid:
       session.claims.role === "parent" ? getLiveParentUid(session) : undefined,
-    role: session.claims.role,
+    role,
     status: "signed-in",
   };
 }
@@ -113,11 +108,16 @@ export async function GET(request: NextRequest) {
       cookieHeader: request.headers.get("cookie") ?? undefined,
     });
 
-    if (
-      !isValidParentSession(session) &&
-      !isValidCoachSession(session) &&
-      !isValidAdminSession(session)
-    ) {
+    if (!session) {
+      return NextResponse.json({
+        configured: true,
+        status: "signed-out",
+      });
+    }
+
+    const responseBody = await getSessionResponseBody(session);
+
+    if (!responseBody) {
       return NextResponse.json({
         configured: true,
         status: "signed-out",
@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       configured: true,
-      ...getSessionResponseBody(session),
+      ...responseBody,
     });
   } catch (error) {
     logFirebaseAdminSessionDiagnostic("session-read-failed", { error });
@@ -178,11 +178,7 @@ export async function POST(request: NextRequest) {
       authorizationHeader: `Bearer ${idToken}`,
     });
 
-    if (
-      !isValidParentSession(session) &&
-      !isValidCoachSession(session) &&
-      !isValidAdminSession(session)
-    ) {
+    if (!session) {
       return NextResponse.json(
         {
           error:
@@ -192,8 +188,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    try {
+      await acceptOrganizationMembershipInvitations(session);
+    } catch (error) {
+      if (error instanceof OrganizationMembershipAcceptanceError) {
+        throw error;
+      }
+
+      console.warn("Organization membership onboarding failed.", {
+        error: getSafeErrorDetails(error),
+        uid: session.user.id,
+      });
+
+      return NextResponse.json(
+        {
+          error: "Could not complete organization membership onboarding.",
+          reason: "membership-onboarding-failed",
+        },
+        { status: 500 },
+      );
+    }
+
+    const responseBody = await getSessionResponseBody(session);
+
+    if (!responseBody) {
+      return NextResponse.json(
+        {
+          error:
+            "This account does not have an active GameDay role or organization membership.",
+        },
+        { status: 403 },
+      );
+    }
+
     const response = NextResponse.json({
-      ...getSessionResponseBody(session),
+      ...responseBody,
       status: "ok",
     });
     response.cookies.set(
@@ -204,6 +233,13 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
+    if (error instanceof OrganizationMembershipAcceptanceError) {
+      return NextResponse.json(
+        { error: error.message, reason: error.reason },
+        { status: error.status },
+      );
+    }
+
     logFirebaseAdminSessionDiagnostic("session-verification-failed", {
       adminAppInitialized,
       error,

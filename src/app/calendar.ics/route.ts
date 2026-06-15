@@ -9,6 +9,7 @@ import { getRequestedOrganizationId } from "../data/activeOrganization";
 import { resolveActiveAdminOrganizationContext } from "../data/adminOrganizationScope.server";
 import { getCurrentAuthSession } from "../data/currentUser.server";
 import { getEventScheduleReadModel } from "../data/eventSchedule.server";
+import { resolveSessionAccessRole } from "../data/sessionAccess.server";
 import type { Team } from "../data/teams";
 
 export const dynamic = "force-dynamic";
@@ -78,9 +79,12 @@ function getCalendarEvent(
 
 export async function GET(request: Request) {
   const session = await getCurrentAuthSession();
-  const role = session?.claims.role ?? "shared";
+  const resolvedRole = session
+    ? await resolveSessionAccessRole(session)
+    : "shared";
+  const role = resolvedRole === "authenticated" ? "shared" : resolvedRole;
   const activeOrganizationId =
-    session?.claims.role === "admin"
+    session && role === "admin"
       ? (
           await resolveActiveAdminOrganizationContext(
             session,

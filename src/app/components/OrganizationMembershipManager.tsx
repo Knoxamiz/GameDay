@@ -219,7 +219,8 @@ export default function OrganizationMembershipManager({
     <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
       <h2 className="text-xl font-bold">Organization Members</h2>
       <p className="mt-2 text-sm text-slate-300">
-        Invite and manage access for the active organization.
+        Invite and manage access for the active organization. Owner and admin
+        invitations activate when the verified email signs in.
       </p>
 
       {message && (

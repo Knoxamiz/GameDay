@@ -14,7 +14,10 @@ import {
   isPublishedEvent,
   sortEventsByStartDate,
 } from "../data/events";
-import { getEventScheduleReadModel } from "../data/eventSchedule.server";
+import {
+  getEventScheduleReadModel,
+  type EventScheduleRole,
+} from "../data/eventSchedule.server";
 import { getCurrentParentUser } from "../data/currentUser.server";
 import { getOrganizationContext } from "../data/organizationContext.server";
 import { getTeamStatusLabel } from "../data/teams";
@@ -29,7 +32,7 @@ import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import AttendanceRosterCard from "./AttendanceRosterCard";
 import AttendanceSummaryCard from "./AttendanceSummaryCard";
-import MvpNav, { type MvpNavRole } from "./MvpNav";
+import MvpNav from "./MvpNav";
 import RegistrationRosterCard from "./RegistrationRosterCard";
 import TeamReadinessSummary from "./TeamReadinessSummary";
 import TransportationSummaryCard from "./TransportationSummaryCard";
@@ -37,7 +40,7 @@ import TransportationSummaryCard from "./TransportationSummaryCard";
 type TeamDetailsProps = {
   activeOrganizationId?: string;
   teamId: string;
-  role?: MvpNavRole;
+  role?: EventScheduleRole;
 };
 
 function isDefined<TValue>(

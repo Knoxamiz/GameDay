@@ -1,5 +1,4 @@
 import {
-  hasCapability,
   type AuthSessionSource,
 } from "../infrastructure/auth";
 import type { AccessCapability } from "./accessControl";
@@ -12,8 +11,9 @@ import {
 import type { Athlete } from "./athletes";
 import {
   canManageOrganization,
+  canAccessAdmin,
   getAdminActor,
-  isAdminRoleSession,
+  hasAdminCapability,
   resolveAdminOrganizationScope,
   type AdminOrganizationScope,
 } from "./adminOrganizationScope.server";
@@ -86,7 +86,7 @@ function canAdminReviewRegistration(
 ) {
   return Boolean(
     canManageOrganization(scope, registration.organizationId) &&
-      hasCapability(scope.session.claims, capability),
+      hasAdminCapability(scope, capability),
   );
 }
 
@@ -373,8 +373,7 @@ export async function updateAdminRegistrationReview(
     .verifySession(options.sessionSource)
     .catch(() => null);
 
-  // Firestore admin writes are intentionally disabled without a verified admin session.
-  if (!isAdminRoleSession(session)) {
+  if (!session) {
     createReviewError(
       "admin-session-required",
       "Please sign in as an admin before reviewing registrations.",
@@ -383,6 +382,14 @@ export async function updateAdminRegistrationReview(
   }
 
   const adminScope = await resolveAdminOrganizationScope(session);
+
+  if (!canAccessAdmin(adminScope)) {
+    createReviewError(
+      "admin-session-required",
+      "Please sign in as an admin before reviewing registrations.",
+      403,
+    );
+  }
   const activeOrganizationId = normalizeText(options.activeOrganizationId);
 
   if (

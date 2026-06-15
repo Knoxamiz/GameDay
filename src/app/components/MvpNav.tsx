@@ -2,9 +2,12 @@ import Link from "next/link";
 import type { AccessRole } from "../data/accessControl";
 import { withActiveOrganization } from "../data/activeOrganization";
 import { getCurrentAuthSession } from "../data/currentUser.server";
-import { getLandingRouteForClaims } from "../infrastructure/auth";
+import {
+  getLandingRouteForSession,
+  resolveSessionAccessRole,
+} from "../data/sessionAccess.server";
 
-export type MvpNavRole = AccessRole | "shared";
+export type MvpNavRole = AccessRole | "authenticated" | "shared";
 
 type OrganizationContext = {
   count: number;
@@ -29,6 +32,10 @@ function getRoleLabel(role: MvpNavRole) {
     return "Parent";
   }
 
+  if (role === "authenticated") {
+    return "Verified";
+  }
+
   return "Signed Out";
 }
 
@@ -36,6 +43,7 @@ const utilityItemsByRole: Record<
   MvpNavRole,
   { href: string; label: string }[]
 > = {
+  authenticated: [{ href: "/login", label: "Sign In" }],
   parent: [
     { href: "/parent", label: "Athletes" },
     { href: "/events", label: "Schedule" },
@@ -64,15 +72,17 @@ export default async function MvpNav({
   organizationContext,
 }: MvpNavProps = {}) {
   const session = await getCurrentAuthSession();
-  const role: MvpNavRole = session?.claims.role ?? "shared";
+  const role: MvpNavRole = session
+    ? await resolveSessionAccessRole(session)
+    : "shared";
   const utilityItems = utilityItemsByRole[role];
   const homeHref = session
     ? role === "admin"
       ? withActiveOrganization(
-          getLandingRouteForClaims(session.claims),
+          await getLandingRouteForSession(session),
           activeOrganizationId,
         )
-      : getLandingRouteForClaims(session.claims)
+      : await getLandingRouteForSession(session)
     : "/";
 
   return (

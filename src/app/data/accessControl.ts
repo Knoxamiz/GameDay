@@ -55,7 +55,7 @@ export const authReadiness = {
   backendProvider: "Firebase Auth",
   currentMode: "firebase-session",
   requiredClaims: [
-    "role",
+    "role when using legacy parent, coach, or admin bootstrap access",
     "adminId for legacy admin compatibility",
     "organizationIds for bootstrap admin and coach scope",
     "teamIds for bootstrap coach scope",

@@ -1,16 +1,12 @@
-import {
-  hasCapability,
-  type AuthSession,
-  type AuthSessionSource,
-} from "../infrastructure/auth";
+import type { AuthSessionSource } from "../infrastructure/auth";
 import { getFirebaseAdminConfig } from "../infrastructure/firebase";
-import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
 import { runFirestoreTransaction } from "../infrastructure/firebaseRepositories";
 import type { RepositoryTransaction } from "../infrastructure/repositories";
 import {
   canManageOrganization,
   canUseAdminSetup,
   resolveAdminOrganizationScope,
+  verifyAdminAccessSession,
   type AdminOrganizationScope,
 } from "./adminOrganizationScope.server";
 import {
@@ -83,12 +79,6 @@ function createAdminEventError(
   throw new AdminEventError(reason, message, status);
 }
 
-function isAdminEventSession(
-  session: AuthSession | null,
-): session is AuthSession {
-  return session?.claims.role === "admin";
-}
-
 async function requireAdminEventSession(source: AuthSessionSource) {
   if (!getFirebaseAdminConfig()) {
     createAdminEventError(
@@ -98,10 +88,9 @@ async function requireAdminEventSession(source: AuthSessionSource) {
     );
   }
 
-  const authProvider = new FirebaseAdminAuthProvider();
-  const session = await authProvider.verifySession(source).catch(() => null);
+  const session = await verifyAdminAccessSession(source);
 
-  if (!isAdminEventSession(session)) {
+  if (!session) {
     createAdminEventError(
       "admin-session-required",
       "Please sign in as an admin before managing events.",
@@ -111,7 +100,7 @@ async function requireAdminEventSession(source: AuthSessionSource) {
 
   const scope = await resolveAdminOrganizationScope(session);
 
-  if (!hasCapability(session.claims, "manage-organization") || !canUseAdminSetup(scope)) {
+  if (!canUseAdminSetup(scope)) {
     createAdminEventError(
       "admin-event-capability-required",
       "This admin cannot manage organization events.",

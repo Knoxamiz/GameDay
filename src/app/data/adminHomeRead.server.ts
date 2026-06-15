@@ -1,12 +1,11 @@
 import { cookies, headers } from "next/headers";
-import type { AuthSession, AuthSessionSource } from "../infrastructure/auth";
+import type { AuthSessionSource } from "../infrastructure/auth";
 import { getFirebaseAdminConfig } from "../infrastructure/firebase";
-import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import {
   canManageOrganization,
   resolveAdminOrganizationScope,
-  isAdminRoleSession,
+  verifyAdminAccessSession,
 } from "./adminOrganizationScope.server";
 import type { AttendanceEntry } from "./attendance";
 import { isActiveCoachAssignment } from "./coachAssignmentRecords";
@@ -70,12 +69,6 @@ function getOrganizationShell(organizationId?: string): Organization {
   };
 }
 
-function isValidAdminSession(
-  session: AuthSession | null,
-): session is AuthSession {
-  return isAdminRoleSession(session);
-}
-
 function uniqueById<TRecord extends { id: string }>(records: TRecord[]) {
   return [...new Map(records.map((record) => [record.id, record])).values()];
 }
@@ -105,10 +98,9 @@ export async function getAdminHomeReadModel(
   }
 
   try {
-    const authProvider = new FirebaseAdminAuthProvider();
-    const session = await authProvider.verifySession(await getAuthSessionSource());
+    const session = await verifyAdminAccessSession(await getAuthSessionSource());
 
-    if (!isValidAdminSession(session)) {
+    if (!session) {
       return buildEmptyAdminHomeReadModel();
     }
 

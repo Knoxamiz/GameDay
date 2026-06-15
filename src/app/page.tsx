@@ -1,15 +1,18 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentAuthSession } from "./data/currentUser.server";
-import { getLandingRouteForClaims } from "./infrastructure/auth";
+import {
+  getLandingRouteForSession,
+  resolveSessionAccessRole,
+} from "./data/sessionAccess.server";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const session = await getCurrentAuthSession();
 
-  if (session) {
-    redirect(getLandingRouteForClaims(session.claims));
+  if (session && (await resolveSessionAccessRole(session)) !== "authenticated") {
+    redirect(await getLandingRouteForSession(session));
   }
 
   return (

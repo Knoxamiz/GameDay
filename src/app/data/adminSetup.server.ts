@@ -12,7 +12,7 @@ import {
   getAdminActor,
   getOrganizationManagementAuthority,
   resolveAdminOrganizationScope,
-  verifyAdminRoleSession,
+  verifyAdminAccessSession,
   type AdminOrganizationScope,
   type AdminOrganizationScopeSource,
   type OrganizationManagementAuthority,
@@ -333,7 +333,7 @@ async function requireAdminSetupScope(
     );
   }
 
-  const session = await verifyAdminRoleSession(source);
+  const session = await verifyAdminAccessSession(source);
 
   if (!session) {
     createSetupError(
@@ -408,7 +408,7 @@ export async function getAdminSetupReadModel(
   }
 
   try {
-    const session = await verifyAdminRoleSession(await getAuthSessionSource());
+    const session = await verifyAdminAccessSession(await getAuthSessionSource());
 
     if (!session) {
       return emptyReadModel();

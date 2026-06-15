@@ -69,13 +69,9 @@ function mapFirebaseUser(user: FirebaseClientUser): AuthenticatedUser {
 
 async function buildSessionFromClientUser(
   user: FirebaseClientUser,
-): Promise<AuthSession | null> {
+): Promise<AuthSession> {
   const tokenResult = await user.getIdTokenResult();
   const claims = parseAuthRoleClaims(tokenResult.claims);
-
-  if (!claims) {
-    return null;
-  }
 
   return {
     claims,
@@ -118,10 +114,6 @@ export async function createFirebaseClientAuthAdapter(): Promise<ClientAuthAdapt
       );
       const session = await buildSessionFromClientUser(credential.user);
 
-      if (!session) {
-        throw new Error("Firebase user is missing required GameDay role claims.");
-      }
-
       return session;
     },
     logout() {
@@ -155,10 +147,6 @@ export async function signInFirebaseUserWithEmailPassword(
     credential.user.getIdToken(),
     buildSessionFromClientUser(credential.user),
   ]);
-
-  if (!session) {
-    throw new Error("Firebase user is missing required GameDay role claims.");
-  }
 
   return {
     idToken,

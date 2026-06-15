@@ -9,7 +9,10 @@ import {
   getEventTeamIds,
   getEventTimeLabel,
 } from "../data/events";
-import { getScopedEventDetailsReadModel } from "../data/eventSchedule.server";
+import {
+  getScopedEventDetailsReadModel,
+  type EventScheduleRole,
+} from "../data/eventSchedule.server";
 import { getCurrentParentUser } from "../data/currentUser.server";
 import { getOrganizationContext } from "../data/organizationContext.server";
 import { isParentEventEligibleRegistration } from "../data/registrations";
@@ -17,7 +20,7 @@ import { createFirestoreRepositories } from "../infrastructure/firebaseRepositor
 import AttendanceSummaryCard from "./AttendanceSummaryCard";
 import EventReadinessSummary from "./EventReadinessSummary";
 import GameAlertPanel from "./GameAlertPanel";
-import MvpNav, { type MvpNavRole } from "./MvpNav";
+import MvpNav from "./MvpNav";
 import RideShareBoard from "./RideShareBoard";
 import TransportationSummaryCard from "./TransportationSummaryCard";
 
@@ -25,7 +28,7 @@ type EventDetailsProps = {
   activeOrganizationId?: string;
   eventId: string;
   mode?: "full" | "ride-share";
-  role?: MvpNavRole;
+  role?: EventScheduleRole;
 };
 
 export default async function EventDetails({

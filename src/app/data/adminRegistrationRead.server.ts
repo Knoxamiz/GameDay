@@ -1,12 +1,11 @@
 import { cookies, headers } from "next/headers";
 import { getFirebaseAdminConfig } from "../infrastructure/firebase";
-import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import type { AuthSessionSource } from "../infrastructure/auth";
 import {
   canManageOrganization,
-  isAdminRoleSession,
   resolveAdminOrganizationScope,
+  verifyAdminAccessSession,
 } from "./adminOrganizationScope.server";
 import {
   registrationRequirementStatusValues,
@@ -124,10 +123,9 @@ export async function getAdminRegistrationReadModel(
   }
 
   try {
-    const authProvider = new FirebaseAdminAuthProvider();
-    const session = await authProvider.verifySession(await getAuthSessionSource());
+    const session = await verifyAdminAccessSession(await getAuthSessionSource());
 
-    if (!isAdminRoleSession(session)) {
+    if (!session) {
       return getEmptyAdminRegistrationReadModel();
     }
 

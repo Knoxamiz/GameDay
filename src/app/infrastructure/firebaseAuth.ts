@@ -23,6 +23,7 @@ type FirebaseAdminAuth = {
 
 type FirebaseUserRecord = {
   email?: string;
+  emailVerified: boolean;
   uid: string;
 };
 
@@ -54,6 +55,7 @@ export async function getFirebaseAdminUser(uid: string) {
 
   return {
     email: user.email,
+    emailVerified: user.emailVerified,
     uid: user.uid,
   };
 }
@@ -103,10 +105,6 @@ export class FirebaseAdminAuthProvider implements AuthProvider {
 
     const decodedToken = await firebaseAdminAuth.getAuth(app).verifyIdToken(token);
     const claims = parseAuthRoleClaims(decodedToken);
-
-    if (!claims) {
-      return null;
-    }
 
     return {
       claims,

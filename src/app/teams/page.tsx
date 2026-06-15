@@ -17,6 +17,7 @@ import {
 } from "../data/events";
 import { getEventScheduleReadModel } from "../data/eventSchedule.server";
 import { getOrganizationContext } from "../data/organizationContext.server";
+import { resolveSessionAccessRole } from "../data/sessionAccess.server";
 import { summarizeTransportationEntries } from "../data/transportation";
 import { getTeamStatusLabel, isArchivedTeam } from "../data/teams";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
@@ -42,7 +43,11 @@ export default async function TeamsHome({ searchParams }: TeamsHomeProps) {
     redirect("/login");
   }
 
-  const role = session.claims.role;
+  const role = await resolveSessionAccessRole(session);
+
+  if (role === "authenticated") {
+    redirect("/login");
+  }
   const requestedOrganizationId = getRequestedOrganizationId(
     (await searchParams)?.organizationId,
   );

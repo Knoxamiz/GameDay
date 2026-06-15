@@ -9,9 +9,12 @@ import {
   getRequestedOrganizationId,
   withActiveOrganization,
 } from "../../data/activeOrganization";
-import { resolveActiveAdminOrganizationContext } from "../../data/adminOrganizationScope.server";
+import {
+  canAccessAdmin,
+  resolveActiveAdminOrganizationContext,
+} from "../../data/adminOrganizationScope.server";
 import { getCurrentAuthSession } from "../../data/currentUser.server";
-import { getLandingRouteForClaims } from "../../infrastructure/auth";
+import { getLandingRouteForSession } from "../../data/sessionAccess.server";
 
 export const dynamic = "force-dynamic";
 
@@ -30,10 +33,6 @@ export default async function AdminSetupPage({
     redirect("/login");
   }
 
-  if (session.claims.role !== "admin") {
-    redirect(getLandingRouteForClaims(session.claims));
-  }
-
   const requestedOrganizationId = getRequestedOrganizationId(
     (await searchParams)?.organizationId,
   );
@@ -41,6 +40,10 @@ export default async function AdminSetupPage({
     session,
     requestedOrganizationId,
   );
+
+  if (!canAccessAdmin(activeContext.scope)) {
+    redirect(await getLandingRouteForSession(session));
+  }
   const setup = await getAdminSetupReadModel(
     activeContext.activeOrganizationId,
   );

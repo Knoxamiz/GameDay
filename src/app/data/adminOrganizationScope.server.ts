@@ -3,6 +3,7 @@ import {
   type AuthSession,
   type AuthSessionSource,
 } from "../infrastructure/auth";
+import type { AccessCapability } from "./accessControl";
 import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import {
@@ -94,17 +95,17 @@ function getScopeSource(
   return "empty";
 }
 
-export function isAdminRoleSession(
-  session: AuthSession | null,
-): session is AuthSession {
-  return session?.claims.role === "admin";
-}
-
-export async function verifyAdminRoleSession(source: AuthSessionSource) {
+export async function verifyAdminAccessSession(source: AuthSessionSource) {
   const authProvider = new FirebaseAdminAuthProvider();
   const session = await authProvider.verifySession(source).catch(() => null);
 
-  return isAdminRoleSession(session) ? session : null;
+  if (!session) {
+    return null;
+  }
+
+  const scope = await resolveAdminOrganizationScope(session);
+
+  return canAccessAdmin(scope) ? session : null;
 }
 
 export async function resolveAdminOrganizationScope(
@@ -145,6 +146,13 @@ export function canManageOrganization(
   organizationId: string,
 ) {
   return scope.organizationIds.includes(organizationId);
+}
+
+export function canAccessAdmin(scope: AdminOrganizationScope) {
+  return (
+    scope.session.claims.role === "admin" ||
+    scope.membershipOrganizationIds.length > 0
+  );
 }
 
 export function getOrganizationManagementAuthority(
@@ -200,7 +208,17 @@ export async function resolveActiveAdminOrganizationContext(
 }
 
 export function canUseAdminSetup(scope: AdminOrganizationScope) {
-  return hasCapability(scope.session.claims, "manage-organization");
+  return hasAdminCapability(scope, "manage-organization");
+}
+
+export function hasAdminCapability(
+  scope: AdminOrganizationScope,
+  capability: AccessCapability,
+) {
+  return (
+    hasCapability(scope.session.claims, capability) ||
+    scope.membershipOrganizationIds.length > 0
+  );
 }
 
 export function getAdminActor(scope: AdminOrganizationScope): AdminRecordActor {

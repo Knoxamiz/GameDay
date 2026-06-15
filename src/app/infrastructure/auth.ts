@@ -6,6 +6,7 @@ import {
 } from "../data/accessControl";
 
 export type AuthProviderId = "firebase";
+export type AuthSessionRole = AccessRole | "authenticated";
 
 export type AuthCredentials = {
   email: string;
@@ -18,7 +19,7 @@ export type AuthRoleClaims = {
   coachId?: string;
   organizationIds: string[];
   parentId?: string;
-  role: AccessRole;
+  role: AuthSessionRole;
   teamIds: string[];
 };
 
@@ -60,7 +61,7 @@ export interface ClientAuthAdapter {
 export class AccessDeniedError extends Error {
   constructor(
     readonly capability: AccessCapability,
-    readonly role?: AccessRole,
+    readonly role?: AuthSessionRole,
   ) {
     super(
       role
@@ -93,12 +94,8 @@ function readStringArrayClaim(value: unknown) {
 
 export function parseAuthRoleClaims(
   claims: Record<string, unknown>,
-): AuthRoleClaims | null {
+): AuthRoleClaims {
   const role = claims.role;
-
-  if (!isAccessRole(role)) {
-    return null;
-  }
 
   return {
     adminId: typeof claims.adminId === "string" ? claims.adminId : undefined,
@@ -106,19 +103,21 @@ export function parseAuthRoleClaims(
     coachId: typeof claims.coachId === "string" ? claims.coachId : undefined,
     organizationIds: readStringArrayClaim(claims.organizationIds),
     parentId: typeof claims.parentId === "string" ? claims.parentId : undefined,
-    role,
+    role: isAccessRole(role) ? role : "authenticated",
     teamIds: readStringArrayClaim(claims.teamIds),
   };
 }
 
 export function hasCapability(
-  roleOrClaims: AccessRole | AuthRoleClaims,
+  roleOrClaims: AuthSessionRole | AuthRoleClaims,
   capability: AccessCapability,
 ) {
   const role =
     typeof roleOrClaims === "string" ? roleOrClaims : roleOrClaims.role;
 
-  return getRoleDefinition(role).capabilities.includes(capability);
+  return role === "authenticated"
+    ? false
+    : getRoleDefinition(role).capabilities.includes(capability);
 }
 
 export function assertCapability(
@@ -146,5 +145,7 @@ export function canAccessAthlete(claims: AuthRoleClaims, athleteId: string) {
 }
 
 export function getLandingRouteForClaims(claims: AuthRoleClaims) {
-  return getRoleDefinition(claims.role).landingRoute;
+  return claims.role === "authenticated"
+    ? "/login"
+    : getRoleDefinition(claims.role).landingRoute;
 }

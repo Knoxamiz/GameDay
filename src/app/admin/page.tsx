@@ -13,8 +13,12 @@ import {
   getRequestedOrganizationId,
   withActiveOrganization,
 } from "../data/activeOrganization";
-import { resolveActiveAdminOrganizationContext } from "../data/adminOrganizationScope.server";
+import {
+  canAccessAdmin,
+  resolveActiveAdminOrganizationContext,
+} from "../data/adminOrganizationScope.server";
 import { getCurrentAuthSession } from "../data/currentUser.server";
+import { getLandingRouteForSession } from "../data/sessionAccess.server";
 import {
   getEventDateLabel,
   getEventTeamIds,
@@ -22,7 +26,6 @@ import {
 } from "../data/events";
 import { isCoachVisibleRosterRegistration } from "../data/registrations";
 import { getTeamsNeedingCoaches, isActiveTeam } from "../data/teams";
-import { getLandingRouteForClaims } from "../infrastructure/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -39,10 +42,6 @@ export default async function AdminHome({ searchParams }: AdminHomeProps) {
     redirect("/login");
   }
 
-  if (session.claims.role !== "admin") {
-    redirect(getLandingRouteForClaims(session.claims));
-  }
-
   const requestedOrganizationId = getRequestedOrganizationId(
     (await searchParams)?.organizationId,
   );
@@ -50,6 +49,10 @@ export default async function AdminHome({ searchParams }: AdminHomeProps) {
     session,
     requestedOrganizationId,
   );
+
+  if (!canAccessAdmin(activeContext.scope)) {
+    redirect(await getLandingRouteForSession(session));
+  }
   const {
     attendanceEntries,
     coaches: organizationCoaches,

@@ -74,7 +74,7 @@ export default function ParentLoginForm() {
     <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
       <h2 className="text-xl font-bold">Sign in to GameDay</h2>
       <p className="mt-2 text-sm text-slate-400">
-        Firebase verifies your account and opens the role assigned to it.
+        Firebase verifies your account, role, and organization membership.
       </p>
 
       <form className="mt-5 space-y-4" onSubmit={handleLogin}>
