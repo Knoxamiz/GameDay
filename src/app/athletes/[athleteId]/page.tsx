@@ -2,12 +2,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import AthleteReadinessCard from "../../components/AthleteReadinessCard";
 import MvpNav from "../../components/MvpNav";
+import ParentRegistrationLifecyclePanel from "../../components/ParentRegistrationLifecyclePanel";
 import RegistrationRequirementsChecklist from "../../components/RegistrationRequirementsChecklist";
 import { getCurrentParentUser } from "../../data/currentUser.server";
 import type { DocumentRequirement } from "../../data/documents";
 import { getOrganizationContext } from "../../data/organizationContext.server";
 import { getAthleteRegistrationReadModel } from "../../data/parentAthleteRegistration.server";
-import type { RegistrationRequirement } from "../../data/registrations";
+import {
+  isRegistrationTerminal,
+  type RegistrationRequirement,
+} from "../../data/registrations";
 
 type AthleteDetailsPageProps = {
   params: Promise<{
@@ -50,13 +54,14 @@ export default async function AthleteDetailsPage({
   }
   const readModel = await getAthleteRegistrationReadModel(athleteId, {
     parentId: currentUser.parentId,
+    parentUid: currentUser.parentUid,
   });
 
   if (!readModel) {
     notFound();
   }
 
-  const { athlete, registration } = readModel;
+  const { athlete, parent, registration } = readModel;
   const registrationRequirements = Array.isArray(registration?.requirements)
     ? registration.requirements
     : [];
@@ -149,7 +154,18 @@ export default async function AthleteDetailsPage({
           paymentRequirements={registration?.paymentRequirements ?? []}
           registrationId={registrationId}
           requirements={registrationRequirements}
+          updatesAllowed={
+            registration ? !isRegistrationTerminal(registration.status) : false
+          }
         />
+
+        {registration && (
+          <ParentRegistrationLifecyclePanel
+            athlete={athlete}
+            parent={parent}
+            registration={registration}
+          />
+        )}
 
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <h2 className="text-lg font-bold">Team</h2>

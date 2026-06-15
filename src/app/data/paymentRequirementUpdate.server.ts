@@ -8,6 +8,7 @@ import type {
   ParentPaymentRequirementUpdatePayload,
   ParentPaymentRequirementUpdateResult,
 } from "./paymentRequirementUpdate";
+import { isRegistrationTerminal } from "./registrations";
 
 type UpdateParentPaymentRequirementOptions = {
   sessionSource: AuthSessionSource;
@@ -133,12 +134,22 @@ export async function updateParentPaymentRequirementIntent(
     !registration ||
     registration.athleteId !== athleteId ||
     registration.organizationId !== organizationId ||
-    registration.parentId !== parentId
+    registration.parentId !== parentId ||
+    (registration.ownerUid && registration.ownerUid !== parentUid) ||
+    (registration.parentUid && registration.parentUid !== parentUid)
   ) {
     createPaymentError(
       "registration-not-found",
       "Could not find a registration owned by this parent.",
       404,
+    );
+  }
+
+  if (isRegistrationTerminal(registration.status)) {
+    createPaymentError(
+      "registration-lifecycle-closed",
+      "Payment activity is closed for a withdrawn, rejected, or inactive registration.",
+      409,
     );
   }
 

@@ -220,10 +220,14 @@ export function buildAthleteReadiness({
     });
   }
 
-  if (registrationStatus === "Rejected") {
+  if (
+    registrationStatus === "Rejected" ||
+    registrationStatus === "Withdrawn" ||
+    registrationStatus === "Inactive"
+  ) {
     concerns.push({
       category: "Blocked",
-      label: "Registration has been rejected.",
+      label: `Registration is ${registrationStatus.toLowerCase()}.`,
       source: "Registration",
     });
   } else if (isRegistrationIncomplete(registrationStatus)) {

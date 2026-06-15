@@ -21,7 +21,10 @@ import {
   getParentAthleteRegistrationReadModel,
   getRegistrationByAthlete,
 } from "../data/parentAthleteRegistration.server";
-import { getRegistrationRosterStatus } from "../data/registrations";
+import {
+  getRegistrationRosterStatus,
+  isParentEventEligibleRegistration,
+} from "../data/registrations";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import { getLandingRouteForClaims } from "../infrastructure/auth";
 
@@ -54,13 +57,20 @@ export default async function ParentHome() {
   );
   const teamsById = new Map(schedule.teams.map((team) => [team.id, team]));
   const nextEventByAthleteId = new Map(
-    parentAthletes.map((athlete) => [
-      athlete.id,
-      schedule.events.find(
-        (event) =>
-          isPublishedEvent(event) && eventHasTeamId(event, athlete.teamId),
-      ),
-    ]),
+    parentAthletes.map((athlete) => {
+      const registration = getRegistrationByAthlete(athlete, registrations);
+
+      return [
+        athlete.id,
+        registration && isParentEventEligibleRegistration(registration)
+          ? schedule.events.find(
+              (event) =>
+                isPublishedEvent(event) &&
+                eventHasTeamId(event, athlete.teamId),
+            )
+          : undefined,
+      ];
+    }),
   );
   const repositories = createFirestoreRepositories();
   const [attendanceEntries, transportationEntries] = await Promise.all([

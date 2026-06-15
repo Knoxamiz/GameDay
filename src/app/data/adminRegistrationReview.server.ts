@@ -5,7 +5,11 @@ import {
 import type { AccessCapability } from "./accessControl";
 import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
-import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
+import {
+  createFirestoreRepositories,
+  runFirestoreTransaction,
+} from "../infrastructure/firebaseRepositories";
+import type { Athlete } from "./athletes";
 import {
   canManageOrganization,
   getAdminActor,
@@ -17,10 +21,16 @@ import type {
   AdminRegistrationReviewPayload,
   AdminRegistrationReviewResult,
 } from "./adminRegistrationReview";
+import type { ParentGuardian } from "./parents";
+import { applyParentRegistrationCorrection } from "./parentRegistrationLifecycle.server";
 import type {
   Registration,
   RegistrationRequirement,
   RosterStatus,
+} from "./registrations";
+import {
+  hasPendingParentLifecycleRequest,
+  isRegistrationTerminal,
 } from "./registrations";
 
 type UpdateAdminRegistrationReviewOptions = {
@@ -170,6 +180,170 @@ async function assertRosterStatusAllowed(
       400,
     );
   }
+
+  if (isRegistrationTerminal(registration.status)) {
+    createReviewError(
+      "registration-lifecycle-closed",
+      "A withdrawn, rejected, or inactive registration cannot be rostered.",
+      409,
+    );
+  }
+}
+
+async function resolveParentLifecycleRequest(
+  payload: Extract<
+    AdminRegistrationReviewPayload,
+    { actionType: "parent-change-request" | "withdrawal-request" }
+  >,
+  activeOrganizationId: string,
+  reviewedAt: string,
+  reviewedBy: string,
+) {
+  await runFirestoreTransaction(async (transaction) => {
+    const registration = await transaction.get<Registration>(
+      "registrations",
+      payload.registrationId,
+    );
+
+    if (!registration) {
+      createReviewError(
+        "registration-not-found",
+        "Could not find this registration.",
+        404,
+      );
+    }
+
+    if (registration.organizationId !== activeOrganizationId) {
+      createReviewError(
+        "active-organization-mismatch",
+        "This registration is outside the active organization.",
+        403,
+      );
+    }
+
+    if (payload.actionType === "parent-change-request") {
+      const request = registration.parentChangeRequest;
+
+      if (!request || request.status !== "pending") {
+        createReviewError(
+          "parent-change-request-not-pending",
+          "No parent correction request is waiting for review.",
+          409,
+        );
+      }
+
+      if (
+        (registration.ownerUid || registration.parentUid) &&
+        request.requestedByUid !==
+          (registration.ownerUid || registration.parentUid)
+      ) {
+        createReviewError(
+          "parent-change-request-owner-mismatch",
+          "The correction request does not match the registration owner.",
+          409,
+        );
+      }
+
+      if (payload.decision === "reject") {
+        transaction.update<Registration>("registrations", registration.id, {
+          parentChangeRequest: {
+            ...request,
+            resolvedAt: reviewedAt,
+            resolvedByUid: reviewedBy,
+            status: "rejected",
+          },
+          updatedAt: reviewedAt,
+        });
+        return;
+      }
+
+      const [athlete, parent] = await Promise.all([
+        transaction.get<Athlete>("athletes", registration.athleteId),
+        transaction.get<ParentGuardian>("parents", registration.parentId),
+      ]);
+
+      if (
+        !athlete ||
+        !parent ||
+        athlete.parentId !== registration.parentId ||
+        (athlete.ownerUid &&
+          athlete.ownerUid !== request.requestedByUid) ||
+        (athlete.parentUid &&
+          athlete.parentUid !== request.requestedByUid) ||
+        (parent.ownerUid && parent.ownerUid !== request.requestedByUid) ||
+        (parent.parentUid && parent.parentUid !== request.requestedByUid)
+      ) {
+        createReviewError(
+          "registration-context-missing",
+          "The linked parent or athlete record could not be verified.",
+          409,
+        );
+      }
+
+      const corrected = applyParentRegistrationCorrection(
+        request.correction,
+        athlete,
+        parent,
+        registration,
+        reviewedAt,
+      );
+
+      corrected.registration.parentChangeRequest = {
+        ...request,
+        resolvedAt: reviewedAt,
+        resolvedByUid: reviewedBy,
+        status: "approved",
+      };
+      transaction.set("parents", parent.id, corrected.parent);
+      transaction.set("athletes", athlete.id, corrected.athlete);
+      transaction.set(
+        "registrations",
+        registration.id,
+        corrected.registration,
+      );
+      return;
+    }
+
+    const request = registration.withdrawalRequest;
+
+    if (!request || request.status !== "pending") {
+      createReviewError(
+        "withdrawal-request-not-pending",
+        "No withdrawal request is waiting for review.",
+        409,
+      );
+    }
+
+    if (
+      (registration.ownerUid || registration.parentUid) &&
+      request.requestedByUid !== (registration.ownerUid || registration.parentUid)
+    ) {
+      createReviewError(
+        "withdrawal-request-owner-mismatch",
+        "The withdrawal request does not match the registration owner.",
+        409,
+      );
+    }
+
+    transaction.update<Registration>("registrations", registration.id, {
+      ...(payload.decision === "approve"
+        ? {
+            rosterStatus: "inactive" as const,
+            status: "Withdrawn" as const,
+            withdrawnAt: reviewedAt,
+            withdrawnByUid: reviewedBy,
+            ...(request.reason ? { withdrawalReason: request.reason } : {}),
+          }
+        : {}),
+      updatedAt: reviewedAt,
+      withdrawalRequest: {
+        ...request,
+        resolvedAt: reviewedAt,
+        resolvedByUid: reviewedBy,
+        status: payload.decision === "approve" ? "approved" : "rejected",
+      },
+    });
+  });
 }
 
 export async function updateAdminRegistrationReview(
@@ -255,7 +429,40 @@ export async function updateAdminRegistrationReview(
   const reviewedBy = session.claims.adminId ?? session.user.id;
   const actor = getAdminActor(adminScope);
 
+  if (
+    payload.actionType === "parent-change-request" ||
+    payload.actionType === "withdrawal-request"
+  ) {
+    await resolveParentLifecycleRequest(
+      payload,
+      activeOrganizationId,
+      reviewedAt,
+      reviewedBy,
+    );
+
+    return { source: "firestore" };
+  }
+
   if (payload.actionType === "registration-status") {
+    if (
+      registration.status === "Withdrawn" ||
+      registration.status === "Inactive"
+    ) {
+      createReviewError(
+        "registration-lifecycle-closed",
+        "Withdrawn or inactive registrations require a dedicated lifecycle action.",
+        409,
+      );
+    }
+
+    if (hasPendingParentLifecycleRequest(registration)) {
+      createReviewError(
+        "parent-lifecycle-request-pending",
+        "Resolve the parent correction or withdrawal request before changing registration status.",
+        409,
+      );
+    }
+
     const adminNotes = getAdminNotesValue(
       payload.adminNotes,
       registration.adminNotes,
@@ -266,6 +473,10 @@ export async function updateAdminRegistrationReview(
       status: payload.status,
       updatedAt: reviewedAt,
     };
+
+    if (payload.status === "Rejected" || payload.status === "Waitlisted") {
+      registrationPatch.rosterStatus = "inactive";
+    }
 
     if (adminNotes) {
       registrationPatch.adminNotes = adminNotes;
@@ -286,6 +497,14 @@ export async function updateAdminRegistrationReview(
   }
 
   if (payload.actionType === "roster-status") {
+    if (hasPendingParentLifecycleRequest(registration)) {
+      createReviewError(
+        "parent-lifecycle-request-pending",
+        "Resolve the parent correction or withdrawal request before changing roster status.",
+        409,
+      );
+    }
+
     await assertRosterStatusAllowed(registration, payload.rosterStatus);
 
     const rosterPatch: Partial<Registration> = {

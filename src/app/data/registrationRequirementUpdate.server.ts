@@ -3,7 +3,7 @@ import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import { FirebaseDocumentStorageAdapter } from "../infrastructure/firebaseStorage";
-import { getLiveParentId } from "./liveIdentity";
+import { getLiveParentId, getLiveParentUid } from "./liveIdentity";
 import type {
   ParentRegistrationRequirementUploadPayload,
   ParentRegistrationRequirementUploadResult,
@@ -18,6 +18,7 @@ import type {
   RegistrationRequirement,
   RegistrationRequirementStatus,
 } from "./registrations";
+import { isRegistrationTerminal } from "./registrations";
 
 type UpdateParentRegistrationRequirementOptions = {
   sessionSource: AuthSessionSource;
@@ -154,11 +155,13 @@ export async function updateParentRegistrationRequirementStatus(
     .verifySession(options.sessionSource)
     .catch(() => null);
   const liveParentId = getLiveParentId(session);
+  const parentUid = getLiveParentUid(session);
 
   if (
     !session ||
     session.claims.role !== "parent" ||
     !liveParentId ||
+    !parentUid ||
     liveParentId !== parentId
   ) {
     createRequirementError(
@@ -174,12 +177,22 @@ export async function updateParentRegistrationRequirementStatus(
   if (
     !registration ||
     registration.parentId !== parentId ||
-    registration.athleteId !== athleteId
+    registration.athleteId !== athleteId ||
+    (registration.ownerUid && registration.ownerUid !== parentUid) ||
+    (registration.parentUid && registration.parentUid !== parentUid)
   ) {
     createRequirementError(
       "registration-not-found",
       "Could not find a registration owned by this parent.",
       404,
+    );
+  }
+
+  if (isRegistrationTerminal(registration.status)) {
+    createRequirementError(
+      "registration-lifecycle-closed",
+      "Documents cannot be changed for a withdrawn, rejected, or inactive registration.",
+      409,
     );
   }
 
@@ -265,11 +278,13 @@ export async function uploadParentRegistrationRequirementDocument(
     .verifySession(options.sessionSource)
     .catch(() => null);
   const liveParentId = getLiveParentId(session);
+  const parentUid = getLiveParentUid(session);
 
   if (
     !session ||
     session.claims.role !== "parent" ||
     !liveParentId ||
+    !parentUid ||
     liveParentId !== parentId
   ) {
     createRequirementError(
@@ -286,12 +301,22 @@ export async function uploadParentRegistrationRequirementDocument(
     !registration ||
     registration.athleteId !== athleteId ||
     registration.organizationId !== organizationId ||
-    registration.parentId !== parentId
+    registration.parentId !== parentId ||
+    (registration.ownerUid && registration.ownerUid !== parentUid) ||
+    (registration.parentUid && registration.parentUid !== parentUid)
   ) {
     createRequirementError(
       "registration-not-found",
       "Could not find a registration owned by this parent.",
       404,
+    );
+  }
+
+  if (isRegistrationTerminal(registration.status)) {
+    createRequirementError(
+      "registration-lifecycle-closed",
+      "Documents cannot be uploaded for a withdrawn, rejected, or inactive registration.",
+      409,
     );
   }
 

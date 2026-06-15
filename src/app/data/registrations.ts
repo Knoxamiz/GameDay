@@ -1,4 +1,8 @@
 import type { PaymentRequirement } from "./payments";
+import type {
+  ParentRegistrationChangeRequest,
+  ParentRegistrationWithdrawalRequest,
+} from "./parentRegistrationLifecycle";
 
 export type RegistrationRequirementStatus =
   | "Missing"
@@ -11,8 +15,10 @@ export type RegistrationStatus =
   | "Approved"
   | "Rejected"
   | "Incomplete"
+  | "Inactive"
   | "Pending"
   | "Pending Review"
+  | "Withdrawn"
   | "Waitlisted";
 
 export type RosterStatus = "not_rostered" | "rostered" | "inactive";
@@ -53,6 +59,7 @@ export type Registration = {
   createdAt?: string;
   createdByUid?: string;
   ownerUid?: string;
+  parentChangeRequest?: ParentRegistrationChangeRequest;
   paymentRequirements?: PaymentRequirement[];
   registrationInviteId?: string;
   registrationId?: string;
@@ -67,6 +74,10 @@ export type Registration = {
   inviteCode?: string;
   submittedDate?: string;
   updatedAt?: string;
+  withdrawalRequest?: ParentRegistrationWithdrawalRequest;
+  withdrawnAt?: string;
+  withdrawnByUid?: string;
+  withdrawalReason?: string;
   requirements: RegistrationRequirement[];
 };
 
@@ -88,8 +99,10 @@ export const registrationStatusValues: RegistrationStatus[] = [
   "Approved",
   "Rejected",
   "Incomplete",
+  "Inactive",
   "Pending",
   "Pending Review",
+  "Withdrawn",
   "Waitlisted",
 ];
 
@@ -212,7 +225,34 @@ export function isRegistrationConcern(status: RegistrationStatus) {
     isRegistrationPending(status) ||
     isRegistrationIncomplete(status) ||
     status === "Rejected" ||
+    status === "Withdrawn" ||
+    status === "Inactive" ||
     status === "Waitlisted"
+  );
+}
+
+export function isRegistrationTerminal(status: RegistrationStatus) {
+  return (
+    status === "Rejected" ||
+    status === "Withdrawn" ||
+    status === "Inactive"
+  );
+}
+
+export function canParentDirectlyCorrectRegistration(
+  registration: Registration,
+) {
+  return Boolean(
+    !registration.reviewedAt &&
+      getRegistrationRosterStatus(registration) === "not_rostered" &&
+      isRegistrationPending(registration.status),
+  );
+}
+
+export function hasPendingParentLifecycleRequest(registration: Registration) {
+  return (
+    registration.parentChangeRequest?.status === "pending" ||
+    registration.withdrawalRequest?.status === "pending"
   );
 }
 
@@ -235,7 +275,7 @@ export function getRosterStatusLabel(status: RosterStatus) {
 export function isCoachVisibleRosterRegistration(registration: Registration) {
   return (
     getRegistrationRosterStatus(registration) === "rostered" &&
-    registration.status !== "Rejected" &&
+    !isRegistrationTerminal(registration.status) &&
     registration.status !== "Waitlisted"
   );
 }
@@ -245,7 +285,7 @@ export function isParentEventEligibleRegistration(
 ) {
   return (
     getRegistrationRosterStatus(registration) !== "inactive" &&
-    registration.status !== "Rejected" &&
+    !isRegistrationTerminal(registration.status) &&
     registration.status !== "Waitlisted"
   );
 }

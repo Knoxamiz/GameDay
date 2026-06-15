@@ -42,6 +42,7 @@ type RegistrationRequirementsChecklistProps = {
   paymentRequirements?: PaymentRequirement[];
   registrationId: string;
   requirements: RegistrationRequirement[];
+  updatesAllowed?: boolean;
 };
 
 function getRequirementTone(status: RegistrationRequirementStatus) {
@@ -100,6 +101,7 @@ export default function RegistrationRequirementsChecklist({
   paymentRequirements: initialPaymentRequirements = [],
   registrationId,
   requirements,
+  updatesAllowed = true,
 }: RegistrationRequirementsChecklistProps) {
   const router = useRouter();
   const [uploadingRequirementId, setUploadingRequirementId] = useState<
@@ -260,6 +262,11 @@ export default function RegistrationRequirementsChecklist({
           {actionError}
         </p>
       )}
+      {!updatesAllowed && (
+        <p className="mt-3 rounded-xl border border-slate-700 bg-slate-950 p-3 text-sm text-slate-300">
+          Document and payment updates are closed for this registration.
+        </p>
+      )}
       <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs font-semibold">
         <div className="rounded-xl bg-slate-800 p-3">
           <p className="text-slate-400">Documents</p>
@@ -305,7 +312,8 @@ export default function RegistrationRequirementsChecklist({
                   Cleared
                 </p>
               )}
-              {(isDocumentMissing(requirement) ||
+              {updatesAllowed &&
+                (isDocumentMissing(requirement) ||
                 isDocumentBlocked(requirement)) && (
                 <label
                   aria-disabled={uploadingRequirementId === requirement.id}
@@ -370,7 +378,8 @@ export default function RegistrationRequirementsChecklist({
                   Cleared
                 </p>
               )}
-              {(isPaymentMissing(requirement) ||
+              {updatesAllowed &&
+                (isPaymentMissing(requirement) ||
                 isPaymentBlocked(requirement)) && (
                 <button
                   type="button"
@@ -445,7 +454,8 @@ export default function RegistrationRequirementsChecklist({
                   Cleared
                 </p>
               )}
-              {(isRequirementMissing(requirement) ||
+              {updatesAllowed &&
+                (isRequirementMissing(requirement) ||
                 isRequirementBlocked(requirement)) && (
                 <label
                   aria-disabled={uploadingRequirementId === requirement.label}

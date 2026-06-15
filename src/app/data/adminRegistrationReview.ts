@@ -38,6 +38,16 @@ export type AdminRegistrationReviewPayload =
       registrationId: string;
       required: boolean;
       status: PaymentRequirementStatus;
+    }
+  | {
+      actionType: "parent-change-request";
+      decision: "approve" | "reject";
+      registrationId: string;
+    }
+  | {
+      actionType: "withdrawal-request";
+      decision: "approve" | "reject";
+      registrationId: string;
     };
 
 export type AdminRegistrationReviewResult = {

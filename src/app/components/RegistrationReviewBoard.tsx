@@ -390,6 +390,14 @@ function getStatusDetails(status: RegistrationStatus, details: string) {
     return "Registration has been rejected by admin review.";
   }
 
+  if (status === "Withdrawn") {
+    return "The parent withdrew this registration. Historical records remain available.";
+  }
+
+  if (status === "Inactive") {
+    return "This registration is inactive and excluded from roster and event activity.";
+  }
+
   return details;
 }
 
@@ -432,6 +440,10 @@ function RegistrationReviewCard({
   );
   const requirementSummary = summarizeRegistrationRequirements(requirements);
   const openRequirements = requirements.filter(isRequirementOpen);
+  const lifecycleClosed = status === "Withdrawn" || status === "Inactive";
+  const parentLifecycleRequestPending =
+    registration.parentChangeRequest?.status === "pending" ||
+    registration.withdrawalRequest?.status === "pending";
 
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
@@ -453,6 +465,84 @@ function RegistrationReviewCard({
       <p className="mt-4 text-sm text-slate-300">
         {getStatusDetails(status, registration.details)}
       </p>
+
+      {registration.parentChangeRequest?.status === "pending" && (
+        <div className="mt-4 rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-sm">
+          <p className="font-semibold text-yellow-100">
+            Parent Correction Request
+          </p>
+          <div className="mt-3 space-y-1 text-slate-300">
+            <p>
+              Athlete: {registration.parentChangeRequest.correction.athleteFirstName}{" "}
+              {registration.parentChangeRequest.correction.athleteLastName}
+            </p>
+            <p>Grade: {registration.parentChangeRequest.correction.grade || "Not provided"}</p>
+            <p>School: {registration.parentChangeRequest.correction.school || "Not provided"}</p>
+            <p>Parent: {registration.parentChangeRequest.correction.parentName}</p>
+            <p>Email: {registration.parentChangeRequest.correction.parentEmail || "Not provided"}</p>
+            <p>Phone: {registration.parentChangeRequest.correction.parentPhone || "Not provided"}</p>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2 font-semibold">
+            {(["approve", "reject"] as const).map((decision) => (
+              <button
+                className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 capitalize text-white"
+                key={decision}
+                onClick={() =>
+                  saveAdminReviewChange({
+                    activeOrganizationId,
+                    onError: onReviewError,
+                    onSuccess: () => router.refresh(),
+                    payload: {
+                      actionType: "parent-change-request",
+                      decision,
+                      registrationId: registration.id,
+                    },
+                    source,
+                  })
+                }
+                type="button"
+              >
+                {decision}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {registration.withdrawalRequest?.status === "pending" && (
+        <div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm">
+          <p className="font-semibold text-red-100">
+            Parent Withdrawal Request
+          </p>
+          <p className="mt-2 text-slate-300">
+            {registration.withdrawalRequest.reason || "No reason provided."}
+          </p>
+          <div className="mt-3 grid grid-cols-2 gap-2 font-semibold">
+            {(["approve", "reject"] as const).map((decision) => (
+              <button
+                className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 capitalize text-white"
+                key={decision}
+                onClick={() =>
+                  saveAdminReviewChange({
+                    activeOrganizationId,
+                    onError: onReviewError,
+                    onSuccess: () => router.refresh(),
+                    payload: {
+                      actionType: "withdrawal-request",
+                      decision,
+                      registrationId: registration.id,
+                    },
+                    source,
+                  })
+                }
+                type="button"
+              >
+                {decision}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="mt-4 rounded-xl bg-slate-800 p-4 text-sm">
         <div className="flex items-start justify-between gap-3">
@@ -479,6 +569,7 @@ function RegistrationReviewCard({
             <button
               key={option}
               type="button"
+              disabled={lifecycleClosed || parentLifecycleRequestPending}
               onClick={() => {
                 saveAdminReviewChange({
                   activeOrganizationId,
@@ -499,7 +590,7 @@ function RegistrationReviewCard({
                   source,
                 });
               }}
-              className={`rounded-xl border px-2 py-2 ${
+              className={`rounded-xl border px-2 py-2 disabled:cursor-not-allowed disabled:opacity-50 ${
                 option === rosterStatus
                   ? "border-blue-500 bg-blue-500/20 text-blue-200"
                   : "border-slate-700 bg-slate-950 text-slate-300"
@@ -611,6 +702,7 @@ function RegistrationReviewCard({
           <button
             key={option}
             type="button"
+            disabled={lifecycleClosed || parentLifecycleRequestPending}
             onClick={() => {
               saveAdminReviewChange({
                 activeOrganizationId,
@@ -624,7 +716,7 @@ function RegistrationReviewCard({
                 source,
               });
             }}
-            className={`rounded-xl border px-2 py-3 ${
+            className={`rounded-xl border px-2 py-3 disabled:cursor-not-allowed disabled:opacity-50 ${
               option === status
                 ? "border-blue-500 bg-blue-500/20 text-blue-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"

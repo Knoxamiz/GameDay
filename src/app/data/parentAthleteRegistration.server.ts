@@ -15,12 +15,14 @@ export type ParentAthleteRegistrationReadModel = {
 
 export type AthleteRegistrationReadModel = {
   athlete: Athlete;
+  parent: ParentGuardian;
   registration?: Registration;
   source: ParentAthleteRegistrationSource;
 };
 
 export type AthleteRegistrationReadOptions = {
   parentId?: string;
+  parentUid?: string;
 };
 
 function normalizeModelId(id: string) {
@@ -113,8 +115,9 @@ export async function getAthleteRegistrationReadModel(
 ): Promise<AthleteRegistrationReadModel | null> {
   const normalizedAthleteId = normalizeModelId(athleteId);
   const normalizedParentId = normalizeModelId(options.parentId ?? "");
+  const normalizedParentUid = normalizeModelId(options.parentUid ?? "");
 
-  if (!normalizedAthleteId || !normalizedParentId) {
+  if (!normalizedAthleteId || !normalizedParentId || !normalizedParentUid) {
     return null;
   }
 
@@ -124,9 +127,20 @@ export async function getAthleteRegistrationReadModel(
 
   try {
     const repositories = createFirestoreRepositories();
-    const athlete = await repositories.athletes.getById(normalizedAthleteId);
+    const [athlete, parent] = await Promise.all([
+      repositories.athletes.getById(normalizedAthleteId),
+      repositories.parents.getById(normalizedParentId),
+    ]);
 
-    if (!athlete || athlete.parentId !== normalizedParentId) {
+    if (
+      !athlete ||
+      !parent ||
+      athlete.parentId !== normalizedParentId ||
+      (athlete.ownerUid && athlete.ownerUid !== normalizedParentUid) ||
+      (athlete.parentUid && athlete.parentUid !== normalizedParentUid) ||
+      (parent.ownerUid && parent.ownerUid !== normalizedParentUid) ||
+      (parent.parentUid && parent.parentUid !== normalizedParentUid)
+    ) {
       return null;
     }
 
@@ -138,12 +152,20 @@ export async function getAthleteRegistrationReadModel(
           parentRegistration.id === athlete.registrationId,
       );
 
-    if (!registration || registration.parentId !== normalizedParentId) {
+    if (
+      !registration ||
+      registration.parentId !== normalizedParentId ||
+      (registration.ownerUid &&
+        registration.ownerUid !== normalizedParentUid) ||
+      (registration.parentUid &&
+        registration.parentUid !== normalizedParentUid)
+    ) {
       return null;
     }
 
     return {
       athlete,
+      parent,
       registration,
       source: "firestore",
     };

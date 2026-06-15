@@ -35,6 +35,10 @@ function getBoolean(value: unknown) {
   return typeof value === "boolean" ? value : false;
 }
 
+function getRequestDecision(value: unknown): "approve" | "reject" | null {
+  return value === "approve" || value === "reject" ? value : null;
+}
+
 function getNumber(value: unknown) {
   const numberValue = typeof value === "number" ? value : Number(value);
 
@@ -125,6 +129,23 @@ function getPayload(
       registrationId,
       required: getBoolean(body?.required),
       status: getPaymentRequirementStatus(body?.status),
+    };
+  }
+
+  if (
+    actionType === "parent-change-request" ||
+    actionType === "withdrawal-request"
+  ) {
+    const decision = getRequestDecision(body?.decision);
+
+    if (!decision) {
+      return null;
+    }
+
+    return {
+      actionType,
+      decision,
+      registrationId,
     };
   }
 
