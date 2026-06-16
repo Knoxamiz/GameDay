@@ -12,7 +12,6 @@ import {
   resolveActiveAdminOrganizationContext,
 } from "../data/adminOrganizationScope.server";
 import { getCurrentAuthSession } from "../data/currentUser.server";
-import { buildAdminSetupChecklist } from "../data/adminSetupChecklist";
 import { getOrganizationWorkspaceType } from "../data/organizations";
 import { isActiveTeam } from "../data/teams";
 import { getLandingRouteForSession } from "../data/sessionAccess.server";
@@ -80,14 +79,6 @@ export default async function AdminHome({ searchParams }: AdminHomeProps) {
       organizationReadModels.find(
         (readModel) => readModel.organization.id === activeOrganizationId,
       ) ?? organizationReadModels[0];
-    const setupChecklist = buildAdminSetupChecklist({
-      activeOrganization: activeReadModel.organization,
-      coachAssignments: activeReadModel.coachAssignments,
-      events: activeReadModel.events,
-      registrationInvites: activeReadModel.registrationInvites,
-      registrations: activeReadModel.registrations,
-      teams: activeReadModel.teams,
-    });
     const operatingModel = buildAdminOperatingModel({
       coachAssignments: activeReadModel.coachAssignments,
       events: activeReadModel.events,
@@ -104,7 +95,6 @@ export default async function AdminHome({ searchParams }: AdminHomeProps) {
         operatingModel={operatingModel}
         organizations={activeContext.organizations}
         readModel={activeReadModel}
-        setupChecklist={setupChecklist}
       />
     );
   }

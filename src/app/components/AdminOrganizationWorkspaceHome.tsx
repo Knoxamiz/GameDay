@@ -1,23 +1,12 @@
 import Link from "next/link";
-import {
-  getEventShortDateLabel,
-  getEventTimeLabel,
-  isPublishedEvent,
-  isUpcomingEvent,
-  sortEventsByStartDate,
-} from "../data/events";
 import { withActiveOrganization } from "../data/activeOrganization";
 import type { AdminHomeReadModel } from "../data/adminHomeRead.server";
 import type { AdminOperatingModel } from "../data/adminOperatingModel";
-import type { AdminSetupChecklistModel } from "../data/adminSetupChecklist";
-import { isActiveCoachAssignment } from "../data/coachAssignmentRecords";
 import {
   getOrganizationWorkspaceTypeLabel,
   type Organization,
 } from "../data/organizations";
-import { getRegistrationRosterStatus } from "../data/registrations";
 import type { Team } from "../data/teams";
-import AdminJoinLinkButton from "./AdminJoinLinkButton";
 import SessionControls from "./SessionControls";
 
 type AdminOrganizationWorkspaceHomeProps = {
@@ -27,7 +16,6 @@ type AdminOrganizationWorkspaceHomeProps = {
   operatingModel: AdminOperatingModel;
   organizations: Organization[];
   readModel: AdminHomeReadModel;
-  setupChecklist: AdminSetupChecklistModel;
 };
 
 type WorkspaceIconName =
@@ -174,7 +162,7 @@ function ShellLink({
   return (
     <Link
       aria-current={active ? "page" : undefined}
-      className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold ${
+      className={`flex items-center justify-center gap-0 rounded-md px-3 py-2.5 text-sm font-semibold lg:justify-start lg:gap-3 ${
         active
           ? "bg-blue-50 text-blue-700"
           : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
@@ -182,43 +170,7 @@ function ShellLink({
       href={withActiveOrganization(href, organizationId)}
     >
       <WorkspaceIcon className="size-4" name={icon} />
-      {label}
-    </Link>
-  );
-}
-
-function SettingsLink({
-  description,
-  href,
-  icon,
-  label,
-  organizationId,
-}: {
-  description: string;
-  href: string;
-  icon: WorkspaceIconName;
-  label: string;
-  organizationId: string;
-}) {
-  return (
-    <Link
-      className="flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-white px-4 py-3 transition hover:border-blue-200 hover:bg-blue-50"
-      href={withActiveOrganization(href, organizationId)}
-    >
-      <span className="flex min-w-0 items-center gap-3">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-600">
-          <WorkspaceIcon className="size-4" name={icon} />
-        </span>
-        <span className="min-w-0">
-          <span className="block truncate text-sm font-bold text-slate-900">
-            {label}
-          </span>
-          <span className="mt-0.5 block truncate text-xs text-slate-500">
-            {description}
-          </span>
-        </span>
-      </span>
-      <span className="text-blue-500">›</span>
+      <span className="hidden lg:inline">{label}</span>
     </Link>
   );
 }
@@ -259,20 +211,11 @@ export default function AdminOrganizationWorkspaceHome({
   operatingModel,
   organizations,
   readModel,
-  setupChecklist,
 }: AdminOrganizationWorkspaceHomeProps) {
   const organization = readModel.organization;
   const displayName = getDisplayName(accountLabel);
   const workspaceTypeLabel = getOrganizationWorkspaceTypeLabel(organization);
   const activeTeams = operatingModel.activeTeams;
-  const activeAssignments = readModel.coachAssignments.filter(
-    isActiveCoachAssignment,
-  );
-  const upcomingPublishedEvents = readModel.events
-    .filter(isPublishedEvent)
-    .filter((event) => isUpcomingEvent(event))
-    .sort(sortEventsByStartDate)
-    .slice(0, 3);
   const activeTeamIdSet = new Set(activeTeams.map((team) => team.id));
   const currentInvites = operatingModel.currentInvites.filter((invite) =>
     activeTeamIdSet.has(invite.teamId),
@@ -330,21 +273,22 @@ export default function AdminOrganizationWorkspaceHome({
       tone: "orange" | "red" | "slate";
     } => Boolean(item),
   );
-  const nextRequiredStep = setupChecklist.nextRequiredStep;
   const activeSectionHref =
     currentSection === "alerts" ? "/admin/alerts" : "/admin";
 
   return (
     <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
       <div className="flex min-h-screen">
-        <aside className="hidden w-60 shrink-0 border-r border-slate-200 bg-white lg:block">
-          <div className="flex h-16 items-center gap-2 border-b border-slate-200 px-5">
+        <aside className="block w-14 shrink-0 border-r border-slate-200 bg-white lg:w-60">
+          <div className="flex h-16 items-center justify-center gap-2 border-b border-slate-200 px-2 lg:justify-start lg:px-5">
             <span className="flex size-8 items-center justify-center rounded-md bg-blue-600 text-sm font-black text-white">
               G
             </span>
-            <span className="font-black text-slate-950">GameDay</span>
+            <span className="hidden font-black text-slate-950 lg:inline">
+              GameDay
+            </span>
           </div>
-          <nav className="space-y-1 px-3 py-5">
+          <nav className="space-y-1 px-2 py-5 lg:px-3">
             {sidebarItems.map((item) => (
               <ShellLink
                 active={item.href === activeSectionHref}
@@ -535,60 +479,7 @@ export default function AdminOrganizationWorkspaceHome({
               </section>
             ) : (
             <>
-            <div className="mt-5 grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-              <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm xl:order-2">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <h2 className="text-lg font-black">Organization Settings</h2>
-                    <p className="mt-1 text-sm text-slate-500">
-                      Manage setup and configuration.
-                    </p>
-                  </div>
-                  {nextRequiredStep?.actionHref && (
-                    <Link
-                      className="rounded-md bg-blue-600 px-3 py-2 text-sm font-bold text-white"
-                      href={withActiveOrganization(
-                        nextRequiredStep.actionHref,
-                        activeOrganizationId,
-                      )}
-                    >
-                      {nextRequiredStep.actionLabel ?? "Continue setup"}
-                    </Link>
-                  )}
-                </div>
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <SettingsLink
-                    description="Name and workspace profile"
-                    href="/admin/setup#organization"
-                    icon="settings"
-                    label="Edit Organization"
-                    organizationId={activeOrganizationId}
-                  />
-                  <SettingsLink
-                    description={`${currentInvites.length} current invite${currentInvites.length === 1 ? "" : "s"}`}
-                    href="/admin/setup#registration-invites"
-                    icon="clipboard"
-                    label="Registration Settings"
-                    organizationId={activeOrganizationId}
-                  />
-                  <SettingsLink
-                    description={`${activeAssignments.length} active assignment${activeAssignments.length === 1 ? "" : "s"}`}
-                    href="/admin/setup#members"
-                    icon="people"
-                    label="Staff & Roles"
-                    organizationId={activeOrganizationId}
-                  />
-                  <SettingsLink
-                    description={`${upcomingPublishedEvents.length} upcoming published event${upcomingPublishedEvents.length === 1 ? "" : "s"}`}
-                    href="/admin/schedule"
-                    icon="calendar"
-                    label="Schedule"
-                    organizationId={activeOrganizationId}
-                  />
-                </div>
-              </section>
-
-              <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm xl:order-1 xl:col-span-2">
+              <section className="mt-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-2xl font-black">Current Teams</h2>
@@ -643,116 +534,6 @@ export default function AdminOrganizationWorkspaceHome({
                   + Create new team
                 </Link>
               </section>
-            </div>
-
-            <div className="mt-5 grid gap-5 lg:grid-cols-3">
-              <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                <p className="text-xs font-bold uppercase text-slate-500">
-                  Registration
-                </p>
-                <p className="mt-2 text-3xl font-black">
-                  {readModel.registrations.length}
-                </p>
-                <p className="mt-1 text-sm text-slate-500">
-                  {operatingModel.pendingRegistrations.length} pending review ·{" "}
-                  {operatingModel.rosteredRegistrations.length} rostered
-                </p>
-                {operatingModel.openInvites[0]?.inviteCode ? (
-                  <AdminJoinLinkButton
-                    className="mt-4 rounded-md bg-blue-600 px-3 py-2 text-sm font-bold text-white"
-                    joinPath={`/join/${operatingModel.openInvites[0].inviteCode}`}
-                  />
-                ) : (
-                  <Link
-                    className="mt-4 inline-flex rounded-md bg-blue-600 px-3 py-2 text-sm font-bold text-white"
-                    href={withActiveOrganization(
-                      "/admin/setup#registration-invites",
-                      activeOrganizationId,
-                    )}
-                  >
-                    Create invite
-                  </Link>
-                )}
-              </section>
-
-              <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                <p className="text-xs font-bold uppercase text-slate-500">
-                  Next Event
-                </p>
-                {upcomingPublishedEvents[0] ? (
-                  <>
-                    <p className="mt-2 text-lg font-black">
-                      {upcomingPublishedEvents[0].title}
-                    </p>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {getEventShortDateLabel(upcomingPublishedEvents[0])} ·{" "}
-                      {getEventTimeLabel(upcomingPublishedEvents[0])}
-                    </p>
-                  </>
-                ) : (
-                  <p className="mt-3 text-sm text-slate-500">
-                    No upcoming published events.
-                  </p>
-                )}
-                <Link
-                  className="mt-4 inline-flex rounded-md bg-blue-600 px-3 py-2 text-sm font-bold text-white"
-                  href={withActiveOrganization(
-                    "/admin/schedule",
-                    activeOrganizationId,
-                  )}
-                >
-                  Open schedule
-                </Link>
-              </section>
-
-              <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                <p className="text-xs font-bold uppercase text-slate-500">
-                  Roster Status
-                </p>
-                <p className="mt-2 text-3xl font-black">
-                  {
-                    readModel.registrations.filter(
-                      (registration) =>
-                        getRegistrationRosterStatus(registration) === "rostered",
-                    ).length
-                  }
-                </p>
-                <p className="mt-1 text-sm text-slate-500">
-                  active roster records
-                </p>
-                <Link
-                  className="mt-4 inline-flex rounded-md bg-blue-600 px-3 py-2 text-sm font-bold text-white"
-                  href={withActiveOrganization(
-                    "/admin/registrations",
-                    activeOrganizationId,
-                  )}
-                >
-                  Review roster
-                </Link>
-              </section>
-            </div>
-
-            <section className="mt-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="text-lg font-black">Readiness</h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {operatingModel.stageDescription}
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <StatusPill tone="slate">{operatingModel.stageLabel}</StatusPill>
-                  {setupChecklist.steps.map((step) => (
-                    <span
-                      className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600"
-                      key={step.id}
-                    >
-                      {step.label}: {step.count}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </section>
             </>
             )}
           </section>

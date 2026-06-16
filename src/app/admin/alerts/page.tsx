@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import AdminOrganizationWorkspaceHome from "../../components/AdminOrganizationWorkspaceHome";
 import { getAdminHomeReadModel } from "../../data/adminHomeRead.server";
 import { buildAdminOperatingModel } from "../../data/adminOperatingModel";
-import { buildAdminSetupChecklist } from "../../data/adminSetupChecklist";
 import { getRequestedOrganizationId } from "../../data/activeOrganization";
 import {
   canAccessAdmin,
@@ -46,14 +45,6 @@ export default async function AdminAlertsPage({
   }
 
   const readModel = await getAdminHomeReadModel(activeContext.activeOrganizationId);
-  const setupChecklist = buildAdminSetupChecklist({
-    activeOrganization: readModel.organization,
-    coachAssignments: readModel.coachAssignments,
-    events: readModel.events,
-    registrationInvites: readModel.registrationInvites,
-    registrations: readModel.registrations,
-    teams: readModel.teams,
-  });
   const operatingModel = buildAdminOperatingModel({
     coachAssignments: readModel.coachAssignments,
     events: readModel.events,
@@ -71,7 +62,6 @@ export default async function AdminAlertsPage({
       operatingModel={operatingModel}
       organizations={activeContext.organizations}
       readModel={readModel}
-      setupChecklist={setupChecklist}
     />
   );
 }
