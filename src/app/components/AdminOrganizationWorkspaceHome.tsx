@@ -23,6 +23,7 @@ import SessionControls from "./SessionControls";
 type AdminOrganizationWorkspaceHomeProps = {
   accountLabel?: string;
   activeOrganizationId: string;
+  currentSection?: "alerts" | "overview";
   operatingModel: AdminOperatingModel;
   organizations: Organization[];
   readModel: AdminHomeReadModel;
@@ -52,6 +53,7 @@ const sidebarItems: {
     label: "Registrations",
   },
   { href: "/admin/schedule", icon: "calendar", label: "Schedule" },
+  { href: "/admin/alerts", icon: "alert", label: "Alerts" },
   { href: "/admin/setup", icon: "settings", label: "Settings" },
 ];
 
@@ -253,6 +255,7 @@ function EmptyState({ children }: { children: string }) {
 export default function AdminOrganizationWorkspaceHome({
   accountLabel,
   activeOrganizationId,
+  currentSection = "overview",
   operatingModel,
   organizations,
   readModel,
@@ -328,6 +331,8 @@ export default function AdminOrganizationWorkspaceHome({
     } => Boolean(item),
   );
   const nextRequiredStep = setupChecklist.nextRequiredStep;
+  const activeSectionHref =
+    currentSection === "alerts" ? "/admin/alerts" : "/admin";
 
   return (
     <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
@@ -342,7 +347,7 @@ export default function AdminOrganizationWorkspaceHome({
           <nav className="space-y-1 px-3 py-5">
             {sidebarItems.map((item) => (
               <ShellLink
-                active={item.href === "/admin"}
+                active={item.href === activeSectionHref}
                 href={item.href}
                 icon={item.icon}
                 key={item.label}
@@ -402,39 +407,136 @@ export default function AdminOrganizationWorkspaceHome({
               </p>
             </div>
 
-            <section className="mt-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex min-w-0 items-center gap-4">
-                  <span className="flex size-16 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                    <WorkspaceIcon className="size-8" name="home" />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold uppercase text-slate-500">
-                      Current Workspace
-                    </p>
-                    <h2 className="truncate text-2xl font-black">
-                      {organization.name}
-                    </h2>
+            {currentSection === "overview" && (
+              <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h2 className="text-lg font-black">Announcements</h2>
+                      <p className="mt-1 text-sm text-slate-500">
+                        New announcements and organization updates.
+                      </p>
+                    </div>
+                    <StatusPill tone="slate">
+                      {`${recentAnnouncements.length} new`}
+                    </StatusPill>
+                  </div>
+                  <div className="mt-3">
+                    {recentAnnouncements[0] ? (
+                      <div>
+                        <p className="truncate text-sm font-black">
+                          {recentAnnouncements[0].subject}
+                        </p>
+                        <p className="mt-1 line-clamp-2 text-sm text-slate-500">
+                          {recentAnnouncements[0].content}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-500">
+                        No announcements have been created for this organization.
+                      </p>
+                    )}
+                  </div>
+                </section>
+
+                <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h2 className="text-lg font-black">Alerts</h2>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Items that need attention.
+                      </p>
+                    </div>
+                    <Link
+                      className="text-sm font-bold text-blue-600"
+                      href={withActiveOrganization(
+                        "/admin/alerts",
+                        activeOrganizationId,
+                      )}
+                    >
+                      View all ›
+                    </Link>
+                  </div>
+                  <div className="mt-3">
+                    {alertItems[0] ? (
+                      <Link
+                        className="flex items-center justify-between gap-3 rounded-md bg-orange-50 px-3 py-2 text-sm font-bold text-orange-800"
+                        href={withActiveOrganization(
+                          alertItems[0].href,
+                          activeOrganizationId,
+                        )}
+                      >
+                        <span className="truncate">{alertItems[0].label}</span>
+                        <span>Open</span>
+                      </Link>
+                    ) : (
+                      <p className="text-sm text-slate-500">
+                        No active alerts for this organization.
+                      </p>
+                    )}
+                  </div>
+                </section>
+              </div>
+            )}
+
+            {currentSection === "alerts" ? (
+              <section className="mt-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h2 className="text-2xl font-black">Alerts</h2>
                     <p className="mt-1 text-sm text-slate-500">
-                      Manage teams, people, registration, and schedule for this
-                      workspace.
+                      Each alert opens the exact place where the issue can be
+                      fixed or reviewed.
                     </p>
                   </div>
+                  <StatusPill tone={alertItems.length > 0 ? "orange" : "green"}>
+                    {`${alertItems.length} open`}
+                  </StatusPill>
                 </div>
-                <Link
-                  className="rounded-md border border-slate-200 px-4 py-2.5 text-center text-sm font-bold text-blue-600 hover:bg-blue-50"
-                  href={withActiveOrganization(
-                    "/admin/setup#organization",
-                    activeOrganizationId,
+                <div className="mt-5 space-y-3">
+                  {alertItems.length === 0 ? (
+                    <EmptyState>No active alerts for this organization.</EmptyState>
+                  ) : (
+                    alertItems.map((item) => (
+                      <Link
+                        className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 px-4 py-4 transition hover:border-blue-200 hover:bg-blue-50"
+                        href={withActiveOrganization(
+                          item.href,
+                          activeOrganizationId,
+                        )}
+                        key={item.label}
+                      >
+                        <span className="flex min-w-0 items-center gap-3">
+                          <span
+                            className={`flex size-10 shrink-0 items-center justify-center rounded-full ${
+                              item.tone === "red"
+                                ? "bg-red-50 text-red-600"
+                                : item.tone === "orange"
+                                  ? "bg-orange-50 text-orange-600"
+                                  : "bg-slate-100 text-slate-600"
+                            }`}
+                          >
+                            <WorkspaceIcon className="size-5" name="alert" />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block truncate text-base font-black">
+                              {item.label}
+                            </span>
+                            <span className="mt-1 block text-sm text-slate-500">
+                              Open the related workflow.
+                            </span>
+                          </span>
+                        </span>
+                        <StatusPill tone={item.tone}>Open</StatusPill>
+                      </Link>
+                    ))
                   )}
-                >
-                  View organization profile
-                </Link>
-              </div>
-            </section>
-
+                </div>
+              </section>
+            ) : (
+            <>
             <div className="mt-5 grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-              <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+              <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm xl:order-2">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-lg font-black">Organization Settings</h2>
@@ -486,10 +588,10 @@ export default function AdminOrganizationWorkspaceHome({
                 </div>
               </section>
 
-              <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+              <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm xl:order-1 xl:col-span-2">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h2 className="text-lg font-black">Current Teams</h2>
+                    <h2 className="text-2xl font-black">Current Teams</h2>
                     <p className="mt-1 text-sm text-slate-500">
                       Teams in this organization.
                     </p>
@@ -504,13 +606,13 @@ export default function AdminOrganizationWorkspaceHome({
                     View all teams ›
                   </Link>
                 </div>
-                <div className="mt-4 space-y-3">
+                <div className="mt-5 grid gap-4 lg:grid-cols-2">
                   {activeTeams.length === 0 ? (
                     <EmptyState>No active teams in this organization yet.</EmptyState>
                   ) : (
-                    activeTeams.slice(0, 5).map((team) => (
+                    activeTeams.slice(0, 6).map((team) => (
                       <Link
-                        className="flex items-center justify-between gap-3 rounded-md border border-slate-200 px-3 py-3 hover:bg-slate-50"
+                        className="flex items-center justify-between gap-3 rounded-md border border-slate-200 px-4 py-4 hover:bg-slate-50"
                         href={withActiveOrganization(
                           `/admin/teams/${team.id}`,
                           activeOrganizationId,
@@ -518,7 +620,7 @@ export default function AdminOrganizationWorkspaceHome({
                         key={team.id}
                       >
                         <span className="min-w-0">
-                          <span className="block truncate text-sm font-black">
+                          <span className="block truncate text-base font-black">
                             {team.name}
                           </span>
                           <span className="mt-1 block truncate text-xs text-slate-500">
@@ -540,90 +642,6 @@ export default function AdminOrganizationWorkspaceHome({
                 >
                   + Create new team
                 </Link>
-              </section>
-            </div>
-
-            <div className="mt-5 grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-              <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <h2 className="text-lg font-black">Announcements</h2>
-                    <p className="mt-1 text-sm text-slate-500">
-                      Real communications for this organization.
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-4 space-y-3">
-                  {recentAnnouncements.length === 0 ? (
-                    <EmptyState>
-                      No announcements have been created for this organization.
-                    </EmptyState>
-                  ) : (
-                    recentAnnouncements.map((message) => (
-                      <div
-                        className="rounded-md border border-slate-200 px-3 py-3"
-                        key={message.id}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-black">
-                              {message.subject}
-                            </p>
-                            <p className="mt-1 line-clamp-2 text-sm text-slate-500">
-                              {message.content}
-                            </p>
-                          </div>
-                          <StatusPill tone="slate">{message.priority}</StatusPill>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </section>
-
-              <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <h2 className="text-lg font-black">Alerts</h2>
-                    <p className="mt-1 text-sm text-slate-500">
-                      Items that need your attention.
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-4 space-y-3">
-                  {alertItems.length === 0 ? (
-                    <EmptyState>No active alerts for this organization.</EmptyState>
-                  ) : (
-                    alertItems.map((item) => (
-                      <Link
-                        className="flex items-center justify-between gap-3 rounded-md border border-slate-200 px-3 py-3 hover:bg-slate-50"
-                        href={withActiveOrganization(
-                          item.href,
-                          activeOrganizationId,
-                        )}
-                        key={item.label}
-                      >
-                        <span className="flex min-w-0 items-center gap-3">
-                          <span
-                            className={`flex size-8 shrink-0 items-center justify-center rounded-full ${
-                              item.tone === "red"
-                                ? "bg-red-50 text-red-600"
-                                : item.tone === "orange"
-                                  ? "bg-orange-50 text-orange-600"
-                                  : "bg-slate-100 text-slate-600"
-                            }`}
-                          >
-                            <WorkspaceIcon className="size-4" name="alert" />
-                          </span>
-                          <span className="truncate text-sm font-bold">
-                            {item.label}
-                          </span>
-                        </span>
-                        <StatusPill tone={item.tone}>Open</StatusPill>
-                      </Link>
-                    ))
-                  )}
-                </div>
               </section>
             </div>
 
@@ -735,6 +753,8 @@ export default function AdminOrganizationWorkspaceHome({
                 </div>
               </div>
             </section>
+            </>
+            )}
           </section>
         </div>
       </div>
