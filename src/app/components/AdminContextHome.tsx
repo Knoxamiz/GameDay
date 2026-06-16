@@ -69,6 +69,13 @@ function getInitials(name: string) {
   return initials || "CT";
 }
 
+function getOrganizationTeamCount(
+  organizationId: string,
+  teams: AdminTeamChoice[],
+) {
+  return teams.filter((team) => team.organizationId === organizationId).length;
+}
+
 function CardShell({
   body,
   icon,
@@ -235,12 +242,17 @@ export default function AdminContextHome({
   const [teamBuilderSeason, setTeamBuilderSeason] = useState(
     getCurrentSeasonLabel(),
   );
+  const [teamName, setTeamName] = useState("");
+  const [teamDivision, setTeamDivision] = useState("");
+  const [teamSeason, setTeamSeason] = useState(getCurrentSeasonLabel());
   const [isSavingOrganization, setIsSavingOrganization] = useState(false);
   const [isSavingTeamBuilder, setIsSavingTeamBuilder] = useState(false);
+  const [isSavingTeam, setIsSavingTeam] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [organizationError, setOrganizationError] = useState<string | null>(null);
   const [teamBuilderError, setTeamBuilderError] = useState<string | null>(null);
+  const [teamError, setTeamError] = useState<string | null>(null);
   const displayName = getDisplayName(accountLabel);
   const initials = getInitials(displayName);
   const activeOrganizationTeams = activeOrganizationId
@@ -322,6 +334,49 @@ export default function AdminContextHome({
         error instanceof Error ? error.message : "Could not create Team Builder.",
       );
       setIsSavingTeamBuilder(false);
+    }
+  }
+
+  async function createTeam(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!activeOrganizationId) {
+      setTeamError("Select an organization before creating a team.");
+      return;
+    }
+
+    setTeamError(null);
+    setIsSavingTeam(true);
+
+    try {
+      const response = await fetch("/api/admin/setup", {
+        body: JSON.stringify({
+          activeOrganizationId,
+          actionType: "team",
+          division: teamDivision,
+          name: teamName,
+          organizationId: activeOrganizationId,
+          season: teamSeason,
+          status: "active",
+        }),
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      const body = (await response.json().catch(() => null)) as
+        | SetupResponse
+        | null;
+
+      if (!response.ok || !body?.id) {
+        throw new Error(body?.error ?? "Could not create team.");
+      }
+
+      window.location.assign(
+        withActiveOrganization(`/admin/teams/${body.id}`, activeOrganizationId),
+      );
+    } catch (error) {
+      setTeamError(error instanceof Error ? error.message : "Could not create team.");
+      setIsSavingTeam(false);
     }
   }
 
@@ -450,26 +505,67 @@ export default function AdminContextHome({
             {activePanel === "select-organization" && (
               <div>
                 <h2 className="text-2xl font-bold">Select Organization</h2>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+                  Each organization is its own GameDay workspace. Teams,
+                  rosters, schedules, registration links, documents, and parent
+                  data stay inside the organization you open.
+                </p>
                 {organizations.length > 0 ? (
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    {organizations.map((organization) => (
-                      <Link
-                        className={`rounded-lg border p-4 transition hover:border-blue-300 ${
-                          organization.id === activeOrganizationId
-                            ? "border-blue-500 bg-blue-50"
-                            : "border-slate-200"
-                        }`}
-                        href={withActiveOrganization("/admin", organization.id)}
-                        key={organization.id}
-                      >
-                        <p className="font-bold">{organization.name}</p>
-                        <p className="mt-1 text-sm text-slate-500">
-                          {organization.id === activeOrganizationId
-                            ? "Selected"
-                            : "Select organization"}
-                        </p>
-                      </Link>
-                    ))}
+                    {organizations.map((organization) => {
+                      const isActive = organization.id === activeOrganizationId;
+                      const teamCount = getOrganizationTeamCount(
+                        organization.id,
+                        teams,
+                      );
+
+                      return (
+                        <Link
+                          className={`rounded-lg border p-5 transition hover:border-blue-300 ${
+                            isActive
+                              ? "border-blue-500 bg-blue-50"
+                              : "border-slate-200"
+                          }`}
+                          href={withActiveOrganization("/admin", organization.id)}
+                          key={organization.id}
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div>
+                              <p className="font-bold">{organization.name}</p>
+                              <p className="mt-1 text-sm text-slate-500">
+                                Separate workspace
+                              </p>
+                            </div>
+                            <span
+                              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                isActive
+                                  ? "bg-blue-600 text-white"
+                                  : "bg-slate-100 text-slate-600"
+                              }`}
+                            >
+                              {isActive ? "Selected" : "Open"}
+                            </span>
+                          </div>
+                          <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                            <div className="rounded-md bg-white/70 p-3">
+                              <p className="text-slate-500">Teams</p>
+                              <p className="mt-1 font-bold text-slate-900">
+                                {teamCount}
+                              </p>
+                            </div>
+                            <div className="rounded-md bg-white/70 p-3">
+                              <p className="text-slate-500">Data</p>
+                              <p className="mt-1 font-bold text-slate-900">
+                                Isolated
+                              </p>
+                            </div>
+                          </div>
+                          <p className="mt-4 text-sm font-semibold text-blue-600">
+                            Open workspace
+                          </p>
+                        </Link>
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="mt-4 rounded-md bg-slate-50 p-4 text-slate-600">
@@ -521,7 +617,8 @@ export default function AdminContextHome({
                 <h2 className="text-2xl font-bold">Select Team</h2>
                 {activeOrganizationId && (
                   <p className="mt-1 text-sm text-slate-500">
-                    Showing teams in the selected organization.
+                    Open an existing team or create a new one in the selected
+                    organization.
                   </p>
                 )}
                 {activeOrganizationTeams.length > 0 ? (
@@ -549,19 +646,74 @@ export default function AdminContextHome({
                   </div>
                 ) : (
                   <div className="mt-4 rounded-md bg-slate-50 p-4 text-slate-600">
-                    <p>No teams found for this view.</p>
-                    {activeOrganizationId && (
-                      <Link
-                        className="mt-3 inline-block font-semibold text-blue-600"
-                        href={withActiveOrganization(
-                          "/admin/setup#team",
-                          activeOrganizationId,
-                        )}
-                      >
-                        Create teams in organization setup
-                      </Link>
-                    )}
+                    <p>No teams found for this organization yet.</p>
                   </div>
+                )}
+
+                {activeOrganizationId ? (
+                  <form
+                    className="mt-5 border-t border-slate-200 pt-5"
+                    onSubmit={createTeam}
+                  >
+                    <h3 className="text-xl font-bold">Create Team</h3>
+                    <div className="mt-4 grid gap-3 md:grid-cols-3">
+                      <label>
+                        <span className="text-sm font-semibold text-slate-600">
+                          Team name
+                        </span>
+                        <input
+                          className="mt-2 w-full rounded-md border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-violet-500"
+                          disabled={isSavingTeam}
+                          onChange={(event) => setTeamName(event.target.value)}
+                          required
+                          value={teamName}
+                        />
+                      </label>
+                      <label>
+                        <span className="text-sm font-semibold text-slate-600">
+                          Division
+                        </span>
+                        <input
+                          className="mt-2 w-full rounded-md border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-violet-500"
+                          disabled={isSavingTeam}
+                          onChange={(event) =>
+                            setTeamDivision(event.target.value)
+                          }
+                          placeholder="10U, Varsity, Rec"
+                          required
+                          value={teamDivision}
+                        />
+                      </label>
+                      <label>
+                        <span className="text-sm font-semibold text-slate-600">
+                          Season
+                        </span>
+                        <input
+                          className="mt-2 w-full rounded-md border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-violet-500"
+                          disabled={isSavingTeam}
+                          onChange={(event) => setTeamSeason(event.target.value)}
+                          required
+                          value={teamSeason}
+                        />
+                      </label>
+                    </div>
+                    <button
+                      className="mt-4 rounded-md bg-violet-600 px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={isSavingTeam}
+                      type="submit"
+                    >
+                      {isSavingTeam ? "Creating..." : "Create team"}
+                    </button>
+                    {teamError && (
+                      <p className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
+                        {teamError}
+                      </p>
+                    )}
+                  </form>
+                ) : (
+                  <p className="mt-4 rounded-md bg-slate-50 p-4 text-slate-600">
+                    Select an organization first, then create or open a team.
+                  </p>
                 )}
               </div>
             )}
