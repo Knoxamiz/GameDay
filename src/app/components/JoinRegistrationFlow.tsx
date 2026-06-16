@@ -8,6 +8,7 @@ import {
   type DocumentRequirementStatus,
 } from "../data/documents";
 import type { Organization } from "../data/organizations";
+import { getOrganizationWorkspaceType } from "../data/organizations";
 import {
   summarizePaymentRequirements,
   type PaymentRequirementStatus,
@@ -135,6 +136,11 @@ export default function JoinRegistrationFlow({
   const athleteName = [form.athleteFirstName, form.athleteLastName]
     .filter(Boolean)
     .join(" ");
+  const isTeamBuilderInvite =
+    getOrganizationWorkspaceType(organization) === "single_team";
+  const teamName = team?.name ?? invite.title;
+  const teamDivision = team?.division ?? team?.ageGroup ?? team?.label;
+  const teamSeason = team?.season;
 
   function updateForm(name: keyof JoinFormState, value: string) {
     setForm((currentForm) => ({
@@ -329,13 +335,36 @@ export default function JoinRegistrationFlow({
     <>
       <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
         <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">
-          Team Invite
+          {isTeamBuilderInvite ? "Team Builder Registration" : "Team Registration"}
         </p>
-        <h1 className="mt-3 text-3xl font-bold">{invite.title}</h1>
+        <h1 className="mt-3 text-3xl font-bold">{teamName}</h1>
         <p className="mt-3 text-slate-300">
-          {organization?.name ?? invite.organizationId}
+          {organization?.name ?? "GameDay registration"}
         </p>
-        <p className="mt-1 text-sm text-slate-400">{team?.name ?? "Team TBD"}</p>
+        <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+          <div className="rounded-xl bg-slate-800 p-3">
+            <p className="text-slate-400">Team</p>
+            <p className="mt-1 font-semibold text-white">{teamName}</p>
+          </div>
+          <div className="rounded-xl bg-slate-800 p-3">
+            <p className="text-slate-400">Division</p>
+            <p className="mt-1 font-semibold text-white">
+              {teamDivision ?? "Not listed"}
+            </p>
+          </div>
+          <div className="rounded-xl bg-slate-800 p-3">
+            <p className="text-slate-400">Season</p>
+            <p className="mt-1 font-semibold text-white">
+              {teamSeason ?? "Not listed"}
+            </p>
+          </div>
+          <div className="rounded-xl bg-slate-800 p-3">
+            <p className="text-slate-400">To complete</p>
+            <p className="mt-1 font-semibold text-white">
+              Parent, athlete, and readiness details
+            </p>
+          </div>
+        </div>
         {invite.description && (
           <p className="mt-3 text-sm text-slate-300">{invite.description}</p>
         )}

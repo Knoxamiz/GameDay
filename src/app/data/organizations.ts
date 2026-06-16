@@ -39,6 +39,6 @@ export function getOrganizationWorkspaceTypeLabel(
   organization: Organization | null | undefined,
 ) {
   return getOrganizationWorkspaceType(organization) === "single_team"
-    ? "Individual Team"
+    ? "Team Workspace"
     : "Organization";
 }

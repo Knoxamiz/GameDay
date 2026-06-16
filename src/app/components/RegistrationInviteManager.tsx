@@ -7,6 +7,7 @@ import {
   type RegistrationInvite,
   type RegistrationInviteStatus,
 } from "../data/invites";
+import type { OrganizationWorkspaceType } from "../data/organizations";
 import { isActiveTeam, type Team } from "../data/teams";
 
 type RegistrationInviteManagerProps = {
@@ -14,6 +15,7 @@ type RegistrationInviteManagerProps = {
   organizationId: string;
   registrationInvites: RegistrationInvite[];
   teams: Team[];
+  workspaceType?: OrganizationWorkspaceType;
 };
 
 type SetupResponse = {
@@ -125,6 +127,10 @@ function InviteEditor({
           {copyMessage}
         </p>
       )}
+      <p className="mt-2 text-xs text-slate-500">
+        Use this real link for a QR code or printed handout. It only starts
+        parent registration and never grants staff access.
+      </p>
 
       <details className="mt-3 text-xs text-slate-500">
         <summary className="cursor-pointer font-semibold">
@@ -242,15 +248,23 @@ export default function RegistrationInviteManager({
   organizationId,
   registrationInvites,
   teams,
+  workspaceType = "organization",
 }: RegistrationInviteManagerProps) {
   const activeTeams = teams.filter(
     (team) =>
       team.organizationId === organizationId &&
       isActiveTeam(team),
   );
+  const isSingleTeamWorkspace = workspaceType === "single_team";
+  const defaultInviteTitle = activeTeams[0]
+    ? `${activeTeams[0].name} Registration`
+    : "";
+  const defaultInviteDescription = activeTeams[0]
+    ? `Register your athlete for ${activeTeams[0].name}.`
+    : "";
   const [inviteTeamId, setInviteTeamId] = useState(activeTeams[0]?.id ?? "");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [title, setTitle] = useState(defaultInviteTitle);
+  const [description, setDescription] = useState(defaultInviteDescription);
   const [status, setStatus] = useState<Exclude<
     RegistrationInviteStatus,
     "archived"
@@ -325,9 +339,13 @@ export default function RegistrationInviteManager({
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
         Step 4
       </p>
-      <h2 className="mt-2 text-xl font-bold">Registration Invites</h2>
+      <h2 className="mt-2 text-xl font-bold">
+        {isSingleTeamWorkspace ? "Team Registration Link" : "Registration Invites"}
+      </h2>
       <p className="mt-2 text-sm text-slate-300">
-        Parent registration opens only through a real open invite.
+        {isSingleTeamWorkspace
+          ? "Create and open the real join link parents will use from a QR code or message."
+          : "Parent registration opens only through a real open invite."}
       </p>
 
       {message && (
@@ -347,20 +365,29 @@ export default function RegistrationInviteManager({
         </p>
       ) : (
         <div className="mt-4 space-y-3">
-          <label className="block">
-            <span className="text-sm font-semibold text-slate-300">Team</span>
-            <select
-              className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
-              onChange={(event) => setInviteTeamId(event.target.value)}
-              value={selectedTeamId}
-            >
-              {activeTeams.map((team) => (
-                <option key={team.id} value={team.id}>
-                  {team.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          {isSingleTeamWorkspace && activeTeams.length === 1 ? (
+            <div className="rounded-xl bg-slate-800 p-3 text-sm">
+              <p className="font-semibold text-white">{activeTeams[0].name}</p>
+              <p className="mt-1 text-slate-400">
+                This Team Builder workspace has one registration team.
+              </p>
+            </div>
+          ) : (
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-300">Team</span>
+              <select
+                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
+                onChange={(event) => setInviteTeamId(event.target.value)}
+                value={selectedTeamId}
+              >
+                {activeTeams.map((team) => (
+                  <option key={team.id} value={team.id}>
+                    {team.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <label className="block">
             <span className="text-sm font-semibold text-slate-300">Title</span>
             <input
@@ -455,14 +482,16 @@ export default function RegistrationInviteManager({
             }
             type="button"
           >
-            Create Invite
+            {isSingleTeamWorkspace ? "Create registration link" : "Create Invite"}
           </button>
         </div>
       )}
 
       <div className="mt-6 border-t border-slate-800 pt-5">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="font-bold">Organization Invites</h3>
+          <h3 className="font-bold">
+            {isSingleTeamWorkspace ? "Team Registration Links" : "Organization Invites"}
+          </h3>
           <label className="flex items-center gap-2 text-xs font-semibold text-slate-400">
             <input
               checked={showArchived}

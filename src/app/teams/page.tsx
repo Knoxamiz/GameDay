@@ -23,6 +23,7 @@ import {
   getRegistrationInviteStatus,
 } from "../data/invites";
 import { getOrganizationContext } from "../data/organizationContext.server";
+import { getOrganizationWorkspaceType } from "../data/organizations";
 import { isCoachVisibleRosterRegistration } from "../data/registrations";
 import { resolveSessionAccessRole } from "../data/sessionAccess.server";
 import { summarizeTransportationEntries } from "../data/transportation";
@@ -103,6 +104,9 @@ export default async function TeamsHome({
   const organizationContext = activeContext?.activeOrganization
     ? { count: 1, label: activeContext.activeOrganization.name }
     : await getOrganizationContext(schedule.organizationIds);
+  const isSingleTeamWorkspace =
+    getOrganizationWorkspaceType(activeContext?.activeOrganization) ===
+    "single_team";
   const repositories = schedule.source === "firestore"
     ? createFirestoreRepositories()
     : null;
@@ -382,10 +386,14 @@ export default async function TeamsHome({
         activeOrganizationId={activeOrganizationId}
         activeOrganizationName={activeContext.activeOrganization?.name}
         currentSection="teams"
-        description="Roster, schedule, and readiness by team."
+        description={
+          isSingleTeamWorkspace
+            ? "Manage the one team in this Team Builder workspace."
+            : "Roster, schedule, and readiness by team."
+        }
         organizationSelectorAction={teamsIndexHref}
         organizations={activeContext.organizations}
-        title="Teams"
+        title={isSingleTeamWorkspace ? "Team" : "Teams"}
       >
         {teamList}
       </AdminAppShell>

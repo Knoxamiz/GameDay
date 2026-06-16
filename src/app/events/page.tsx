@@ -22,6 +22,7 @@ import {
 } from "../data/events";
 import { getEventScheduleReadModel } from "../data/eventSchedule.server";
 import { getOrganizationContext } from "../data/organizationContext.server";
+import { getOrganizationWorkspaceType } from "../data/organizations";
 import { resolveSessionAccessRole } from "../data/sessionAccess.server";
 import { summarizeTransportationEntries } from "../data/transportation";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
@@ -99,6 +100,9 @@ export default async function EventsHome({
   const organizationContext = activeContext?.activeOrganization
     ? { count: 1, label: activeContext.activeOrganization.name }
     : await getOrganizationContext(schedule.organizationIds);
+  const isSingleTeamWorkspace =
+    getOrganizationWorkspaceType(activeContext?.activeOrganization) ===
+    "single_team";
   const repositories = schedule.source === "firestore"
     ? createFirestoreRepositories()
     : null;
@@ -273,10 +277,14 @@ export default async function EventsHome({
         activeOrganizationId={activeOrganizationId}
         activeOrganizationName={activeContext.activeOrganization?.name}
         currentSection="schedule"
-        description="Create, publish, and monitor practices, games, tournaments, and meetings."
+        description={
+          isSingleTeamWorkspace
+            ? "Create and publish the team's first practice, game, tournament, or meeting."
+            : "Create, publish, and monitor practices, games, tournaments, and meetings."
+        }
         organizationSelectorAction={scheduleIndexHref}
         organizations={activeContext.organizations}
-        title="Schedule"
+        title={isSingleTeamWorkspace ? "Team Schedule" : "Schedule"}
       >
         {eventContent}
       </AdminAppShell>

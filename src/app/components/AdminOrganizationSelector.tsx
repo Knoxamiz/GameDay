@@ -29,7 +29,7 @@ export default function AdminOrganizationSelector({
     >
       <label className={compact ? "min-w-0 flex-1 sm:min-w-64" : "block"}>
         <span className={compact ? "sr-only" : "text-sm font-semibold text-slate-300"}>
-          Active organization
+          Active workspace
         </span>
         <select
           className={`${compact ? "" : "mt-2"} w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2.5 text-white`}
@@ -38,7 +38,7 @@ export default function AdminOrganizationSelector({
           required
         >
           <option disabled value="">
-            Choose an organization
+            Choose a workspace
           </option>
           {organizations.map((organization) => (
             <option key={organization.id} value={organization.id}>
@@ -55,11 +55,11 @@ export default function AdminOrganizationSelector({
         }
         type="submit"
       >
-        {compact ? "Switch" : "Use Organization"}
+        {compact ? "Switch" : "Use Workspace"}
       </button>
       {!compact && !activeOrganizationId && (
         <p className="mt-3 text-sm text-yellow-200">
-          Choose an organization before viewing or changing admin data.
+          Choose a workspace before viewing or changing admin data.
         </p>
       )}
     </form>

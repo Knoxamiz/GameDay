@@ -14,6 +14,7 @@ import {
   resolveActiveAdminOrganizationContext,
 } from "../../data/adminOrganizationScope.server";
 import { getCurrentAuthSession } from "../../data/currentUser.server";
+import { getOrganizationWorkspaceType } from "../../data/organizations";
 import { getLandingRouteForSession } from "../../data/sessionAccess.server";
 
 export const dynamic = "force-dynamic";
@@ -81,6 +82,8 @@ export default async function AdminSetupPage({
   const defaultOpenSection = getDefaultSetupSection(
     setupChecklist.nextRequiredStep?.id,
   );
+  const isSingleTeamWorkspace =
+    getOrganizationWorkspaceType(setup.organizations[0]) === "single_team";
 
   return (
     <AdminAppShell
@@ -88,10 +91,14 @@ export default async function AdminSetupPage({
       activeOrganizationId={activeContext.activeOrganizationId}
       activeOrganizationName={activeContext.activeOrganization?.name}
       currentSection="setup"
-      description="See what is complete, take the next required action, and open management tools only when needed."
+      description={
+        isSingleTeamWorkspace
+          ? "Open the team registration link, manage the team record, and keep setup focused on one team."
+          : "See what is complete, take the next required action, and open management tools only when needed."
+      }
       organizationSelectorAction="/admin/setup"
       organizations={activeContext.organizations}
-      title="Setup"
+      title={isSingleTeamWorkspace ? "Team Builder Setup" : "Setup"}
     >
       {!activeContext.requiresSelection && (
         <AdminSetupChecklist checklist={setupChecklist} />

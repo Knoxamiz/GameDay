@@ -44,6 +44,7 @@ export default function AdminSetupChecklist({
   checklist,
 }: AdminSetupChecklistProps) {
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
+  const isSingleTeamWorkspace = checklist.workspaceType === "single_team";
   const isRequiredSetupComplete =
     checklist.completedRequiredSteps === checklist.requiredStepCount;
   const nextRequiredStep = checklist.nextRequiredStep;
@@ -53,12 +54,12 @@ export default function AdminSetupChecklist({
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-            First-Run Setup
+            {isSingleTeamWorkspace ? "Team Builder Setup" : "First-Run Setup"}
           </p>
           <h2 className="mt-2 text-xl font-bold">
             {checklist.activeOrganizationName
               ? `Setup for ${checklist.activeOrganizationName}`
-              : "Create your organization"}
+              : "Create your workspace"}
           </h2>
         </div>
         <span className="shrink-0 rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-200">
@@ -82,7 +83,9 @@ export default function AdminSetupChecklist({
             </p>
             <p className="mt-1 text-sm text-slate-300">
               {nextRequiredStep?.description ??
-                "Operational steps can continue as your season develops."}
+                (isSingleTeamWorkspace
+                  ? "Registration, roster, and schedule can continue as your team develops."
+                  : "Operational steps can continue as your season develops.")}
             </p>
           </div>
           {nextRequiredStep?.actionHref && nextRequiredStep.actionLabel && (
@@ -141,6 +144,10 @@ export default function AdminSetupChecklist({
                   >
                     View Join Page
                   </Link>
+                  <p className="w-full text-xs text-slate-500">
+                    Use this real join link for a QR code or printed handout.
+                    It only opens parent registration.
+                  </p>
               </div>
             )}
           </div>

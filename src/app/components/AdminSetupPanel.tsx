@@ -156,6 +156,9 @@ export default function AdminSetupPanel({
       invite.organizationId === organizationId &&
       getRegistrationInviteStatus(invite) !== "archived",
   ).length;
+  const workspaceLabel = isSingleTeamWorkspace
+    ? "Team Workspace"
+    : "Organization";
 
   useEffect(() => {
     const sectionByHash: Record<string, SetupSectionId> = {
@@ -294,7 +297,7 @@ export default function AdminSetupPanel({
         description={`${organizationName} is the display name shown throughout GameDay.`}
         id="organization"
         isOpen={openSection === "organization"}
-        label="Organization"
+        label={workspaceLabel}
         onToggle={() =>
           setOpenSection(openSection === "organization" ? null : "organization")
         }
@@ -304,7 +307,7 @@ export default function AdminSetupPanel({
           <p className="text-lg font-bold text-white">{organizationName}</p>
           <label className="block">
             <span className="text-sm font-semibold text-slate-300">
-              Display Name
+              Workspace Name
             </span>
             <input
               className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
@@ -324,14 +327,14 @@ export default function AdminSetupPanel({
             }
             type="button"
           >
-            Save Organization
+            Save Workspace
           </button>
           <details className="text-xs text-slate-500">
             <summary className="cursor-pointer font-semibold">
               Technical details
             </summary>
             <p className="mt-2 break-all">
-              Internal Organization ID: {organizationId}
+              Internal Workspace ID: {organizationId}
             </p>
           </details>
         </div>
@@ -357,13 +360,15 @@ export default function AdminSetupPanel({
 
       <SetupHubSection
         description={
-          activeTeams.length > 0
+          isSingleTeamWorkspace && activeTeams.length > 0
+            ? `${activeTeams[0]?.name ?? "The team"} is the active Team Builder team.`
+            : activeTeams.length > 0
             ? `${activeTeams.length} active team${activeTeams.length === 1 ? "" : "s"} available for registration.`
             : "Create an active team before opening registration."
         }
         id="team"
         isOpen={openSection === "teams"}
-        label="Teams"
+        label={isSingleTeamWorkspace ? "Team" : "Teams"}
         onToggle={() =>
           setOpenSection(openSection === "teams" ? null : "teams")
         }
@@ -371,11 +376,13 @@ export default function AdminSetupPanel({
       >
         <div className="grid gap-6 lg:grid-cols-2">
           <div>
-            <h3 className="font-bold text-white">Create Team</h3>
+            <h3 className="font-bold text-white">
+              {isSingleTeamWorkspace ? "Team Builder Team" : "Create Team"}
+            </h3>
             {isSingleTeamWorkspace && teams.length > 0 ? (
               <p className="mt-3 rounded-md bg-slate-950 p-3 text-sm text-slate-300">
-                This individual team workspace already has its team. Manage
-                that team instead of creating another one.
+                This is a single-team workspace. Upgrade to organization to add
+                more teams. Manage this team below for now.
               </p>
             ) : (
             <div className="mt-3 space-y-3">
@@ -448,23 +455,33 @@ export default function AdminSetupPanel({
 
       <SetupHubSection
         description={
-          currentInviteCount > 0
+          isSingleTeamWorkspace && currentInviteCount > 0
+            ? "A team registration link exists for this workspace."
+            : currentInviteCount > 0
             ? `${currentInviteCount} current invite${currentInviteCount === 1 ? "" : "s"}.`
-            : "Create an invite after an active team exists."
+            : isSingleTeamWorkspace
+              ? "Create a real team registration link after the team exists."
+              : "Create an invite after an active team exists."
         }
         id="registration-invites"
         isOpen={openSection === "invites"}
-        label="Registration Invites"
+        label={isSingleTeamWorkspace ? "Team Registration Link" : "Registration Invites"}
         onToggle={() =>
           setOpenSection(openSection === "invites" ? null : "invites")
         }
         status={currentInviteCount > 0 ? "Configured" : activeTeams.length > 0 ? "Next" : "Waiting"}
       >
-        <RegistrationInviteManager embedded organizationId={organizationId} registrationInvites={registrationInvites} teams={teams} />
+        <RegistrationInviteManager
+          embedded
+          organizationId={organizationId}
+          registrationInvites={registrationInvites}
+          teams={teams}
+          workspaceType={isSingleTeamWorkspace ? "single_team" : "organization"}
+        />
       </SetupHubSection>
 
       <SetupHubSection
-        description="A compact count of the real records in this organization."
+        description="A compact count of the real records in this workspace."
         id="current-setup"
         isOpen={openSection === "summary"}
         label="Current Setup Summary"
@@ -474,7 +491,7 @@ export default function AdminSetupPanel({
         status="Overview"
       >
         <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
-          {[{ label: "Organizations", value: organizations.length }, { label: "Teams", value: teams.length }, { label: "Members", value: organizationMemberships.length }, { label: "Coach assignments", value: coachAssignments.length }, { label: "Invites", value: registrationInvites.length }].map((item) => (
+          {[{ label: "Workspaces", value: organizations.length }, { label: "Teams", value: teams.length }, { label: "Members", value: organizationMemberships.length }, { label: "Coach assignments", value: coachAssignments.length }, { label: "Invites", value: registrationInvites.length }].map((item) => (
             <div className="rounded-md bg-slate-950 p-3" key={item.label}>
               <p className="text-2xl font-bold text-white">{item.value}</p>
               <p className="mt-1 text-xs text-slate-400">{item.label}</p>

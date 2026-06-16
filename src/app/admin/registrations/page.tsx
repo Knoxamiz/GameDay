@@ -15,6 +15,7 @@ import {
   resolveActiveAdminOrganizationContext,
 } from "../../data/adminOrganizationScope.server";
 import { getCurrentAuthSession } from "../../data/currentUser.server";
+import { getOrganizationWorkspaceType } from "../../data/organizations";
 import { getLandingRouteForSession } from "../../data/sessionAccess.server";
 
 export const dynamic = "force-dynamic";
@@ -58,6 +59,7 @@ export default async function AdminRegistrationsPage({
         registrationInvites: adminHomeReadModel.registrationInvites,
         registrations: registrationReadModel.registrations,
         teams: adminHomeReadModel.teams,
+        workspaceType: getOrganizationWorkspaceType(adminHomeReadModel.organization),
       })
     : null;
   const setupHref = withActiveOrganization(

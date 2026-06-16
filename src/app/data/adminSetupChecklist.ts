@@ -8,7 +8,11 @@ import {
   getRegistrationInviteStatus,
   type RegistrationInvite,
 } from "./invites";
-import type { Organization } from "./organizations";
+import {
+  getOrganizationWorkspaceType,
+  type Organization,
+  type OrganizationWorkspaceType,
+} from "./organizations";
 import {
   isCoachVisibleRosterRegistration,
   isRegistrationPending,
@@ -49,6 +53,7 @@ export type AdminSetupChecklistModel = {
   nextRequiredStep?: AdminSetupChecklistStep;
   requiredStepCount: number;
   steps: AdminSetupChecklistStep[];
+  workspaceType: OrganizationWorkspaceType;
 };
 
 type AdminSetupChecklistInput = {
@@ -85,6 +90,8 @@ export function buildAdminSetupChecklist({
   teams,
 }: AdminSetupChecklistInput): AdminSetupChecklistModel {
   const organizationId = activeOrganization?.id;
+  const workspaceType = getOrganizationWorkspaceType(activeOrganization);
+  const isSingleTeamWorkspace = workspaceType === "single_team";
   const organizationTeams = organizationId
     ? teams.filter((team) => team.organizationId === organizationId)
     : [];
@@ -142,56 +149,84 @@ export function buildAdminSetupChecklist({
   const steps: AdminSetupChecklistStep[] = [
     {
       actionHref: "/admin/setup#organization",
-      actionLabel: hasOrganization ? "View organization" : "Create organization",
+      actionLabel: hasOrganization ? "View workspace" : "Create workspace",
       count: hasOrganization ? 1 : 0,
       description: hasOrganization
-        ? `${activeOrganization?.name} is the active organization.`
-        : "Create the organization record and owner membership first.",
+        ? isSingleTeamWorkspace
+          ? `${activeOrganization?.name} is the active team workspace.`
+          : `${activeOrganization?.name} is the active organization.`
+        : "Create the workspace record and owner membership first.",
       id: "organization",
-      label: "Organization",
+      label: "Workspace",
       required: true,
       status: hasOrganization ? "complete" : "next",
     },
     {
       actionHref: "/admin/setup#team",
-      actionLabel: hasActiveTeam ? "Manage teams" : "Create active team",
+      actionLabel: hasActiveTeam
+        ? isSingleTeamWorkspace
+          ? "Manage team"
+          : "Manage teams"
+        : "Create active team",
       count: activeTeams.length,
       description: hasActiveTeam
-        ? `${activeTeams.length} active team${activeTeams.length === 1 ? "" : "s"} available.`
+        ? isSingleTeamWorkspace
+          ? `${activeTeams[0]?.name ?? "The team"} is active.`
+          : `${activeTeams.length} active team${activeTeams.length === 1 ? "" : "s"} available.`
         : hasOrganization
           ? "Create an active team before opening registration."
-          : "An organization is required before teams can be created.",
+          : "A workspace is required before teams can be created.",
       id: "team",
-      label: "Active team",
+      label: isSingleTeamWorkspace ? "Team" : "Active team",
       required: true,
       status: hasActiveTeam ? "complete" : hasOrganization ? "next" : "waiting",
     },
     {
       actionHref: "/admin/setup#registration-invites",
-      actionLabel: hasInvite ? "Manage invites" : "Create invite",
+      actionLabel: hasInvite
+        ? isSingleTeamWorkspace
+          ? "Manage link"
+          : "Manage invites"
+        : isSingleTeamWorkspace
+          ? "Create registration link"
+          : "Create invite",
       count: currentInvites.length,
       description: hasInvite
-        ? `${currentInvites.length} current registration invite${currentInvites.length === 1 ? "" : "s"} exist.`
+        ? isSingleTeamWorkspace
+          ? "A team registration link exists."
+          : `${currentInvites.length} current registration invite${currentInvites.length === 1 ? "" : "s"} exist.`
         : hasActiveTeam
-          ? "Create a registration invite for an active team."
+          ? isSingleTeamWorkspace
+            ? "Create the real join link parents will use to register."
+            : "Create a registration invite for an active team."
           : "An active team is required before creating an invite.",
       id: "invite",
-      label: "Registration invite",
+      label: isSingleTeamWorkspace ? "Registration link" : "Registration invite",
       required: true,
       status: hasInvite ? "complete" : hasActiveTeam ? "next" : "waiting",
     },
     {
       actionHref: "/admin/setup#registration-invites",
-      actionLabel: hasOpenInvite ? "Manage open invite" : "Open registration",
+      actionLabel: hasOpenInvite
+        ? isSingleTeamWorkspace
+          ? "Copy join link"
+          : "Manage open invite"
+        : isSingleTeamWorkspace
+          ? "Open team registration"
+          : "Open registration",
       count: availableInvites.length,
       description: hasOpenInvite
-        ? "A date-valid, capacity-available invite is open for registration."
+        ? isSingleTeamWorkspace
+          ? "The team join link is open for parent registration."
+          : "A date-valid, capacity-available invite is open for registration."
         : hasInvite
-          ? "Open an invite with a valid schedule and available capacity."
+          ? isSingleTeamWorkspace
+            ? "Open the team registration link when parents can register."
+            : "Open an invite with a valid schedule and available capacity."
           : "Create an invite before opening registration.",
       id: "registration-open",
       joinPath,
-      label: "Registration open",
+      label: isSingleTeamWorkspace ? "Team registration open" : "Registration open",
       required: true,
       status: hasOpenInvite ? "complete" : hasInvite ? "next" : "waiting",
     },
@@ -202,14 +237,16 @@ export function buildAdminSetupChecklist({
       description:
         activeCoachAssignments.length > 0
           ? `${activeCoachAssignments.length} active assignment${activeCoachAssignments.length === 1 ? "" : "s"} cover active teams.`
-          : "Optional: assign a coach when the team is ready for operations.",
+          : isSingleTeamWorkspace
+            ? "Optional: owner can operate through admin tools; assign a coach for coach dashboard access."
+            : "Optional: assign a coach when the team is ready for operations.",
       id: "coach",
       label: "Coach assignment",
       required: false,
       status: activeCoachAssignments.length > 0 ? "complete" : "optional",
     },
     {
-      actionHref: "/events",
+      actionHref: "/admin/schedule?action=create-event#create-event",
       actionLabel: publishedEvents.length > 0 ? "View schedule" : "Create event",
       count: publishedEvents.length,
       description:
@@ -266,5 +303,6 @@ export function buildAdminSetupChecklist({
     nextRequiredStep,
     requiredStepCount: requiredSteps.length,
     steps,
+    workspaceType,
   };
 }

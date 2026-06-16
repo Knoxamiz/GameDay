@@ -14,6 +14,7 @@ import {
   type RegistrationInvite,
 } from "./invites";
 import { isPaymentOpen } from "./payments";
+import type { OrganizationWorkspaceType } from "./organizations";
 import {
   getRegistrationRosterStatus,
   isCoachVisibleRosterRegistration,
@@ -62,6 +63,7 @@ type AdminOperatingModelInput = {
   registrationInvites: RegistrationInvite[];
   registrations: Registration[];
   teams: Team[];
+  workspaceType?: OrganizationWorkspaceType;
 };
 
 function getInviteRegistrationCount(
@@ -136,24 +138,34 @@ function getStageLabel({
   openInvites,
   pendingRegistrations,
   rosteredRegistrations,
+  workspaceType,
 }: {
   activeTeams: Team[];
   currentInvites: RegistrationInvite[];
   openInvites: RegistrationInvite[];
   pendingRegistrations: Registration[];
   rosteredRegistrations: Registration[];
+  workspaceType?: OrganizationWorkspaceType;
 }) {
+  const isSingleTeamWorkspace = workspaceType === "single_team";
+
   if (activeTeams.length === 0) {
     return {
-      description: "Create the first active team or age group.",
-      label: "Workspace setup",
+      description: isSingleTeamWorkspace
+        ? "Create the team record for this Team Builder workspace."
+        : "Create the first active team or age group.",
+      label: isSingleTeamWorkspace ? "Team Builder setup" : "Workspace setup",
     };
   }
 
   if (currentInvites.length === 0 || openInvites.length === 0) {
     return {
-      description: "Configure registration access for families.",
-      label: "Registration setup",
+      description: isSingleTeamWorkspace
+        ? "Create and open the team registration link for families."
+        : "Configure registration access for families.",
+      label: isSingleTeamWorkspace
+        ? "Team registration setup"
+        : "Registration setup",
     };
   }
 
@@ -166,14 +178,18 @@ function getStageLabel({
 
   if (rosteredRegistrations.length === 0) {
     return {
-      description: "Registration is open and waiting for rostered athletes.",
-      label: "Registration intake",
+      description: isSingleTeamWorkspace
+        ? "The team link is open and waiting for rostered players."
+        : "Registration is open and waiting for rostered athletes.",
+      label: isSingleTeamWorkspace ? "Player intake" : "Registration intake",
     };
   }
 
   return {
-    description: "Teams, roster, and schedule are ready for daily operations.",
-    label: "Active operations",
+    description: isSingleTeamWorkspace
+      ? "Team roster and schedule are ready for daily operations."
+      : "Teams, roster, and schedule are ready for daily operations.",
+    label: isSingleTeamWorkspace ? "Team operations" : "Active operations",
   };
 }
 
@@ -183,7 +199,9 @@ export function buildAdminOperatingModel({
   registrationInvites,
   registrations,
   teams,
+  workspaceType,
 }: AdminOperatingModelInput): AdminOperatingModel {
+  const isSingleTeamWorkspace = workspaceType === "single_team";
   const activeTeams = teams.filter(isActiveTeam);
   const activeTeamIdSet = new Set(activeTeams.map((team) => team.id));
   const currentInvites = registrationInvites.filter(
@@ -206,10 +224,9 @@ export function buildAdminOperatingModel({
   const rosteredRegistrations = registrations.filter(
     isCoachVisibleRosterRegistration,
   );
-  const teamsNeedingCoaches = getTeamsNeedingActiveCoachAssignments(
-    activeTeams,
-    coachAssignments,
-  );
+  const teamsNeedingCoaches = isSingleTeamWorkspace
+    ? []
+    : getTeamsNeedingActiveCoachAssignments(activeTeams, coachAssignments);
   const rosteredTeamsWithoutEvents = getRosteredTeamsWithoutPublishedEvents(
     activeTeams,
     registrations,
@@ -222,6 +239,7 @@ export function buildAdminOperatingModel({
     openInvites,
     pendingRegistrations,
     rosteredRegistrations,
+    workspaceType,
   });
   const joinPath = openInvites[0]?.inviteCode
     ? `/join/${openInvites[0].inviteCode}`
@@ -235,32 +253,44 @@ export function buildAdminOperatingModel({
 
   if (activeTeams.length === 0) {
     nextAction = {
-      description: "Start by creating the first active team or age group.",
+      description: isSingleTeamWorkspace
+        ? "Create the active team for this Team Builder workspace."
+        : "Start by creating the first active team or age group.",
       href: "/admin/setup#team",
       id: "create-team",
       label: "Create team",
     };
   } else if (currentInvites.length === 0) {
     nextAction = {
-      description: "Create the invite parents will use to register athletes.",
+      description: isSingleTeamWorkspace
+        ? "Create the real join link parents will use to register players."
+        : "Create the invite parents will use to register athletes.",
       href: "/admin/setup#registration-invites",
       id: "create-invite",
-      label: "Create invite",
+      label: isSingleTeamWorkspace
+        ? "Create registration link"
+        : "Create invite",
     };
   } else if (openInvites.length === 0) {
     nextAction = {
-      description: "Open a valid invite so parents can register.",
+      description: isSingleTeamWorkspace
+        ? "Open the team registration link so parents can register."
+        : "Open a valid invite so parents can register.",
       href: "/admin/setup#registration-invites",
       id: "open-registration",
-      label: "Open registration",
+      label: isSingleTeamWorkspace
+        ? "Open team registration"
+        : "Open registration",
     };
   } else if (registrations.length === 0) {
     nextAction = {
-      description: "Share the open invite link with families.",
+      description: isSingleTeamWorkspace
+        ? "Share the open team join link with families."
+        : "Share the open invite link with families.",
       href: "/admin/setup#registration-invites",
       id: "copy-join-link",
       joinPath,
-      label: "Copy join link",
+      label: isSingleTeamWorkspace ? "Copy team join link" : "Copy join link",
     };
   } else if (pendingRegistrations.length > 0) {
     nextAction = {

@@ -69,7 +69,10 @@ export default function AdminWorkspaceEntry({
       }
 
       window.location.assign(
-        withActiveOrganization("/admin/setup", body.id),
+        withActiveOrganization(
+          workspaceType === "single_team" ? "/admin" : "/admin/setup",
+          body.id,
+        ),
       );
     } catch (creationError) {
       setError(
@@ -104,7 +107,7 @@ export default function AdminWorkspaceEntry({
             </p>
             <h1 className="mt-2 text-3xl font-bold">Choose a workspace</h1>
             <p className="mt-2 text-sm text-slate-300">
-              Select the organization or individual team you want to manage.
+              Select the organization or team workspace you want to manage.
             </p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               {organizations.map((organization) => (
@@ -133,7 +136,7 @@ export default function AdminWorkspaceEntry({
             </p>
             <h1 className="mt-2 text-3xl font-bold">Create your workspace</h1>
             <p className="mt-2 text-sm text-slate-300">
-              Choose the structure that matches what you manage today.
+              Start with one team fast, or set up a multi-team organization.
             </p>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -149,7 +152,7 @@ export default function AdminWorkspaceEntry({
               >
                 <p className="font-bold">Create Organization</p>
                 <p className="mt-2 text-sm text-slate-300">
-                  Create an organization for multiple teams.
+                  Create a workspace for multiple teams, coaches, and divisions.
                 </p>
               </button>
               <button
@@ -162,9 +165,10 @@ export default function AdminWorkspaceEntry({
                 onClick={() => setWorkspaceType("single_team")}
                 type="button"
               >
-                <p className="font-bold">Create Individual Team</p>
+                <p className="font-bold">Team Builder</p>
                 <p className="mt-2 text-sm text-slate-300">
-                  Create an individual team workspace for one team.
+                  Create one real team workspace, then open registration and
+                  share the join link.
                 </p>
               </button>
             </div>
@@ -176,7 +180,7 @@ export default function AdminWorkspaceEntry({
               >
                 <h2 className="font-bold">
                   {workspaceType === "single_team"
-                    ? "Individual Team Details"
+                    ? "Team Builder Details"
                     : "Organization Details"}
                 </h2>
                 <div className="mt-4 space-y-4">
@@ -237,7 +241,7 @@ export default function AdminWorkspaceEntry({
                       {isSaving
                         ? "Creating..."
                         : workspaceType === "single_team"
-                          ? "Create Individual Team"
+                          ? "Create Team Workspace"
                           : "Create Organization"}
                     </button>
                     <button
@@ -261,7 +265,7 @@ export default function AdminWorkspaceEntry({
             <h1 className="mt-2 text-3xl font-bold">No manageable workspace</h1>
             <p className="mt-3 max-w-xl text-sm text-slate-300">
               This account does not have an active owner or admin membership,
-              and it is not allowed to create a workspace. Ask an organization
+              and it is not allowed to create a workspace. Ask a workspace
               owner to invite or reactivate this account.
             </p>
             <Link

@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import type { Organization } from "../data/organizations";
+import {
+  getOrganizationWorkspaceTypeLabel,
+  type Organization,
+} from "../data/organizations";
 import { withActiveOrganization } from "../data/activeOrganization";
 import AdminOrganizationSelector from "./AdminOrganizationSelector";
 import SessionControls from "./SessionControls";
@@ -51,11 +54,16 @@ export default function AdminAppShell({
   organizations,
   title,
 }: AdminAppShellProps) {
+  const activeOrganization = organizations.find(
+    (organization) => organization.id === activeOrganizationId,
+  );
+  const workspaceTypeLabel =
+    getOrganizationWorkspaceTypeLabel(activeOrganization);
   const organizationLabel = activeOrganizationName
     ? activeOrganizationName
     : organizations.length > 0
-      ? "Choose an organization"
-      : "No organization yet";
+      ? "Choose a workspace"
+      : "No workspace yet";
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -70,7 +78,7 @@ export default function AdminAppShell({
                 GameDay
               </Link>
               <p className="mt-1 text-xs font-semibold uppercase text-blue-300">
-                Admin / Owner
+                {workspaceTypeLabel}
               </p>
               {accountLabel && (
                 <p className="mt-1 text-sm text-slate-400">{accountLabel}</p>
@@ -103,7 +111,7 @@ export default function AdminAppShell({
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase text-slate-500">
-                Current organization
+                Current workspace
               </p>
               <p className="mt-1 font-semibold text-white">{organizationLabel}</p>
             </div>
