@@ -69,13 +69,6 @@ function getInitials(name: string) {
   return initials || "CT";
 }
 
-function getOrganizationTeamCount(
-  organizationId: string,
-  teams: AdminTeamChoice[],
-) {
-  return teams.filter((team) => team.organizationId === organizationId).length;
-}
-
 function CardShell({
   body,
   icon,
@@ -485,72 +478,40 @@ export default function AdminContextHome({
             />
             {activePanel === "select-organization" && (
               <InlineDropdown>
-                <h2 className="text-2xl font-bold">Select Organization</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Each organization is its own GameDay workspace. Teams,
-                  rosters, schedules, registration links, documents, and parent
-                  data stay inside the organization you open.
-                </p>
                 {organizations.length > 0 ? (
-                  <div className="mt-4 space-y-3">
+                  <ul className="divide-y divide-slate-200" aria-label="Organizations">
                     {organizations.map((organization) => {
                       const isActive = organization.id === activeOrganizationId;
-                      const teamCount = getOrganizationTeamCount(
-                        organization.id,
-                        teams,
-                      );
 
                       return (
-                        <Link
-                          className={`block rounded-lg border p-4 transition hover:border-blue-300 ${
-                            isActive
-                              ? "border-blue-500 bg-blue-50"
-                              : "border-slate-200"
-                          }`}
-                          href={withActiveOrganization("/admin", organization.id)}
-                          key={organization.id}
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            <div>
-                              <p className="font-bold">{organization.name}</p>
-                              <p className="mt-1 text-sm text-slate-500">
-                                Separate workspace
-                              </p>
-                            </div>
-                            <span
-                              className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                                isActive
-                                  ? "bg-blue-600 text-white"
-                                  : "bg-slate-100 text-slate-600"
-                              }`}
-                            >
-                              {isActive ? "Selected" : "Open"}
+                        <li key={organization.id}>
+                          <Link
+                            aria-current={isActive ? "page" : undefined}
+                            className="flex items-center justify-between gap-4 rounded-md px-3 py-4 text-left transition hover:bg-blue-50 focus:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            href={withActiveOrganization("/admin", organization.id)}
+                          >
+                            <span className="min-w-0">
+                              <span className="block truncate text-lg font-bold text-[#071635]">
+                                {organization.name}
+                              </span>
+                              {isActive && (
+                                <span className="mt-1 block text-sm font-semibold text-blue-600">
+                                  Current workspace
+                                </span>
+                              )}
                             </span>
-                          </div>
-                          <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                            <div className="rounded-md bg-white/70 p-3">
-                              <p className="text-slate-500">Teams</p>
-                              <p className="mt-1 font-bold text-slate-900">
-                                {teamCount}
-                              </p>
-                            </div>
-                            <div className="rounded-md bg-white/70 p-3">
-                              <p className="text-slate-500">Data</p>
-                              <p className="mt-1 font-bold text-slate-900">
-                                Isolated
-                              </p>
-                            </div>
-                          </div>
-                          <p className="mt-4 text-sm font-semibold text-blue-600">
-                            Open workspace
-                          </p>
-                        </Link>
+                            <span className="flex shrink-0 items-center gap-3 text-sm font-semibold text-blue-600">
+                              Open
+                              <ChevronRightIcon className="size-5" />
+                            </span>
+                          </Link>
+                        </li>
                       );
                     })}
-                  </div>
+                  </ul>
                 ) : (
-                  <p className="mt-4 rounded-md bg-slate-50 p-4 text-slate-600">
-                    No organizations yet. Create one to begin.
+                  <p className="rounded-md bg-slate-50 p-4 text-sm font-semibold text-slate-600">
+                    No organizations on this account yet.
                   </p>
                 )}
               </InlineDropdown>
