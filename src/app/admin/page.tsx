@@ -5,10 +5,7 @@ import AdminContextHome, {
 import AdminOrganizationWorkspaceHome from "../components/AdminOrganizationWorkspaceHome";
 import { getAdminHomeReadModel } from "../data/adminHomeRead.server";
 import { buildAdminOperatingModel } from "../data/adminOperatingModel";
-import {
-  getRequestedOrganizationId,
-  withActiveOrganization,
-} from "../data/activeOrganization";
+import { getRequestedOrganizationId } from "../data/activeOrganization";
 import {
   canAccessAdmin,
   canUseAdminSetup,
@@ -29,12 +26,6 @@ type AdminHomeProps = {
   }>;
 };
 
-function getRequestedView(value?: string | string[]) {
-  const view = Array.isArray(value) ? value[0] : value;
-
-  return view?.trim();
-}
-
 export default async function AdminHome({ searchParams }: AdminHomeProps) {
   const session = await getCurrentAuthSession();
 
@@ -46,8 +37,6 @@ export default async function AdminHome({ searchParams }: AdminHomeProps) {
   const requestedOrganizationId = getRequestedOrganizationId(
     resolvedSearchParams?.organizationId,
   );
-  const requestedView = getRequestedView(resolvedSearchParams?.view);
-  const shouldShowWorkspacePicker = requestedView === "workspaces";
   const activeContext = await resolveActiveAdminOrganizationContext(
     session,
     requestedOrganizationId,
@@ -55,14 +44,6 @@ export default async function AdminHome({ searchParams }: AdminHomeProps) {
 
   if (!canAccessAdmin(activeContext.scope)) {
     redirect(await getLandingRouteForSession(session, session.claims.role));
-  }
-
-  if (activeContext.organizations.length === 1 && !shouldShowWorkspacePicker) {
-    const onlyOrganizationId = activeContext.organizations[0].id;
-
-    if (requestedOrganizationId !== onlyOrganizationId) {
-      redirect(withActiveOrganization("/admin", onlyOrganizationId));
-    }
   }
 
   const activeOrganizationId = activeContext.activeOrganizationId;
@@ -94,7 +75,7 @@ export default async function AdminHome({ searchParams }: AdminHomeProps) {
     (organization) => getOrganizationWorkspaceType(organization) !== "single_team",
   );
 
-  if (activeOrganizationId && !shouldShowWorkspacePicker) {
+  if (requestedOrganizationId && activeOrganizationId) {
     const activeReadModel =
       organizationReadModels.find(
         (readModel) => readModel.organization.id === activeOrganizationId,
