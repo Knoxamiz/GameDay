@@ -1112,7 +1112,7 @@ async function createProvisionedWorkspace(
   };
 
   await runFirestoreTransaction(async (transaction) => {
-    const [existingOrganization, existingMembership, existingTeam, memberships] =
+    const [existingOrganization, existingMembership, existingTeam] =
       await Promise.all([
       transaction.get<Organization>("organizations", organization.id),
       transaction.get<OrganizationMembership>(
@@ -1122,33 +1122,7 @@ async function createProvisionedWorkspace(
       team
         ? transaction.get<Team>("teams", team.id)
         : Promise.resolve(null),
-      transaction.list<OrganizationMembership>("organizationMemberships", {
-        scope: { uid: session.user.id },
-      }),
     ]);
-
-    const managerOrganizationIds = uniqueStringList([
-      ...scope.claimOrganizationIds,
-      ...memberships
-        .filter(canManageOrganizationMembership)
-        .map((candidate) => candidate.organizationId),
-    ]);
-    const managedOrganizations = await Promise.all(
-      managerOrganizationIds.map((managedOrganizationId) =>
-        transaction.get<Organization>(
-          "organizations",
-          managedOrganizationId,
-        ),
-      ),
-    );
-
-    if (managedOrganizations.some(Boolean)) {
-      createSetupError(
-        "workspace-provisioning-scope-exists",
-        "This account already manages a workspace.",
-        403,
-      );
-    }
 
     if (existingOrganization || existingMembership || existingTeam) {
       createSetupError(
