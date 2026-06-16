@@ -8,6 +8,7 @@ import {
 } from "../data/organizations";
 import type { Team } from "../data/teams";
 import AdminAnnouncementForm from "./AdminAnnouncementForm";
+import BackButton from "./BackButton";
 import SessionControls from "./SessionControls";
 
 type AdminOrganizationWorkspaceHomeProps = {
@@ -299,6 +300,10 @@ export default function AdminOrganizationWorkspaceHome({
       : currentSection === "announcements"
         ? "/admin/announcements"
         : "/admin";
+  const backFallbackHref =
+    currentSection === "overview"
+      ? "/admin"
+      : withActiveOrganization("/admin", activeOrganizationId);
 
   return (
     <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
@@ -335,8 +340,9 @@ export default function AdminOrganizationWorkspaceHome({
         </aside>
 
         <div className="min-w-0 flex-1">
-          <header className="flex min-h-16 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6">
-            <div className="min-w-0">
+          <header className="flex min-h-16 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 sm:px-6">
+            <div className="flex min-w-0 items-center gap-3">
+              <BackButton fallbackHref={backFallbackHref} />
               <p className="truncate text-sm font-semibold text-slate-500">
                 Organizations / {organization.name}
               </p>
