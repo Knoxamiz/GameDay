@@ -488,7 +488,10 @@ export default function AdminContextHome({
                           <Link
                             aria-current={isActive ? "page" : undefined}
                             className="flex items-center justify-between gap-4 rounded-md px-3 py-4 text-left transition hover:bg-blue-50 focus:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            href={withActiveOrganization("/admin", organization.id)}
+                            href={withActiveOrganization(
+                              "/admin/setup",
+                              organization.id,
+                            )}
                           >
                             <span className="min-w-0">
                               <span className="block truncate text-lg font-bold text-[#071635]">
