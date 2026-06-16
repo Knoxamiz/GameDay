@@ -2,7 +2,9 @@ import { redirect } from "next/navigation";
 import AdminContextHome, {
   type AdminTeamChoice,
 } from "../components/AdminContextHome";
+import AdminOrganizationWorkspaceHome from "../components/AdminOrganizationWorkspaceHome";
 import { getAdminHomeReadModel } from "../data/adminHomeRead.server";
+import { buildAdminOperatingModel } from "../data/adminOperatingModel";
 import {
   getRequestedOrganizationId,
   withActiveOrganization,
@@ -13,6 +15,7 @@ import {
   resolveActiveAdminOrganizationContext,
 } from "../data/adminOrganizationScope.server";
 import { getCurrentAuthSession } from "../data/currentUser.server";
+import { buildAdminSetupChecklist } from "../data/adminSetupChecklist";
 import { getOrganizationWorkspaceType } from "../data/organizations";
 import { isActiveTeam } from "../data/teams";
 import { getLandingRouteForSession } from "../data/sessionAccess.server";
@@ -22,8 +25,15 @@ export const dynamic = "force-dynamic";
 type AdminHomeProps = {
   searchParams?: Promise<{
     organizationId?: string | string[];
+    view?: string | string[];
   }>;
 };
+
+function getRequestedView(value?: string | string[]) {
+  const view = Array.isArray(value) ? value[0] : value;
+
+  return view?.trim();
+}
 
 export default async function AdminHome({ searchParams }: AdminHomeProps) {
   const session = await getCurrentAuthSession();
@@ -32,9 +42,12 @@ export default async function AdminHome({ searchParams }: AdminHomeProps) {
     redirect("/login");
   }
 
+  const resolvedSearchParams = await searchParams;
   const requestedOrganizationId = getRequestedOrganizationId(
-    (await searchParams)?.organizationId,
+    resolvedSearchParams?.organizationId,
   );
+  const requestedView = getRequestedView(resolvedSearchParams?.view);
+  const shouldShowWorkspacePicker = requestedView === "workspaces";
   const activeContext = await resolveActiveAdminOrganizationContext(
     session,
     requestedOrganizationId,
@@ -44,7 +57,7 @@ export default async function AdminHome({ searchParams }: AdminHomeProps) {
     redirect(await getLandingRouteForSession(session, session.claims.role));
   }
 
-  if (activeContext.organizations.length === 1) {
+  if (activeContext.organizations.length === 1 && !shouldShowWorkspacePicker) {
     const onlyOrganizationId = activeContext.organizations[0].id;
 
     if (requestedOrganizationId !== onlyOrganizationId) {
@@ -80,6 +93,40 @@ export default async function AdminHome({ searchParams }: AdminHomeProps) {
   const organizations = activeContext.organizations.filter(
     (organization) => getOrganizationWorkspaceType(organization) !== "single_team",
   );
+
+  if (activeOrganizationId && !shouldShowWorkspacePicker) {
+    const activeReadModel =
+      organizationReadModels.find(
+        (readModel) => readModel.organization.id === activeOrganizationId,
+      ) ?? organizationReadModels[0];
+    const setupChecklist = buildAdminSetupChecklist({
+      activeOrganization: activeReadModel.organization,
+      coachAssignments: activeReadModel.coachAssignments,
+      events: activeReadModel.events,
+      registrationInvites: activeReadModel.registrationInvites,
+      registrations: activeReadModel.registrations,
+      teams: activeReadModel.teams,
+    });
+    const operatingModel = buildAdminOperatingModel({
+      coachAssignments: activeReadModel.coachAssignments,
+      events: activeReadModel.events,
+      registrationInvites: activeReadModel.registrationInvites,
+      registrations: activeReadModel.registrations,
+      teams: activeReadModel.teams,
+      workspaceType: getOrganizationWorkspaceType(activeReadModel.organization),
+    });
+
+    return (
+      <AdminOrganizationWorkspaceHome
+        accountLabel={session.user.email}
+        activeOrganizationId={activeOrganizationId}
+        operatingModel={operatingModel}
+        organizations={activeContext.organizations}
+        readModel={activeReadModel}
+        setupChecklist={setupChecklist}
+      />
+    );
+  }
 
   return (
     <AdminContextHome

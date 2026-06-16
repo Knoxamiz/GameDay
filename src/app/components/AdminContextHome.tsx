@@ -489,7 +489,7 @@ export default function AdminContextHome({
                             aria-current={isActive ? "page" : undefined}
                             className="flex items-center justify-between gap-4 rounded-md px-3 py-4 text-left transition hover:bg-blue-50 focus:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             href={withActiveOrganization(
-                              "/admin/setup",
+                              "/admin",
                               organization.id,
                             )}
                           >
