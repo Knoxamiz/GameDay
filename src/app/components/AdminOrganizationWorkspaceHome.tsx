@@ -7,12 +7,13 @@ import {
   type Organization,
 } from "../data/organizations";
 import type { Team } from "../data/teams";
+import AdminAnnouncementForm from "./AdminAnnouncementForm";
 import SessionControls from "./SessionControls";
 
 type AdminOrganizationWorkspaceHomeProps = {
   accountLabel?: string;
   activeOrganizationId: string;
-  currentSection?: "alerts" | "overview";
+  currentSection?: "alerts" | "announcements" | "overview";
   operatingModel: AdminOperatingModel;
   organizations: Organization[];
   readModel: AdminHomeReadModel;
@@ -23,6 +24,7 @@ type WorkspaceIconName =
   | "calendar"
   | "clipboard"
   | "home"
+  | "message"
   | "people"
   | "settings"
   | "team";
@@ -41,6 +43,11 @@ const sidebarItems: {
     label: "Registrations",
   },
   { href: "/admin/schedule", icon: "calendar", label: "Schedule" },
+  {
+    href: "/admin/announcements",
+    icon: "message",
+    label: "Announcements",
+  },
   { href: "/admin/alerts", icon: "alert", label: "Alerts" },
   { href: "/admin/setup", icon: "settings", label: "Settings" },
 ];
@@ -104,6 +111,15 @@ function WorkspaceIcon({
         <path d="M16 21v-2a4 4 0 0 0-8 0v2" />
         <circle cx="12" cy="7" r="4" />
         <path d="M22 21v-2a4 4 0 0 0-3-3.87M2 21v-2a4 4 0 0 1 3-3.87" />
+      </svg>
+    );
+  }
+
+  if (name === "message") {
+    return (
+      <svg {...commonProps}>
+        <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z" />
+        <path d="M8 9h8M8 13h5" />
       </svg>
     );
   }
@@ -220,7 +236,11 @@ export default function AdminOrganizationWorkspaceHome({
   const currentInvites = operatingModel.currentInvites.filter((invite) =>
     activeTeamIdSet.has(invite.teamId),
   );
-  const recentAnnouncements = readModel.communications.slice(0, 3);
+  const recentAnnouncements = readModel.communications
+    .filter((message) => message.type === "Organization Announcement")
+    .slice()
+    .sort((first, second) => second.timestamp.localeCompare(first.timestamp))
+    .slice(0, 3);
   const alertItems = [
     activeTeams.length === 0
       ? {
@@ -274,7 +294,11 @@ export default function AdminOrganizationWorkspaceHome({
     } => Boolean(item),
   );
   const activeSectionHref =
-    currentSection === "alerts" ? "/admin/alerts" : "/admin";
+    currentSection === "alerts"
+      ? "/admin/alerts"
+      : currentSection === "announcements"
+        ? "/admin/announcements"
+        : "/admin";
 
   return (
     <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
@@ -354,16 +378,27 @@ export default function AdminOrganizationWorkspaceHome({
             {currentSection === "overview" && (
               <div className="mt-5 grid gap-4 lg:grid-cols-2">
                 <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <h2 className="text-lg font-black">Announcements</h2>
                       <p className="mt-1 text-sm text-slate-500">
                         New announcements and organization updates.
                       </p>
                     </div>
-                    <StatusPill tone="slate">
-                      {`${recentAnnouncements.length} new`}
-                    </StatusPill>
+                    <div className="flex items-center gap-2">
+                      <StatusPill tone="slate">
+                        {`${recentAnnouncements.length} new`}
+                      </StatusPill>
+                      <Link
+                        className="rounded-md bg-blue-600 px-3 py-2 text-sm font-black text-white hover:bg-blue-700"
+                        href={withActiveOrganization(
+                          "/admin/announcements?action=create#create-announcement",
+                          activeOrganizationId,
+                        )}
+                      >
+                        Create Announcement +
+                      </Link>
+                    </div>
                   </div>
                   <div className="mt-3">
                     {recentAnnouncements[0] ? (
@@ -477,6 +512,50 @@ export default function AdminOrganizationWorkspaceHome({
                   )}
                 </div>
               </section>
+            ) : currentSection === "announcements" ? (
+              <div className="mt-5 space-y-4">
+                <AdminAnnouncementForm
+                  activeOrganizationId={activeOrganizationId}
+                />
+
+                <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                  <div>
+                    <h2 className="text-2xl font-black">Announcements</h2>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Recent organization updates.
+                    </p>
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    {recentAnnouncements.length > 0 ? (
+                      recentAnnouncements.map((announcement) => (
+                        <article
+                          className="rounded-md border border-slate-200 bg-slate-50 p-3"
+                          key={announcement.id}
+                        >
+                          <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                            <h3 className="text-sm font-black">
+                              {announcement.subject}
+                            </h3>
+                            <time className="text-xs font-semibold text-slate-500">
+                              {new Date(
+                                announcement.timestamp,
+                              ).toLocaleDateString()}
+                            </time>
+                          </div>
+                          <p className="mt-2 text-sm text-slate-600">
+                            {announcement.content}
+                          </p>
+                        </article>
+                      ))
+                    ) : (
+                      <EmptyState>
+                        No announcements have been created for this organization.
+                      </EmptyState>
+                    )}
+                  </div>
+                </section>
+              </div>
             ) : (
             <>
               <section className="mt-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
