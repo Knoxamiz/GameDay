@@ -95,7 +95,7 @@ function SetupHubSection({
           <p className="mt-1 text-sm text-slate-400">{description}</p>
         </div>
         <span className="shrink-0 text-sm font-semibold text-blue-300">
-          {isOpen ? "Close" : "Manage"}
+          {isOpen ? "Close" : "Open"}
         </span>
       </button>
       {isOpen && <div className="border-t border-slate-800 p-4">{children}</div>}

@@ -796,7 +796,8 @@ export default function RegistrationReviewBoard({
         )}
         {registrations.length === 0 && (
           <p className="rounded-2xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300">
-            No registrations exist for the active organization.
+            No registrations exist for the active organization yet. Use the
+            registration pipeline above to open or share a real invite.
           </p>
         )}
         {registrations.map((registration) => (

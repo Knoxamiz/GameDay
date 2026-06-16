@@ -10,6 +10,7 @@ import { isActiveTeam, type Team } from "../data/teams";
 type AdminEventFormProps = {
   activeOrganizationId: string;
   canCreateEvents: boolean;
+  defaultOpen?: boolean;
   teams: Team[];
 };
 
@@ -70,6 +71,7 @@ function toIsoDateTime(value: string) {
 export default function AdminEventForm({
   activeOrganizationId,
   canCreateEvents,
+  defaultOpen = false,
   teams,
 }: AdminEventFormProps) {
   const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
@@ -149,11 +151,25 @@ export default function AdminEventForm({
   }
 
   return (
-    <section className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-      <h2 className="text-lg font-bold">Create Event</h2>
-      <p className="mt-2 text-sm text-slate-300">
-        Save a real schedule item for selected teams.
-      </p>
+    <details
+      className="mt-6 rounded-2xl border border-slate-800 bg-slate-900"
+      id="create-event"
+      open={defaultOpen}
+    >
+      <summary className="cursor-pointer list-none p-5 [&::-webkit-details-marker]:hidden">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-bold">Create Event</h2>
+            <p className="mt-2 text-sm text-slate-300">
+              Save a real schedule item for selected teams.
+            </p>
+          </div>
+          <span className="rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white">
+            Create event
+          </span>
+        </div>
+      </summary>
+      <div className="border-t border-slate-800 p-5">
 
       {message && (
         <p className="mt-4 rounded-xl border border-blue-500/30 bg-blue-500/10 p-3 text-sm font-semibold text-blue-200">
@@ -297,6 +313,7 @@ export default function AdminEventForm({
           </button>
         </div>
       )}
-    </section>
+      </div>
+    </details>
   );
 }

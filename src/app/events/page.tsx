@@ -18,6 +18,7 @@ import {
   getEventTeamIds,
   getEventTimeLabel,
   isArchivedEvent,
+  isUpcomingEvent,
 } from "../data/events";
 import { getEventScheduleReadModel } from "../data/eventSchedule.server";
 import { getOrganizationContext } from "../data/organizationContext.server";
@@ -28,12 +29,35 @@ import { createFirestoreRepositories } from "../infrastructure/firebaseRepositor
 export const dynamic = "force-dynamic";
 
 type EventsHomeProps = {
+  adminRouteBase?: boolean;
   searchParams?: Promise<{
+    action?: string | string[];
     organizationId?: string | string[];
   }>;
 };
 
-export default async function EventsHome({ searchParams }: EventsHomeProps) {
+function getRequestedAction(value?: string | string[]) {
+  const action = Array.isArray(value) ? value[0] : value;
+  const normalizedAction = action?.trim();
+
+  return normalizedAction || undefined;
+}
+
+function withOptionalAction(href: string, action?: string) {
+  if (!action) {
+    return href;
+  }
+
+  const url = new URL(href, "https://gameday.local");
+  url.searchParams.set("action", action);
+
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
+export default async function EventsHome({
+  adminRouteBase = false,
+  searchParams,
+}: EventsHomeProps) {
   const session = await getCurrentAuthSession();
 
   if (!session) {
@@ -45,9 +69,11 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
   if (role === "authenticated") {
     redirect("/login");
   }
+  const resolvedSearchParams = await searchParams;
   const requestedOrganizationId = getRequestedOrganizationId(
-    (await searchParams)?.organizationId,
+    resolvedSearchParams?.organizationId,
   );
+  const requestedAction = getRequestedAction(resolvedSearchParams?.action);
   const activeContext =
     role === "admin"
       ? await resolveActiveAdminOrganizationContext(
@@ -56,6 +82,19 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
         )
       : undefined;
   const activeOrganizationId = activeContext?.activeOrganizationId;
+  if (role === "admin" && activeContext && !adminRouteBase) {
+    redirect(
+      withOptionalAction(
+        withActiveOrganization("/admin/schedule", activeOrganizationId),
+        requestedAction,
+      ),
+    );
+  }
+
+  if (role === "admin" && activeContext?.requiresSelection) {
+    redirect("/admin");
+  }
+
   const schedule = await getEventScheduleReadModel(role, activeOrganizationId);
   const organizationContext = activeContext?.activeOrganization
     ? { count: 1, label: activeContext.activeOrganization.name }
@@ -67,6 +106,7 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
     role === "admin"
       ? schedule.events.filter((event) => !isArchivedEvent(event))
       : schedule.events;
+  const upcomingEvents = visibleEvents.filter((event) => isUpcomingEvent(event));
   const [attendanceLists, transportationLists] = repositories
     ? await Promise.all([
         Promise.all(
@@ -94,6 +134,8 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
       transportationLists[index] ?? [],
     ]),
   );
+  const scheduleIndexHref = adminRouteBase ? "/admin/schedule" : "/events";
+  const eventDetailsBaseHref = adminRouteBase ? "/admin/schedule" : "/events";
 
   const eventContent = (
     <>
@@ -110,27 +152,28 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
             <AdminEventForm
               activeOrganizationId={activeOrganizationId}
               canCreateEvents={schedule.canCreateEvents}
+              defaultOpen={
+                requestedAction === "create-event" || upcomingEvents.length === 0
+              }
               teams={schedule.teams}
             />
-            {schedule.canCreateEvents && (
-              <AdminEventLifecycleManager
-                activeOrganizationId={activeOrganizationId}
-                events={schedule.events}
-                teams={schedule.teams}
-              />
-            )}
           </>
         )}
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-2">
-          {visibleEvents.length === 0 && (
+        <section className="mt-6">
+          <h2 className="text-lg font-bold">Upcoming Events</h2>
+          <p className="mt-2 text-sm text-slate-300">
+            Published, draft, or canceled events still ahead on the schedule.
+          </p>
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          {upcomingEvents.length === 0 && (
             <p className="rounded-lg border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300 lg:col-span-2">
               {activeContext?.requiresSelection
                 ? "Choose an organization to view its schedule."
                 : "No events are scheduled for your current organization and team scope."}
             </p>
           )}
-          {visibleEvents.map((event) => {
+          {upcomingEvents.map((event) => {
             const eventTeams = getEventTeamIds(event)
               .map((teamId) => teamsById.get(teamId))
               .filter(Boolean);
@@ -149,7 +192,7 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
               <Link
                 key={event.id}
                 href={withActiveOrganization(
-                  `/events/${event.id}`,
+                  `${eventDetailsBaseHref}/${event.id}`,
                   activeOrganizationId,
                 )}
                 className="block rounded-lg border border-slate-800 bg-slate-900 p-5 shadow-lg"
@@ -212,6 +255,14 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
             );
           })}
         </div>
+        </section>
+        {role === "admin" && activeOrganizationId && schedule.canCreateEvents && (
+          <AdminEventLifecycleManager
+            activeOrganizationId={activeOrganizationId}
+            events={schedule.events}
+            teams={schedule.teams}
+          />
+        )}
     </>
   );
 
@@ -223,7 +274,7 @@ export default async function EventsHome({ searchParams }: EventsHomeProps) {
         activeOrganizationName={activeContext.activeOrganization?.name}
         currentSection="schedule"
         description="Create, publish, and monitor practices, games, tournaments, and meetings."
-        organizationSelectorAction="/events"
+        organizationSelectorAction={scheduleIndexHref}
         organizations={activeContext.organizations}
         title="Schedule"
       >

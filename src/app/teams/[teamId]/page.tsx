@@ -1,6 +1,9 @@
 import TeamDetails from "../../components/TeamDetails";
 import { redirect } from "next/navigation";
-import { getRequestedOrganizationId } from "../../data/activeOrganization";
+import {
+  getRequestedOrganizationId,
+  withActiveOrganization,
+} from "../../data/activeOrganization";
 import { resolveActiveAdminOrganizationContext } from "../../data/adminOrganizationScope.server";
 import { getCurrentAuthSession } from "../../data/currentUser.server";
 import { resolveSessionAccessRole } from "../../data/sessionAccess.server";
@@ -40,8 +43,21 @@ export default async function TeamDetailsPage({
         )
       : undefined;
 
+  if (role === "admin" && activeContext?.requiresSelection) {
+    redirect("/admin");
+  }
+
+  if (role === "admin" && activeContext) {
+    redirect(
+      withActiveOrganization(
+        `/admin/teams/${teamId}`,
+        activeContext.activeOrganizationId,
+      ),
+    );
+  }
+
   if (role === "admin" && !activeContext?.activeOrganizationId) {
-    redirect("/teams");
+    redirect("/admin/teams");
   }
 
   return (

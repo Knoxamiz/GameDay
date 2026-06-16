@@ -31,13 +31,13 @@ const adminNavigation: {
 }[] = [
   { href: "/admin", label: "Home", section: "home" },
   { href: "/admin/setup", label: "Setup", section: "setup" },
-  { href: "/teams", label: "Teams", section: "teams" },
+  { href: "/admin/teams", label: "Teams", section: "teams" },
   {
     href: "/admin/registrations",
     label: "Registration",
     section: "registration",
   },
-  { href: "/events", label: "Schedule", section: "schedule" },
+  { href: "/admin/schedule", label: "Schedule", section: "schedule" },
 ];
 
 export default function AdminAppShell({

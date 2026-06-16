@@ -136,12 +136,16 @@ export default async function EventDetails({
   const eventAnnouncements = eventMessages.map((message) => message.content);
   const eventChat = eventMessages.map((message) => message.subject);
   const eventNotes = getEventNotes(eventDetails);
+  const eventBaseHref = role === "admin" ? "/admin/schedule" : "/events";
+  const teamBaseHref = role === "admin" ? "/admin/teams" : "/teams";
   const eventActionHref = withActiveOrganization(
-    `/events/${eventDetails.id}`,
+    `${eventBaseHref}/${eventDetails.id}`,
     activeOrganizationId,
   );
   const rideShareHref = withActiveOrganization(
-    `/events/${eventDetails.id}?view=ride-share`,
+    role === "admin"
+      ? `${eventBaseHref}/${eventDetails.id}`
+      : `${eventBaseHref}/${eventDetails.id}?view=ride-share`,
     activeOrganizationId,
   );
   const registrationActionHref =
@@ -153,14 +157,16 @@ export default async function EventDetails({
       : role === "parent"
         ? "/registration"
         : team
-          ? withActiveOrganization(`/teams/${team.id}`, activeOrganizationId)
+          ? withActiveOrganization(`${teamBaseHref}/${team.id}`, activeOrganizationId)
           : eventActionHref;
   const eventBackHref =
     role === "parent"
       ? "/parent"
+      : role === "admin"
+        ? withActiveOrganization("/admin/schedule", activeOrganizationId)
       : team
-        ? withActiveOrganization(`/teams/${team.id}`, activeOrganizationId)
-        : withActiveOrganization("/events", activeOrganizationId);
+        ? withActiveOrganization(`${teamBaseHref}/${team.id}`, activeOrganizationId)
+        : withActiveOrganization(eventBaseHref, activeOrganizationId);
 
   if (mode === "ride-share") {
     return (

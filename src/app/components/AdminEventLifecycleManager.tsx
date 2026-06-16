@@ -102,9 +102,6 @@ function EventLifecycleEditor({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="font-semibold text-white">{event.title}</p>
-            <p className="mt-1 break-all text-xs text-slate-400">
-              Event ID: {event.id}
-            </p>
           </div>
           <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-300">
             {getEventStatusLabel(event)}

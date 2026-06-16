@@ -1,6 +1,9 @@
 import EventDetails from "../../components/EventDetails";
 import { redirect } from "next/navigation";
-import { getRequestedOrganizationId } from "../../data/activeOrganization";
+import {
+  getRequestedOrganizationId,
+  withActiveOrganization,
+} from "../../data/activeOrganization";
 import { resolveActiveAdminOrganizationContext } from "../../data/adminOrganizationScope.server";
 import { getCurrentAuthSession } from "../../data/currentUser.server";
 import { resolveSessionAccessRole } from "../../data/sessionAccess.server";
@@ -42,8 +45,21 @@ export default async function EventDetailsPage({
         )
       : undefined;
 
+  if (role === "admin" && activeContext?.requiresSelection) {
+    redirect("/admin");
+  }
+
+  if (role === "admin" && activeContext) {
+    redirect(
+      withActiveOrganization(
+        `/admin/schedule/${eventId}`,
+        activeContext.activeOrganizationId,
+      ),
+    );
+  }
+
   if (role === "admin" && !activeContext?.activeOrganizationId) {
-    redirect("/events");
+    redirect("/admin/schedule");
   }
 
   const view = Array.isArray(resolvedSearchParams?.view)
