@@ -757,6 +757,7 @@ export default function AdminOrganizationWorkspaceHome({
                     scheduleDefaultCreateOpen ||
                     upcomingScheduleEvents.length === 0
                   }
+                  events={visibleScheduleEvents}
                   teams={readModel.teams}
                 />
 

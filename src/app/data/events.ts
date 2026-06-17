@@ -28,6 +28,7 @@ export type GameDayEvent = {
   createdAt: string;
   createdByUid: string;
   notes?: string | string[];
+  seriesId?: string;
   status: GameDayEventStatus;
   updatedAt: string;
 

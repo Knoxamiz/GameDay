@@ -47,6 +47,14 @@ export type AdminEventResult = {
   source: "firestore";
 };
 
+export type AdminEventSeriesResult = {
+  events: GameDayEvent[];
+  ids: string[];
+  message: string;
+  seriesId: string;
+  source: "firestore";
+};
+
 type AdminEventWriteOptions = {
   activeOrganizationId?: string;
   sessionSource: AuthSessionSource;
@@ -261,14 +269,55 @@ function assertValidDateRange(startsAt: string, endsAt: string) {
   }
 }
 
-export async function createAdminEvent(
-  payload: AdminEventPayload,
-  options: AdminEventWriteOptions,
-): Promise<AdminEventResult> {
-  const scope = await requireAdminEventSession(options.sessionSource);
-  const session = scope.session;
+function buildAdminEventRecord({
+  createdByUid,
+  payload,
+  seriesId,
+  timestamp,
+}: {
+  createdByUid: string;
+  payload: AdminEventPayload;
+  seriesId?: string;
+  timestamp: string;
+}) {
   const organizationId = normalizeText(payload.organizationId);
-  const activeOrganizationId = normalizeText(options.activeOrganizationId);
+  const title = normalizeText(payload.title);
+  const locationName = normalizeText(payload.locationName);
+  const teamIds = uniqueStringList(payload.teamIds);
+  const startsAt = normalizeText(payload.startsAt);
+  const endsAt = normalizeText(payload.endsAt);
+  const address = normalizeText(payload.address);
+  const notes = normalizeText(payload.notes);
+  const event: GameDayEvent = {
+    ...(address ? { address } : {}),
+    createdAt: timestamp,
+    createdByUid,
+    endsAt,
+    id: createLiveRecordId("event", [
+      organizationId,
+      title,
+      startsAt.slice(0, 10),
+    ]),
+    locationName,
+    ...(notes ? { notes } : {}),
+    organizationId,
+    ...(seriesId ? { seriesId } : {}),
+    startsAt,
+    status: payload.status,
+    teamIds,
+    title,
+    type: payload.type,
+    updatedAt: timestamp,
+  };
+
+  return event;
+}
+
+function assertValidEventPayload(
+  payload: AdminEventPayload,
+  activeOrganizationId: string,
+) {
+  const organizationId = normalizeText(payload.organizationId);
   const title = normalizeText(payload.title);
   const locationName = normalizeText(payload.locationName);
   const teamIds = uniqueStringList(payload.teamIds);
@@ -291,42 +340,38 @@ export async function createAdminEvent(
     );
   }
 
-  assertManagedOrganization(scope, organizationId);
   assertValidDateRange(startsAt, endsAt);
+}
+
+export async function createAdminEvent(
+  payload: AdminEventPayload,
+  options: AdminEventWriteOptions,
+): Promise<AdminEventResult> {
+  const scope = await requireAdminEventSession(options.sessionSource);
+  const session = scope.session;
+  const organizationId = normalizeText(payload.organizationId);
+  const activeOrganizationId = normalizeText(options.activeOrganizationId);
+  const teamIds = uniqueStringList(payload.teamIds);
+
+  assertValidEventPayload(payload, activeOrganizationId);
+  assertManagedOrganization(scope, organizationId);
 
   const now = new Date().toISOString();
-  const address = normalizeText(payload.address);
-  const notes = normalizeText(payload.notes);
-  const event: GameDayEvent = {
-    ...(address ? { address } : {}),
-    createdAt: now,
+  const event = buildAdminEventRecord({
     createdByUid: session.user.id,
-    endsAt,
-    id: createLiveRecordId("event", [
-      organizationId,
-      title,
-      startsAt.slice(0, 10),
-    ]),
-    locationName,
-    ...(notes ? { notes } : {}),
-    organizationId,
-    startsAt,
-    status: payload.status,
-    teamIds,
-    title,
-    type: payload.type,
-    updatedAt: now,
-  };
+    payload,
+    timestamp: now,
+  });
 
   await runFirestoreTransaction(async (transaction) => {
     const [organization, organizationTeams, organizationEvents] =
       await Promise.all([
-      transaction.get<Organization>("organizations", organizationId),
-      transaction.list<Team>("teams", { scope: { organizationId } }),
-      transaction.list<GameDayEvent>("events", {
-        scope: { organizationId },
-      }),
-    ]);
+        transaction.get<Organization>("organizations", organizationId),
+        transaction.list<Team>("teams", { scope: { organizationId } }),
+        transaction.list<GameDayEvent>("events", {
+          scope: { organizationId },
+        }),
+      ]);
 
     if (!organization) {
       createAdminEventError(
@@ -363,6 +408,127 @@ export async function createAdminEvent(
     event,
     id: event.id,
     message: `Event created: ${event.title}`,
+    source: "firestore",
+  };
+}
+
+export async function createAdminEventSeries(
+  payloads: AdminEventPayload[],
+  options: AdminEventWriteOptions,
+): Promise<AdminEventSeriesResult> {
+  const scope = await requireAdminEventSession(options.sessionSource);
+  const session = scope.session;
+  const activeOrganizationId = normalizeText(options.activeOrganizationId);
+  const safePayloads = payloads.filter(Boolean);
+
+  if (safePayloads.length === 0) {
+    createAdminEventError(
+      "invalid-event-series",
+      "Choose at least one event date.",
+      400,
+    );
+  }
+
+  if (safePayloads.length > 80) {
+    createAdminEventError(
+      "event-series-too-large",
+      "Create 80 or fewer events at a time.",
+      400,
+    );
+  }
+
+  const organizationId = normalizeText(safePayloads[0]?.organizationId);
+
+  if (!organizationId) {
+    createAdminEventError(
+      "invalid-event-series-organization",
+      "Choose an organization before creating events.",
+      400,
+    );
+  }
+
+  assertManagedOrganization(scope, organizationId);
+
+  safePayloads.forEach((payload) => {
+    if (normalizeText(payload.organizationId) !== organizationId) {
+      createAdminEventError(
+        "event-series-organization-mismatch",
+        "Create one organization schedule at a time.",
+        400,
+      );
+    }
+
+    assertValidEventPayload(payload, activeOrganizationId);
+  });
+
+  const now = new Date().toISOString();
+  const seriesId = createLiveRecordId("event-series", [
+    organizationId,
+    safePayloads[0]?.title ?? "schedule",
+    safePayloads[0]?.startsAt?.slice(0, 10) ?? now.slice(0, 10),
+  ]);
+  const eventsToCreate = safePayloads.map((payload) =>
+    buildAdminEventRecord({
+      createdByUid: session.user.id,
+      payload,
+      seriesId,
+      timestamp: now,
+    }),
+  );
+  const affectedTeamIds = uniqueStringList(
+    eventsToCreate.flatMap((event) => event.teamIds),
+  );
+
+  await runFirestoreTransaction(async (transaction) => {
+    const [organization, organizationTeams, organizationEvents] =
+      await Promise.all([
+        transaction.get<Organization>("organizations", organizationId),
+        transaction.list<Team>("teams", { scope: { organizationId } }),
+        transaction.list<GameDayEvent>("events", {
+          scope: { organizationId },
+        }),
+      ]);
+
+    if (!organization) {
+      createAdminEventError(
+        "organization-required",
+        "Create the organization before creating events.",
+        400,
+      );
+    }
+
+    eventsToCreate.forEach((event) => {
+      validateEventTeams({
+        organizationId,
+        organizationTeams,
+        requireActive: true,
+        teamIds: event.teamIds,
+      });
+
+      transaction.create("events", event.id, event);
+    });
+
+    updateTeamEventHelpers(
+      transaction,
+      organizationTeams,
+      [...organizationEvents, ...eventsToCreate],
+      affectedTeamIds,
+      now,
+    );
+  });
+
+  console.info("Admin event series created.", {
+    eventCount: eventsToCreate.length,
+    organizationId,
+    seriesId,
+    teamCount: affectedTeamIds.length,
+  });
+
+  return {
+    events: eventsToCreate,
+    ids: eventsToCreate.map((event) => event.id),
+    message: `${eventsToCreate.length} events created.`,
+    seriesId,
     source: "firestore",
   };
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   AdminEventError,
   createAdminEvent,
+  createAdminEventSeries,
   updateAdminEvent,
   type AdminEventPayload,
   type AdminEventUpdatePayload,
@@ -50,7 +51,7 @@ function getTeamIds(value: unknown) {
     : [];
 }
 
-function getAdminEventPayload(body: Record<string, unknown> | null) {
+function getAdminEventPayloadFromRecord(body: Record<string, unknown> | null) {
   if (!body) {
     return null;
   }
@@ -79,6 +80,30 @@ function getAdminEventPayload(body: Record<string, unknown> | null) {
     title: getText(body.title),
     type,
   } satisfies AdminEventPayload;
+}
+
+function getAdminEventPayload(body: Record<string, unknown> | null) {
+  return getAdminEventPayloadFromRecord(body);
+}
+
+function getAdminEventSeriesPayload(body: Record<string, unknown> | null) {
+  if (!body || !Array.isArray(body.events)) {
+    return null;
+  }
+
+  const payloads = body.events.map((eventBody) =>
+    getAdminEventPayloadFromRecord(
+      eventBody && typeof eventBody === "object"
+        ? (eventBody as Record<string, unknown>)
+        : null,
+    ),
+  );
+
+  if (payloads.some((payload) => !payload)) {
+    return null;
+  }
+
+  return payloads as AdminEventPayload[];
 }
 
 function getAdminEventUpdatePayload(body: Record<string, unknown> | null) {
@@ -168,9 +193,10 @@ export async function POST(request: NextRequest) {
     string,
     unknown
   > | null;
+  const seriesPayload = getAdminEventSeriesPayload(body);
   const payload = getAdminEventPayload(body);
 
-  if (!payload) {
+  if (!payload && !seriesPayload) {
     return NextResponse.json(
       {
         error: "Enter event details.",
@@ -181,7 +207,19 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await createAdminEvent(payload, {
+    if (seriesPayload) {
+      const result = await createAdminEventSeries(seriesPayload, {
+        activeOrganizationId: getText(body?.activeOrganizationId),
+        sessionSource: {
+          authorizationHeader: request.headers.get("authorization") ?? undefined,
+          cookieHeader: request.headers.get("cookie") ?? undefined,
+        },
+      });
+
+      return NextResponse.json(result, { status: 201 });
+    }
+
+    const result = await createAdminEvent(payload as AdminEventPayload, {
       activeOrganizationId: getText(body?.activeOrganizationId),
       sessionSource: {
         authorizationHeader: request.headers.get("authorization") ?? undefined,
