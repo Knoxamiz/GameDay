@@ -18,6 +18,7 @@ import { isCoachVisibleRosterRegistration } from "../data/registrations";
 import { getTeamStatusLabel, type Team } from "../data/teams";
 import AdminAnnouncementForm from "./AdminAnnouncementForm";
 import AdminArchiveButton from "./AdminArchiveButton";
+import AdminOrgMembersManager from "./AdminOrgMembersManager";
 import BackButton from "./BackButton";
 import SessionControls from "./SessionControls";
 
@@ -28,6 +29,7 @@ type AdminOrganizationWorkspaceHomeProps = {
     | "alerts"
     | "announcements"
     | "overview"
+    | "people"
     | "teamDetails"
     | "teams";
   operatingModel: AdminOperatingModel;
@@ -53,7 +55,7 @@ const sidebarItems: {
 }[] = [
   { href: "/admin", icon: "home", label: "Overview" },
   { href: "/admin/teams", icon: "team", label: "Teams" },
-  { href: "/admin/setup#members", icon: "people", label: "People" },
+  { href: "/admin/people", icon: "people", label: "Org Members" },
   {
     href: "/admin/registrations",
     icon: "clipboard",
@@ -323,6 +325,8 @@ export default function AdminOrganizationWorkspaceHome({
       ? "/admin/alerts"
       : currentSection === "announcements"
         ? "/admin/announcements"
+        : currentSection === "people"
+          ? "/admin/people"
         : currentSection === "teams" || currentSection === "teamDetails"
           ? "/admin/teams"
           : "/admin";
@@ -335,12 +339,16 @@ export default function AdminOrganizationWorkspaceHome({
   const pageTitle =
     currentSection === "teams"
       ? "Teams"
+      : currentSection === "people"
+        ? "Org Members"
       : currentSection === "teamDetails" && selectedTeam
         ? selectedTeam.name
         : organization.name;
   const pageSubtitle =
     currentSection === "teams"
       ? "Team workspaces"
+      : currentSection === "people"
+        ? "Permissions, titles, and points of contact"
       : currentSection === "teamDetails"
         ? "Team workspace"
         : `${workspaceTypeLabel} Workspace`;
@@ -641,6 +649,14 @@ export default function AdminOrganizationWorkspaceHome({
                   </div>
                 </section>
               </div>
+            ) : currentSection === "people" ? (
+              <section className="mt-5">
+                <AdminOrgMembersManager
+                  activeOrganizationId={activeOrganizationId}
+                  authority={readModel.organizationManagementAuthority}
+                  memberships={readModel.organizationMemberships}
+                />
+              </section>
             ) : currentSection === "teams" ? (
               <section className="mt-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

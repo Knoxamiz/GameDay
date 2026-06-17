@@ -92,16 +92,20 @@ export type AdminSetupPayload =
     }
   | {
       actionType: "organization-membership-invite";
+      displayName?: string;
       email: string;
       organizationId: string;
       role: OrganizationMembershipRole;
+      title?: string;
     }
   | {
       actionType: "organization-membership-update";
+      displayName?: string;
       membershipId: string;
       operation: "activate" | "remove" | "suspend" | "update";
       organizationId: string;
       role: OrganizationMembershipRole;
+      title?: string;
       uid?: string;
     }
   | {
@@ -692,7 +696,9 @@ async function inviteOrganizationMembership(
   >,
 ): Promise<AdminSetupResult> {
   const organizationId = normalizeText(payload.organizationId);
+  const displayName = normalizeText(payload.displayName);
   const email = normalizeEmail(payload.email);
+  const title = normalizeText(payload.title);
 
   if (!organizationId || !email || !email.includes("@")) {
     createSetupError(
@@ -708,6 +714,7 @@ async function inviteOrganizationMembership(
   const membership: OrganizationMembership = {
     createdAt: now,
     createdByUid: scope.session.user.id,
+    ...(displayName ? { displayName } : {}),
     email,
     id: createLiveRecordId("organization-membership", [
       organizationId,
@@ -717,6 +724,7 @@ async function inviteOrganizationMembership(
     organizationId,
     role: payload.role,
     status: "invited",
+    ...(title ? { title } : {}),
     updatedAt: now,
   };
 
@@ -851,7 +859,14 @@ async function updateOrganizationMembership(
   >,
 ): Promise<AdminSetupResult> {
   const organizationId = normalizeText(payload.organizationId);
+  const hasDisplayName = Object.prototype.hasOwnProperty.call(
+    payload,
+    "displayName",
+  );
+  const displayName = normalizeText(payload.displayName);
   const membershipId = normalizeText(payload.membershipId);
+  const hasTitle = Object.prototype.hasOwnProperty.call(payload, "title");
+  const title = normalizeText(payload.title);
 
   if (!organizationId || !membershipId) {
     createSetupError(
@@ -939,6 +954,22 @@ async function updateOrganizationMembership(
       role: payload.role,
       updatedAt: now,
     };
+
+    if (hasDisplayName) {
+      if (displayName) {
+        updatedMembership.displayName = displayName;
+      } else {
+        delete updatedMembership.displayName;
+      }
+    }
+
+    if (hasTitle) {
+      if (title) {
+        updatedMembership.title = title;
+      } else {
+        delete updatedMembership.title;
+      }
+    }
 
     if (payload.operation === "activate") {
       if (membership.status === "active") {

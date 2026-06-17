@@ -10,6 +10,7 @@ export type OrganizationMembership = {
   id: string;
   organizationId: string;
   acceptedAt?: string;
+  displayName?: string;
   email: string;
   invitedByUid?: string;
   role: OrganizationMembershipRole;
@@ -18,6 +19,7 @@ export type OrganizationMembership = {
   status: OrganizationMembershipStatus;
   suspendedAt?: string;
   suspendedByUid?: string;
+  title?: string;
   uid?: string;
   createdByUid: string;
   createdAt: string;

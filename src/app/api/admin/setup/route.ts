@@ -162,9 +162,11 @@ function getSetupPayload(body: Record<string, unknown> | null) {
 
     return {
       actionType,
+      displayName: getText(body.displayName),
       email: getText(body.email),
       organizationId: getText(body.organizationId),
       role,
+      title: getText(body.title),
     } satisfies AdminSetupPayload;
   }
 
@@ -178,10 +180,12 @@ function getSetupPayload(body: Record<string, unknown> | null) {
 
     return {
       actionType,
+      displayName: getText(body.displayName),
       membershipId: getText(body.membershipId),
       operation,
       organizationId: getText(body.organizationId),
       role,
+      title: getText(body.title),
       uid: getText(body.uid),
     } satisfies AdminSetupPayload;
   }

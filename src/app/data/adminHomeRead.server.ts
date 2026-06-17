@@ -4,6 +4,8 @@ import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import {
   canManageOrganization,
+  getOrganizationManagementAuthority,
+  type OrganizationManagementAuthority,
   resolveAdminOrganizationScope,
   verifyAdminAccessSession,
 } from "./adminOrganizationScope.server";
@@ -16,6 +18,7 @@ import type { Coach } from "./coaches";
 import type { GameDayEvent } from "./events";
 import type { RegistrationInvite } from "./invites";
 import type { GameDayMessage } from "./messages";
+import type { OrganizationMembership } from "./organizationMemberships";
 import type { Organization } from "./organizations";
 import type { Registration } from "./registrations";
 import { isArchivedTeam, type Team } from "./teams";
@@ -29,6 +32,8 @@ export type AdminHomeReadModel = {
   events: GameDayEvent[];
   organization: Organization;
   organizationExists: boolean;
+  organizationManagementAuthority: OrganizationManagementAuthority | null;
+  organizationMemberships: OrganizationMembership[];
   organizations: Organization[];
   registrationInvites: RegistrationInvite[];
   registrations: Registration[];
@@ -91,6 +96,8 @@ function buildEmptyAdminHomeReadModel(
     events: [],
     organization: getOrganizationShell(organizationId),
     organizationExists: false,
+    organizationManagementAuthority: null,
+    organizationMemberships: [],
     organizations: organizationId ? [getOrganizationShell(organizationId)] : [],
     registrationInvites: [],
     registrations: [],
@@ -130,6 +137,7 @@ export async function getAdminHomeReadModel(
       registrations,
       registrationInvites,
       communications,
+      organizationMemberships,
     ] = await Promise.all([
       repositories.organizations.getById(organizationId),
       repositories.teams.listByOrganizationId(organizationId),
@@ -138,6 +146,9 @@ export async function getAdminHomeReadModel(
       repositories.registrations.listByOrganizationId(organizationId),
       repositories.registrationInvites.listByOrganizationId(organizationId),
       repositories.messages.listByAudience({ organizationId }),
+      repositories.organizationMemberships.listByOrganizationId(
+        organizationId,
+      ),
     ]);
     const coaches = (
       await Promise.all(
@@ -165,6 +176,11 @@ export async function getAdminHomeReadModel(
       events,
       organization: organization ?? getOrganizationShell(organizationId),
       organizationExists: Boolean(organization),
+      organizationManagementAuthority: getOrganizationManagementAuthority(
+        scope,
+        organizationId,
+      ),
+      organizationMemberships: uniqueById(organizationMemberships),
       organizations: [organization ?? getOrganizationShell(organizationId)],
       registrationInvites: uniqueById(registrationInvites),
       registrations: uniqueById(registrations),

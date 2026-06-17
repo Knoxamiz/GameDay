@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import type {
   CoachAssignment,
@@ -13,12 +14,12 @@ import {
 } from "../data/invites";
 import type { OrganizationMembership } from "../data/organizationMemberships";
 import type { Organization } from "../data/organizations";
+import { withActiveOrganization } from "../data/activeOrganization";
 import { getOrganizationWorkspaceType } from "../data/organizations";
 import { isActiveTeam, type Team } from "../data/teams";
 import RegistrationInviteManager from "./RegistrationInviteManager";
 import TeamLifecycleManager from "./TeamLifecycleManager";
 import CoachAssignmentLifecycleManager from "./CoachAssignmentLifecycleManager";
-import OrganizationMembershipManager from "./OrganizationMembershipManager";
 
 type AdminSetupPanelProps = {
   activeOrganizationId?: string;
@@ -27,7 +28,6 @@ type AdminSetupPanelProps = {
   coachAssignments: CoachAssignment[];
   coaches: Coach[];
   defaultOpenSection?: SetupSectionId;
-  organizationManagementAuthority: "admin" | "bootstrap-admin" | "owner" | null;
   organizationMemberships: OrganizationMembership[];
   organizations: Organization[];
   registrationInvites: RegistrationInvite[];
@@ -110,7 +110,6 @@ export default function AdminSetupPanel({
   coachAssignments,
   coaches,
   defaultOpenSection,
-  organizationManagementAuthority,
   organizationMemberships,
   organizations,
   registrationInvites,
@@ -341,21 +340,27 @@ export default function AdminSetupPanel({
       </SetupHubSection>
 
       <SetupHubSection
-        description="Invite and manage owners, admins, coaches, and staff."
+        description="Org member permissions and contact titles live on their own screen."
         id="members"
         isOpen={openSection === "members"}
-        label="Members"
+        label="Org Members"
         onToggle={() =>
           setOpenSection(openSection === "members" ? null : "members")
         }
         status={`${organizationMemberships.length} record${organizationMemberships.length === 1 ? "" : "s"}`}
       >
-        <OrganizationMembershipManager
-          activeOrganizationId={organizationId}
-          authority={organizationManagementAuthority}
-          embedded
-          memberships={organizationMemberships}
-        />
+        <div className="max-w-xl">
+          <p className="text-sm text-slate-300">
+            Manage app permissions, public contact titles, and member status
+            from the dedicated Org Members page.
+          </p>
+          <Link
+            className="mt-4 inline-flex rounded-md bg-blue-500 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-600"
+            href={withActiveOrganization("/admin/people", organizationId)}
+          >
+            Open Org Members
+          </Link>
+        </div>
       </SetupHubSection>
 
       <SetupHubSection

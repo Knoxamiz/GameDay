@@ -112,9 +112,6 @@ export default async function AdminSetupPage({
           coachAssignments={setup.coachAssignments}
           coaches={setup.coaches}
           defaultOpenSection={defaultOpenSection}
-          organizationManagementAuthority={
-            setup.organizationManagementAuthority
-          }
           organizationMemberships={setup.organizationMemberships}
           organizations={setup.organizations}
           registrationInvites={setup.registrationInvites}
