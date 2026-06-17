@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import {
+  getEventDateLabel,
+  getEventLocationLabel,
   getEventStatusLabel,
   getEventTeamIds,
+  getEventTimeLabel,
   isArchivedEvent,
   type GameDayEvent,
   type GameDayEventStatus,
@@ -61,6 +64,22 @@ function toIsoDateTime(value: string) {
   return Number.isNaN(date.getTime()) ? "" : date.toISOString();
 }
 
+function getStatusClass(status: GameDayEventStatus) {
+  if (status === "published") {
+    return "bg-emerald-50 text-emerald-700";
+  }
+
+  if (status === "draft") {
+    return "bg-orange-50 text-orange-700";
+  }
+
+  if (status === "canceled") {
+    return "bg-red-50 text-red-700";
+  }
+
+  return "bg-slate-100 text-slate-600";
+}
+
 function EventLifecycleEditor({
   activeOrganizationId,
   event,
@@ -87,6 +106,10 @@ function EventLifecycleEditor({
     Array.isArray(event.notes) ? event.notes.join("\n") : (event.notes ?? ""),
   );
   const [status, setStatus] = useState<GameDayEventStatus>(event.status);
+  const eventTeamNames = initialTeamIds
+    .map((teamId) => teams.find((team) => team.id === teamId)?.name)
+    .filter(Boolean)
+    .join(", ");
 
   function toggleTeam(teamId: string) {
     setSelectedTeamIds((currentTeamIds) =>
@@ -97,42 +120,61 @@ function EventLifecycleEditor({
   }
 
   return (
-    <details className="rounded-xl border border-slate-700 bg-slate-950">
+    <details className="rounded-lg border border-slate-200 bg-white">
       <summary className="cursor-pointer list-none p-4 [&::-webkit-details-marker]:hidden">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
-            <p className="font-semibold text-white">{event.title}</p>
+            <p className="truncate text-base font-black text-slate-950">
+              {event.title}
+            </p>
+            <p className="mt-1 text-sm font-semibold text-slate-500">
+              {getEventDateLabel(event)} · {getEventTimeLabel(event)}
+            </p>
+            <p className="mt-1 truncate text-sm text-slate-500">
+              {eventTeamNames || "Organization"} ·{" "}
+              {getEventLocationLabel(event)}
+            </p>
           </div>
-          <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-300">
+          <span
+            className={`w-fit rounded-full px-2.5 py-1 text-xs font-black ${getStatusClass(
+              event.status,
+            )}`}
+          >
             {getEventStatusLabel(event)}
           </span>
         </div>
       </summary>
 
-      <div className="space-y-3 border-t border-slate-800 p-4">
-        <fieldset className="rounded-xl bg-slate-900 p-3">
-          <legend className="text-sm font-semibold text-slate-300">
-            Teams
-          </legend>
-          <div className="mt-3 space-y-2">
+      <div className="space-y-4 border-t border-slate-200 p-4">
+        <fieldset>
+          <legend className="text-sm font-black text-slate-700">Teams</legend>
+          <div className="mt-2 flex flex-wrap gap-2">
             {teams.map((team) => {
               const isSelected = selectedTeamIds.includes(team.id);
               const canSelect = isActiveTeam(team) || isSelected;
 
               return (
                 <label
-                  className="flex items-center justify-between gap-3 text-sm text-slate-300"
+                  className={`inline-flex cursor-pointer items-center rounded-full border px-3 py-2 text-sm font-black ${
+                    isSelected
+                      ? "border-blue-600 bg-blue-50 text-blue-700"
+                      : canSelect
+                        ? "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                        : "border-slate-200 bg-slate-50 text-slate-400"
+                  }`}
                   key={team.id}
                 >
-                  <span>
-                    {team.name} ({getTeamStatusLabel(team)})
-                  </span>
                   <input
                     checked={isSelected}
+                    className="sr-only"
                     disabled={!canSelect}
                     onChange={() => toggleTeam(team.id)}
                     type="checkbox"
                   />
+                  <span>
+                    {team.name}
+                    {!isActiveTeam(team) ? ` (${getTeamStatusLabel(team)})` : ""}
+                  </span>
                 </label>
               );
             })}
@@ -140,19 +182,19 @@ function EventLifecycleEditor({
         </fieldset>
 
         <label className="block">
-          <span className="text-sm font-semibold text-slate-300">Title</span>
+          <span className="text-sm font-black text-slate-700">Title</span>
           <input
-            className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none"
+            className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             onChange={(changeEvent) => setTitle(changeEvent.target.value)}
             value={title}
           />
         </label>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <label className="block">
-            <span className="text-sm font-semibold text-slate-300">Type</span>
+            <span className="text-sm font-black text-slate-700">Type</span>
             <select
-              className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white"
+              className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
               onChange={(changeEvent) =>
                 setType(changeEvent.target.value as GameDayEventType)
               }
@@ -166,9 +208,9 @@ function EventLifecycleEditor({
             </select>
           </label>
           <label className="block">
-            <span className="text-sm font-semibold text-slate-300">Status</span>
+            <span className="text-sm font-black text-slate-700">Status</span>
             <select
-              className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white"
+              className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
               onChange={(changeEvent) =>
                 setStatus(changeEvent.target.value as GameDayEventStatus)
               }
@@ -183,61 +225,75 @@ function EventLifecycleEditor({
           </label>
         </div>
 
-        <label className="block">
-          <span className="text-sm font-semibold text-slate-300">Starts</span>
-          <input
-            className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none"
-            onChange={(changeEvent) => setStartsAt(changeEvent.target.value)}
-            type="datetime-local"
-            value={startsAt}
-          />
-        </label>
-        <label className="block">
-          <span className="text-sm font-semibold text-slate-300">Ends</span>
-          <input
-            className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none"
-            onChange={(changeEvent) => setEndsAt(changeEvent.target.value)}
-            type="datetime-local"
-            value={endsAt}
-          />
-        </label>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block">
+            <span className="text-sm font-black text-slate-700">Starts</span>
+            <input
+              className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              onChange={(changeEvent) => setStartsAt(changeEvent.target.value)}
+              type="datetime-local"
+              value={startsAt}
+            />
+          </label>
+          <label className="block">
+            <span className="text-sm font-black text-slate-700">Ends</span>
+            <input
+              className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              onChange={(changeEvent) => setEndsAt(changeEvent.target.value)}
+              type="datetime-local"
+              value={endsAt}
+            />
+          </label>
+        </div>
 
         <label className="block">
-          <span className="text-sm font-semibold text-slate-300">Location</span>
+          <span className="text-sm font-black text-slate-700">Location</span>
           <input
-            className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none"
+            className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             onChange={(changeEvent) =>
               setLocationName(changeEvent.target.value)
             }
             value={locationName}
           />
         </label>
-        <label className="block">
-          <span className="text-sm font-semibold text-slate-300">Address</span>
-          <input
-            className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none"
-            onChange={(changeEvent) => setAddress(changeEvent.target.value)}
-            value={address}
-          />
-        </label>
-        <label className="block">
-          <span className="text-sm font-semibold text-slate-300">Notes</span>
-          <textarea
-            className="mt-2 min-h-24 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none"
-            onChange={(changeEvent) => setNotes(changeEvent.target.value)}
-            value={notes}
-          />
-        </label>
+
+        <details className="rounded-md border border-slate-200 bg-slate-50 p-3">
+          <summary className="cursor-pointer text-sm font-black text-slate-700">
+            More details
+          </summary>
+          <div className="mt-3 space-y-3">
+            <label className="block">
+              <span className="text-xs font-bold uppercase text-slate-500">
+                Address
+              </span>
+              <input
+                className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                onChange={(changeEvent) => setAddress(changeEvent.target.value)}
+                value={address}
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-bold uppercase text-slate-500">
+                Notes
+              </span>
+              <textarea
+                className="mt-2 min-h-20 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                onChange={(changeEvent) => setNotes(changeEvent.target.value)}
+                value={notes}
+              />
+            </label>
+          </div>
+        </details>
 
         {(status === "canceled" || status === "archived") && (
-          <p className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-3 text-xs text-yellow-100">
+          <p className="rounded-md border border-orange-200 bg-orange-50 p-3 text-xs font-semibold text-orange-700">
             Existing attendance and transportation responses remain stored for
             history. This event will not be used as a team&apos;s next event.
           </p>
         )}
 
         <button
-          className="w-full rounded-xl bg-blue-500 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-md bg-blue-600 py-3 text-sm font-black text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={isSaving}
           onClick={() =>
             void onSave(event.id, {
@@ -314,16 +370,15 @@ export default function AdminEventLifecycleManager({
   }
 
   return (
-    <section className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-      <div className="flex items-start justify-between gap-3">
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-lg font-bold">Manage Events</h2>
-          <p className="mt-2 text-sm text-slate-300">
-            Edit event details and lifecycle status. Event IDs and organization
-            ownership remain fixed.
+          <h2 className="text-2xl font-black">Existing Events</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Open an event only when you need to change details or status.
           </p>
         </div>
-        <label className="flex shrink-0 items-center gap-2 text-xs font-semibold text-slate-400">
+        <label className="flex w-fit shrink-0 items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm font-bold text-slate-600">
           <input
             checked={showArchived}
             onChange={(changeEvent) =>
@@ -336,19 +391,19 @@ export default function AdminEventLifecycleManager({
       </div>
 
       {message && (
-        <p className="mt-4 rounded-xl border border-blue-500/30 bg-blue-500/10 p-3 text-sm font-semibold text-blue-200">
+        <p className="mt-4 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm font-bold text-blue-700">
           {message}
         </p>
       )}
       {error && (
-        <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm font-semibold text-red-300">
+        <p className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-700">
           {error}
         </p>
       )}
 
-      <div className="mt-4 space-y-3">
+      <div className="mt-5 space-y-3">
         {visibleEvents.length === 0 ? (
-          <p className="rounded-xl bg-slate-800 p-3 text-sm text-slate-300">
+          <p className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-4 text-sm font-semibold text-slate-500">
             No events in this view.
           </p>
         ) : (

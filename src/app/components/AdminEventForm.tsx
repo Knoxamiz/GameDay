@@ -74,7 +74,13 @@ export default function AdminEventForm({
   defaultOpen = false,
   teams,
 }: AdminEventFormProps) {
-  const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
+  const availableTeams = teams.filter(
+    (team) =>
+      team.organizationId === activeOrganizationId && isActiveTeam(team),
+  );
+  const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>(() =>
+    availableTeams.length === 1 ? [availableTeams[0].id] : [],
+  );
   const [title, setTitle] = useState("");
   const [type, setType] = useState<GameDayEventType>("practice");
   const [startsAt, setStartsAt] = useState(getDefaultStartTime());
@@ -86,10 +92,6 @@ export default function AdminEventForm({
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const availableTeams = teams.filter(
-    (team) =>
-      team.organizationId === activeOrganizationId && isActiveTeam(team),
-  );
 
   function toggleTeam(teamId: string) {
     setSelectedTeamIds((currentTeamIds) =>
@@ -152,77 +154,81 @@ export default function AdminEventForm({
 
   return (
     <details
-      className="mt-6 rounded-2xl border border-slate-800 bg-slate-900"
+      className="rounded-lg border border-slate-200 bg-white shadow-sm"
       id="create-event"
       open={defaultOpen}
     >
       <summary className="cursor-pointer list-none p-5 [&::-webkit-details-marker]:hidden">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-lg font-bold">Create Event</h2>
-            <p className="mt-2 text-sm text-slate-300">
-              Save a real schedule item for selected teams.
+            <h2 className="text-2xl font-black">Create Event</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Add a practice, game, tournament, meeting, or team reminder.
             </p>
           </div>
-          <span className="rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white">
-            Create event
+          <span className="inline-flex rounded-md bg-blue-600 px-3 py-2 text-sm font-black text-white">
+            Create Event +
           </span>
         </div>
       </summary>
-      <div className="border-t border-slate-800 p-5">
+      <div className="border-t border-slate-200 p-5">
 
       {message && (
-        <p className="mt-4 rounded-xl border border-blue-500/30 bg-blue-500/10 p-3 text-sm font-semibold text-blue-200">
+        <p className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm font-bold text-blue-700">
           {message}
         </p>
       )}
       {error && (
-        <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm font-semibold text-red-300">
+        <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-700">
           {error}
         </p>
       )}
 
       {availableTeams.length === 0 ? (
-        <p className="mt-4 rounded-xl bg-slate-800 p-3 text-sm text-slate-300">
+        <p className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-4 text-sm font-semibold text-slate-500">
           Create or activate a team before adding events.
         </p>
       ) : (
-        <div className="mt-4 space-y-3">
-          <fieldset className="rounded-xl bg-slate-800 p-3">
-            <legend className="text-sm font-semibold text-slate-300">
-              Teams
-            </legend>
-            <div className="mt-3 space-y-2">
+        <div className="space-y-4">
+          <fieldset>
+            <legend className="text-sm font-black text-slate-700">Teams</legend>
+            <div className="mt-2 flex flex-wrap gap-2">
               {availableTeams.map((team) => (
                 <label
-                  className="flex items-center justify-between gap-3 text-sm text-slate-300"
+                  className={`inline-flex cursor-pointer items-center rounded-full border px-3 py-2 text-sm font-black ${
+                    selectedTeamIds.includes(team.id)
+                      ? "border-blue-600 bg-blue-50 text-blue-700"
+                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                  }`}
                   key={team.id}
                 >
-                  <span>{team.name}</span>
                   <input
                     checked={selectedTeamIds.includes(team.id)}
+                    className="sr-only"
                     onChange={() => toggleTeam(team.id)}
                     type="checkbox"
                   />
+                  <span>{team.name}</span>
                 </label>
               ))}
             </div>
           </fieldset>
 
           <label className="block">
-            <span className="text-sm font-semibold text-slate-300">Title</span>
+            <span className="text-sm font-black text-slate-700">Title</span>
             <input
-              className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
+              className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
               onChange={(event) => setTitle(event.target.value)}
+              placeholder="Practice at Riverside Field"
               value={title}
             />
           </label>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <label className="block">
-              <span className="text-sm font-semibold text-slate-300">Type</span>
+              <span className="text-sm font-black text-slate-700">Type</span>
               <select
-                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
+                className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                 onChange={(event) =>
                   setType(event.target.value as GameDayEventType)
                 }
@@ -236,11 +242,9 @@ export default function AdminEventForm({
               </select>
             </label>
             <label className="block">
-              <span className="text-sm font-semibold text-slate-300">
-                Status
-              </span>
+              <span className="text-sm font-black text-slate-700">Status</span>
               <select
-                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
+                className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                 onChange={(event) =>
                   setStatus(event.target.value as CreateEventStatus)
                 }
@@ -255,61 +259,74 @@ export default function AdminEventForm({
             </label>
           </div>
 
-          <label className="block">
-            <span className="text-sm font-semibold text-slate-300">Starts</span>
-            <input
-              className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
-              onChange={(event) => setStartsAt(event.target.value)}
-              type="datetime-local"
-              value={startsAt}
-            />
-          </label>
-          <label className="block">
-            <span className="text-sm font-semibold text-slate-300">Ends</span>
-            <input
-              className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
-              onChange={(event) => setEndsAt(event.target.value)}
-              type="datetime-local"
-              value={endsAt}
-            />
-          </label>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block">
+              <span className="text-sm font-black text-slate-700">Starts</span>
+              <input
+                className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                onChange={(event) => setStartsAt(event.target.value)}
+                type="datetime-local"
+                value={startsAt}
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-black text-slate-700">Ends</span>
+              <input
+                className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                onChange={(event) => setEndsAt(event.target.value)}
+                type="datetime-local"
+                value={endsAt}
+              />
+            </label>
+          </div>
 
           <label className="block">
-            <span className="text-sm font-semibold text-slate-300">
+            <span className="text-sm font-black text-slate-700">
               Location
             </span>
             <input
-              className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
+              className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
               onChange={(event) => setLocationName(event.target.value)}
+              placeholder="Riverside Field"
               value={locationName}
             />
           </label>
-          <label className="block">
-            <span className="text-sm font-semibold text-slate-300">
-              Address
-            </span>
-            <input
-              className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
-              onChange={(event) => setAddress(event.target.value)}
-              value={address}
-            />
-          </label>
-          <label className="block">
-            <span className="text-sm font-semibold text-slate-300">Notes</span>
-            <textarea
-              className="mt-2 min-h-24 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
-              onChange={(event) => setNotes(event.target.value)}
-              value={notes}
-            />
-          </label>
+
+          <details className="rounded-md border border-slate-200 bg-slate-50 p-3">
+            <summary className="cursor-pointer text-sm font-black text-slate-700">
+              More details
+            </summary>
+            <div className="mt-3 space-y-3">
+              <label className="block">
+                <span className="text-xs font-bold uppercase text-slate-500">
+                  Address
+                </span>
+                <input
+                  className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  onChange={(event) => setAddress(event.target.value)}
+                  value={address}
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs font-bold uppercase text-slate-500">
+                  Notes
+                </span>
+                <textarea
+                  className="mt-2 min-h-20 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  onChange={(event) => setNotes(event.target.value)}
+                  value={notes}
+                />
+              </label>
+            </div>
+          </details>
 
           <button
-            className="w-full rounded-xl bg-blue-500 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-md bg-blue-600 py-3 text-sm font-black text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isSaving}
             onClick={() => void saveEvent()}
             type="button"
           >
-            Create Event
+            {isSaving ? "Creating Event..." : "Create Event"}
           </button>
         </div>
       )}

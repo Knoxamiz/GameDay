@@ -1,12 +1,18 @@
 import Link from "next/link";
 import { withActiveOrganization } from "../data/activeOrganization";
+import { summarizeAttendanceEntries } from "../data/attendance";
 import type { AdminHomeReadModel } from "../data/adminHomeRead.server";
 import type { AdminOperatingModel } from "../data/adminOperatingModel";
 import { isActiveCoachAssignment } from "../data/coachAssignmentRecords";
 import {
   eventHasTeamId,
+  getEventDateLabel,
+  getEventLocationLabel,
   getEventShortDateLabel,
+  getEventStatusLabel,
+  getEventTeamIds,
   getEventTimeLabel,
+  isArchivedEvent,
   isUpcomingEvent,
   sortEventsByStartDate,
 } from "../data/events";
@@ -17,8 +23,11 @@ import {
 } from "../data/organizations";
 import { isCoachVisibleRosterRegistration } from "../data/registrations";
 import { getTeamStatusLabel, type Team } from "../data/teams";
+import { summarizeTransportationEntries } from "../data/transportation";
 import AdminAnnouncementForm from "./AdminAnnouncementForm";
 import AdminArchiveButton from "./AdminArchiveButton";
+import AdminEventForm from "./AdminEventForm";
+import AdminEventLifecycleManager from "./AdminEventLifecycleManager";
 import AdminOrgMembersManager from "./AdminOrgMembersManager";
 import BackButton from "./BackButton";
 import RegistrationInviteManager from "./RegistrationInviteManager";
@@ -34,12 +43,14 @@ type AdminOrganizationWorkspaceHomeProps = {
     | "overview"
     | "people"
     | "registration"
+    | "schedule"
     | "teamDetails"
     | "teams";
   registrationReviewSource?: "empty" | "firestore";
   operatingModel: AdminOperatingModel;
   organizations: Organization[];
   readModel: AdminHomeReadModel;
+  scheduleDefaultCreateOpen?: boolean;
   selectedTeamId?: string;
 };
 
@@ -253,6 +264,7 @@ export default function AdminOrganizationWorkspaceHome({
   registrationReviewSource = "firestore",
   organizations,
   readModel,
+  scheduleDefaultCreateOpen = false,
   selectedTeamId,
 }: AdminOrganizationWorkspaceHomeProps) {
   const organization = readModel.organization;
@@ -336,6 +348,8 @@ export default function AdminOrganizationWorkspaceHome({
           ? "/admin/people"
           : currentSection === "registration"
             ? "/admin/registrations"
+            : currentSection === "schedule"
+              ? "/admin/schedule"
         : currentSection === "teams" || currentSection === "teamDetails"
           ? "/admin/teams"
           : "/admin";
@@ -352,6 +366,8 @@ export default function AdminOrganizationWorkspaceHome({
         ? "Org Members"
         : currentSection === "registration"
           ? "Registration"
+          : currentSection === "schedule"
+            ? "Schedule"
       : currentSection === "teamDetails" && selectedTeam
         ? selectedTeam.name
         : organization.name;
@@ -362,6 +378,8 @@ export default function AdminOrganizationWorkspaceHome({
         ? "Permissions, titles, and points of contact"
         : currentSection === "registration"
           ? "Links, submitted players, and roster review"
+          : currentSection === "schedule"
+            ? "Create and manage real team events"
       : currentSection === "teamDetails"
         ? "Team workspace"
         : `${workspaceTypeLabel} Workspace`;
@@ -397,6 +415,14 @@ export default function AdminOrganizationWorkspaceHome({
   const selectedTeamNextEvent = selectedTeam
     ? getNextTeamEvent(selectedTeam.id)
     : undefined;
+  const visibleScheduleEvents = readModel.events
+    .filter((event) => !isArchivedEvent(event))
+    .slice()
+    .sort(sortEventsByStartDate);
+  const upcomingScheduleEvents = visibleScheduleEvents.filter((event) =>
+    isUpcomingEvent(event),
+  );
+  const scheduleTeamMap = new Map(readModel.teams.map((team) => [team.id, team]));
 
   return (
     <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
@@ -705,6 +731,142 @@ export default function AdminOrganizationWorkspaceHome({
                     source={registrationReviewSource}
                   />
                 </section>
+              </div>
+            ) : currentSection === "schedule" ? (
+              <div className="mt-5 space-y-4">
+                <div className="flex justify-end">
+                  <a
+                    className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 shadow-sm hover:bg-slate-50"
+                    href={withActiveOrganization(
+                      "/calendar.ics",
+                      activeOrganizationId,
+                    )}
+                  >
+                    Subscribe Calendar
+                  </a>
+                </div>
+
+                <AdminEventForm
+                  activeOrganizationId={activeOrganizationId}
+                  canCreateEvents={Boolean(readModel.organizationExists)}
+                  defaultOpen={
+                    scheduleDefaultCreateOpen ||
+                    upcomingScheduleEvents.length === 0
+                  }
+                  teams={readModel.teams}
+                />
+
+                <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h2 className="text-2xl font-black">Upcoming Events</h2>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Published, draft, and canceled events still ahead.
+                      </p>
+                    </div>
+                    <StatusPill tone="blue">
+                      {`${upcomingScheduleEvents.length} upcoming`}
+                    </StatusPill>
+                  </div>
+
+                  <div className="mt-5 grid gap-3 lg:grid-cols-2">
+                    {upcomingScheduleEvents.length === 0 ? (
+                      <div className="lg:col-span-2">
+                        <EmptyState>
+                          No events are scheduled for this organization yet.
+                        </EmptyState>
+                      </div>
+                    ) : (
+                      upcomingScheduleEvents.map((event) => {
+                        const eventTeams = getEventTeamIds(event)
+                          .map((teamId) => scheduleTeamMap.get(teamId))
+                          .filter(Boolean);
+                        const attendance = summarizeAttendanceEntries(
+                          event.id,
+                          readModel.attendanceEntries.filter(
+                            (entry) => entry.eventId === event.id,
+                          ),
+                        );
+                        const transportation = summarizeTransportationEntries(
+                          event.id,
+                          readModel.transportationEntries.filter(
+                            (entry) => entry.eventId === event.id,
+                          ),
+                        );
+                        const hasTransportationIssue =
+                          transportation.needsRide > 0;
+                        const statusTone =
+                          event.status === "canceled"
+                            ? "red"
+                            : event.status === "draft"
+                              ? "orange"
+                              : hasTransportationIssue
+                                ? "red"
+                                : "green";
+                        const statusLabel =
+                          event.status === "published" &&
+                          hasTransportationIssue
+                            ? "Ride Help"
+                            : getEventStatusLabel(event);
+
+                        return (
+                          <Link
+                            className="block rounded-lg border border-slate-200 p-4 transition hover:border-blue-200 hover:bg-blue-50"
+                            href={withActiveOrganization(
+                              `/admin/schedule/${event.id}`,
+                              activeOrganizationId,
+                            )}
+                            key={event.id}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="text-xs font-bold uppercase text-slate-500">
+                                  {event.type}
+                                </p>
+                                <h3 className="mt-1 truncate text-lg font-black">
+                                  {event.title}
+                                </h3>
+                              </div>
+                              <StatusPill tone={statusTone}>
+                                {statusLabel}
+                              </StatusPill>
+                            </div>
+
+                            <p className="mt-2 truncate text-sm font-semibold text-slate-500">
+                              {eventTeams.map((team) => team?.name).join(", ") ||
+                                "Organization"}
+                            </p>
+                            <div className="mt-4 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+                              <div className="rounded-md bg-slate-50 p-3">
+                                <p className="font-black text-slate-900">
+                                  {getEventDateLabel(event)}
+                                </p>
+                                <p className="mt-1">
+                                  {getEventTimeLabel(event)}
+                                </p>
+                              </div>
+                              <div className="rounded-md bg-slate-50 p-3">
+                                <p className="font-black text-slate-900">
+                                  {getEventLocationLabel(event)}
+                                </p>
+                                <p className="mt-1">
+                                  {attendance.attending} attending ·{" "}
+                                  {transportation.needsRide} need ride
+                                </p>
+                              </div>
+                            </div>
+                          </Link>
+                        );
+                      })
+                    )}
+                  </div>
+                </section>
+
+                <AdminEventLifecycleManager
+                  activeOrganizationId={activeOrganizationId}
+                  events={readModel.events}
+                  teams={readModel.teams}
+                />
               </div>
             ) : currentSection === "people" ? (
               <section className="mt-5">
