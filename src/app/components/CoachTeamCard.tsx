@@ -45,6 +45,18 @@ function getReadinessTone(openItems: number, limited: boolean) {
   return openItems > 0 ? "text-yellow-200" : "text-blue-300";
 }
 
+function getResponseTone(status: string) {
+  if (status === "Attending" || status === "Driving Self") {
+    return "bg-emerald-500/20 text-emerald-200";
+  }
+
+  if (status === "Not Attending" || status === "Needs Ride") {
+    return "bg-yellow-500/20 text-yellow-100";
+  }
+
+  return "bg-slate-700 text-slate-200";
+}
+
 export default function CoachTeamCard({ card }: CoachTeamCardProps) {
   const { attendanceEntries, nextEvent, registrations, team } = card;
   const teamHref = `/teams/${team.id}`;
@@ -66,7 +78,27 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
     rosteredAthletes: registrations.length,
     teamHref,
   });
-  const rosterPreview = registrations.slice(0, 4);
+  const rosterPreview = card.rosterPlayers.slice(0, 6).map((rosterPlayer) => {
+    const attendanceStatus =
+      attendanceEntries.find(
+        (entry) =>
+          entry.athleteId === rosterPlayer.registration.athleteId &&
+          entry.eventId === nextEvent?.id,
+      )?.status ?? "Unknown";
+    const transportationStatus =
+      card.transportationEntries.find(
+        (entry) =>
+          entry.athleteId === rosterPlayer.registration.athleteId &&
+          entry.eventId === nextEvent?.id,
+      )?.status ?? "Unknown";
+
+    return {
+      attendanceStatus,
+      parent: rosterPlayer.parent,
+      registration: rosterPlayer.registration,
+      transportationStatus,
+    };
+  });
 
   return (
     <article className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
@@ -221,21 +253,85 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
       </div>
 
       <div className="mt-4 rounded-xl bg-slate-800 p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-          Active roster
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              Roster & parent contact
+            </p>
+            <p className="mt-2 text-sm text-slate-300">
+              Attendance is for the next event shown above.
+            </p>
+          </div>
+          <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-slate-300">
+            {registrations.length}
+          </span>
+        </div>
         <div className="mt-3 space-y-2 text-sm text-slate-300">
           {rosterPreview.length > 0 ? (
-            rosterPreview.map((registration) => (
-              <p key={registration.id}>
-                {registration.athleteName ?? "Rostered athlete"}
-              </p>
+            rosterPreview.map((player) => (
+              <div
+                className="rounded-xl bg-slate-900 p-3"
+                key={player.registration.id}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-white">
+                      {player.registration.athleteName ?? "Rostered athlete"}
+                    </p>
+                    <p className="mt-1 truncate text-xs text-slate-400">
+                      {player.parent?.name ||
+                        player.registration.parentName ||
+                        "Parent"}
+                    </p>
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${getResponseTone(
+                      player.attendanceStatus,
+                    )}`}
+                  >
+                    {player.attendanceStatus}
+                  </span>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getResponseTone(
+                      player.transportationStatus,
+                    )}`}
+                  >
+                    {player.transportationStatus}
+                  </span>
+                  {player.parent?.email && (
+                    <a
+                      className="rounded-full border border-slate-700 px-2.5 py-1 text-xs font-semibold text-slate-200 hover:bg-slate-800"
+                      href={`mailto:${player.parent.email}`}
+                    >
+                      Email parent
+                    </a>
+                  )}
+                  {player.parent?.phone && (
+                    <a
+                      className="rounded-full border border-slate-700 px-2.5 py-1 text-xs font-semibold text-slate-200 hover:bg-slate-800"
+                      href={`tel:${player.parent.phone}`}
+                    >
+                      Call
+                    </a>
+                  )}
+                  {!player.parent?.email && !player.parent?.phone && (
+                    <span className="text-xs font-semibold text-slate-500">
+                      No parent contact listed
+                    </span>
+                  )}
+                </div>
+              </div>
             ))
           ) : (
             <p>No rostered athletes yet.</p>
           )}
           {registrations.length > rosterPreview.length && (
-            <p>{registrations.length - rosterPreview.length} more</p>
+            <p className="rounded-xl border border-slate-700 bg-slate-950 p-3 text-center text-xs font-semibold text-slate-400">
+              {registrations.length - rosterPreview.length} more on the full
+              team page
+            </p>
           )}
         </div>
       </div>
@@ -259,4 +355,3 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
     </article>
   );
 }
-

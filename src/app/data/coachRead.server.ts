@@ -18,6 +18,7 @@ import {
   type GameDayEvent,
 } from "./events";
 import type { Organization } from "./organizations";
+import type { ParentGuardian } from "./parents";
 import type { Registration } from "./registrations";
 import type { Team } from "./teams";
 import type { TransportationEntry } from "./transportation";
@@ -30,8 +31,14 @@ export type CoachTeamHomeCard = {
   nextEvent?: GameDayEvent;
   organization?: Organization;
   registrations: Registration[];
+  rosterPlayers: CoachRosterPlayer[];
   team: Team;
   transportationEntries: TransportationEntry[];
+};
+
+export type CoachRosterPlayer = {
+  parent?: ParentGuardian;
+  registration: Registration;
 };
 
 export type CoachHomeReadModel = {
@@ -227,6 +234,25 @@ export async function getCoachHomeReadModel(): Promise<CoachHomeReadModel> {
         const nextEvent = getPrimaryCoachTeamEvent(team, teamEvents);
         const registrations =
           await repositories.registrations.listRosteredByTeamId(team.id);
+        const parentIds = [
+          ...new Set(
+            registrations
+              .map((registration) => registration.parentId)
+              .filter(Boolean),
+          ),
+        ];
+        const parentRecords = await Promise.all(
+          parentIds.map((parentId) => repositories.parents.getById(parentId)),
+        );
+        const parentById = new Map(
+          parentRecords.flatMap((parent) =>
+            parent ? [[parent.id, parent]] : [],
+          ),
+        );
+        const rosterPlayers = registrations.map((registration) => ({
+          parent: parentById.get(registration.parentId),
+          registration,
+        }));
         const rosteredAthleteIdSet = new Set(
           registrations.map((registration) => registration.athleteId),
         );
@@ -259,6 +285,7 @@ export async function getCoachHomeReadModel(): Promise<CoachHomeReadModel> {
           nextEvent,
           organization: organizationById.get(team.organizationId),
           registrations,
+          rosterPlayers,
           team,
           transportationEntries,
         };

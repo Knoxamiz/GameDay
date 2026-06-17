@@ -31,7 +31,7 @@ type ParentAthleteCardProps = {
 
 function getStatusLightClass(tone: ParentPlayerStatusTone) {
   if (tone === "green") {
-    return "bg-emerald-50 text-emerald-700";
+    return "bg-emerald-600 text-white shadow-sm shadow-emerald-200 ring-1 ring-emerald-700/10";
   }
 
   if (tone === "red") {
@@ -47,7 +47,7 @@ function getStatusLightClass(tone: ParentPlayerStatusTone) {
 
 function getStatusDotClass(tone: ParentPlayerStatusTone) {
   if (tone === "green") {
-    return "bg-emerald-500";
+    return "bg-white";
   }
 
   if (tone === "red") {
@@ -81,7 +81,7 @@ export default function ParentAthleteCard({
         </span>
         <span className="flex shrink-0 items-center gap-2">
           <span
-            className={`inline-flex max-w-36 items-center gap-1.5 truncate rounded-full px-2.5 py-1 text-xs font-black ${getStatusLightClass(
+            className={`inline-flex max-w-36 items-center gap-1.5 truncate rounded-md px-3 py-2 text-xs font-black ${getStatusLightClass(
               status.tone,
             )}`}
             title={status.description}
@@ -135,15 +135,22 @@ export default function ParentAthleteCard({
               <Link
                 className={`flex items-center justify-between gap-3 rounded-md border px-3 py-2 transition hover:border-blue-200 hover:bg-blue-50 ${
                   event.isToday
-                    ? "border-emerald-200 bg-emerald-50"
+                    ? "border-emerald-300 bg-emerald-50 ring-1 ring-emerald-200"
                     : "border-slate-200 bg-white"
                 }`}
                 href={event.href}
                 key={event.id}
               >
                 <span className="min-w-0">
-                  <span className="block truncate text-sm font-black">
-                    {event.title}
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span className="truncate text-sm font-black">
+                      {event.title}
+                    </span>
+                    {event.isToday && (
+                      <span className="shrink-0 rounded-md bg-emerald-600 px-2 py-1 text-[11px] font-black text-white shadow-sm">
+                        Today
+                      </span>
+                    )}
                   </span>
                   <span className="mt-0.5 block truncate text-xs font-semibold text-slate-500">
                     {event.locationLabel}

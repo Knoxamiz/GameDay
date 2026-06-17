@@ -8,6 +8,7 @@ import {
   getEventStatusLabel,
   getEventTeamIds,
   getEventTimeLabel,
+  type GameDayEvent,
 } from "../data/events";
 import {
   getScopedEventDetailsReadModel,
@@ -30,6 +31,35 @@ type EventDetailsProps = {
   mode?: "full" | "ride-share";
   role?: EventScheduleRole;
 };
+
+const parentEventDisplayTimeZone = "America/New_York";
+
+function getEventStartDate(event: GameDayEvent) {
+  const date = new Date(
+    event.startsAt || event.startDateTime || event.date || "",
+  );
+
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function getLocalDateKey(date: Date) {
+  return new Intl.DateTimeFormat("en-US", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: parentEventDisplayTimeZone,
+    year: "numeric",
+  }).format(date);
+}
+
+function isParentEventToday(event: GameDayEvent, now: Date) {
+  const eventStartDate = getEventStartDate(event);
+
+  if (!eventStartDate) {
+    return false;
+  }
+
+  return getLocalDateKey(eventStartDate) === getLocalDateKey(now);
+}
 
 function getParentEventPlanLabel(
   attendanceStatus: string,
@@ -99,6 +129,7 @@ export default async function EventDetails({
   const eventTeams = getEventTeamIds(eventDetails)
     .map((teamId) => eventReadModel.teams.find((team) => team.id === teamId))
     .filter(Boolean);
+  const eventIsToday = isParentEventToday(eventDetails, new Date());
   const team = eventTeams[0];
   const eventTeamIds = getEventTeamIds(eventDetails);
   const parentUser = role === "parent" ? await getCurrentParentUser() : null;
@@ -310,12 +341,19 @@ export default async function EventDetails({
                   {getEventLocationLabel(eventDetails)}
                 </p>
               </div>
-              <span
-                className={`shrink-0 rounded-full px-3 py-1 text-xs font-black ${getParentEventStatusClass(
-                  eventDetails.status,
-                )}`}
-              >
-                {getEventStatusLabel(eventDetails)}
+              <span className="flex shrink-0 flex-col items-end gap-2">
+                {eventIsToday && (
+                  <span className="rounded-md bg-emerald-600 px-3 py-2 text-xs font-black text-white shadow-sm shadow-emerald-200">
+                    Today
+                  </span>
+                )}
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-black ${getParentEventStatusClass(
+                    eventDetails.status,
+                  )}`}
+                >
+                  {getEventStatusLabel(eventDetails)}
+                </span>
               </span>
             </div>
 
