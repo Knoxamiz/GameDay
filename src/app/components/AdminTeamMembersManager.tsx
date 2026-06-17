@@ -448,6 +448,10 @@ export default function AdminTeamMembersManager({
                 </span>
               </summary>
               <div className="grid gap-3 border-t border-slate-200 p-3 sm:grid-cols-2">
+                <p className="rounded-md border border-blue-100 bg-blue-50 p-3 text-sm font-bold text-blue-800 sm:col-span-2">
+                  Use the exact email this coach signs in with. That email
+                  unlocks their coach dashboard for this team.
+                </p>
                 <input
                   className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                   onChange={(event) => setCoachName(event.target.value)}

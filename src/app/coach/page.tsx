@@ -129,12 +129,24 @@ export default async function CoachHome() {
           {source !== "error" && coachTeamCards.length === 0 && (
             <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300">
               <p className="text-lg font-bold text-white">
-                No active team assignment yet.
+                No team assigned yet.
               </p>
               <p className="mt-3">
-                Wait for an admin to assign this coach account to an active
-                team. Archived, inactive, or missing assignments do not grant
-                coach roster access.
+                An admin needs to add this coach account to a team before
+                roster, attendance, schedule, and parent contact tools appear.
+              </p>
+              <div className="mt-4 rounded-xl border border-slate-700 bg-slate-950 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Coach login email
+                </p>
+                <p className="mt-2 break-words font-semibold text-white">
+                  {currentCoach.email || session.user.email || "Not available"}
+                </p>
+              </div>
+              <p className="mt-3 text-xs leading-5 text-slate-400">
+                Admin path: open the organization, choose a team, then use
+                Players & Coaches &gt; Coaches &gt; Add coach with that exact
+                login email.
               </p>
             </div>
           )}
