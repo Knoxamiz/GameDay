@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import BottomNav from "../components/BottomNav";
-import ParentAthleteCard from "../components/ParentAthleteCard";
+import ParentAthleteCard, {
+  type ParentPlayerScheduleItem,
+  type ParentPlayerStatus,
+} from "../components/ParentAthleteCard";
 import SessionControls from "../components/SessionControls";
 import {
   getCurrentAuthSession,
@@ -10,16 +13,22 @@ import {
 import {
   eventHasTeamId,
   getEventDateLabel,
+  getEventLocationLabel,
   getEventTimeLabel,
   isEventVisibleToNonAdmin,
   isUpcomingEvent,
+  sortEventsByStartDate,
+  type GameDayEvent,
 } from "../data/events";
 import { getEventScheduleReadModel } from "../data/eventSchedule.server";
 import {
   getParentAthleteRegistrationReadModel,
   getRegistrationByAthlete,
 } from "../data/parentAthleteRegistration.server";
-import { getParentNextAction } from "../data/parentDashboard";
+import {
+  getParentNextAction,
+  type ParentNextAction,
+} from "../data/parentDashboard";
 import {
   getRegistrationRosterStatus,
   hasPendingParentLifecycleRequest,
@@ -29,6 +38,94 @@ import { getLandingRouteForClaims } from "../infrastructure/auth";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 
 export const dynamic = "force-dynamic";
+
+const parentEventDisplayTimeZone = "America/New_York";
+
+function getEventStartDate(event: GameDayEvent) {
+  const date = new Date(
+    event.startsAt || event.startDateTime || event.date || "",
+  );
+
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function getLocalDateKey(date: Date) {
+  return new Intl.DateTimeFormat("en-US", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: parentEventDisplayTimeZone,
+    year: "numeric",
+  }).format(date);
+}
+
+function isEventToday(event: GameDayEvent, now: Date) {
+  const eventStartDate = getEventStartDate(event);
+
+  if (!eventStartDate) {
+    return false;
+  }
+
+  return getLocalDateKey(eventStartDate) === getLocalDateKey(now);
+}
+
+function isAccountAlert(action: ParentNextAction, athleteHref: string) {
+  return (
+    action.tone === "blocked" ||
+    (action.tone === "attention" && action.href === athleteHref)
+  );
+}
+
+function getPlayerStatus(
+  action: ParentNextAction,
+  athleteHref: string,
+  scheduleEvents: GameDayEvent[],
+  now: Date,
+): ParentPlayerStatus {
+  if (isAccountAlert(action, athleteHref)) {
+    return {
+      description: action.description,
+      label: "Account alert",
+      tone: "red",
+    };
+  }
+
+  if (scheduleEvents.some((event) => isEventToday(event, now))) {
+    return {
+      description: "This player has something scheduled today.",
+      label: "Today",
+      tone: "green",
+    };
+  }
+
+  if (scheduleEvents.length > 0) {
+    return {
+      description: "This player has upcoming scheduled events.",
+      label: "Upcoming",
+      tone: "yellow",
+    };
+  }
+
+  return {
+    description: "No upcoming schedule is posted for this player.",
+    label: "No schedule",
+    tone: "gray",
+  };
+}
+
+function toPlayerScheduleItems(
+  events: GameDayEvent[],
+  now: Date,
+): ParentPlayerScheduleItem[] {
+  return events.slice(0, 3).map((event) => ({
+    dateLabel: getEventDateLabel(event),
+    href: `/events/${event.id}`,
+    id: event.id,
+    isToday: isEventToday(event, now),
+    locationLabel: getEventLocationLabel(event),
+    timeLabel: getEventTimeLabel(event),
+    title: event.title,
+  }));
+}
 
 export default async function ParentHome() {
   const session = await getCurrentAuthSession();
@@ -58,9 +155,12 @@ export default async function ParentHome() {
   });
   const schedule = await getEventScheduleReadModel("parent");
   const now = new Date();
-  const upcomingScopedEvents = schedule.events.filter(
-    (event) => isEventVisibleToNonAdmin(event) && isUpcomingEvent(event, now),
-  );
+  const upcomingScopedEvents = schedule.events
+    .filter(
+      (event) => isEventVisibleToNonAdmin(event) && isUpcomingEvent(event, now),
+    )
+    .slice()
+    .sort(sortEventsByStartDate);
   const nextEventByAthleteId = new Map(
     parentAthletes.map((athlete) => {
       const registration = getRegistrationByAthlete(athlete, registrations);
@@ -90,6 +190,13 @@ export default async function ParentHome() {
   ]);
   const athleteRows = parentAthletes.map((athlete) => {
     const registration = getRegistrationByAthlete(athlete, registrations);
+    const athleteHref = `/athletes/${athlete.id}`;
+    const athleteScheduleEvents =
+      registration && isParentEventEligibleRegistration(registration)
+        ? upcomingScopedEvents.filter((event) =>
+            eventHasTeamId(event, athlete.teamId),
+          )
+        : [];
     const nextEvent = nextEventByAthleteId.get(athlete.id);
     const attendanceStatus =
       attendanceEntries.find(
@@ -103,7 +210,7 @@ export default async function ParentHome() {
       )?.status ?? "Unknown";
     const nextAction = getParentNextAction({
       attendanceStatus,
-      athleteHref: `/athletes/${athlete.id}`,
+      athleteHref,
       eventHref: nextEvent ? `/events/${nextEvent.id}` : undefined,
       hasPendingLifecycleRequest: registration
         ? hasPendingParentLifecycleRequest(registration)
@@ -120,30 +227,18 @@ export default async function ParentHome() {
     return {
       athlete,
       nextAction,
-      nextEvent,
-      registration,
+      scheduleItems: toPlayerScheduleItems(athleteScheduleEvents, now),
+      status: getPlayerStatus(
+        nextAction,
+        athleteHref,
+        athleteScheduleEvents,
+        now,
+      ),
     };
   });
   const hasRegistrations = parentAthletes.length > 0 || registrations.length > 0;
   const parentDisplayName =
     currentParent.firstName || currentParent.name || "Parent";
-  const scheduleRows = upcomingScopedEvents
-    .map((event) => {
-      const athleteNames = athleteRows
-        .filter((row) => {
-          if (!row.registration || !isParentEventEligibleRegistration(row.registration)) {
-            return false;
-          }
-
-          return eventHasTeamId(event, row.athlete.teamId);
-        })
-        .map((row) => row.athlete.name);
-
-      return { athleteNames, event };
-    })
-    .filter((row) => row.athleteNames.length > 0)
-    .slice(0, 3);
-
   return (
     <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
       <header className="border-b border-slate-200 bg-white">
@@ -221,62 +316,21 @@ export default async function ParentHome() {
                 No players registered yet.
               </p>
             ) : (
-              athleteRows.map(({ athlete, nextAction }) => (
-                <ParentAthleteCard
-                  athleteId={athlete.id}
-                  athleteName={athlete.name}
-                  key={athlete.id}
-                  nextAction={nextAction}
-                />
-              ))
+              athleteRows.map(
+                ({ athlete, nextAction, scheduleItems, status }) => (
+                  <ParentAthleteCard
+                    athleteId={athlete.id}
+                    athleteName={athlete.name}
+                    key={athlete.id}
+                    nextAction={nextAction}
+                    scheduleItems={scheduleItems}
+                    status={status}
+                  />
+                ),
+              )
             )}
           </div>
         </section>
-
-        {hasRegistrations && (
-          <section className="mt-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-xl font-black">Schedule</h2>
-              <Link
-                className="text-sm font-black text-blue-700"
-                href="/events"
-              >
-                View all
-              </Link>
-            </div>
-
-            <div className="mt-3 space-y-2">
-              {scheduleRows.length === 0 ? (
-                <p className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-3 text-sm font-semibold text-slate-500">
-                  No upcoming events.
-                </p>
-              ) : (
-                scheduleRows.map(({ athleteNames, event }) => (
-                  <Link
-                    className="flex items-center justify-between gap-3 rounded-md border border-slate-200 px-3 py-2 transition hover:border-blue-200 hover:bg-blue-50"
-                    href={`/events/${event.id}`}
-                    key={event.id}
-                  >
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-black">
-                        {event.title}
-                      </span>
-                      <span className="mt-0.5 block truncate text-xs font-semibold text-slate-500">
-                        {athleteNames.join(", ")}
-                      </span>
-                    </span>
-                    <span className="shrink-0 text-right text-xs font-black text-slate-600">
-                      {getEventDateLabel(event)}
-                      <span className="block font-semibold">
-                        {getEventTimeLabel(event)}
-                      </span>
-                    </span>
-                  </Link>
-                ))
-              )}
-            </div>
-          </section>
-        )}
 
         <BottomNav
           surface="light"
