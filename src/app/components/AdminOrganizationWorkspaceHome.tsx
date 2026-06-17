@@ -30,6 +30,7 @@ import AdminEventForm from "./AdminEventForm";
 import AdminEventLifecycleManager from "./AdminEventLifecycleManager";
 import AdminOrgMembersManager from "./AdminOrgMembersManager";
 import AdminTeamCreateForm from "./AdminTeamCreateForm";
+import AdminTeamMembersManager from "./AdminTeamMembersManager";
 import BackButton from "./BackButton";
 import RegistrationInviteManager from "./RegistrationInviteManager";
 import RegistrationReviewBoard from "./RegistrationReviewBoard";
@@ -1042,28 +1043,14 @@ export default function AdminOrganizationWorkspaceHome({
                       </div>
                     </section>
 
-                    <div className="grid gap-4 lg:grid-cols-2">
-                      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                        <h2 className="text-xl font-black">Roster</h2>
-                        <div className="mt-4 space-y-2">
-                          {selectedTeamRosteredRegistrations.length > 0 ? (
-                            selectedTeamRosteredRegistrations
-                              .slice(0, 8)
-                              .map((registration) => (
-                                <p
-                                  className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold"
-                                  key={registration.id}
-                                >
-                                  {registration.athleteName ??
-                                    "Rostered athlete"}
-                                </p>
-                              ))
-                          ) : (
-                            <EmptyState>No rostered athletes yet.</EmptyState>
-                          )}
-                        </div>
-                      </section>
-
+                    <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
+                      <AdminTeamMembersManager
+                        activeOrganizationId={activeOrganizationId}
+                        coachAssignments={readModel.coachAssignments}
+                        coaches={readModel.coaches}
+                        rosteredRegistrations={selectedTeamRosteredRegistrations}
+                        teamId={selectedTeam.id}
+                      />
                       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
                         <h2 className="text-xl font-black">Next Event</h2>
                         {selectedTeamNextEvent ? (
