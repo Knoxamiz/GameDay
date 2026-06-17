@@ -774,13 +774,11 @@ export default function AdminOrganizationWorkspaceHome({
                     </StatusPill>
                   </div>
 
-                  <div className="mt-5 grid gap-3 lg:grid-cols-2">
+                  <div className="mt-5 space-y-2">
                     {upcomingScheduleEvents.length === 0 ? (
-                      <div className="lg:col-span-2">
-                        <EmptyState>
-                          No events are scheduled for this organization yet.
-                        </EmptyState>
-                      </div>
+                      <EmptyState>
+                        No events are scheduled for this organization yet.
+                      </EmptyState>
                     ) : (
                       upcomingScheduleEvents.map((event) => {
                         const eventTeams = getEventTeamIds(event)
@@ -816,47 +814,55 @@ export default function AdminOrganizationWorkspaceHome({
 
                         return (
                           <Link
-                            className="block rounded-lg border border-slate-200 p-4 transition hover:border-blue-200 hover:bg-blue-50"
+                            className="flex flex-col gap-3 rounded-lg border border-slate-200 px-4 py-3 transition hover:border-blue-200 hover:bg-blue-50 sm:flex-row sm:items-center sm:justify-between"
                             href={withActiveOrganization(
                               `/admin/schedule/${event.id}`,
                               activeOrganizationId,
                             )}
                             key={event.id}
                           >
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0">
+                            <div className="min-w-0 sm:w-44 sm:shrink-0">
+                              <p className="text-sm font-black text-slate-950">
+                                {getEventDateLabel(event)}
+                              </p>
+                              <p className="mt-1 text-xs font-semibold text-slate-500">
+                                {getEventTimeLabel(event)}
+                              </p>
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
                                 <p className="text-xs font-bold uppercase text-slate-500">
                                   {event.type}
                                 </p>
-                                <h3 className="mt-1 truncate text-lg font-black">
-                                  {event.title}
-                                </h3>
+                                <StatusPill tone={statusTone}>
+                                  {statusLabel}
+                                </StatusPill>
                               </div>
-                              <StatusPill tone={statusTone}>
-                                {statusLabel}
-                              </StatusPill>
+                              <h3 className="mt-1 truncate text-base font-black">
+                                {event.title}
+                              </h3>
+                              <p className="mt-1 truncate text-sm font-semibold text-slate-500">
+                                {eventTeams.map((team) => team?.name).join(", ") ||
+                                  "Organization"}{" "}
+                                / {getEventLocationLabel(event)}
+                              </p>
                             </div>
-
-                            <p className="mt-2 truncate text-sm font-semibold text-slate-500">
-                              {eventTeams.map((team) => team?.name).join(", ") ||
-                                "Organization"}
-                            </p>
-                            <div className="mt-4 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+                            <div className="grid grid-cols-2 gap-2 text-sm sm:w-48 sm:shrink-0">
                               <div className="rounded-md bg-slate-50 p-3">
                                 <p className="font-black text-slate-900">
-                                  {getEventDateLabel(event)}
+                                  {attendance.attending}
                                 </p>
-                                <p className="mt-1">
-                                  {getEventTimeLabel(event)}
+                                <p className="mt-1 font-semibold text-slate-500">
+                                  attending
                                 </p>
                               </div>
                               <div className="rounded-md bg-slate-50 p-3">
                                 <p className="font-black text-slate-900">
-                                  {getEventLocationLabel(event)}
+                                  {transportation.needsRide}
                                 </p>
-                                <p className="mt-1">
-                                  {attendance.attending} attending ·{" "}
-                                  {transportation.needsRide} need ride
+                                <p className="mt-1 font-semibold text-slate-500">
+                                  need ride
                                 </p>
                               </div>
                             </div>
