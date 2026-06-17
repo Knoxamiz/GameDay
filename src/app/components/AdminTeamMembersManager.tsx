@@ -281,195 +281,233 @@ export default function AdminTeamMembersManager({
   }
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="text-xl font-black">Players and Coaches</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Add or remove real roster records and coach assignments.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">
-            {rosteredRegistrations.length} rostered
+    <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
+        <span>
+          <span className="block text-lg font-black text-slate-950">
+            Players & Coaches
           </span>
-          <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">
+          <span className="mt-1 block text-sm text-slate-500">
+            {rosteredRegistrations.length} rostered /{" "}
             {activeTeamCoachAssignments.length} coaches
           </span>
-        </div>
-      </div>
+        </span>
+        <span className="text-2xl font-black text-blue-600 transition group-open:rotate-90">
+          &rsaquo;
+        </span>
+      </summary>
 
       {message && (
-        <p className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm font-bold text-emerald-700">
+        <p className="mx-4 mb-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm font-bold text-emerald-700">
           {message}
         </p>
       )}
       {error && (
-        <p className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-700">
+        <p className="mx-4 mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-700">
           {error}
         </p>
       )}
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-2">
-        <div className="rounded-lg border border-slate-200 p-4">
-          <h3 className="text-base font-black">Players</h3>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <input
-              className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-              onChange={(event) => setAthleteFirstName(event.target.value)}
-              placeholder="Player first name"
-              value={athleteFirstName}
-            />
-            <input
-              className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-              onChange={(event) => setAthleteLastName(event.target.value)}
-              placeholder="Player last name"
-              value={athleteLastName}
-            />
-            <input
-              className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-              onChange={(event) => setGrade(event.target.value)}
-              placeholder="Grade"
-              value={grade}
-            />
-            <input
-              className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-              onChange={(event) => setJerseySize(event.target.value)}
-              placeholder="Uniform size"
-              value={jerseySize}
-            />
-            <input
-              className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-              onChange={(event) => setSchool(event.target.value)}
-              placeholder="School"
-              value={school}
-            />
-            <input
-              className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-              onChange={(event) => setDateOfBirth(event.target.value)}
-              type="date"
-              value={dateOfBirth}
-            />
-            <input
-              className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 sm:col-span-2"
-              onChange={(event) => setParentName(event.target.value)}
-              placeholder="Parent or guardian name, optional"
-              value={parentName}
-            />
-            <input
-              className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-              onChange={(event) => setParentEmail(event.target.value)}
-              placeholder="Parent email, optional"
-              type="email"
-              value={parentEmail}
-            />
-            <input
-              className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-              onChange={(event) => setParentPhone(event.target.value)}
-              placeholder="Parent phone, optional"
-              value={parentPhone}
-            />
-          </div>
-          <button
-            className="mt-3 rounded-md bg-blue-600 px-3 py-2 text-sm font-black text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={Boolean(savingKey)}
-            onClick={() => void addPlayer()}
-            type="button"
-          >
-            {savingKey === "player-add" ? "Adding..." : "+ Add player"}
-          </button>
-
-          <div className="mt-4 space-y-2">
-            {rosteredRegistrations.length === 0 ? (
-              <p className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-500">
-                No rostered players yet.
-              </p>
-            ) : (
-              rosteredRegistrations.map((registration) => (
-                <div
-                  className="flex items-center justify-between gap-3 rounded-md border border-slate-200 px-3 py-2"
-                  key={registration.id}
+      <div className="space-y-2 border-t border-slate-200 p-4">
+        <details className="group/player overflow-hidden rounded-lg border border-slate-200 bg-white">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
+            <span>
+              <span className="block font-black text-slate-950">Players</span>
+              <span className="mt-1 block text-sm text-slate-500">
+                {rosteredRegistrations.length} rostered
+              </span>
+            </span>
+            <span className="text-2xl font-black text-blue-600 transition group-open/player:rotate-90">
+              &rsaquo;
+            </span>
+          </summary>
+          <div className="border-t border-slate-200 p-4">
+            <details className="group/add-player overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
+                <span className="font-black text-slate-950">Add player</span>
+                <span className="text-xl font-black text-blue-600 transition group-open/add-player:rotate-90">
+                  &rsaquo;
+                </span>
+              </summary>
+              <div className="grid gap-3 border-t border-slate-200 p-3 sm:grid-cols-2">
+                <input
+                  className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  onChange={(event) => setAthleteFirstName(event.target.value)}
+                  placeholder="Player first name"
+                  value={athleteFirstName}
+                />
+                <input
+                  className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  onChange={(event) => setAthleteLastName(event.target.value)}
+                  placeholder="Player last name"
+                  value={athleteLastName}
+                />
+                <input
+                  className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  onChange={(event) => setGrade(event.target.value)}
+                  placeholder="Grade"
+                  value={grade}
+                />
+                <input
+                  className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  onChange={(event) => setJerseySize(event.target.value)}
+                  placeholder="Uniform size"
+                  value={jerseySize}
+                />
+                <input
+                  className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  onChange={(event) => setSchool(event.target.value)}
+                  placeholder="School"
+                  value={school}
+                />
+                <input
+                  className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  onChange={(event) => setDateOfBirth(event.target.value)}
+                  type="date"
+                  value={dateOfBirth}
+                />
+                <input
+                  className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 sm:col-span-2"
+                  onChange={(event) => setParentName(event.target.value)}
+                  placeholder="Parent or guardian name, optional"
+                  value={parentName}
+                />
+                <input
+                  className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  onChange={(event) => setParentEmail(event.target.value)}
+                  placeholder="Parent email, optional"
+                  type="email"
+                  value={parentEmail}
+                />
+                <input
+                  className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  onChange={(event) => setParentPhone(event.target.value)}
+                  placeholder="Parent phone, optional"
+                  value={parentPhone}
+                />
+                <button
+                  className="rounded-md bg-blue-600 px-3 py-2 text-sm font-black text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 sm:col-span-2"
+                  disabled={Boolean(savingKey)}
+                  onClick={() => void addPlayer()}
+                  type="button"
                 >
-                  <span className="min-w-0 truncate text-sm font-black">
-                    {registration.athleteName ?? "Rostered player"}
-                  </span>
-                  <button
-                    className="rounded-md border border-red-200 px-2.5 py-1.5 text-xs font-black text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={Boolean(savingKey)}
-                    onClick={() => void removePlayer(registration)}
-                    type="button"
+                  {savingKey === "player-add" ? "Adding..." : "+ Add player"}
+                </button>
+              </div>
+            </details>
+
+            <div className="mt-3 space-y-2">
+              {rosteredRegistrations.length === 0 ? (
+                <p className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-500">
+                  No rostered players yet.
+                </p>
+              ) : (
+                rosteredRegistrations.map((registration) => (
+                  <div
+                    className="flex items-center justify-between gap-3 rounded-md border border-slate-200 px-3 py-2"
+                    key={registration.id}
                   >
-                    {savingKey === `player-remove-${registration.id}`
-                      ? "Removing..."
-                      : "Remove"}
-                  </button>
-                </div>
-              ))
-            )}
+                    <span className="min-w-0 truncate text-sm font-black">
+                      {registration.athleteName ?? "Rostered player"}
+                    </span>
+                    <button
+                      className="rounded-md border border-red-200 px-2.5 py-1.5 text-xs font-black text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={Boolean(savingKey)}
+                      onClick={() => void removePlayer(registration)}
+                      type="button"
+                    >
+                      {savingKey === `player-remove-${registration.id}`
+                        ? "Removing..."
+                        : "Remove"}
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-        </div>
+        </details>
 
-        <div className="rounded-lg border border-slate-200 p-4">
-          <h3 className="text-base font-black">Coaches</h3>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <input
-              className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-              onChange={(event) => setCoachName(event.target.value)}
-              placeholder="Coach name"
-              value={coachName}
-            />
-            <input
-              className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-              onChange={(event) => setCoachEmail(event.target.value)}
-              placeholder="Coach email"
-              type="email"
-              value={coachEmail}
-            />
-          </div>
-          <button
-            className="mt-3 rounded-md bg-blue-600 px-3 py-2 text-sm font-black text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={Boolean(savingKey)}
-            onClick={() => void addCoach()}
-            type="button"
-          >
-            {savingKey === "coach-add" ? "Adding..." : "+ Add coach"}
-          </button>
-
-          <div className="mt-4 space-y-2">
-            {activeTeamCoachAssignments.length === 0 ? (
-              <p className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-500">
-                No coaches assigned yet.
-              </p>
-            ) : (
-              activeTeamCoachAssignments.map((assignment) => (
-                <div
-                  className="flex items-center justify-between gap-3 rounded-md border border-slate-200 px-3 py-2"
-                  key={assignment.id}
+        <details className="group/coach overflow-hidden rounded-lg border border-slate-200 bg-white">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
+            <span>
+              <span className="block font-black text-slate-950">Coaches</span>
+              <span className="mt-1 block text-sm text-slate-500">
+                {activeTeamCoachAssignments.length} assigned
+              </span>
+            </span>
+            <span className="text-2xl font-black text-blue-600 transition group-open/coach:rotate-90">
+              &rsaquo;
+            </span>
+          </summary>
+          <div className="border-t border-slate-200 p-4">
+            <details className="group/add-coach overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
+                <span className="font-black text-slate-950">Add coach</span>
+                <span className="text-xl font-black text-blue-600 transition group-open/add-coach:rotate-90">
+                  &rsaquo;
+                </span>
+              </summary>
+              <div className="grid gap-3 border-t border-slate-200 p-3 sm:grid-cols-2">
+                <input
+                  className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  onChange={(event) => setCoachName(event.target.value)}
+                  placeholder="Coach name"
+                  value={coachName}
+                />
+                <input
+                  className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  onChange={(event) => setCoachEmail(event.target.value)}
+                  placeholder="Coach email"
+                  type="email"
+                  value={coachEmail}
+                />
+                <button
+                  className="rounded-md bg-blue-600 px-3 py-2 text-sm font-black text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 sm:col-span-2"
+                  disabled={Boolean(savingKey)}
+                  onClick={() => void addCoach()}
+                  type="button"
                 >
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-black">
-                      {getCoachName(assignment, coaches)}
-                    </span>
-                    <span className="block truncate text-xs font-semibold text-slate-500">
-                      {assignment.email}
-                    </span>
-                  </span>
-                  <button
-                    className="rounded-md border border-red-200 px-2.5 py-1.5 text-xs font-black text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={Boolean(savingKey)}
-                    onClick={() => void removeCoach(assignment)}
-                    type="button"
+                  {savingKey === "coach-add" ? "Adding..." : "+ Add coach"}
+                </button>
+              </div>
+            </details>
+
+            <div className="mt-3 space-y-2">
+              {activeTeamCoachAssignments.length === 0 ? (
+                <p className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-500">
+                  No coaches assigned yet.
+                </p>
+              ) : (
+                activeTeamCoachAssignments.map((assignment) => (
+                  <div
+                    className="flex items-center justify-between gap-3 rounded-md border border-slate-200 px-3 py-2"
+                    key={assignment.id}
                   >
-                    {savingKey === `coach-remove-${assignment.id}`
-                      ? "Removing..."
-                      : "Remove"}
-                  </button>
-                </div>
-              ))
-            )}
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-black">
+                        {getCoachName(assignment, coaches)}
+                      </span>
+                      <span className="block truncate text-xs font-semibold text-slate-500">
+                        {assignment.email}
+                      </span>
+                    </span>
+                    <button
+                      className="rounded-md border border-red-200 px-2.5 py-1.5 text-xs font-black text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={Boolean(savingKey)}
+                      onClick={() => void removeCoach(assignment)}
+                      type="button"
+                    >
+                      {savingKey === `coach-remove-${assignment.id}`
+                        ? "Removing..."
+                        : "Remove"}
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-        </div>
+        </details>
       </div>
-    </section>
+    </details>
   );
 }

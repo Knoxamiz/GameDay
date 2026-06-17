@@ -1043,7 +1043,7 @@ export default function AdminOrganizationWorkspaceHome({
                       </div>
                     </section>
 
-                    <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
+                    <div className="space-y-3">
                       <AdminTeamMembersManager
                         activeOrganizationId={activeOrganizationId}
                         coachAssignments={readModel.coachAssignments}
@@ -1051,32 +1051,48 @@ export default function AdminOrganizationWorkspaceHome({
                         rosteredRegistrations={selectedTeamRosteredRegistrations}
                         teamId={selectedTeam.id}
                       />
-                      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                        <h2 className="text-xl font-black">Next Event</h2>
-                        {selectedTeamNextEvent ? (
-                          <Link
-                            className="mt-4 block rounded-md border border-slate-200 p-4 transition hover:border-blue-200 hover:bg-blue-50"
-                            href={withActiveOrganization(
-                              `/admin/schedule/${selectedTeamNextEvent.id}`,
-                              activeOrganizationId,
-                            )}
-                          >
-                            <p className="font-black">
-                              {selectedTeamNextEvent.title}
-                            </p>
-                            <p className="mt-2 text-sm text-slate-500">
-                              {getEventShortDateLabel(
-                                selectedTeamNextEvent,
-                              )}{" "}
-                              {getEventTimeLabel(
-                                selectedTeamNextEvent,
+                      <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
+                          <span>
+                            <span className="block text-lg font-black text-slate-950">
+                              Next Event
+                            </span>
+                            <span className="mt-1 block text-sm text-slate-500">
+                              {selectedTeamNextEvent
+                                ? selectedTeamNextEvent.title
+                                : "None scheduled"}
+                            </span>
+                          </span>
+                          <span className="text-2xl font-black text-blue-600 transition group-open:rotate-90">
+                            &rsaquo;
+                          </span>
+                        </summary>
+                        <div className="border-t border-slate-200 p-4">
+                          {selectedTeamNextEvent ? (
+                            <Link
+                              className="block rounded-md border border-slate-200 p-4 transition hover:border-blue-200 hover:bg-blue-50"
+                              href={withActiveOrganization(
+                                `/admin/schedule/${selectedTeamNextEvent.id}`,
+                                activeOrganizationId,
                               )}
-                            </p>
-                          </Link>
-                        ) : (
-                          <EmptyState>No upcoming event.</EmptyState>
-                        )}
-                      </section>
+                            >
+                              <p className="font-black">
+                                {selectedTeamNextEvent.title}
+                              </p>
+                              <p className="mt-2 text-sm text-slate-500">
+                                {getEventShortDateLabel(
+                                  selectedTeamNextEvent,
+                                )}{" "}
+                                {getEventTimeLabel(
+                                  selectedTeamNextEvent,
+                                )}
+                              </p>
+                            </Link>
+                          ) : (
+                            <EmptyState>No upcoming event.</EmptyState>
+                          )}
+                        </div>
+                      </details>
                     </div>
                   </div>
                 )}
