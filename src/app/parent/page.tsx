@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import ParentAthleteCard from "../components/ParentAthleteCard";
 import BottomNav from "../components/BottomNav";
+import ParentAthleteCard from "../components/ParentAthleteCard";
 import SessionControls from "../components/SessionControls";
 import {
   getCurrentAuthSession,
@@ -27,8 +27,8 @@ import {
   hasPendingParentLifecycleRequest,
   isParentEventEligibleRegistration,
 } from "../data/registrations";
-import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import { getLandingRouteForClaims } from "../infrastructure/auth";
+import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 
 export const dynamic = "force-dynamic";
 
@@ -48,12 +48,13 @@ export default async function ParentHome() {
   if (currentUser.source !== "firebase-session") {
     redirect("/login");
   }
+
   const {
     athletes: parentAthletes,
+    errorMessage,
     parent: currentParent,
     registrations,
     source,
-    errorMessage,
   } = await getParentAthleteRegistrationReadModel(currentUser.parentId, {
     parentUid: currentUser.parentUid,
   });
@@ -73,9 +74,8 @@ export default async function ParentHome() {
       return [
         athlete.id,
         registration && isParentEventEligibleRegistration(registration)
-          ? upcomingScopedEvents.find(
-              (event) =>
-                eventHasTeamId(event, athlete.teamId),
+          ? upcomingScopedEvents.find((event) =>
+              eventHasTeamId(event, athlete.teamId),
             )
           : undefined,
       ];
@@ -91,22 +91,22 @@ export default async function ParentHome() {
   ];
   const [attendanceEntries, transportationEntries, organizations] =
     await Promise.all([
-    Promise.all(
-      parentAthletes.map((athlete) =>
-        repositories.attendance.listByAthleteId(athlete.id),
+      Promise.all(
+        parentAthletes.map((athlete) =>
+          repositories.attendance.listByAthleteId(athlete.id),
+        ),
+      ).then((entryLists) => entryLists.flat()),
+      Promise.all(
+        parentAthletes.map((athlete) =>
+          repositories.transportation.listByAthleteId(athlete.id),
+        ),
+      ).then((entryLists) => entryLists.flat()),
+      Promise.all(
+        organizationIds.map((organizationId) =>
+          repositories.organizations.getById(organizationId),
+        ),
       ),
-    ).then((entryLists) => entryLists.flat()),
-    Promise.all(
-      parentAthletes.map((athlete) =>
-        repositories.transportation.listByAthleteId(athlete.id),
-      ),
-    ).then((entryLists) => entryLists.flat()),
-    Promise.all(
-      organizationIds.map((organizationId) =>
-        repositories.organizations.getById(organizationId),
-      ),
-    ),
-  ]);
+    ]);
   const organizationsById = new Map(
     organizations.flatMap((organization) =>
       organization ? [[organization.id, organization]] : [],
@@ -150,23 +150,51 @@ export default async function ParentHome() {
       transportationStatus,
     };
   });
-  const actionCount = athleteRows.filter((row) =>
-    row.nextAction.tone === "attention" || row.nextAction.tone === "blocked",
+  const actionCount = athleteRows.filter(
+    (row) =>
+      row.nextAction.tone === "attention" || row.nextAction.tone === "blocked",
   ).length;
   const hasRegistrations = parentAthletes.length > 0 || registrations.length > 0;
   const parentDisplayName =
     currentParent.firstName || currentParent.name || "Parent";
-  const priorityRow =
-    athleteRows.find(
-      (row) =>
-        row.nextAction.tone === "blocked" ||
-        row.nextAction.tone === "attention",
-    ) ?? athleteRows[0];
+  const playerAlerts = athleteRows.map((row) => ({
+    athleteName: row.athlete.name,
+    description: row.nextEvent
+      ? [
+          getEventDateLabel(row.nextEvent),
+          getEventTimeLabel(row.nextEvent),
+          getEventLocationLabel(row.nextEvent),
+        ]
+          .filter(Boolean)
+          .join(" - ")
+      : row.nextAction.description,
+    href: `/athletes/${row.athlete.id}`,
+    label: row.nextEvent
+      ? row.nextEvent.title
+      : row.nextAction.label,
+    tone: row.nextAction.tone,
+  }));
+  const scheduleRows = upcomingScopedEvents
+    .map((event) => {
+      const athleteNames = athleteRows
+        .filter((row) => {
+          if (!row.registration || !isParentEventEligibleRegistration(row.registration)) {
+            return false;
+          }
+
+          return eventHasTeamId(event, row.athlete.teamId);
+        })
+        .map((row) => row.athlete.name);
+
+      return { athleteNames, event };
+    })
+    .filter((row) => row.athleteNames.length > 0)
+    .slice(0, 4);
 
   return (
     <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
           <Link className="text-xl font-black" href="/parent">
             GameDay
           </Link>
@@ -184,55 +212,25 @@ export default async function ParentHome() {
         </div>
       </header>
 
-      <section className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
-          <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm font-black uppercase text-blue-700">
-              Parent Home
+      <section className="mx-auto max-w-3xl px-4 py-5 pb-24 sm:px-6">
+        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-sm font-black uppercase text-blue-700">
+            Parent Home
+          </p>
+          <h1 className="mt-2 text-3xl font-black tracking-tight">
+            Hi, {parentDisplayName}
+          </h1>
+          <p className="mt-2 text-base font-semibold text-slate-600">
+            Your players and their next scheduled things.
+          </p>
+          {organizationContext && (
+            <p className="mt-3 text-sm text-slate-500">
+              {organizationContext.count === 1
+                ? organizationContext.label
+                : `Linked organizations: ${organizationContext.label}`}
             </p>
-            <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
-              Hi, {parentDisplayName}
-            </h1>
-            <p className="mt-2 max-w-2xl text-base font-semibold text-slate-600">
-              Here is what each player needs right now.
-            </p>
-            {organizationContext && (
-              <p className="mt-3 text-sm text-slate-500">
-                {organizationContext.count === 1
-                  ? organizationContext.label
-                  : `Linked organizations: ${organizationContext.label}`}
-              </p>
-            )}
-          </section>
-
-          <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm font-black text-slate-500">Family Snapshot</p>
-            <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs font-bold">
-              <div className="rounded-md bg-slate-50 p-3">
-                <p className="text-slate-500">Players</p>
-                <p className="mt-1 text-2xl font-black text-slate-950">
-                  {parentAthletes.length}
-                </p>
-              </div>
-              <div className="rounded-md bg-slate-50 p-3">
-                <p className="text-slate-500">Needs</p>
-                <p
-                  className={`mt-1 text-2xl font-black ${
-                    actionCount > 0 ? "text-orange-600" : "text-emerald-600"
-                  }`}
-                >
-                  {actionCount}
-                </p>
-              </div>
-              <div className="rounded-md bg-slate-50 p-3">
-                <p className="text-slate-500">Events</p>
-                <p className="mt-1 text-2xl font-black text-slate-950">
-                  {upcomingScopedEvents.length}
-                </p>
-              </div>
-            </div>
-          </section>
-        </div>
+          )}
+        </section>
 
         {source === "error" && (
           <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-5 text-sm text-red-700">
@@ -250,7 +248,7 @@ export default async function ParentHome() {
               First step
             </p>
             <h2 className="mt-2 text-2xl font-black">Find your team</h2>
-            <p className="mt-2 max-w-2xl text-sm font-semibold text-slate-600">
+            <p className="mt-2 text-sm font-semibold text-slate-600">
               Search open GameDay registrations by organization and team. A QR
               code still works, but parents should not need one to get started.
             </p>
@@ -263,29 +261,40 @@ export default async function ParentHome() {
           </section>
         )}
 
-        {priorityRow && (
+        {playerAlerts.length > 0 && (
           <section className="mt-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm font-black uppercase text-slate-500">
-              Needs Attention
-            </p>
-            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-2xl font-black">
-                  {priorityRow.athlete.name}
-                </h2>
-                <p className="mt-1 text-sm font-semibold text-slate-600">
-                  {priorityRow.nextAction.label}:{" "}
-                  {priorityRow.nextAction.description}
+                <h2 className="text-xl font-black">Player Alerts</h2>
+                <p className="mt-1 text-sm font-semibold text-slate-500">
+                  {actionCount > 0
+                    ? `${actionCount} item${
+                        actionCount === 1 ? "" : "s"
+                      } need attention.`
+                    : "Next scheduled things by player."}
                 </p>
               </div>
-              {priorityRow.nextAction.href && (
+            </div>
+            <div className="mt-4 space-y-2">
+              {playerAlerts.map((alert) => (
                 <Link
-                  className="inline-flex shrink-0 rounded-md bg-blue-600 px-4 py-3 text-sm font-black text-white hover:bg-blue-700"
-                  href={priorityRow.nextAction.href}
+                  className="flex flex-col gap-2 rounded-md border border-slate-200 bg-slate-50 p-3 transition hover:border-blue-200 hover:bg-blue-50 sm:flex-row sm:items-center sm:justify-between"
+                  href={alert.href}
+                  key={`${alert.athleteName}-${alert.label}`}
                 >
-                  Open
+                  <span className="min-w-0">
+                    <span className="block truncate text-base font-black">
+                      {alert.athleteName} - {alert.label}
+                    </span>
+                    <span className="mt-1 block truncate text-sm font-semibold text-slate-500">
+                      {alert.description}
+                    </span>
+                  </span>
+                  <span className="text-sm font-black text-blue-700">
+                    Open
+                  </span>
                 </Link>
-              )}
+              ))}
             </div>
           </section>
         )}
@@ -294,7 +303,7 @@ export default async function ParentHome() {
           <div>
             <h2 className="text-2xl font-black">Players</h2>
             <p className="mt-1 text-sm font-semibold text-slate-500">
-              Each card is scoped to one player.
+              Tap a player for options and details.
             </p>
           </div>
           <Link
@@ -306,14 +315,7 @@ export default async function ParentHome() {
         </div>
 
         <div className="mt-4 space-y-3">
-          {athleteRows.map(
-            ({
-              athlete,
-              attendanceStatus,
-              nextEvent,
-              registration,
-              transportationStatus,
-            }) => {
+          {athleteRows.map(({ athlete, nextAction, nextEvent, registration }) => {
             const team = teamsById.get(athlete.teamId);
             const organizationId =
               registration?.organizationId ?? athlete.organizationId ?? "";
@@ -323,20 +325,14 @@ export default async function ParentHome() {
 
             return (
               <ParentAthleteCard
-                key={athlete.id}
                 athleteId={athlete.id}
                 athleteName={athlete.name}
-                hasPendingLifecycleRequest={
-                  registration
-                    ? hasPendingParentLifecycleRequest(registration)
-                    : false
-                }
-                hasRegistration={Boolean(registration)}
+                key={athlete.id}
+                nextAction={nextAction}
                 nextEvent={
                   nextEvent
                     ? {
                         date: getEventDateLabel(nextEvent),
-                        directionsUrl: "",
                         id: nextEvent.id,
                         location: getEventLocationLabel(nextEvent),
                         status: nextEvent.status,
@@ -346,11 +342,6 @@ export default async function ParentHome() {
                     : undefined
                 }
                 organizationName={organizationName}
-                initialTransportationStatus={transportationStatus}
-                initialAttendanceStatus={attendanceStatus}
-                paymentRequirements={registration?.paymentRequirements ?? []}
-                registrationId={registration?.id ?? athlete.registrationId}
-                registrationRequirements={registration?.requirements ?? []}
                 registrationStatus={registration?.status ?? "Pending"}
                 rosterStatus={getRegistrationRosterStatus(registration)}
                 teamDetail={[team?.division, team?.season]
@@ -364,23 +355,54 @@ export default async function ParentHome() {
 
         {hasRegistrations && (
           <section className="mt-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-xl font-black">Family Schedule</h2>
+                <h2 className="text-xl font-black">Schedule</h2>
                 <p className="mt-1 text-sm font-semibold text-slate-500">
-                  {upcomingScopedEvents.length === 0
-                    ? "No upcoming events are scheduled for your registered players."
-                    : `${upcomingScopedEvents.length} upcoming event${
-                        upcomingScopedEvents.length === 1 ? "" : "s"
-                      } for your registered players.`}
+                  Upcoming events for your players.
                 </p>
               </div>
               <Link
+                className="rounded-md bg-blue-600 px-3 py-2 text-sm font-black text-white hover:bg-blue-700"
                 href="/events"
-                className="inline-flex rounded-md bg-blue-600 px-4 py-3 text-sm font-black text-white hover:bg-blue-700"
               >
-                View Schedule
+                View all
               </Link>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              {scheduleRows.length === 0 ? (
+                <p className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-4 text-sm font-semibold text-slate-500">
+                  No upcoming events are scheduled for your registered players.
+                </p>
+              ) : (
+                scheduleRows.map(({ athleteNames, event }) => (
+                  <Link
+                    className="block rounded-md border border-slate-200 p-3 transition hover:border-blue-200 hover:bg-blue-50"
+                    href={`/events/${event.id}`}
+                    key={event.id}
+                  >
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <span className="min-w-0">
+                        <span className="block truncate text-base font-black">
+                          {event.title}
+                        </span>
+                        <span className="mt-1 block text-sm font-semibold text-slate-500">
+                          {athleteNames.join(", ")}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-sm font-black text-slate-700">
+                        {getEventDateLabel(event)}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm font-semibold text-slate-500">
+                      {[getEventTimeLabel(event), getEventLocationLabel(event)]
+                        .filter(Boolean)
+                        .join(" - ")}
+                    </p>
+                  </Link>
+                ))
+              )}
             </div>
           </section>
         )}
