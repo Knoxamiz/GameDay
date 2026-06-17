@@ -81,62 +81,62 @@ function getDocumentRequirementsFromRegistration(
 
 function getActionToneClasses(tone: ParentNextActionTone) {
   if (tone === "ready") {
-    return "border-blue-500/40 bg-blue-500/10 text-blue-100";
+    return "border-emerald-200 bg-emerald-50 text-emerald-800";
   }
 
   if (tone === "blocked") {
-    return "border-red-500/40 bg-red-500/10 text-red-100";
+    return "border-red-200 bg-red-50 text-red-800";
   }
 
   if (tone === "attention") {
-    return "border-yellow-500/40 bg-yellow-500/10 text-yellow-100";
+    return "border-orange-200 bg-orange-50 text-orange-800";
   }
 
-  return "border-slate-700 bg-slate-950 text-slate-200";
+  return "border-slate-200 bg-slate-50 text-slate-700";
 }
 
 function getRegistrationTone(status: RegistrationStatus) {
   if (status === "Approved") {
-    return "text-blue-300";
+    return "text-emerald-700";
   }
 
   if (status === "Rejected" || status === "Withdrawn" || status === "Inactive") {
-    return "text-red-300";
+    return "text-red-700";
   }
 
-  return "text-yellow-200";
+  return "text-orange-700";
 }
 
 function getRosterTone(status: RosterStatus) {
   if (status === "rostered") {
-    return "text-blue-300";
+    return "text-emerald-700";
   }
 
   if (status === "inactive") {
-    return "text-red-300";
+    return "text-red-700";
   }
 
-  return "text-yellow-200";
+  return "text-orange-700";
 }
 
 function getRequirementTone(open: number, blocked: number, needsReview: number) {
   if (blocked > 0) {
-    return "text-red-300";
+    return "text-red-700";
   }
 
   if (open > 0 || needsReview > 0) {
-    return "text-yellow-200";
+    return "text-orange-700";
   }
 
-  return "text-blue-300";
+  return "text-emerald-700";
 }
 
 function getEventStatusTone(status: GameDayEventStatus) {
   if (status === "canceled") {
-    return "bg-red-500/20 text-red-300";
+    return "bg-red-50 text-red-700";
   }
 
-  return "bg-blue-500/20 text-blue-300";
+  return "bg-blue-50 text-blue-700";
 }
 
 function getPaymentLabel(paymentRequirements: PaymentRequirement[]) {
@@ -242,29 +242,29 @@ export default function ParentAthleteCard({
   const paymentSummary = summarizePaymentRequirements(paymentRequirements);
 
   return (
-    <article className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-      <div className="flex items-start justify-between gap-3">
+    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3 className="text-xl font-bold">{athleteName}</h3>
-          <p className="mt-1 text-sm text-slate-400">
-            {[organizationName, teamName].filter(Boolean).join(" - ") ||
+          <h3 className="text-2xl font-black">{athleteName}</h3>
+          <p className="mt-1 text-sm font-semibold text-slate-500">
+            {[organizationName, teamName].filter(Boolean).join(" / ") ||
               "Team pending"}
           </p>
           {teamDetail && (
-            <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <p className="mt-1 text-xs font-bold uppercase text-slate-400">
               {teamDetail}
             </p>
           )}
         </div>
         <span
-          className={`rounded-full px-3 py-1 text-xs font-semibold ${
+          className={`w-fit rounded-full px-2.5 py-1 text-xs font-black ${
             nextAction.tone === "ready"
-              ? "bg-blue-500/20 text-blue-300"
+              ? "bg-emerald-50 text-emerald-700"
               : nextAction.tone === "blocked"
-                ? "bg-red-500/20 text-red-300"
+                ? "bg-red-50 text-red-700"
                 : nextAction.tone === "attention"
-                  ? "bg-yellow-500/20 text-yellow-200"
-                  : "bg-slate-800 text-slate-300"
+                  ? "bg-orange-50 text-orange-700"
+                  : "bg-slate-100 text-slate-600"
           }`}
         >
           {nextAction.label}
@@ -284,7 +284,7 @@ export default function ParentAthleteCard({
         {nextAction.href && (
           <Link
             href={nextAction.href}
-            className="mt-4 block rounded-xl bg-blue-500 py-3 text-center text-sm font-semibold text-white"
+            className="mt-4 inline-flex rounded-md bg-blue-600 px-4 py-3 text-center text-sm font-black text-white hover:bg-blue-700"
           >
             {nextAction.label}
           </Link>
@@ -292,8 +292,10 @@ export default function ParentAthleteCard({
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-        <div className="rounded-xl bg-slate-800 p-3">
-          <p className="text-slate-400">Registration</p>
+        <div className="rounded-md bg-slate-50 p-3">
+          <p className="text-xs font-bold uppercase text-slate-500">
+            Registration
+          </p>
           <p
             className={`mt-1 font-semibold ${getRegistrationTone(
               currentRegistrationStatus,
@@ -302,23 +304,25 @@ export default function ParentAthleteCard({
             {getParentRegistrationStatusLabel(currentRegistrationStatus)}
           </p>
         </div>
-        <div className="rounded-xl bg-slate-800 p-3">
-          <p className="text-slate-400">Roster</p>
+        <div className="rounded-md bg-slate-50 p-3">
+          <p className="text-xs font-bold uppercase text-slate-500">Roster</p>
           <p className={`mt-1 font-semibold ${getRosterTone(rosterStatus)}`}>
             {getParentRosterStatusLabel(rosterStatus)}
           </p>
         </div>
-        <div className="rounded-xl bg-slate-800 p-3">
-          <p className="text-slate-400">Requirements</p>
+        <div className="rounded-md bg-slate-50 p-3">
+          <p className="text-xs font-bold uppercase text-slate-500">
+            Requirements
+          </p>
           <p className={`mt-1 font-semibold ${requirementTone}`}>
             {requirementSummary.label}
           </p>
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="mt-1 text-xs text-slate-500">
             {getParentRequirementCountLabel(requirementSummary)}
           </p>
         </div>
-        <div className="rounded-xl bg-slate-800 p-3">
-          <p className="text-slate-400">Payment</p>
+        <div className="rounded-md bg-slate-50 p-3">
+          <p className="text-xs font-bold uppercase text-slate-500">Payment</p>
           <p
             className={`mt-1 font-semibold ${getRequirementTone(
               paymentSummary.open,
@@ -331,27 +335,31 @@ export default function ParentAthleteCard({
         </div>
       </div>
 
-      <div className="mt-4 rounded-xl bg-slate-800 p-4">
+      <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <p className="text-xs font-black uppercase text-slate-500">
               Next event
             </p>
             {nextEvent ? (
               <>
-                <p className="mt-2 font-semibold">{nextEvent.title}</p>
-                <p className="mt-2 text-sm text-slate-300">{nextEvent.date}</p>
+                <p className="mt-2 font-black text-slate-950">
+                  {nextEvent.title}
+                </p>
+                <p className="mt-2 text-sm text-slate-600">{nextEvent.date}</p>
                 {nextEvent.time && (
-                  <p className="mt-1 text-sm text-slate-300">{nextEvent.time}</p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {nextEvent.time}
+                  </p>
                 )}
                 {nextEvent.location && (
-                  <p className="mt-2 text-sm text-slate-300">
+                  <p className="mt-2 text-sm text-slate-600">
                     {nextEvent.location}
                   </p>
                 )}
               </>
             ) : (
-              <p className="mt-2 text-sm text-slate-300">
+              <p className="mt-2 text-sm text-slate-600">
                 No upcoming event is scheduled for this athlete.
               </p>
             )}
@@ -374,6 +382,7 @@ export default function ParentAthleteCard({
               eventId={nextEvent.id}
               initialStatus={initialAttendanceStatus}
               compact
+              surface="light"
             />
             <TransportationStatusPicker
               athleteId={athleteId}
@@ -384,12 +393,13 @@ export default function ParentAthleteCard({
               paymentRequirements={paymentRequirements}
               registrationId={registrationId}
               registrationRequirements={requirements}
+              surface="light"
             />
           </>
         )}
 
         {nextEvent && !eventUpdatesAllowed && (
-          <p className="mt-4 rounded-xl border border-slate-700 bg-slate-950 p-3 text-sm text-slate-300">
+          <p className="mt-4 rounded-md border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-600">
             {nextEvent.status === "canceled"
               ? "Attendance and transportation updates are closed for this canceled event."
               : "Attendance and transportation controls are available after this athlete is approved and rostered."}
@@ -405,14 +415,14 @@ export default function ParentAthleteCard({
         {nextEvent && (
           <Link
             href={`/events/${nextEvent.id}`}
-            className="block rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
+            className="block rounded-md bg-blue-600 py-3 text-center font-black text-white hover:bg-blue-700"
           >
             Event Details
           </Link>
         )}
         <Link
           href={`/athletes/${athleteId}`}
-          className="block rounded-xl border border-slate-700 bg-slate-900 py-3 text-center font-semibold text-white"
+          className="block rounded-md border border-slate-200 bg-white py-3 text-center font-black text-slate-700 hover:bg-slate-50"
         >
           Athlete Details
         </Link>
@@ -421,7 +431,7 @@ export default function ParentAthleteCard({
             href={nextEvent.directionsUrl}
             target="_blank"
             rel="noreferrer"
-            className="block rounded-xl border border-slate-700 bg-slate-900 py-3 text-center font-semibold text-white md:col-span-2"
+            className="block rounded-md border border-slate-200 bg-white py-3 text-center font-black text-slate-700 hover:bg-slate-50 md:col-span-2"
           >
             Directions
           </a>

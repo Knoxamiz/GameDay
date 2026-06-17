@@ -19,6 +19,7 @@ type TransportationStatusPickerProps = {
   registrationId: string;
   registrationRequirements: RegistrationRequirement[];
   options: TransportationStatus[];
+  surface?: "dark" | "light";
 };
 
 export default function TransportationStatusPicker({
@@ -30,6 +31,7 @@ export default function TransportationStatusPicker({
   registrationId,
   registrationRequirements,
   options,
+  surface = "dark",
 }: TransportationStatusPickerProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -96,8 +98,12 @@ export default function TransportationStatusPicker({
       <div
         className={`mt-4 rounded-2xl border p-4 text-sm ${
           isReady
-            ? "border-blue-500/40 bg-blue-500/10 text-blue-200"
-            : "border-red-500/40 bg-red-500/10 text-red-200"
+            ? surface === "light"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "border-blue-500/40 bg-blue-500/10 text-blue-200"
+            : surface === "light"
+              ? "border-orange-200 bg-orange-50 text-orange-700"
+              : "border-red-500/40 bg-red-500/10 text-red-200"
         }`}
       >
         <p className="font-semibold">
@@ -117,11 +123,23 @@ export default function TransportationStatusPicker({
         )}
       </div>
 
-      <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+      <div
+        className={`mt-4 rounded-2xl border p-5 ${
+          surface === "light"
+            ? "border-slate-200 bg-white"
+            : "border-slate-800 bg-slate-900"
+        }`}
+      >
         <h2 className="text-lg font-bold">Transportation</h2>
         <p
           className={`mt-3 text-sm font-semibold ${
-            hasTransportationReady ? "text-blue-300" : "text-red-300"
+            hasTransportationReady
+              ? surface === "light"
+                ? "text-emerald-700"
+                : "text-blue-300"
+              : surface === "light"
+                ? "text-orange-700"
+                : "text-red-300"
           }`}
         >
           Current: {selectedStatus}
@@ -138,15 +156,19 @@ export default function TransportationStatusPicker({
                 onClick={() => updateTransportation(option)}
                 className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm font-semibold ${
                   isSelected
-                    ? "border-blue-300 bg-blue-500/20 text-blue-100"
-                    : "border-slate-700 bg-slate-900 text-slate-300"
+                    ? surface === "light"
+                      ? "border-blue-600 bg-blue-50 text-blue-700"
+                      : "border-blue-300 bg-blue-500/20 text-blue-100"
+                    : surface === "light"
+                      ? "border-slate-200 bg-white text-slate-700"
+                      : "border-slate-700 bg-slate-900 text-slate-300"
                 } disabled:cursor-not-allowed disabled:opacity-60`}
               >
                 <span
                   className={`h-4 w-4 rounded-full border ${
                     isSelected
-                      ? "border-blue-300 bg-blue-300"
-                      : "border-slate-500"
+                      ? "border-blue-500 bg-blue-500"
+                      : "border-slate-400"
                   }`}
                 />
                 {option}
@@ -155,7 +177,7 @@ export default function TransportationStatusPicker({
           })}
         </div>
         {error && (
-          <p className="mt-3 text-sm font-semibold text-red-300">{error}</p>
+          <p className="mt-3 text-sm font-semibold text-red-700">{error}</p>
         )}
       </div>
     </>

@@ -134,6 +134,36 @@ export async function getParentRegistrationInviteReadModels(): Promise<
   }
 }
 
+export async function getPublicRegistrationInviteReadModels(): Promise<
+  RegistrationInviteReadModel[]
+> {
+  if (!getFirebaseAdminConfig()) {
+    return [];
+  }
+
+  try {
+    const repositories = createFirestoreRepositories();
+    const [openInvites, legacyActiveInvites] = await Promise.all([
+      repositories.registrationInvites.list({ scope: { status: "open" } }),
+      repositories.registrationInvites.list({ scope: { status: "Active" } }),
+    ]);
+    const inviteModels = await Promise.all(
+      uniqueById([...openInvites, ...legacyActiveInvites]).map(
+        buildInviteReadModel,
+      ),
+    );
+
+    return inviteModels.filter((model) => model.availability.available);
+  } catch (error) {
+    console.warn("Could not load public registration invites.", {
+      message: error instanceof Error ? error.message : "Unknown error",
+      name: error instanceof Error ? error.name : typeof error,
+    });
+
+    return [];
+  }
+}
+
 export async function getRegistrationInviteReadModelByCode(
   inviteCode: string,
 ): Promise<RegistrationInviteReadModel> {
