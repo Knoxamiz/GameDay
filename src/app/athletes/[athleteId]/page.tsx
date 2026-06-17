@@ -288,6 +288,24 @@ export default async function AthleteDetailsPage({
   const teamName = team?.name ?? team?.label ?? "Team unavailable";
   const teamDetail = [team?.division, team?.season].filter(Boolean).join(" - ");
   const organizationName = organization?.name ?? "Organization unavailable";
+  const needsBlocked =
+    requirementSummary.documentsBlocked + requirementSummary.paymentsBlocked;
+  const needsReview =
+    requirementSummary.documentsNeedsReview + requirementSummary.paymentsNeedsReview;
+  const hasPlayerNeeds =
+    requirementSummary.open > 0 || needsBlocked > 0 || needsReview > 0;
+  const playerNeedsLabel =
+    needsBlocked > 0
+      ? `${needsBlocked} needs fix`
+      : requirementSummary.open > 0
+        ? `${requirementSummary.open} open`
+        : `${needsReview} waiting review`;
+  const nextEventLabel = nextEvent
+    ? `${getEventDateLabel(nextEvent)} - ${getEventTimeLabel(nextEvent)}`
+    : getEventUnavailableMessage(registrationStatus, rosterStatus);
+  const eventPlanLabel = nextEvent
+    ? `${attendanceStatus} attendance / ${transportationStatus} ride`
+    : "No next event";
 
   return (
     <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
@@ -305,7 +323,7 @@ export default async function AthleteDetailsPage({
         </div>
       </header>
 
-      <section className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+      <section className="mx-auto max-w-2xl px-4 py-5 sm:px-6">
         <Link
           href="/parent"
           className="inline-flex rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 shadow-sm hover:bg-slate-50"
@@ -314,209 +332,320 @@ export default async function AthleteDetailsPage({
         </Link>
 
         <div className="mt-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-sm font-black uppercase text-blue-700">
+          <p className="text-xs font-black uppercase text-blue-700">
             Player Home
           </p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
+          <h1 className="mt-1 text-3xl font-black tracking-tight">
             {athlete.name}
           </h1>
-          <div className="mt-3 flex flex-wrap gap-2 text-sm font-semibold text-slate-600">
-            <span>{organizationName}</span>
-            <span aria-hidden="true">/</span>
-            <span>{teamName}</span>
-          </div>
+          <p className="mt-2 text-sm font-semibold text-slate-600">
+            {organizationName} / {teamName}
+          </p>
           {teamDetail && (
-            <p className="mt-2 text-xs font-black uppercase text-slate-500">
+            <p className="mt-1 text-xs font-black uppercase text-slate-500">
               {teamDetail}
             </p>
           )}
         </div>
 
-        <div
-          className={`mt-4 rounded-lg border p-5 shadow-sm ${getActionToneClasses(
-            nextAction.tone,
-          )}`}
-        >
-          <p className="text-xs font-black uppercase">What needs attention</p>
-          <p className="mt-2 text-xl font-black">{nextAction.label}</p>
-          <p className="mt-2 text-sm font-semibold">{nextAction.description}</p>
-          {nextAction.href && nextAction.href !== athleteHref && (
-            <Link
-              href={nextAction.href}
-              className="mt-4 block rounded-md bg-blue-600 py-3 text-center text-sm font-black text-white hover:bg-blue-700"
-            >
-              {nextAction.label}
-            </Link>
-          )}
-          {nextAction.href === athleteHref && (
-            <p className="mt-4 rounded-md border border-current/20 bg-white/60 p-3 text-sm font-semibold">
-              Use the sections below to complete this step.
+        {nextAction.tone !== "ready" && (
+          <div
+            className={`mt-3 rounded-lg border p-4 shadow-sm ${getActionToneClasses(
+              nextAction.tone,
+            )}`}
+          >
+            <p className="text-xs font-black uppercase">Needs attention</p>
+            <p className="mt-1 text-lg font-black">{nextAction.label}</p>
+            <p className="mt-1 text-sm font-semibold">
+              {nextAction.description}
             </p>
-          )}
-        </div>
-
-        <div className="mt-4 grid gap-3 text-sm sm:grid-cols-4">
-          <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-            <p className="font-semibold text-slate-500">Registration</p>
-            <p
-              className={`mt-1 font-black ${getRegistrationTone(
-                registrationStatus,
-              )}`}
-            >
-              {getParentRegistrationStatusLabel(registrationStatus)}
-            </p>
-          </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-            <p className="font-semibold text-slate-500">Roster</p>
-            <p className={`mt-1 font-black ${getRosterTone(rosterStatus)}`}>
-              {getParentRosterStatusLabel(rosterStatus)}
-            </p>
-          </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-            <p className="font-semibold text-slate-500">Readiness</p>
-            <p className={`mt-1 font-black ${requirementTone}`}>
-              {requirementSummary.label}
-            </p>
-            <p className="mt-1 text-xs font-semibold text-slate-500">
-              {getParentRequirementCountLabel(requirementSummary)}
-            </p>
-          </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-            <p className="font-semibold text-slate-500">Payment</p>
-            <p
-              className={`mt-1 font-black ${getRequirementTone(
-                paymentSummary.open,
-                paymentSummary.blocked,
-                paymentSummary.needsReview,
-              )}`}
-            >
-              {getPaymentLabel(paymentRequirements)}
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-black">Next Event</h2>
-                <p className="mt-1 text-sm font-semibold text-slate-600">
-                  Only events for this player&apos;s team are shown here.
-                </p>
-              </div>
-              {nextEvent && (
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-semibold ${getEventTone(
-                    nextEvent.status,
-                  )}`}
-                >
-                  {getEventStatusLabel(nextEvent)}
-                </span>
-              )}
-            </div>
-
-            {nextEvent ? (
-              <div className="mt-4 rounded-md bg-slate-50 p-4">
-                <p className="font-black text-slate-950">{nextEvent.title}</p>
-                <p className="mt-3 text-sm font-semibold text-slate-600">
-                  {getEventDateLabel(nextEvent)}
-                </p>
-                <p className="mt-1 text-sm font-semibold text-slate-600">
-                  {getEventTimeLabel(nextEvent)}
-                </p>
-                <p className="mt-3 text-sm font-semibold text-slate-600">
-                  {getEventLocationLabel(nextEvent)}
-                </p>
-              </div>
-            ) : (
-              <p className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-600">
-                {getEventUnavailableMessage(registrationStatus, rosterStatus)}
-              </p>
-            )}
-
-            {nextEvent && eventUpdatesAllowed && (
-              <>
-                <AttendanceStatusPicker
-                  athleteId={athlete.id}
-                  eventId={nextEvent.id}
-                  initialStatus={attendanceStatus}
-                  compact
-                  surface="light"
-                />
-                <TransportationStatusPicker
-                  athleteId={athlete.id}
-                  documentRequirements={documentRequirements}
-                  eventId={nextEvent.id}
-                  initialStatus={transportationStatus}
-                  options={transportationOptions}
-                  paymentRequirements={paymentRequirements}
-                  registrationId={registrationId}
-                  registrationRequirements={registrationRequirements}
-                  surface="light"
-                />
-              </>
-            )}
-
-            {nextEvent && !eventUpdatesAllowed && (
-              <p className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm font-semibold text-slate-600">
-                {nextEvent.status === "canceled"
-                  ? "Attendance and transportation updates are closed for this canceled event."
-                  : "Attendance and transportation controls are available after this player is approved and rostered."}
-              </p>
-            )}
-
-            {nextEvent && (
+            {nextAction.href && nextAction.href !== athleteHref ? (
               <Link
-                href={`/events/${nextEvent.id}`}
-                className="mt-4 block rounded-md bg-blue-600 py-3 text-center font-black text-white hover:bg-blue-700"
+                href={nextAction.href}
+                className="mt-3 block rounded-md bg-blue-600 py-3 text-center text-sm font-black text-white hover:bg-blue-700"
               >
-                Event Details
+                Open
               </Link>
+            ) : (
+              <p className="mt-3 rounded-md border border-current/20 bg-white/60 p-3 text-sm font-semibold">
+                Choose the matching option below.
+              </p>
             )}
           </div>
+        )}
 
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-black">Player Info</h2>
-            <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-              <div className="rounded-md bg-slate-50 p-3">
-                <p className="font-semibold text-slate-500">Grade</p>
-                <p className="mt-1 font-black text-slate-950">
-                  {athlete.grade || "Not listed"}
-                </p>
-              </div>
-              <div className="rounded-md bg-slate-50 p-3">
-                <p className="font-semibold text-slate-500">Jersey</p>
-                <p className="mt-1 font-black text-slate-950">
-                  {athlete.jerseySize || "Not listed"}
-                </p>
-              </div>
-            </div>
-            <p className="mt-3 rounded-md bg-slate-50 p-3 text-sm font-semibold text-slate-600">
-              {athlete.school || "School not listed"}
+        <div className="mt-4 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+          <div className="px-1 py-2">
+            <h2 className="text-xl font-black">Options</h2>
+            <p className="mt-1 text-sm font-semibold text-slate-600">
+              Pick what you need for {athlete.firstName || athlete.name}.
             </p>
           </div>
+
+          <div className="mt-2 space-y-2">
+            <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
+                <span>
+                  <span className="block font-black text-slate-950">
+                    Attendance & ride
+                  </span>
+                  <span className="mt-1 block text-sm font-semibold text-slate-600">
+                    {eventPlanLabel}
+                  </span>
+                </span>
+                <span className="flex shrink-0 items-center gap-2">
+                  {nextEvent && (
+                    <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">
+                      {eventUpdatesAllowed ? "Set plan" : "Locked"}
+                    </span>
+                  )}
+                  <span className="text-2xl font-black text-blue-600 transition group-open:rotate-90">
+                    &rsaquo;
+                  </span>
+                </span>
+              </summary>
+              <div className="border-t border-slate-200 p-4">
+                {nextEvent ? (
+                  <div className="rounded-md bg-slate-50 p-4">
+                    <p className="font-black text-slate-950">
+                      {nextEvent.title}
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-slate-600">
+                      {nextEventLabel}
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-slate-600">
+                      {getEventLocationLabel(nextEvent)}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-600">
+                    {nextEventLabel}
+                  </p>
+                )}
+
+                {nextEvent && eventUpdatesAllowed && (
+                  <>
+                    <AttendanceStatusPicker
+                      athleteId={athlete.id}
+                      eventId={nextEvent.id}
+                      initialStatus={attendanceStatus}
+                      compact
+                      surface="light"
+                    />
+                    <TransportationStatusPicker
+                      athleteId={athlete.id}
+                      documentRequirements={documentRequirements}
+                      eventId={nextEvent.id}
+                      initialStatus={transportationStatus}
+                      options={transportationOptions}
+                      paymentRequirements={paymentRequirements}
+                      registrationId={registrationId}
+                      registrationRequirements={registrationRequirements}
+                      surface="light"
+                    />
+                  </>
+                )}
+
+                {nextEvent && !eventUpdatesAllowed && (
+                  <p className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm font-semibold text-slate-600">
+                    {nextEvent.status === "canceled"
+                      ? "Attendance and transportation updates are closed for this canceled event."
+                      : "Attendance and transportation controls are available after this player is approved and rostered."}
+                  </p>
+                )}
+              </div>
+            </details>
+
+            <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
+                <span>
+                  <span className="block font-black text-slate-950">
+                    Schedule
+                  </span>
+                  <span className="mt-1 block text-sm font-semibold text-slate-600">
+                    {nextEvent ? nextEventLabel : "No upcoming event"}
+                  </span>
+                </span>
+                <span className="text-2xl font-black text-blue-600 transition group-open:rotate-90">
+                  &rsaquo;
+                </span>
+              </summary>
+              <div className="border-t border-slate-200 p-4">
+                {nextEvent ? (
+                  <>
+                    <div className="rounded-md bg-slate-50 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="font-black text-slate-950">
+                          {nextEvent.title}
+                        </p>
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-semibold ${getEventTone(
+                            nextEvent.status,
+                          )}`}
+                        >
+                          {getEventStatusLabel(nextEvent)}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-sm font-semibold text-slate-600">
+                        {nextEventLabel}
+                      </p>
+                      <p className="mt-2 text-sm font-semibold text-slate-600">
+                        {getEventLocationLabel(nextEvent)}
+                      </p>
+                    </div>
+                    <Link
+                      href={`/events/${nextEvent.id}`}
+                      className="mt-4 block rounded-md bg-blue-600 py-3 text-center font-black text-white hover:bg-blue-700"
+                    >
+                      Event Details
+                    </Link>
+                  </>
+                ) : (
+                  <p className="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-600">
+                    {nextEventLabel}
+                  </p>
+                )}
+              </div>
+            </details>
+
+            {hasPlayerNeeds && (
+              <details className="group overflow-hidden rounded-lg border border-orange-200 bg-white">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
+                  <span>
+                    <span className="block font-black text-slate-950">
+                      Player needs
+                    </span>
+                    <span
+                      className={`mt-1 block text-sm font-semibold ${requirementTone}`}
+                    >
+                      {playerNeedsLabel}
+                    </span>
+                  </span>
+                  <span className="text-2xl font-black text-orange-600 transition group-open:rotate-90">
+                    &rsaquo;
+                  </span>
+                </summary>
+                <div className="border-t border-orange-100 p-4">
+                  <RegistrationRequirementsChecklist
+                    athleteId={athlete.id}
+                    documentRequirements={documentRequirements}
+                    organizationId={organizationId}
+                    parentId={currentUser.parentId}
+                    paymentRequirements={paymentRequirements}
+                    registrationId={registrationId}
+                    requirements={registrationRequirements}
+                    surface="inline"
+                    updatesAllowed={
+                      registration
+                        ? !isRegistrationTerminal(registration.status)
+                        : false
+                    }
+                  />
+                </div>
+              </details>
+            )}
+
+            <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
+                <span>
+                  <span className="block font-black text-slate-950">
+                    Registration status
+                  </span>
+                  <span className="mt-1 block text-sm font-semibold text-slate-600">
+                    {getParentRegistrationStatusLabel(registrationStatus)} /
+                    {" "}
+                    {getParentRosterStatusLabel(rosterStatus)}
+                  </span>
+                </span>
+                <span className="text-2xl font-black text-blue-600 transition group-open:rotate-90">
+                  &rsaquo;
+                </span>
+              </summary>
+              <div className="grid gap-3 border-t border-slate-200 p-4 text-sm sm:grid-cols-2">
+                <div className="rounded-md bg-slate-50 p-3">
+                  <p className="font-semibold text-slate-500">Registration</p>
+                  <p
+                    className={`mt-1 font-black ${getRegistrationTone(
+                      registrationStatus,
+                    )}`}
+                  >
+                    {getParentRegistrationStatusLabel(registrationStatus)}
+                  </p>
+                </div>
+                <div className="rounded-md bg-slate-50 p-3">
+                  <p className="font-semibold text-slate-500">Roster</p>
+                  <p className={`mt-1 font-black ${getRosterTone(rosterStatus)}`}>
+                    {getParentRosterStatusLabel(rosterStatus)}
+                  </p>
+                </div>
+                <div className="rounded-md bg-slate-50 p-3">
+                  <p className="font-semibold text-slate-500">Readiness</p>
+                  <p className={`mt-1 font-black ${requirementTone}`}>
+                    {requirementSummary.label}
+                  </p>
+                  <p className="mt-1 text-xs font-semibold text-slate-500">
+                    {getParentRequirementCountLabel(requirementSummary)}
+                  </p>
+                </div>
+                <div className="rounded-md bg-slate-50 p-3">
+                  <p className="font-semibold text-slate-500">Payment</p>
+                  <p
+                    className={`mt-1 font-black ${getRequirementTone(
+                      paymentSummary.open,
+                      paymentSummary.blocked,
+                      paymentSummary.needsReview,
+                    )}`}
+                  >
+                    {getPaymentLabel(paymentRequirements)}
+                  </p>
+                </div>
+              </div>
+            </details>
+
+            {registration && (
+              <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
+                  <span>
+                    <span className="block font-black text-slate-950">
+                      Player info
+                    </span>
+                    <span className="mt-1 block text-sm font-semibold text-slate-600">
+                      View details or request a correction.
+                    </span>
+                  </span>
+                  <span className="text-2xl font-black text-blue-600 transition group-open:rotate-90">
+                    &rsaquo;
+                  </span>
+                </summary>
+                <div className="border-t border-slate-200 p-4">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="rounded-md bg-slate-50 p-3">
+                      <p className="font-semibold text-slate-500">Grade</p>
+                      <p className="mt-1 font-black text-slate-950">
+                        {athlete.grade || "Not listed"}
+                      </p>
+                    </div>
+                    <div className="rounded-md bg-slate-50 p-3">
+                      <p className="font-semibold text-slate-500">Jersey</p>
+                      <p className="mt-1 font-black text-slate-950">
+                        {athlete.jerseySize || "Not listed"}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="mt-3 rounded-md bg-slate-50 p-3 text-sm font-semibold text-slate-600">
+                    {athlete.school || "School not listed"}
+                  </p>
+                  <ParentRegistrationLifecyclePanel
+                    athlete={athlete}
+                    parent={parent}
+                    registration={registration}
+                    surface="inline"
+                  />
+                </div>
+              </details>
+            )}
+          </div>
         </div>
-
-        <RegistrationRequirementsChecklist
-          athleteId={athlete.id}
-          documentRequirements={documentRequirements}
-          organizationId={organizationId}
-          parentId={currentUser.parentId}
-          paymentRequirements={paymentRequirements}
-          registrationId={registrationId}
-          requirements={registrationRequirements}
-          updatesAllowed={
-            registration ? !isRegistrationTerminal(registration.status) : false
-          }
-        />
-
-        {registration && (
-          <ParentRegistrationLifecyclePanel
-            athlete={athlete}
-            parent={parent}
-            registration={registration}
-          />
-        )}
       </section>
     </main>
   );

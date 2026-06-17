@@ -42,6 +42,7 @@ type RegistrationRequirementsChecklistProps = {
   paymentRequirements?: PaymentRequirement[];
   registrationId: string;
   requirements: RegistrationRequirement[];
+  surface?: "card" | "inline";
   updatesAllowed?: boolean;
 };
 
@@ -101,6 +102,7 @@ export default function RegistrationRequirementsChecklist({
   paymentRequirements: initialPaymentRequirements = [],
   registrationId,
   requirements,
+  surface = "card",
   updatesAllowed = true,
 }: RegistrationRequirementsChecklistProps) {
   const router = useRouter();
@@ -143,6 +145,10 @@ export default function RegistrationRequirementsChecklist({
       : totalNeedsReview > 0
         ? "text-orange-700"
         : "text-emerald-700";
+  const wrapperClassName =
+    surface === "inline"
+      ? "mt-4"
+      : "mt-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm";
 
   async function getResponseError(response: Response, fallback: string) {
     const body = (await response.json().catch(() => null)) as {
@@ -252,7 +258,7 @@ export default function RegistrationRequirementsChecklist({
   }
 
   return (
-    <div className="mt-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <div className={wrapperClassName}>
       <h2 className="text-lg font-black">Player Needs</h2>
       <p className={`mt-3 text-sm font-semibold ${summaryTone}`}>
         {summaryLabel}

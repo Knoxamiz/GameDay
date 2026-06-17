@@ -14,6 +14,7 @@ type ParentRegistrationLifecyclePanelProps = {
   athlete: Athlete;
   parent: ParentGuardian;
   registration: Registration;
+  surface?: "card" | "inline";
 };
 
 async function getResponseError(response: Response, fallback: string) {
@@ -28,6 +29,7 @@ export default function ParentRegistrationLifecyclePanel({
   athlete,
   parent,
   registration,
+  surface = "card",
 }: ParentRegistrationLifecyclePanelProps) {
   const [athleteFirstName, setAthleteFirstName] = useState(athlete.firstName);
   const [athleteLastName, setAthleteLastName] = useState(athlete.lastName);
@@ -47,6 +49,10 @@ export default function ParentRegistrationLifecyclePanel({
     registration.parentChangeRequest?.status === "pending";
   const hasPendingWithdrawal =
     registration.withdrawalRequest?.status === "pending";
+  const wrapperClassName =
+    surface === "inline"
+      ? "mt-4"
+      : "mt-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm";
 
   async function save(payload: Record<string, unknown>) {
     setError(null);
@@ -98,7 +104,7 @@ export default function ParentRegistrationLifecyclePanel({
   }
 
   return (
-    <section className="mt-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <section className={wrapperClassName}>
       <h2 className="text-lg font-black">Update Player Info</h2>
       <p className="mt-2 text-sm font-semibold text-slate-600">
         {directCorrectionAllowed
