@@ -10,7 +10,7 @@ import {
   canManageOrganizationMembership,
   type OrganizationMembership,
 } from "./organizationMemberships";
-import type { Organization } from "./organizations";
+import { isArchivedOrganization, type Organization } from "./organizations";
 
 export type AdminOrganizationScopeSource =
   | "claims"
@@ -163,9 +163,9 @@ export async function resolveActiveAdminOrganizationContext(
       repositories.organizations.getById(organizationId),
     ),
   );
-  const organizations = organizationRecords.filter(
-    (organization): organization is Organization => Boolean(organization),
-  );
+  const organizations = organizationRecords
+    .filter((organization): organization is Organization => Boolean(organization))
+    .filter((organization) => !isArchivedOrganization(organization));
   const realOrganizationIdSet = new Set(
     organizations.map((organization) => organization.id),
   );

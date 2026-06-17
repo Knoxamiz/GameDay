@@ -87,6 +87,10 @@ export type AdminSetupPayload =
       organizationId: string;
     }
   | {
+      actionType: "organization-archive";
+      organizationId: string;
+    }
+  | {
       actionType: "organization-membership-invite";
       email: string;
       organizationId: string;
@@ -1293,6 +1297,140 @@ async function createOrUpdateOrganization(
   return {
     id: organization.id,
     message: `Organization saved: ${organization.name}`,
+    source: "firestore",
+  };
+}
+
+async function archiveOrganization(
+  scope: AdminOrganizationScope,
+  payload: Extract<AdminSetupPayload, { actionType: "organization-archive" }>,
+): Promise<AdminSetupResult> {
+  const organizationId = normalizeText(payload.organizationId);
+
+  if (!organizationId) {
+    createSetupError(
+      "organization-required",
+      "Choose an organization to remove.",
+      400,
+    );
+  }
+
+  assertManagedOrganization(scope, organizationId);
+
+  const now = new Date().toISOString();
+  const archivedOrganization = await runFirestoreTransaction(
+    async (transaction) => {
+      const [
+        organization,
+        teams,
+        events,
+        coachAssignments,
+        registrationInvites,
+      ] = await Promise.all([
+        transaction.get<Organization>("organizations", organizationId),
+        transaction.list<Team>("teams", { scope: { organizationId } }),
+        transaction.list<GameDayEvent>("events", { scope: { organizationId } }),
+        transaction.list<CoachAssignment>("coachAssignments", {
+          scope: { organizationId },
+        }),
+        transaction.list<RegistrationInvite>(
+          "registrationInvites",
+          { scope: { organizationId } },
+          "inviteCode",
+        ),
+      ]);
+
+      if (!organization) {
+        createSetupError(
+          "organization-not-found",
+          "Organization not found.",
+          404,
+        );
+      }
+
+      const nextOrganization: Organization = {
+        ...organization,
+        archivedAt: organization.archivedAt ?? now,
+        archivedByUid: organization.archivedByUid ?? scope.session.user.id,
+        lifecycleStatus: "archived",
+        status: {
+          activeTeams: 0,
+          coaches: 0,
+          registeredPlayers: organization.status.registeredPlayers,
+          upcomingEvents: 0,
+        },
+        updatedAt: now,
+      };
+
+      transaction.set("organizations", organization.id, nextOrganization);
+
+      teams
+        .filter((team) => getTeamLifecycleStatus(team) !== "archived")
+        .forEach((team) => {
+          transaction.set("teams", team.id, {
+            ...team,
+            archivedAt: team.archivedAt ?? now,
+            archivedByUid: team.archivedByUid ?? scope.session.user.id,
+            status: "archived",
+            updatedAt: now,
+          });
+        });
+
+      events
+        .filter((event) => event.status !== "archived")
+        .forEach((event) => {
+          transaction.set("events", event.id, {
+            ...event,
+            archivedAt: event.archivedAt ?? now,
+            archivedByUid: event.archivedByUid ?? scope.session.user.id,
+            status: "archived",
+            updatedAt: now,
+          });
+        });
+
+      coachAssignments
+        .filter((assignment) => assignment.status !== "archived")
+        .forEach((assignment) => {
+          transaction.set("coachAssignments", assignment.id, {
+            ...assignment,
+            archivedAt: assignment.archivedAt ?? now,
+            archivedByUid: assignment.archivedByUid ?? scope.session.user.id,
+            status: "archived",
+            updatedAt: now,
+          });
+        });
+
+      registrationInvites
+        .filter((invite) => normalizeRegistrationInvite(invite)?.status !== "archived")
+        .forEach((invite) => {
+          const normalizedInvite = normalizeRegistrationInvite(invite);
+
+          if (!normalizedInvite) {
+            return;
+          }
+
+          transaction.set("registrationInvites", normalizedInvite.inviteCode, {
+            ...normalizedInvite,
+            archivedAt: normalizedInvite.archivedAt ?? now,
+            archivedByUid:
+              normalizedInvite.archivedByUid ?? scope.session.user.id,
+            status: "archived",
+            updatedAt: now,
+            updatedByUid: scope.session.user.id,
+          });
+        });
+
+      return nextOrganization;
+    },
+  );
+
+  console.info("Organization archived.", {
+    organizationId: archivedOrganization.id,
+  });
+
+  return {
+    id: archivedOrganization.id,
+    message: `Organization removed: ${archivedOrganization.name}. Historical records were preserved.`,
     source: "firestore",
   };
 }
