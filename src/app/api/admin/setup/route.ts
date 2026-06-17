@@ -146,6 +146,13 @@ function getSetupPayload(body: Record<string, unknown> | null) {
     } satisfies AdminSetupPayload;
   }
 
+  if (actionType === "organization-archive") {
+    return {
+      actionType,
+      organizationId: getText(body.organizationId),
+    } satisfies AdminSetupPayload;
+  }
+
   if (actionType === "organization-membership-invite") {
     const role = getMembershipRole(body.role);
 
@@ -210,6 +217,14 @@ function getSetupPayload(body: Record<string, unknown> | null) {
       organizationId: getText(body.organizationId),
       season: getText(body.season),
       status,
+      teamId: getText(body.teamId),
+    } satisfies AdminSetupPayload;
+  }
+
+  if (actionType === "team-archive") {
+    return {
+      actionType,
+      organizationId: getText(body.organizationId),
       teamId: getText(body.teamId),
     } satisfies AdminSetupPayload;
   }

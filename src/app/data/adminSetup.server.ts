@@ -23,7 +23,7 @@ import {
   type CoachAssignmentStatus,
 } from "./coachAssignmentRecords";
 import type { Coach } from "./coaches";
-import type { GameDayEvent } from "./events";
+import { eventHasTeamId, type GameDayEvent } from "./events";
 import {
   normalizeRegistrationInvite,
   type NormalizedRegistrationInvite,
@@ -119,6 +119,11 @@ export type AdminSetupPayload =
       organizationId: string;
       season: string;
       status: TeamLifecycleStatus;
+      teamId: string;
+    }
+  | {
+      actionType: "team-archive";
+      organizationId: string;
       teamId: string;
     }
   | {
@@ -1620,6 +1625,188 @@ async function updateTeam(
   };
 }
 
+async function archiveTeam(
+  scope: AdminOrganizationScope,
+  payload: Extract<AdminSetupPayload, { actionType: "team-archive" }>,
+): Promise<AdminSetupResult> {
+  const organizationId = normalizeText(payload.organizationId);
+  const teamId = normalizeText(payload.teamId);
+
+  if (!organizationId || !teamId) {
+    createSetupError(
+      "team-required",
+      "Choose a team to remove.",
+      400,
+    );
+  }
+
+  assertManagedOrganization(scope, organizationId);
+
+  const now = new Date().toISOString();
+  const nextTeam = await runFirestoreTransaction(async (transaction) => {
+    const [
+      organization,
+      team,
+      organizationTeams,
+      events,
+      coachAssignments,
+      registrationInvites,
+      registrations,
+    ] = await Promise.all([
+      transaction.get<Organization>("organizations", organizationId),
+      transaction.get<Team>("teams", teamId),
+      transaction.list<Team>("teams", { scope: { organizationId } }),
+      transaction.list<GameDayEvent>("events", { scope: { organizationId } }),
+      transaction.list<CoachAssignment>("coachAssignments", {
+        scope: { organizationId },
+      }),
+      transaction.list<RegistrationInvite>(
+        "registrationInvites",
+        { scope: { organizationId } },
+        "inviteCode",
+      ),
+      transaction.list<Registration>("registrations", {
+        scope: { organizationId },
+      }),
+    ]);
+
+    if (!organization) {
+      createSetupError(
+        "organization-required",
+        "Create the organization before managing teams.",
+        400,
+      );
+    }
+
+    if (!team) {
+      createSetupError("team-not-found", "Team not found.", 404);
+    }
+
+    if (team.organizationId !== organizationId) {
+      createSetupError(
+        "team-organization-immutable",
+        "A team cannot be moved to another organization.",
+        403,
+      );
+    }
+
+    const archivedTeam: Team = {
+      ...team,
+      archivedAt: team.archivedAt ?? now,
+      archivedByUid: team.archivedByUid ?? scope.session.user.id,
+      status: "archived",
+      teamId: team.teamId ?? team.id,
+      updatedAt: now,
+    };
+
+    delete archivedTeam.lifecycleStatus;
+
+    const eventUpdates: GameDayEvent[] = [];
+    const nextEvents = events.map((event) => {
+      if (event.status === "archived" || !eventHasTeamId(event, team.id)) {
+        return event;
+      }
+
+      const nextEvent: GameDayEvent = {
+        ...event,
+        archivedAt: event.archivedAt ?? now,
+        archivedByUid: event.archivedByUid ?? scope.session.user.id,
+        status: "archived",
+        updatedAt: now,
+      };
+      eventUpdates.push(nextEvent);
+      return nextEvent;
+    });
+
+    const coachAssignmentUpdates: CoachAssignment[] = [];
+    const nextCoachAssignments = coachAssignments.map((assignment) => {
+      if (
+        assignment.status === "archived" ||
+        !assignment.teamIds.includes(team.id)
+      ) {
+        return assignment;
+      }
+
+      const remainingTeamIds = assignment.teamIds.filter(
+        (assignedTeamId) => assignedTeamId !== team.id,
+      );
+      const nextAssignment: CoachAssignment = {
+        ...assignment,
+        status: remainingTeamIds.length > 0 ? assignment.status : "archived",
+        teamIds: remainingTeamIds,
+        updatedAt: now,
+      };
+
+      if (remainingTeamIds.length === 0) {
+        nextAssignment.archivedAt = assignment.archivedAt ?? now;
+        nextAssignment.archivedByUid =
+          assignment.archivedByUid ?? scope.session.user.id;
+      }
+
+      coachAssignmentUpdates.push(nextAssignment);
+      return nextAssignment;
+    });
+
+    const inviteUpdates = registrationInvites
+      .map(normalizeRegistrationInvite)
+      .filter(
+        (invite): invite is NormalizedRegistrationInvite =>
+          Boolean(
+            invite &&
+              invite.teamId === team.id &&
+              invite.status !== "archived",
+          ),
+      )
+      .map((invite) => ({
+        ...invite,
+        archivedAt: invite.archivedAt ?? now,
+        archivedByUid: invite.archivedByUid ?? scope.session.user.id,
+        status: "archived" as const,
+        updatedAt: now,
+        updatedByUid: scope.session.user.id,
+      }));
+    const nextTeams = organizationTeams.map((candidate) =>
+      candidate.id === team.id ? archivedTeam : candidate,
+    );
+    const nextOrganization: Organization = {
+      ...organization,
+      status: getOrganizationStatus({
+        coachAssignments: nextCoachAssignments,
+        events: nextEvents.filter((event) => event.status !== "archived")
+          .length,
+        registrations,
+        teams: nextTeams,
+      }),
+      updatedAt: now,
+    };
+
+    transaction.set("teams", team.id, archivedTeam);
+    transaction.set("organizations", organization.id, nextOrganization);
+    eventUpdates.forEach((event) => {
+      transaction.set("events", event.id, event);
+    });
+    coachAssignmentUpdates.forEach((assignment) => {
+      transaction.set("coachAssignments", assignment.id, assignment);
+    });
+    inviteUpdates.forEach((invite) => {
+      transaction.set("registrationInvites", invite.inviteCode, invite);
+    });
+
+    return archivedTeam;
+  });
+
+  console.info("Team archived.", {
+    organizationId,
+    teamId: nextTeam.id,
+  });
+
+  return {
+    id: nextTeam.id,
+    message: `Team removed: ${nextTeam.name}. Historical records were preserved.`,
+    source: "firestore",
+  };
+}
+
 function getNameParts(name: string) {
   const [firstName = name, ...lastNameParts] = name.split(/\s+/);
 
@@ -2292,6 +2479,10 @@ export async function createAdminSetupRecord(
     return createOrUpdateOrganization(scope, payload);
   }
 
+  if (payload.actionType === "organization-archive") {
+    return archiveOrganization(scope, payload);
+  }
+
   if (payload.actionType === "organization-membership-invite") {
     return inviteOrganizationMembership(scope, payload);
   }
@@ -2306,6 +2497,10 @@ export async function createAdminSetupRecord(
 
   if (payload.actionType === "team-update") {
     return updateTeam(scope, payload);
+  }
+
+  if (payload.actionType === "team-archive") {
+    return archiveTeam(scope, payload);
   }
 
   if (payload.actionType === "coach-assignment") {

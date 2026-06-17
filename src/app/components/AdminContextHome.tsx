@@ -5,6 +5,7 @@ import { FormEvent, ReactNode, SVGProps, useState } from "react";
 import { withActiveOrganization } from "../data/activeOrganization";
 import type { Organization } from "../data/organizations";
 import { createFirebaseClientAuthAdapter } from "../infrastructure/firebaseClientAuth";
+import AdminArchiveButton from "./AdminArchiveButton";
 
 export type AdminTeamChoice = {
   division?: string;
@@ -485,29 +486,41 @@ export default function AdminContextHome({
 
                       return (
                         <li key={organization.id}>
-                          <Link
-                            aria-current={isActive ? "page" : undefined}
-                            className="flex items-center justify-between gap-4 rounded-md px-3 py-4 text-left transition hover:bg-blue-50 focus:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            href={withActiveOrganization(
-                              "/admin",
-                              organization.id,
-                            )}
-                          >
-                            <span className="min-w-0">
-                              <span className="block truncate text-lg font-bold text-[#071635]">
-                                {organization.name}
-                              </span>
-                              {isActive && (
-                                <span className="mt-1 block text-sm font-semibold text-blue-600">
-                                  Current workspace
-                                </span>
+                          <div className="flex flex-col gap-3 rounded-md px-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+                            <Link
+                              aria-current={isActive ? "page" : undefined}
+                              className="min-w-0 flex-1 rounded-md text-left transition hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              href={withActiveOrganization(
+                                "/admin",
+                                organization.id,
                               )}
-                            </span>
-                            <span className="flex shrink-0 items-center gap-3 text-sm font-semibold text-blue-600">
-                              Open
-                              <ChevronRightIcon className="size-5" />
-                            </span>
-                          </Link>
+                            >
+                              <span className="min-w-0">
+                                <span className="block truncate text-lg font-bold text-[#071635]">
+                                  {organization.name}
+                                </span>
+                                {isActive && (
+                                  <span className="mt-1 block text-sm font-semibold text-blue-600">
+                                    Current workspace
+                                  </span>
+                                )}
+                              </span>
+                              <span className="mt-2 flex shrink-0 items-center gap-3 text-sm font-semibold text-blue-600">
+                                Open
+                                <ChevronRightIcon className="size-5" />
+                              </span>
+                            </Link>
+                            <AdminArchiveButton
+                              buttonLabel="Remove"
+                              confirmMessage={`Remove ${organization.name}? Teams, events, invites, and coach assignments will be archived. Historical registrations and documents will be preserved.`}
+                              payload={{
+                                activeOrganizationId: organization.id,
+                                actionType: "organization-archive",
+                                organizationId: organization.id,
+                              }}
+                              redirectHref="/admin"
+                            />
+                          </div>
                         </li>
                       );
                     })}

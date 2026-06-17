@@ -17,6 +17,7 @@ import {
 import { isCoachVisibleRosterRegistration } from "../data/registrations";
 import { getTeamStatusLabel, type Team } from "../data/teams";
 import AdminAnnouncementForm from "./AdminAnnouncementForm";
+import AdminArchiveButton from "./AdminArchiveButton";
 import BackButton from "./BackButton";
 import SessionControls from "./SessionControls";
 
@@ -664,39 +665,57 @@ export default function AdminOrganizationWorkspaceHome({
                       const coachCount = getCoachCount(team);
 
                       return (
-                        <Link
-                          className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-4 py-4 transition hover:border-blue-200 hover:bg-blue-50"
-                          href={withActiveOrganization(
-                            `/admin/teams/${team.id}`,
-                            activeOrganizationId,
-                          )}
+                        <div
+                          className="flex flex-col gap-3 rounded-lg border border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
                           key={team.id}
                         >
-                          <span className="min-w-0">
-                            <span className="block truncate text-base font-black">
-                              {team.name}
+                          <Link
+                            className="flex min-w-0 flex-1 flex-col gap-3 transition hover:text-blue-700 sm:flex-row sm:items-center sm:justify-between"
+                            href={withActiveOrganization(
+                              `/admin/teams/${team.id}`,
+                              activeOrganizationId,
+                            )}
+                          >
+                            <span className="min-w-0">
+                              <span className="block truncate text-base font-black">
+                                {team.name}
+                              </span>
+                              <span className="mt-1 block truncate text-xs text-slate-500">
+                                {getTeamLabel(team) || "Team workspace"}
+                              </span>
                             </span>
-                            <span className="mt-1 block truncate text-xs text-slate-500">
-                              {getTeamLabel(team) || "Team workspace"}
+                            <span className="hidden items-center gap-2 text-xs font-bold text-slate-500 sm:flex">
+                              <span>{rosteredCount} rostered</span>
+                              <span>{coachCount} coaches</span>
                             </span>
-                          </span>
-                          <span className="hidden items-center gap-2 text-xs font-bold text-slate-500 sm:flex">
-                            <span>{rosteredCount} rostered</span>
-                            <span>{coachCount} coaches</span>
-                          </span>
-                          <span className="flex items-center gap-2">
-                            <StatusPill
-                              tone={coachCount > 0 ? "green" : "orange"}
-                            >
-                              {coachCount > 0
-                                ? getTeamStatusLabel(team)
-                                : "Needs coach"}
-                            </StatusPill>
-                            <span className="text-sm font-black text-blue-600">
-                              Open
+                            <span className="flex items-center gap-2">
+                              <StatusPill
+                                tone={coachCount > 0 ? "green" : "orange"}
+                              >
+                                {coachCount > 0
+                                  ? getTeamStatusLabel(team)
+                                  : "Needs coach"}
+                              </StatusPill>
+                              <span className="text-sm font-black text-blue-600">
+                                Open
+                              </span>
                             </span>
-                          </span>
-                        </Link>
+                          </Link>
+                          <AdminArchiveButton
+                            buttonLabel="Remove"
+                            confirmMessage={`Remove ${team.name}? This archives the team and preserves registrations, events, invites, and assignments.`}
+                            payload={{
+                              activeOrganizationId,
+                              actionType: "team-archive",
+                              organizationId: activeOrganizationId,
+                              teamId: team.id,
+                            }}
+                            redirectHref={withActiveOrganization(
+                              "/admin/teams",
+                              activeOrganizationId,
+                            )}
+                          />
+                        </div>
                       );
                     })
                   )}
@@ -729,6 +748,22 @@ export default function AdminOrganizationWorkspaceHome({
                             ? getTeamStatusLabel(selectedTeam)
                             : "Needs coach"}
                         </StatusPill>
+                      </div>
+                      <div className="mt-4">
+                        <AdminArchiveButton
+                          buttonLabel="Remove team"
+                          confirmMessage={`Remove ${selectedTeam.name}? This archives the team and preserves registrations, events, invites, and assignments.`}
+                          payload={{
+                            activeOrganizationId,
+                            actionType: "team-archive",
+                            organizationId: activeOrganizationId,
+                            teamId: selectedTeam.id,
+                          }}
+                          redirectHref={withActiveOrganization(
+                            "/admin/teams",
+                            activeOrganizationId,
+                          )}
+                        />
                       </div>
 
                       <div className="mt-5 grid gap-3 sm:grid-cols-3">
