@@ -1,13 +1,14 @@
 import { redirect } from "next/navigation";
-import TeamDetails from "../../../components/TeamDetails";
-import {
-  getRequestedOrganizationId,
-} from "../../../data/activeOrganization";
+import AdminOrganizationWorkspaceHome from "../../../components/AdminOrganizationWorkspaceHome";
+import { getAdminHomeReadModel } from "../../../data/adminHomeRead.server";
+import { buildAdminOperatingModel } from "../../../data/adminOperatingModel";
+import { getRequestedOrganizationId } from "../../../data/activeOrganization";
 import {
   canAccessAdmin,
   resolveActiveAdminOrganizationContext,
 } from "../../../data/adminOrganizationScope.server";
 import { getCurrentAuthSession } from "../../../data/currentUser.server";
+import { getOrganizationWorkspaceType } from "../../../data/organizations";
 import { getLandingRouteForSession } from "../../../data/sessionAccess.server";
 
 type AdminTeamDetailsPageProps = {
@@ -32,24 +33,43 @@ export default async function AdminTeamDetailsPage({
     redirect("/login");
   }
 
+  const requestedOrganizationId = getRequestedOrganizationId(
+    (await searchParams)?.organizationId,
+  );
   const activeContext = await resolveActiveAdminOrganizationContext(
     session,
-    getRequestedOrganizationId((await searchParams)?.organizationId),
+    requestedOrganizationId,
   );
 
   if (!canAccessAdmin(activeContext.scope)) {
     redirect(await getLandingRouteForSession(session, session.claims.role));
   }
 
-  if (!activeContext.activeOrganizationId) {
-    redirect("/admin/teams");
+  if (!requestedOrganizationId || !activeContext.activeOrganizationId) {
+    redirect("/admin");
   }
 
+  const readModel = await getAdminHomeReadModel(
+    activeContext.activeOrganizationId,
+  );
+  const operatingModel = buildAdminOperatingModel({
+    coachAssignments: readModel.coachAssignments,
+    events: readModel.events,
+    registrationInvites: readModel.registrationInvites,
+    registrations: readModel.registrations,
+    teams: readModel.teams,
+    workspaceType: getOrganizationWorkspaceType(readModel.organization),
+  });
+
   return (
-    <TeamDetails
+    <AdminOrganizationWorkspaceHome
+      accountLabel={session.user.email}
       activeOrganizationId={activeContext.activeOrganizationId}
-      role="admin"
-      teamId={teamId}
+      currentSection="teamDetails"
+      operatingModel={operatingModel}
+      organizations={activeContext.organizations}
+      readModel={readModel}
+      selectedTeamId={teamId}
     />
   );
 }

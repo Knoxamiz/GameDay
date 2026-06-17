@@ -2,11 +2,20 @@ import Link from "next/link";
 import { withActiveOrganization } from "../data/activeOrganization";
 import type { AdminHomeReadModel } from "../data/adminHomeRead.server";
 import type { AdminOperatingModel } from "../data/adminOperatingModel";
+import { isActiveCoachAssignment } from "../data/coachAssignmentRecords";
+import {
+  eventHasTeamId,
+  getEventShortDateLabel,
+  getEventTimeLabel,
+  isUpcomingEvent,
+  sortEventsByStartDate,
+} from "../data/events";
 import {
   getOrganizationWorkspaceTypeLabel,
   type Organization,
 } from "../data/organizations";
-import type { Team } from "../data/teams";
+import { isCoachVisibleRosterRegistration } from "../data/registrations";
+import { getTeamStatusLabel, type Team } from "../data/teams";
 import AdminAnnouncementForm from "./AdminAnnouncementForm";
 import BackButton from "./BackButton";
 import SessionControls from "./SessionControls";
@@ -14,10 +23,16 @@ import SessionControls from "./SessionControls";
 type AdminOrganizationWorkspaceHomeProps = {
   accountLabel?: string;
   activeOrganizationId: string;
-  currentSection?: "alerts" | "announcements" | "overview";
+  currentSection?:
+    | "alerts"
+    | "announcements"
+    | "overview"
+    | "teamDetails"
+    | "teams";
   operatingModel: AdminOperatingModel;
   organizations: Organization[];
   readModel: AdminHomeReadModel;
+  selectedTeamId?: string;
 };
 
 type WorkspaceIconName =
@@ -228,14 +243,22 @@ export default function AdminOrganizationWorkspaceHome({
   operatingModel,
   organizations,
   readModel,
+  selectedTeamId,
 }: AdminOrganizationWorkspaceHomeProps) {
   const organization = readModel.organization;
   const displayName = getDisplayName(accountLabel);
   const workspaceTypeLabel = getOrganizationWorkspaceTypeLabel(organization);
   const activeTeams = operatingModel.activeTeams;
+  const visibleTeams = readModel.teams;
+  const selectedTeam = selectedTeamId
+    ? visibleTeams.find((team) => team.id === selectedTeamId)
+    : undefined;
   const activeTeamIdSet = new Set(activeTeams.map((team) => team.id));
   const currentInvites = operatingModel.currentInvites.filter((invite) =>
     activeTeamIdSet.has(invite.teamId),
+  );
+  const activeCoachAssignments = readModel.coachAssignments.filter(
+    isActiveCoachAssignment,
   );
   const recentAnnouncements = readModel.communications
     .filter((message) => message.type === "Organization Announcement")
@@ -299,11 +322,59 @@ export default function AdminOrganizationWorkspaceHome({
       ? "/admin/alerts"
       : currentSection === "announcements"
         ? "/admin/announcements"
-        : "/admin";
+        : currentSection === "teams" || currentSection === "teamDetails"
+          ? "/admin/teams"
+          : "/admin";
   const backFallbackHref =
-    currentSection === "overview"
+    currentSection === "teamDetails"
+      ? withActiveOrganization("/admin/teams", activeOrganizationId)
+      : currentSection === "overview" || currentSection === "teams"
       ? "/admin"
       : withActiveOrganization("/admin", activeOrganizationId);
+  const pageTitle =
+    currentSection === "teams"
+      ? "Teams"
+      : currentSection === "teamDetails" && selectedTeam
+        ? selectedTeam.name
+        : organization.name;
+  const pageSubtitle =
+    currentSection === "teams"
+      ? "Team workspaces"
+      : currentSection === "teamDetails"
+        ? "Team workspace"
+        : `${workspaceTypeLabel} Workspace`;
+
+  function getTeamRosteredRegistrations(teamId: string) {
+    return readModel.registrations
+      .filter((registration) => registration.teamId === teamId)
+      .filter(isCoachVisibleRosterRegistration);
+  }
+
+  function getCoachCount(team: Team) {
+    const assignmentCoachIds = new Set(
+      activeCoachAssignments
+        .filter((assignment) => assignment.teamIds.includes(team.id))
+        .map((assignment) => assignment.coachId),
+    );
+
+    return Math.max(team.coachIds.length, assignmentCoachIds.size);
+  }
+
+  function getNextTeamEvent(teamId: string) {
+    return readModel.events
+      .filter((event) => event.status !== "archived")
+      .filter((event) => eventHasTeamId(event, teamId))
+      .filter((event) => isUpcomingEvent(event))
+      .sort(sortEventsByStartDate)[0];
+  }
+
+  const selectedTeamRosteredRegistrations = selectedTeam
+    ? getTeamRosteredRegistrations(selectedTeam.id)
+    : [];
+  const selectedTeamCoachCount = selectedTeam ? getCoachCount(selectedTeam) : 0;
+  const selectedTeamNextEvent = selectedTeam
+    ? getNextTeamEvent(selectedTeam.id)
+    : undefined;
 
   return (
     <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
@@ -374,10 +445,10 @@ export default function AdminOrganizationWorkspaceHome({
           <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
             <div>
               <h1 className="text-3xl font-black tracking-tight">
-                {organization.name}
+                {pageTitle}
               </h1>
               <p className="mt-1 text-sm font-semibold text-slate-500">
-                {workspaceTypeLabel} Workspace
+                {pageSubtitle}
               </p>
             </div>
 
@@ -562,6 +633,184 @@ export default function AdminOrganizationWorkspaceHome({
                   </div>
                 </section>
               </div>
+            ) : currentSection === "teams" ? (
+              <section className="mt-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="text-2xl font-black">Current Teams</h2>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Open one team workspace.
+                    </p>
+                  </div>
+                  <Link
+                    className="inline-flex rounded-md bg-blue-600 px-3 py-2 text-sm font-black text-white hover:bg-blue-700"
+                    href={withActiveOrganization(
+                      "/admin/setup#team",
+                      activeOrganizationId,
+                    )}
+                  >
+                    + Create new team
+                  </Link>
+                </div>
+
+                <div className="mt-5 space-y-3">
+                  {visibleTeams.length === 0 ? (
+                    <EmptyState>No teams in this organization yet.</EmptyState>
+                  ) : (
+                    visibleTeams.map((team) => {
+                      const rosteredCount = getTeamRosteredRegistrations(
+                        team.id,
+                      ).length;
+                      const coachCount = getCoachCount(team);
+
+                      return (
+                        <Link
+                          className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-4 py-4 transition hover:border-blue-200 hover:bg-blue-50"
+                          href={withActiveOrganization(
+                            `/admin/teams/${team.id}`,
+                            activeOrganizationId,
+                          )}
+                          key={team.id}
+                        >
+                          <span className="min-w-0">
+                            <span className="block truncate text-base font-black">
+                              {team.name}
+                            </span>
+                            <span className="mt-1 block truncate text-xs text-slate-500">
+                              {getTeamLabel(team) || "Team workspace"}
+                            </span>
+                          </span>
+                          <span className="hidden items-center gap-2 text-xs font-bold text-slate-500 sm:flex">
+                            <span>{rosteredCount} rostered</span>
+                            <span>{coachCount} coaches</span>
+                          </span>
+                          <span className="flex items-center gap-2">
+                            <StatusPill
+                              tone={coachCount > 0 ? "green" : "orange"}
+                            >
+                              {coachCount > 0
+                                ? getTeamStatusLabel(team)
+                                : "Needs coach"}
+                            </StatusPill>
+                            <span className="text-sm font-black text-blue-600">
+                              Open
+                            </span>
+                          </span>
+                        </Link>
+                      );
+                    })
+                  )}
+                </div>
+              </section>
+            ) : currentSection === "teamDetails" ? (
+              <section className="mt-5">
+                {!selectedTeam ? (
+                  <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                    <EmptyState>Team not found in this organization.</EmptyState>
+                  </section>
+                ) : (
+                  <div className="space-y-4">
+                    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <h2 className="text-2xl font-black">
+                            {selectedTeam.name}
+                          </h2>
+                          <p className="mt-1 text-sm text-slate-500">
+                            {getTeamLabel(selectedTeam) || "Team workspace"}
+                          </p>
+                        </div>
+                        <StatusPill
+                          tone={
+                            selectedTeamCoachCount > 0 ? "green" : "orange"
+                          }
+                        >
+                          {selectedTeamCoachCount > 0
+                            ? getTeamStatusLabel(selectedTeam)
+                            : "Needs coach"}
+                        </StatusPill>
+                      </div>
+
+                      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                        <div className="rounded-md bg-slate-50 p-3">
+                          <p className="text-xs font-bold uppercase text-slate-500">
+                            Rostered
+                          </p>
+                          <p className="mt-1 text-2xl font-black">
+                            {selectedTeamRosteredRegistrations.length}
+                          </p>
+                        </div>
+                        <div className="rounded-md bg-slate-50 p-3">
+                          <p className="text-xs font-bold uppercase text-slate-500">
+                            Coaches
+                          </p>
+                          <p className="mt-1 text-2xl font-black">
+                            {selectedTeamCoachCount}
+                          </p>
+                        </div>
+                        <div className="rounded-md bg-slate-50 p-3">
+                          <p className="text-xs font-bold uppercase text-slate-500">
+                            Next Event
+                          </p>
+                          <p className="mt-1 truncate text-sm font-black">
+                            {selectedTeamNextEvent?.title ?? "None scheduled"}
+                          </p>
+                        </div>
+                      </div>
+                    </section>
+
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                        <h2 className="text-xl font-black">Roster</h2>
+                        <div className="mt-4 space-y-2">
+                          {selectedTeamRosteredRegistrations.length > 0 ? (
+                            selectedTeamRosteredRegistrations
+                              .slice(0, 8)
+                              .map((registration) => (
+                                <p
+                                  className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold"
+                                  key={registration.id}
+                                >
+                                  {registration.athleteName ??
+                                    "Rostered athlete"}
+                                </p>
+                              ))
+                          ) : (
+                            <EmptyState>No rostered athletes yet.</EmptyState>
+                          )}
+                        </div>
+                      </section>
+
+                      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                        <h2 className="text-xl font-black">Next Event</h2>
+                        {selectedTeamNextEvent ? (
+                          <Link
+                            className="mt-4 block rounded-md border border-slate-200 p-4 transition hover:border-blue-200 hover:bg-blue-50"
+                            href={withActiveOrganization(
+                              `/admin/schedule/${selectedTeamNextEvent.id}`,
+                              activeOrganizationId,
+                            )}
+                          >
+                            <p className="font-black">
+                              {selectedTeamNextEvent.title}
+                            </p>
+                            <p className="mt-2 text-sm text-slate-500">
+                              {getEventShortDateLabel(
+                                selectedTeamNextEvent,
+                              )}{" "}
+                              {getEventTimeLabel(
+                                selectedTeamNextEvent,
+                              )}
+                            </p>
+                          </Link>
+                        ) : (
+                          <EmptyState>No upcoming event.</EmptyState>
+                        )}
+                      </section>
+                    </div>
+                  </div>
+                )}
+              </section>
             ) : (
             <>
               <section className="mt-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
