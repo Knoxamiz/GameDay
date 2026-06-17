@@ -64,9 +64,9 @@ function TextField({
 }) {
   return (
     <label className="block">
-      <span className="text-sm font-semibold text-slate-300">{label}</span>
+      <span className="text-sm font-black text-slate-700">{label}</span>
       <input
-        className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
+        className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
         onChange={(event) => onChange(name, event.target.value)}
         type="text"
         value={value}
@@ -246,58 +246,60 @@ export default function JoinRegistrationFlow({
 
     return (
       <>
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-          <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+        <div className="rounded-lg border border-emerald-200 bg-white p-5 shadow-sm">
+          <p className="text-sm font-black uppercase text-emerald-700">
             Registration Submitted
           </p>
-          <h1 className="mt-3 text-3xl font-bold">
+          <h1 className="mt-3 text-3xl font-black tracking-tight">
             {confirmedAthleteName}
           </h1>
-          <p className="mt-2 text-slate-300">{team?.name ?? "Team TBD"}</p>
-          <p className="mt-5 text-sm font-semibold text-blue-300">
+          <p className="mt-2 text-sm font-semibold text-slate-600">
+            {team?.name ?? "Team TBD"}
+          </p>
+          <p className="mt-5 rounded-md bg-emerald-50 p-3 text-sm font-bold text-emerald-800">
             {confirmationMessage}
           </p>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5 text-sm">
-          <p className="font-semibold text-slate-400">Registration ID</p>
-          <p className="mt-1 break-words font-semibold text-white">
+        <div className="mt-4 rounded-lg border border-slate-200 bg-white p-5 text-sm shadow-sm">
+          <p className="font-black text-slate-500">Registration ID</p>
+          <p className="mt-1 break-words font-black text-slate-950">
             {submissionResult.registrationId}
           </p>
-          <p className="mt-4 font-semibold text-slate-400">Status</p>
-          <p className="mt-1 font-semibold text-blue-300">
+          <p className="mt-4 font-black text-slate-500">Status</p>
+          <p className="mt-1 font-black text-blue-700">
             {submissionResult.status}
           </p>
-          <p className="mt-4 font-semibold text-slate-400">Parent</p>
-          <p className="mt-1 font-semibold text-white">
+          <p className="mt-4 font-black text-slate-500">Parent</p>
+          <p className="mt-1 font-black text-slate-950">
             {confirmedParentName}
           </p>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <h2 className="text-lg font-bold">What Is Still Needed?</h2>
+        <div className="mt-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-black">What Is Still Needed?</h2>
           <p
             className={`mt-3 text-sm font-semibold ${
               missingTotal > 0
-                ? "text-yellow-200"
-                : "text-blue-300"
+                ? "text-orange-700"
+                : "text-emerald-700"
             }`}
           >
             {missingTotal > 0
               ? `${missingTotal} item${
                   missingTotal === 1 ? "" : "s"
-                } still missing. Admin can review or waive when appropriate.`
-              : "All documents and payments were submitted for review."}
+                } still missing. You can finish these from your parent home.`
+              : "All requested documents and payment records were submitted for review."}
           </p>
-          <div className="mt-4 space-y-2 text-sm text-slate-300">
+          <div className="mt-4 space-y-2 text-sm text-slate-600">
             {documentRequirements.map((requirement) => (
               <p key={requirement.label} className="flex justify-between gap-3">
                 <span>{requirement.label}</span>
                 <span
                   className={
                     requirement.status === "Uploaded"
-                      ? "font-semibold text-yellow-200"
-                      : "font-semibold text-slate-300"
+                      ? "font-black text-orange-700"
+                      : "font-black text-slate-500"
                   }
                 >
                   {requirement.status}
@@ -310,8 +312,8 @@ export default function JoinRegistrationFlow({
                 <span
                   className={
                     requirement.status === "Submitted"
-                      ? "font-semibold text-yellow-200"
-                      : "font-semibold text-slate-300"
+                      ? "font-black text-orange-700"
+                      : "font-black text-slate-500"
                   }
                 >
                   {requirement.status}
@@ -323,7 +325,7 @@ export default function JoinRegistrationFlow({
 
         <Link
           href="/parent"
-          className="mt-4 block w-full rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
+          className="mt-4 block w-full rounded-md bg-blue-600 py-3 text-center font-black text-white hover:bg-blue-700"
         >
           Go To Parent Home
         </Link>
@@ -333,45 +335,47 @@ export default function JoinRegistrationFlow({
 
   return (
     <>
-      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-        <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <p className="text-sm font-black uppercase text-blue-700">
           {isTeamBuilderInvite ? "Team Builder Registration" : "Team Registration"}
         </p>
-        <h1 className="mt-3 text-3xl font-bold">{teamName}</h1>
-        <p className="mt-3 text-slate-300">
+        <h1 className="mt-3 text-3xl font-black tracking-tight">{teamName}</h1>
+        <p className="mt-3 text-sm font-semibold text-slate-600">
           {organization?.name ?? "GameDay registration"}
         </p>
-        <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-          <div className="rounded-xl bg-slate-800 p-3">
-            <p className="text-slate-400">Team</p>
-            <p className="mt-1 font-semibold text-white">{teamName}</p>
+        <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+          <div className="rounded-md bg-slate-50 p-3">
+            <p className="font-semibold text-slate-500">Team</p>
+            <p className="mt-1 font-black text-slate-950">{teamName}</p>
           </div>
-          <div className="rounded-xl bg-slate-800 p-3">
-            <p className="text-slate-400">Division</p>
-            <p className="mt-1 font-semibold text-white">
+          <div className="rounded-md bg-slate-50 p-3">
+            <p className="font-semibold text-slate-500">Division</p>
+            <p className="mt-1 font-black text-slate-950">
               {teamDivision ?? "Not listed"}
             </p>
           </div>
-          <div className="rounded-xl bg-slate-800 p-3">
-            <p className="text-slate-400">Season</p>
-            <p className="mt-1 font-semibold text-white">
+          <div className="rounded-md bg-slate-50 p-3">
+            <p className="font-semibold text-slate-500">Season</p>
+            <p className="mt-1 font-black text-slate-950">
               {teamSeason ?? "Not listed"}
             </p>
           </div>
-          <div className="rounded-xl bg-slate-800 p-3">
-            <p className="text-slate-400">To complete</p>
-            <p className="mt-1 font-semibold text-white">
-              Parent, athlete, and readiness details
+          <div className="rounded-md bg-slate-50 p-3">
+            <p className="font-semibold text-slate-500">Next step</p>
+            <p className="mt-1 font-black text-slate-950">
+              Add parent and player info
             </p>
           </div>
         </div>
         {invite.description && (
-          <p className="mt-3 text-sm text-slate-300">{invite.description}</p>
+          <p className="mt-3 text-sm font-semibold text-slate-600">
+            {invite.description}
+          </p>
         )}
       </div>
 
-      <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-        <h2 className="text-lg font-bold">Parent / Guardian</h2>
+      <div className="mt-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-black">Parent / Guardian</h2>
         <div className="mt-4 space-y-4">
           <TextField
             label="Full Name"
@@ -394,10 +398,10 @@ export default function JoinRegistrationFlow({
         </div>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-        <h2 className="text-lg font-bold">Add Athlete</h2>
+      <div className="mt-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-black">Add Player</h2>
         <div className="mt-4 space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <TextField
               label="First Name"
               name="athleteFirstName"
@@ -426,33 +430,34 @@ export default function JoinRegistrationFlow({
         </div>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
+      <div className="mt-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold">Required Documents</h2>
-            <p className="mt-1 text-sm text-slate-400">
-              Missing items warn the parent, but do not block submission.
+            <h2 className="text-lg font-black">Documents</h2>
+            <p className="mt-1 text-sm font-semibold text-slate-600">
+              Upload now if you have the files. You can also finish later.
             </p>
           </div>
           <span
             className={`rounded-full px-3 py-1 text-xs font-semibold ${
               documentSummary.missing > 0
-                ? "bg-yellow-500/20 text-yellow-200"
-                : "bg-blue-500/20 text-blue-300"
+                ? "bg-orange-50 text-orange-700"
+                : "bg-emerald-50 text-emerald-700"
             }`}
           >
             {documentSummary.missing} Missing
           </span>
         </div>
 
-        <div className="mt-4 space-y-3 text-sm text-slate-300">
-          {documentRequirements.map((requirement) => (
-            <div key={requirement.label} className="rounded-xl bg-slate-800 p-4">
+        <div className="mt-4 space-y-3 text-sm text-slate-600">
+          {documentRequirements.length > 0 ? (
+            documentRequirements.map((requirement) => (
+            <div key={requirement.label} className="rounded-md bg-slate-50 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-semibold text-white">{requirement.label}</p>
+                  <p className="font-black text-slate-950">{requirement.label}</p>
                   {requirement.description && (
-                    <p className="mt-1 text-xs text-slate-400">
+                    <p className="mt-1 text-xs font-semibold text-slate-500">
                       {requirement.description}
                     </p>
                   )}
@@ -460,8 +465,8 @@ export default function JoinRegistrationFlow({
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-semibold ${
                     requirement.status === "Uploaded"
-                      ? "bg-yellow-500/20 text-yellow-200"
-                      : "bg-slate-700 text-slate-300"
+                      ? "bg-orange-50 text-orange-700"
+                      : "bg-white text-slate-500"
                   }`}
                 >
                   {requirement.status}
@@ -475,52 +480,58 @@ export default function JoinRegistrationFlow({
                     requirement.status === "Uploaded" ? "Missing" : "Uploaded",
                   )
                 }
-                className="mt-3 w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
+                className="mt-3 w-full rounded-md border border-slate-200 bg-white py-3 font-black text-slate-700 hover:bg-slate-100"
               >
                 {requirement.status === "Uploaded"
                   ? "Remove Upload"
                   : "Mark Uploaded"}
               </button>
             </div>
-          ))}
+            ))
+          ) : (
+            <p className="rounded-md bg-slate-50 p-4 font-semibold text-slate-600">
+              No document uploads are requested right now.
+            </p>
+          )}
         </div>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
+      <div className="mt-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold">Payment</h2>
-            <p className="mt-1 text-sm text-slate-400">
-              No real payment provider yet. This records the parent payment
-              intent for admin review.
+            <h2 className="text-lg font-black">Payment</h2>
+            <p className="mt-1 text-sm font-semibold text-slate-600">
+              If your organization asks for a payment record, mark it here so
+              staff can review it.
             </p>
           </div>
           <span
             className={`rounded-full px-3 py-1 text-xs font-semibold ${
               paymentSummary.missing > 0
-                ? "bg-yellow-500/20 text-yellow-200"
-                : "bg-blue-500/20 text-blue-300"
+                ? "bg-orange-50 text-orange-700"
+                : "bg-emerald-50 text-emerald-700"
             }`}
           >
             {paymentSummary.missing} Missing
           </span>
         </div>
 
-        <div className="mt-4 space-y-3 text-sm text-slate-300">
-          {paymentRequirements.map((requirement) => (
-            <div key={requirement.label} className="rounded-xl bg-slate-800 p-4">
+        <div className="mt-4 space-y-3 text-sm text-slate-600">
+          {paymentRequirements.length > 0 ? (
+            paymentRequirements.map((requirement) => (
+            <div key={requirement.label} className="rounded-md bg-slate-50 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-semibold text-white">{requirement.label}</p>
-                  <p className="mt-1 text-xs text-slate-400">
+                  <p className="font-black text-slate-950">{requirement.label}</p>
+                  <p className="mt-1 text-xs font-semibold text-slate-500">
                     ${requirement.amountDue} due. {requirement.description}
                   </p>
                 </div>
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-semibold ${
                     requirement.status === "Submitted"
-                      ? "bg-yellow-500/20 text-yellow-200"
-                      : "bg-slate-700 text-slate-300"
+                      ? "bg-orange-50 text-orange-700"
+                      : "bg-white text-slate-500"
                   }`}
                 >
                   {requirement.status}
@@ -534,22 +545,27 @@ export default function JoinRegistrationFlow({
                     requirement.status === "Submitted" ? "Missing" : "Submitted",
                   )
                 }
-                className="mt-3 w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
+                className="mt-3 w-full rounded-md border border-slate-200 bg-white py-3 font-black text-slate-700 hover:bg-slate-100"
               >
                 {requirement.status === "Submitted"
                   ? "Remove Payment Record"
                   : "Record Payment"}
               </button>
             </div>
-          ))}
+            ))
+          ) : (
+            <p className="rounded-md bg-slate-50 p-4 font-semibold text-slate-600">
+              No payment record is requested right now.
+            </p>
+          )}
         </div>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-        <h2 className="text-lg font-bold">Registration Readiness</h2>
+      <div className="mt-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-black">Ready to submit?</h2>
         <p
           className={`mt-3 text-sm font-semibold ${
-            missingTotal > 0 ? "text-yellow-200" : "text-blue-300"
+            missingTotal > 0 ? "text-orange-700" : "text-emerald-700"
           }`}
         >
           {missingTotal > 0
@@ -561,7 +577,7 @@ export default function JoinRegistrationFlow({
       </div>
 
       {submissionError && (
-        <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm font-semibold text-red-300">
+        <p className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-700">
           {submissionError}
         </p>
       )}
@@ -570,7 +586,7 @@ export default function JoinRegistrationFlow({
         type="button"
         disabled={isSubmitting}
         onClick={submitRegistration}
-        className="mt-4 w-full rounded-xl bg-blue-500 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-4 w-full rounded-md bg-blue-600 py-3 font-black text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isSubmitting
           ? "Submitting..."

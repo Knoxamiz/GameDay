@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import AttendanceStatusPicker from "../../components/AttendanceStatusPicker";
-import MvpNav from "../../components/MvpNav";
 import ParentRegistrationLifecyclePanel from "../../components/ParentRegistrationLifecyclePanel";
 import RegistrationRequirementsChecklist from "../../components/RegistrationRequirementsChecklist";
 import TransportationStatusPicker from "../../components/TransportationStatusPicker";
@@ -18,7 +17,6 @@ import {
   isUpcomingEvent,
 } from "../../data/events";
 import { getEventScheduleReadModel } from "../../data/eventSchedule.server";
-import { getOrganizationContext } from "../../data/organizationContext.server";
 import {
   getAthleteRegistrationReadModel,
 } from "../../data/parentAthleteRegistration.server";
@@ -81,54 +79,54 @@ function getDocumentRequirementsFromRegistration(
 
 function getActionToneClasses(tone: ParentNextActionTone) {
   if (tone === "ready") {
-    return "border-blue-500/40 bg-blue-500/10 text-blue-100";
+    return "border-emerald-200 bg-emerald-50 text-emerald-800";
   }
 
   if (tone === "blocked") {
-    return "border-red-500/40 bg-red-500/10 text-red-100";
+    return "border-red-200 bg-red-50 text-red-800";
   }
 
   if (tone === "attention") {
-    return "border-yellow-500/40 bg-yellow-500/10 text-yellow-100";
+    return "border-orange-200 bg-orange-50 text-orange-800";
   }
 
-  return "border-slate-700 bg-slate-950 text-slate-200";
+  return "border-slate-200 bg-slate-50 text-slate-700";
 }
 
 function getRegistrationTone(status: RegistrationStatus) {
   if (status === "Approved") {
-    return "text-blue-300";
+    return "text-emerald-700";
   }
 
   if (status === "Rejected" || status === "Withdrawn" || status === "Inactive") {
-    return "text-red-300";
+    return "text-red-700";
   }
 
-  return "text-yellow-200";
+  return "text-orange-700";
 }
 
 function getRosterTone(status: RosterStatus) {
   if (status === "rostered") {
-    return "text-blue-300";
+    return "text-emerald-700";
   }
 
   if (status === "inactive") {
-    return "text-red-300";
+    return "text-red-700";
   }
 
-  return "text-yellow-200";
+  return "text-orange-700";
 }
 
 function getRequirementTone(open: number, blocked: number, needsReview: number) {
   if (blocked > 0) {
-    return "text-red-300";
+    return "text-red-700";
   }
 
   if (open > 0 || needsReview > 0) {
-    return "text-yellow-200";
+    return "text-orange-700";
   }
 
-  return "text-blue-300";
+  return "text-emerald-700";
 }
 
 function getPaymentLabel(paymentRequirements: PaymentRequirement[]) {
@@ -155,10 +153,10 @@ function getPaymentLabel(paymentRequirements: PaymentRequirement[]) {
 
 function getEventTone(status: string) {
   if (status === "canceled") {
-    return "bg-red-500/20 text-red-300";
+    return "bg-red-50 text-red-700";
   }
 
-  return "bg-blue-500/20 text-blue-300";
+  return "bg-blue-50 text-blue-700";
 }
 
 function getEventUnavailableMessage(
@@ -219,14 +217,12 @@ export default async function AthleteDetailsPage({
   );
   const repositories = createFirestoreRepositories();
   const [
-    organizationContext,
     schedule,
     team,
     organization,
     attendanceEntries,
     transportationEntries,
   ] = await Promise.all([
-    getOrganizationContext(organizationId ? [organizationId] : []),
     getEventScheduleReadModel("parent"),
     athlete.teamId ? repositories.teams.getById(athlete.teamId) : null,
     organizationId ? repositories.organizations.getById(organizationId) : null,
@@ -294,79 +290,101 @@ export default async function AthleteDetailsPage({
   const organizationName = organization?.name ?? "Organization unavailable";
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav organizationContext={organizationContext} />
-
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-          <Link href="/parent" className="text-sm font-semibold text-slate-300">
-            &larr; Back to Parent
+    <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
+      <header className="border-b border-slate-200 bg-white">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4 sm:px-6">
+          <Link className="text-xl font-black" href="/parent">
+            GameDay
           </Link>
-          <h1 className="mt-3 text-3xl font-bold">{athlete.name}</h1>
-          <p className="mt-2 text-sm text-slate-300">{organizationName}</p>
-          <p className="mt-1 text-sm text-slate-300">{teamName}</p>
+          <Link
+            className="rounded-md border border-slate-200 px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50"
+            href="/parent"
+          >
+            Parent Home
+          </Link>
+        </div>
+      </header>
+
+      <section className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+        <Link
+          href="/parent"
+          className="inline-flex rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 shadow-sm hover:bg-slate-50"
+        >
+          &larr; Parent Home
+        </Link>
+
+        <div className="mt-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-sm font-black uppercase text-blue-700">
+            Player Home
+          </p>
+          <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
+            {athlete.name}
+          </h1>
+          <div className="mt-3 flex flex-wrap gap-2 text-sm font-semibold text-slate-600">
+            <span>{organizationName}</span>
+            <span aria-hidden="true">/</span>
+            <span>{teamName}</span>
+          </div>
           {teamDetail && (
-            <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <p className="mt-2 text-xs font-black uppercase text-slate-500">
               {teamDetail}
             </p>
           )}
         </div>
 
         <div
-          className={`mt-4 rounded-2xl border p-5 ${getActionToneClasses(
+          className={`mt-4 rounded-lg border p-5 shadow-sm ${getActionToneClasses(
             nextAction.tone,
           )}`}
         >
-          <p className="text-xs font-semibold uppercase tracking-wide opacity-80">
-            Next action
-          </p>
-          <p className="mt-2 text-xl font-bold">{nextAction.label}</p>
-          <p className="mt-2 text-sm opacity-90">{nextAction.description}</p>
+          <p className="text-xs font-black uppercase">What needs attention</p>
+          <p className="mt-2 text-xl font-black">{nextAction.label}</p>
+          <p className="mt-2 text-sm font-semibold">{nextAction.description}</p>
           {nextAction.href && nextAction.href !== athleteHref && (
             <Link
               href={nextAction.href}
-              className="mt-4 block rounded-xl bg-blue-500 py-3 text-center text-sm font-semibold text-white"
+              className="mt-4 block rounded-md bg-blue-600 py-3 text-center text-sm font-black text-white hover:bg-blue-700"
             >
               {nextAction.label}
             </Link>
           )}
           {nextAction.href === athleteHref && (
-            <p className="mt-4 rounded-xl border border-slate-700 bg-slate-950 p-3 text-sm text-slate-300">
-              Use the registration sections below to complete this step.
+            <p className="mt-4 rounded-md border border-current/20 bg-white/60 p-3 text-sm font-semibold">
+              Use the sections below to complete this step.
             </p>
           )}
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-          <div className="rounded-xl bg-slate-900 p-3">
-            <p className="text-slate-400">Registration</p>
+        <div className="mt-4 grid gap-3 text-sm sm:grid-cols-4">
+          <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+            <p className="font-semibold text-slate-500">Registration</p>
             <p
-              className={`mt-1 font-semibold ${getRegistrationTone(
+              className={`mt-1 font-black ${getRegistrationTone(
                 registrationStatus,
               )}`}
             >
               {getParentRegistrationStatusLabel(registrationStatus)}
             </p>
           </div>
-          <div className="rounded-xl bg-slate-900 p-3">
-            <p className="text-slate-400">Roster</p>
-            <p className={`mt-1 font-semibold ${getRosterTone(rosterStatus)}`}>
+          <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+            <p className="font-semibold text-slate-500">Roster</p>
+            <p className={`mt-1 font-black ${getRosterTone(rosterStatus)}`}>
               {getParentRosterStatusLabel(rosterStatus)}
             </p>
           </div>
-          <div className="rounded-xl bg-slate-900 p-3">
-            <p className="text-slate-400">Readiness</p>
-            <p className={`mt-1 font-semibold ${requirementTone}`}>
+          <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+            <p className="font-semibold text-slate-500">Readiness</p>
+            <p className={`mt-1 font-black ${requirementTone}`}>
               {requirementSummary.label}
             </p>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs font-semibold text-slate-500">
               {getParentRequirementCountLabel(requirementSummary)}
             </p>
           </div>
-          <div className="rounded-xl bg-slate-900 p-3">
-            <p className="text-slate-400">Payment</p>
+          <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+            <p className="font-semibold text-slate-500">Payment</p>
             <p
-              className={`mt-1 font-semibold ${getRequirementTone(
+              className={`mt-1 font-black ${getRequirementTone(
                 paymentSummary.open,
                 paymentSummary.blocked,
                 paymentSummary.needsReview,
@@ -377,102 +395,106 @@ export default async function AthleteDetailsPage({
           </div>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <h2 className="text-lg font-bold">Athlete Info</h2>
-          <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-            <div className="rounded-xl bg-slate-800 p-3">
-              <p className="text-slate-400">Grade</p>
-              <p className="mt-1 font-semibold text-white">
-                {athlete.grade || "Not listed"}
-              </p>
+        <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
+          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-black">Next Event</h2>
+                <p className="mt-1 text-sm font-semibold text-slate-600">
+                  Only events for this player&apos;s team are shown here.
+                </p>
+              </div>
+              {nextEvent && (
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${getEventTone(
+                    nextEvent.status,
+                  )}`}
+                >
+                  {getEventStatusLabel(nextEvent)}
+                </span>
+              )}
             </div>
-            <div className="rounded-xl bg-slate-800 p-3">
-              <p className="text-slate-400">Jersey</p>
-              <p className="mt-1 font-semibold text-white">
-                {athlete.jerseySize || "Not listed"}
-              </p>
-            </div>
-          </div>
-          <p className="mt-3 rounded-xl bg-slate-800 p-3 text-sm text-slate-300">
-            {athlete.school || "School not listed"}
-          </p>
-        </div>
 
-        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-bold">Next Event</h2>
-              <p className="mt-1 text-sm text-slate-400">
-                Scoped to this athlete&apos;s registration and team.
+            {nextEvent ? (
+              <div className="mt-4 rounded-md bg-slate-50 p-4">
+                <p className="font-black text-slate-950">{nextEvent.title}</p>
+                <p className="mt-3 text-sm font-semibold text-slate-600">
+                  {getEventDateLabel(nextEvent)}
+                </p>
+                <p className="mt-1 text-sm font-semibold text-slate-600">
+                  {getEventTimeLabel(nextEvent)}
+                </p>
+                <p className="mt-3 text-sm font-semibold text-slate-600">
+                  {getEventLocationLabel(nextEvent)}
+                </p>
+              </div>
+            ) : (
+              <p className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-600">
+                {getEventUnavailableMessage(registrationStatus, rosterStatus)}
               </p>
-            </div>
+            )}
+
+            {nextEvent && eventUpdatesAllowed && (
+              <>
+                <AttendanceStatusPicker
+                  athleteId={athlete.id}
+                  eventId={nextEvent.id}
+                  initialStatus={attendanceStatus}
+                  compact
+                  surface="light"
+                />
+                <TransportationStatusPicker
+                  athleteId={athlete.id}
+                  documentRequirements={documentRequirements}
+                  eventId={nextEvent.id}
+                  initialStatus={transportationStatus}
+                  options={transportationOptions}
+                  paymentRequirements={paymentRequirements}
+                  registrationId={registrationId}
+                  registrationRequirements={registrationRequirements}
+                  surface="light"
+                />
+              </>
+            )}
+
+            {nextEvent && !eventUpdatesAllowed && (
+              <p className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm font-semibold text-slate-600">
+                {nextEvent.status === "canceled"
+                  ? "Attendance and transportation updates are closed for this canceled event."
+                  : "Attendance and transportation controls are available after this player is approved and rostered."}
+              </p>
+            )}
+
             {nextEvent && (
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-semibold ${getEventTone(
-                  nextEvent.status,
-                )}`}
+              <Link
+                href={`/events/${nextEvent.id}`}
+                className="mt-4 block rounded-md bg-blue-600 py-3 text-center font-black text-white hover:bg-blue-700"
               >
-                {getEventStatusLabel(nextEvent)}
-              </span>
+                Event Details
+              </Link>
             )}
           </div>
 
-          {nextEvent ? (
-            <div className="mt-4 rounded-xl bg-slate-800 p-4">
-              <p className="font-semibold">{nextEvent.title}</p>
-              <p className="mt-3 text-sm text-slate-300">
-                {getEventDateLabel(nextEvent)}
-              </p>
-              <p className="mt-1 text-sm text-slate-300">
-                {getEventTimeLabel(nextEvent)}
-              </p>
-              <p className="mt-3 text-sm text-slate-300">
-                {getEventLocationLabel(nextEvent)}
-              </p>
+          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-black">Player Info</h2>
+            <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+              <div className="rounded-md bg-slate-50 p-3">
+                <p className="font-semibold text-slate-500">Grade</p>
+                <p className="mt-1 font-black text-slate-950">
+                  {athlete.grade || "Not listed"}
+                </p>
+              </div>
+              <div className="rounded-md bg-slate-50 p-3">
+                <p className="font-semibold text-slate-500">Jersey</p>
+                <p className="mt-1 font-black text-slate-950">
+                  {athlete.jerseySize || "Not listed"}
+                </p>
+              </div>
             </div>
-          ) : (
-            <p className="mt-4 rounded-xl border border-slate-700 bg-slate-950 p-4 text-sm text-slate-300">
-              {getEventUnavailableMessage(registrationStatus, rosterStatus)}
+            <p className="mt-3 rounded-md bg-slate-50 p-3 text-sm font-semibold text-slate-600">
+              {athlete.school || "School not listed"}
             </p>
-          )}
-
-          {nextEvent && eventUpdatesAllowed && (
-            <>
-              <AttendanceStatusPicker
-                athleteId={athlete.id}
-                eventId={nextEvent.id}
-                initialStatus={attendanceStatus}
-                compact
-              />
-              <TransportationStatusPicker
-                athleteId={athlete.id}
-                documentRequirements={documentRequirements}
-                eventId={nextEvent.id}
-                initialStatus={transportationStatus}
-                options={transportationOptions}
-                paymentRequirements={paymentRequirements}
-                registrationId={registrationId}
-                registrationRequirements={registrationRequirements}
-              />
-            </>
-          )}
-
-          {nextEvent && !eventUpdatesAllowed && (
-            <p className="mt-4 rounded-xl border border-slate-700 bg-slate-950 p-3 text-sm text-slate-300">
-              {nextEvent.status === "canceled"
-                ? "Attendance and transportation updates are closed for this canceled event."
-                : "Attendance and transportation controls are available after this athlete is approved and rostered."}
-            </p>
-          )}
-
-          {nextEvent && (
-            <Link
-              href={`/events/${nextEvent.id}`}
-              className="mt-4 block rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
-            >
-              Event Details
-            </Link>
-          )}
+          </div>
         </div>
 
         <RegistrationRequirementsChecklist

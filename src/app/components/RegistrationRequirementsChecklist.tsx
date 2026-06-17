@@ -47,50 +47,50 @@ type RegistrationRequirementsChecklistProps = {
 
 function getRequirementTone(status: RegistrationRequirementStatus) {
   if (status === "Approved" || status === "Waived") {
-    return "bg-blue-500/20 text-blue-300";
+    return "bg-emerald-50 text-emerald-700";
   }
 
   if (status === "Submitted" || status === "Uploaded") {
-    return "bg-yellow-500/20 text-yellow-200";
+    return "bg-orange-50 text-orange-700";
   }
 
   if (status === "Rejected") {
-    return "bg-red-500/20 text-red-300";
+    return "bg-red-50 text-red-700";
   }
 
-  return "bg-slate-700 text-slate-300";
+  return "bg-slate-100 text-slate-600";
 }
 
 function getDocumentTone(status: DocumentRequirementStatus) {
   if (status === "Approved" || status === "Waived") {
-    return "bg-blue-500/20 text-blue-300";
+    return "bg-emerald-50 text-emerald-700";
   }
 
   if (status === "Submitted" || status === "Uploaded") {
-    return "bg-yellow-500/20 text-yellow-200";
+    return "bg-orange-50 text-orange-700";
   }
 
   if (status === "Rejected") {
-    return "bg-red-500/20 text-red-300";
+    return "bg-red-50 text-red-700";
   }
 
-  return "bg-slate-700 text-slate-300";
+  return "bg-slate-100 text-slate-600";
 }
 
 function getPaymentTone(status: PaymentRequirementStatus) {
   if (status === "Paid" || status === "Waived") {
-    return "bg-blue-500/20 text-blue-300";
+    return "bg-emerald-50 text-emerald-700";
   }
 
   if (status === "Submitted") {
-    return "bg-yellow-500/20 text-yellow-200";
+    return "bg-orange-50 text-orange-700";
   }
 
   if (status === "Rejected") {
-    return "bg-red-500/20 text-red-300";
+    return "bg-red-50 text-red-700";
   }
 
-  return "bg-slate-700 text-slate-300";
+  return "bg-slate-100 text-slate-600";
 }
 
 export default function RegistrationRequirementsChecklist({
@@ -139,10 +139,10 @@ export default function RegistrationRequirementsChecklist({
           : "Ready";
   const summaryTone =
     totalBlocked > 0 || totalMissing > 0
-      ? "text-red-300"
+      ? "text-red-700"
       : totalNeedsReview > 0
-        ? "text-yellow-200"
-        : "text-blue-300";
+        ? "text-orange-700"
+        : "text-emerald-700";
 
   async function getResponseError(response: Response, fallback: string) {
     const body = (await response.json().catch(() => null)) as {
@@ -252,45 +252,53 @@ export default function RegistrationRequirementsChecklist({
   }
 
   return (
-    <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-      <h2 className="text-lg font-bold">Registration Status</h2>
+    <div className="mt-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="text-lg font-black">Player Needs</h2>
       <p className={`mt-3 text-sm font-semibold ${summaryTone}`}>
         {summaryLabel}
       </p>
       {actionError && (
-        <p className="mt-3 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm font-semibold text-red-300">
+        <p className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-700">
           {actionError}
         </p>
       )}
       {!updatesAllowed && (
-        <p className="mt-3 rounded-xl border border-slate-700 bg-slate-950 p-3 text-sm text-slate-300">
+        <p className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm font-semibold text-slate-600">
           Document and payment updates are closed for this registration.
         </p>
       )}
       <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs font-semibold">
-        <div className="rounded-xl bg-slate-800 p-3">
-          <p className="text-slate-400">Documents</p>
-          <p className="mt-1 text-white">{documentSummary.open} Open</p>
+        <div className="rounded-md bg-slate-50 p-3">
+          <p className="text-slate-500">Documents</p>
+          <p className="mt-1 font-black text-slate-950">
+            {documentSummary.open} Open
+          </p>
         </div>
-        <div className="rounded-xl bg-slate-800 p-3">
-          <p className="text-slate-400">Payment</p>
-          <p className="mt-1 text-white">{paymentSummary.open} Open</p>
+        <div className="rounded-md bg-slate-50 p-3">
+          <p className="text-slate-500">Payment</p>
+          <p className="mt-1 font-black text-slate-950">
+            {paymentSummary.open} Open
+          </p>
         </div>
-        <div className="rounded-xl bg-slate-800 p-3">
-          <p className="text-slate-400">Total</p>
-          <p className="mt-1 text-white">{totalOpenItems} Open</p>
+        <div className="rounded-md bg-slate-50 p-3">
+          <p className="text-slate-500">Total</p>
+          <p className="mt-1 font-black text-slate-950">
+            {totalOpenItems} Open
+          </p>
         </div>
       </div>
 
-      <div className="mt-4 space-y-3 text-sm text-slate-300">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+      <div className="mt-4 space-y-3 text-sm text-slate-600">
+        <h3 className="text-sm font-black uppercase text-slate-500">
           Documents
         </h3>
         {documentRequirements.length > 0 ? (
           documentRequirements.map((requirement) => (
-            <div key={requirement.id} className="rounded-xl bg-slate-800 p-4">
+            <div key={requirement.id} className="rounded-md bg-slate-50 p-4">
               <div className="flex items-center justify-between gap-3">
-                <span>{requirement.label}</span>
+                <span className="font-black text-slate-950">
+                  {requirement.label}
+                </span>
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-semibold ${getDocumentTone(
                     requirement.status,
@@ -299,16 +307,16 @@ export default function RegistrationRequirementsChecklist({
                   {requirement.status}
                 </span>
               </div>
-              <p className="mt-2 text-xs text-slate-400">
+              <p className="mt-2 text-xs font-semibold text-slate-500">
                 {requirement.description}
               </p>
               {isDocumentNeedsReview(requirement) && (
-                <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-yellow-200">
-                  Waiting for admin review
+                <p className="mt-3 text-xs font-black uppercase text-orange-700">
+                  Waiting for review
                 </p>
               )}
               {isDocumentCleared(requirement) && (
-                <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-blue-300">
+                <p className="mt-3 text-xs font-black uppercase text-emerald-700">
                   Cleared
                 </p>
               )}
@@ -317,7 +325,7 @@ export default function RegistrationRequirementsChecklist({
                 isDocumentBlocked(requirement)) && (
                 <label
                   aria-disabled={uploadingRequirementId === requirement.id}
-                  className="mt-3 block w-full cursor-pointer rounded-xl border border-slate-700 bg-slate-900 py-3 text-center font-semibold text-white"
+                  className="mt-3 block w-full cursor-pointer rounded-md border border-slate-200 bg-white py-3 text-center font-black text-slate-700 hover:bg-slate-100"
                 >
                   <input
                     className="sr-only"
@@ -346,17 +354,21 @@ export default function RegistrationRequirementsChecklist({
             </div>
           ))
         ) : (
-          <p>No document requirements listed.</p>
+          <p className="rounded-md bg-slate-50 p-4 font-semibold">
+            No document requirements listed.
+          </p>
         )}
 
-        <h3 className="pt-2 text-sm font-semibold uppercase tracking-wide text-slate-400">
+        <h3 className="pt-2 text-sm font-black uppercase text-slate-500">
           Payment
         </h3>
         {paymentRequirements.length > 0 ? (
           paymentRequirements.map((requirement) => (
-            <div key={requirement.id} className="rounded-xl bg-slate-800 p-4">
+            <div key={requirement.id} className="rounded-md bg-slate-50 p-4">
               <div className="flex items-center justify-between gap-3">
-                <span>{requirement.label}</span>
+                <span className="font-black text-slate-950">
+                  {requirement.label}
+                </span>
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-semibold ${getPaymentTone(
                     requirement.status,
@@ -365,16 +377,16 @@ export default function RegistrationRequirementsChecklist({
                   {requirement.status}
                 </span>
               </div>
-              <p className="mt-2 text-xs text-slate-400">
+              <p className="mt-2 text-xs font-semibold text-slate-500">
                 ${requirement.amountDue} due. {requirement.description}
               </p>
               {isPaymentNeedsReview(requirement) && (
-                <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-yellow-200">
-                  Waiting for admin review
+                <p className="mt-3 text-xs font-black uppercase text-orange-700">
+                  Waiting for review
                 </p>
               )}
               {isPaymentCleared(requirement) && (
-                <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-blue-300">
+                <p className="mt-3 text-xs font-black uppercase text-emerald-700">
                   Cleared
                 </p>
               )}
@@ -403,7 +415,7 @@ export default function RegistrationRequirementsChecklist({
                         ),
                       );
                   }}
-                  className="mt-3 w-full rounded-xl border border-slate-700 bg-slate-900 py-3 font-semibold text-white"
+                  className="mt-3 w-full rounded-md border border-slate-200 bg-white py-3 font-black text-slate-700 hover:bg-slate-100"
                 >
                   {isPaymentBlocked(requirement)
                     ? "Resubmit Payment"
@@ -413,11 +425,13 @@ export default function RegistrationRequirementsChecklist({
             </div>
           ))
         ) : (
-          <p>No payment requirements listed.</p>
+          <p className="rounded-md bg-slate-50 p-4 font-semibold">
+            No payment requirements listed.
+          </p>
         )}
 
         {documentRequirements.length === 0 && paymentRequirements.length === 0 && (
-          <h3 className="pt-2 text-sm font-semibold uppercase tracking-wide text-slate-400">
+          <h3 className="pt-2 text-sm font-black uppercase text-slate-500">
             Registration Items
           </h3>
         )}
@@ -427,10 +441,12 @@ export default function RegistrationRequirementsChecklist({
           currentRequirements.map((requirement) => (
             <div
               key={requirement.label}
-              className="rounded-xl bg-slate-800 p-4"
+              className="rounded-md bg-slate-50 p-4"
             >
               <div className="flex items-center justify-between gap-3">
-                <span>{requirement.label}</span>
+                <span className="font-black text-slate-950">
+                  {requirement.label}
+                </span>
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-semibold ${getRequirementTone(
                     requirement.status,
@@ -440,17 +456,17 @@ export default function RegistrationRequirementsChecklist({
                 </span>
               </div>
               {requirement.description && (
-                <p className="mt-2 text-xs text-slate-400">
+                <p className="mt-2 text-xs font-semibold text-slate-500">
                   {requirement.description}
                 </p>
               )}
               {isRequirementNeedsReview(requirement) && (
-                <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-yellow-200">
-                  Waiting for admin review
+                <p className="mt-3 text-xs font-black uppercase text-orange-700">
+                  Waiting for review
                 </p>
               )}
               {isRequirementCleared(requirement) && (
-                <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-blue-300">
+                <p className="mt-3 text-xs font-black uppercase text-emerald-700">
                   Cleared
                 </p>
               )}
@@ -459,7 +475,7 @@ export default function RegistrationRequirementsChecklist({
                 isRequirementBlocked(requirement)) && (
                 <label
                   aria-disabled={uploadingRequirementId === requirement.label}
-                  className="mt-3 block w-full cursor-pointer rounded-xl border border-slate-700 bg-slate-900 py-3 text-center font-semibold text-white"
+                  className="mt-3 block w-full cursor-pointer rounded-md border border-slate-200 bg-white py-3 text-center font-black text-slate-700 hover:bg-slate-100"
                 >
                   <input
                     className="sr-only"
@@ -490,7 +506,9 @@ export default function RegistrationRequirementsChecklist({
         ) : (
           documentRequirements.length === 0 &&
           paymentRequirements.length === 0 && (
-            <p>No registration requirements listed.</p>
+            <p className="rounded-md bg-slate-50 p-4 font-semibold">
+              No registration requirements listed.
+            </p>
           )
         )}
       </div>
