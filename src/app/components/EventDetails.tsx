@@ -31,6 +31,49 @@ type EventDetailsProps = {
   role?: EventScheduleRole;
 };
 
+function getParentEventPlanLabel(
+  attendanceStatus: string,
+  transportationStatus: string,
+) {
+  if (attendanceStatus === "Not Attending") {
+    return "Not attending";
+  }
+
+  if (transportationStatus === "Needs Ride") {
+    return "Needs ride";
+  }
+
+  if (attendanceStatus === "Unknown" || transportationStatus === "Unknown") {
+    return "Set event plan";
+  }
+
+  return "Plan set";
+}
+
+function getParentEventPlanClass(label: string) {
+  if (label === "Plan set") {
+    return "bg-emerald-50 text-emerald-700";
+  }
+
+  if (label === "Needs ride" || label === "Set event plan") {
+    return "bg-orange-50 text-orange-700";
+  }
+
+  return "bg-slate-100 text-slate-600";
+}
+
+function getParentEventStatusClass(status: string) {
+  if (status === "canceled") {
+    return "bg-red-50 text-red-700";
+  }
+
+  if (status === "published") {
+    return "bg-emerald-50 text-emerald-700";
+  }
+
+  return "bg-slate-100 text-slate-600";
+}
+
 export default async function EventDetails({
   activeOrganizationId,
   eventId,
@@ -198,6 +241,198 @@ export default async function EventDetails({
             eventId={eventDetails.id}
             role={role}
           />
+        </section>
+      </main>
+    );
+  }
+
+  if (role === "parent") {
+    const parentEventRows = registrations.map((registration) => {
+      const attendanceStatus =
+        attendanceEntries.find(
+          (entry) => entry.athleteId === registration.athleteId,
+        )?.status ?? "Unknown";
+      const transportationStatus =
+        transportationEntries.find(
+          (entry) => entry.athleteId === registration.athleteId,
+        )?.status ?? "Unknown";
+      const planLabel = getParentEventPlanLabel(
+        attendanceStatus,
+        transportationStatus,
+      );
+
+      return {
+        attendanceStatus,
+        planLabel,
+        registration,
+        transportationStatus,
+      };
+    });
+
+    return (
+      <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
+        <header className="border-b border-slate-200 bg-white">
+          <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+            <Link className="text-xl font-black" href="/parent">
+              GameDay
+            </Link>
+            <Link
+              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 shadow-sm hover:bg-slate-50"
+              href={eventBackHref}
+            >
+              Parent Home
+            </Link>
+          </div>
+        </header>
+
+        <section className="mx-auto max-w-2xl px-4 py-4 pb-24 sm:px-6">
+          <Link
+            className="inline-flex rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 shadow-sm hover:bg-slate-50"
+            href={eventBackHref}
+          >
+            &larr; Back
+          </Link>
+
+          <section className="mt-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-black uppercase text-blue-700">
+                  {eventDetails.type}
+                </p>
+                <h1 className="mt-1 truncate text-2xl font-black tracking-tight">
+                  {eventDetails.title}
+                </h1>
+                <p className="mt-2 text-sm font-semibold text-slate-600">
+                  {getEventDateLabel(eventDetails)} /{" "}
+                  {getEventTimeLabel(eventDetails)}
+                </p>
+                <p className="mt-1 text-sm font-semibold text-slate-600">
+                  {getEventLocationLabel(eventDetails)}
+                </p>
+              </div>
+              <span
+                className={`shrink-0 rounded-full px-3 py-1 text-xs font-black ${getParentEventStatusClass(
+                  eventDetails.status,
+                )}`}
+              >
+                {getEventStatusLabel(eventDetails)}
+              </span>
+            </div>
+
+            {eventDetails.address && (
+              <p className="mt-4 rounded-md bg-slate-50 p-3 text-sm font-semibold text-slate-600">
+                {eventDetails.address}
+              </p>
+            )}
+          </section>
+
+          {eventUpdatesClosed && (
+            <p className="mt-3 rounded-lg border border-orange-200 bg-orange-50 p-3 text-sm font-semibold text-orange-800">
+              Attendance and ride updates are closed for this event.
+            </p>
+          )}
+
+          {gameAlert && (
+            <section className="mt-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-lg font-black">Game alert</h2>
+                <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">
+                  {gameAlert.status}
+                </span>
+              </div>
+              <p className="mt-2 text-sm font-semibold text-slate-600">
+                {gameAlert.homeTeamName} {gameAlert.homeScore} /{" "}
+                {gameAlert.awayTeamName} {gameAlert.awayScore}
+              </p>
+              <p className="mt-2 text-sm font-semibold text-slate-600">
+                {gameAlert.latestUpdate}
+              </p>
+            </section>
+          )}
+
+          <section className="mt-4">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-xl font-black">Your players</h2>
+              <p className="text-sm font-bold text-slate-500">
+                {parentEventRows.length}
+              </p>
+            </div>
+
+            <div className="mt-2 space-y-2">
+              {parentEventRows.length === 0 ? (
+                <p className="rounded-lg border border-dashed border-slate-300 bg-white p-4 text-sm font-semibold text-slate-500">
+                  No player from your account is tied to this event.
+                </p>
+              ) : (
+                parentEventRows.map(
+                  ({
+                    attendanceStatus,
+                    planLabel,
+                    registration,
+                    transportationStatus,
+                  }) => (
+                    <Link
+                      className="flex min-h-14 items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm transition hover:border-blue-200 hover:bg-blue-50"
+                      href={`/athletes/${registration.athleteId}`}
+                      key={registration.id}
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-lg font-black">
+                          {registration.athleteName ?? "Player"}
+                        </span>
+                        <span className="mt-0.5 block truncate text-xs font-semibold text-slate-500">
+                          {attendanceStatus} / {transportationStatus}
+                        </span>
+                      </span>
+                      <span
+                        className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-black ${getParentEventPlanClass(
+                          planLabel,
+                        )}`}
+                      >
+                        {planLabel}
+                      </span>
+                    </Link>
+                  ),
+                )
+              )}
+            </div>
+          </section>
+
+          {(eventAnnouncements.length > 0 || eventNotes.length > 0) && (
+            <section className="mt-4 space-y-2">
+              {eventAnnouncements.length > 0 && (
+                <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 [&::-webkit-details-marker]:hidden">
+                    <span className="font-black">Announcements</span>
+                    <span className="text-lg font-black text-blue-700 transition group-open:rotate-90">
+                      &gt;
+                    </span>
+                  </summary>
+                  <div className="space-y-2 border-t border-slate-200 p-4 text-sm font-semibold text-slate-600">
+                    {eventAnnouncements.map((announcement) => (
+                      <p key={announcement}>{announcement}</p>
+                    ))}
+                  </div>
+                </details>
+              )}
+
+              {eventNotes.length > 0 && (
+                <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 [&::-webkit-details-marker]:hidden">
+                    <span className="font-black">Event notes</span>
+                    <span className="text-lg font-black text-blue-700 transition group-open:rotate-90">
+                      &gt;
+                    </span>
+                  </summary>
+                  <div className="space-y-2 border-t border-slate-200 p-4 text-sm font-semibold text-slate-600">
+                    {eventNotes.map((note) => (
+                      <p key={note}>{note}</p>
+                    ))}
+                  </div>
+                </details>
+              )}
+            </section>
+          )}
         </section>
       </main>
     );
