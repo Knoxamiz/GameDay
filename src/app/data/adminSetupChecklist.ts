@@ -162,7 +162,7 @@ export function buildAdminSetupChecklist({
       status: hasOrganization ? "complete" : "next",
     },
     {
-      actionHref: "/admin/setup#team",
+      actionHref: "/admin/teams#create-team",
       actionLabel: hasActiveTeam
         ? isSingleTeamWorkspace
           ? "Manage team"

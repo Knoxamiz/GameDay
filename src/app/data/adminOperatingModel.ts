@@ -256,7 +256,7 @@ export function buildAdminOperatingModel({
       description: isSingleTeamWorkspace
         ? "Create the active team for this Team Builder workspace."
         : "Start by creating the first active team or age group.",
-      href: "/admin/setup#team",
+      href: "/admin/teams#create-team",
       id: "create-team",
       label: "Create team",
     };

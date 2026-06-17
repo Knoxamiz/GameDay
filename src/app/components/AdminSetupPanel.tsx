@@ -17,7 +17,6 @@ import type { Organization } from "../data/organizations";
 import { withActiveOrganization } from "../data/activeOrganization";
 import { getOrganizationWorkspaceType } from "../data/organizations";
 import { isActiveTeam, type Team } from "../data/teams";
-import TeamLifecycleManager from "./TeamLifecycleManager";
 import CoachAssignmentLifecycleManager from "./CoachAssignmentLifecycleManager";
 
 type AdminSetupPanelProps = {
@@ -46,10 +45,6 @@ type SetupResponse = {
   id?: string;
   message?: string;
 };
-
-function getCurrentSeasonLabel() {
-  return `${new Date().getFullYear()} Season`;
-}
 
 function getOrganizationNameFromId(organizationId: string) {
   return organizationId
@@ -118,10 +113,6 @@ export default function AdminSetupPanel({
   const [organizationName, setOrganizationName] = useState(
     organizations[0]?.name ?? getOrganizationNameFromId(organizationId),
   );
-  const [teamName, setTeamName] = useState("");
-  const [teamDivision, setTeamDivision] = useState("");
-  const [teamSeason, setTeamSeason] = useState(getCurrentSeasonLabel());
-  const [teamStatus, setTeamStatus] = useState<"active" | "inactive">("active");
   const [coachName, setCoachName] = useState("");
   const [coachEmail, setCoachEmail] = useState("");
   const [coachUid, setCoachUid] = useState("");
@@ -376,46 +367,17 @@ export default function AdminSetupPanel({
         }
         status={activeTeams.length > 0 ? "Complete" : "Next"}
       >
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div>
-            <h3 className="font-bold text-white">
-              {isSingleTeamWorkspace ? "Team Builder Team" : "Create Team"}
-            </h3>
-            {isSingleTeamWorkspace && teams.length > 0 ? (
-              <p className="mt-3 rounded-md bg-slate-950 p-3 text-sm text-slate-300">
-                This is a single-team workspace. Upgrade to organization to add
-                more teams. Manage this team below for now.
-              </p>
-            ) : (
-            <div className="mt-3 space-y-3">
-              <label className="block">
-                <span className="text-sm font-semibold text-slate-300">Team Name</span>
-                <input className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none" onChange={(event) => setTeamName(event.target.value)} value={teamName} />
-              </label>
-              <label className="block">
-                <span className="text-sm font-semibold text-slate-300">Division</span>
-                <input className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none" onChange={(event) => setTeamDivision(event.target.value)} placeholder="10U, 12U, High School" value={teamDivision} />
-              </label>
-              <label className="block">
-                <span className="text-sm font-semibold text-slate-300">Season</span>
-                <input className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none" onChange={(event) => setTeamSeason(event.target.value)} value={teamSeason} />
-              </label>
-              <label className="block">
-                <span className="text-sm font-semibold text-slate-300">Status</span>
-                <select className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-4 py-3 text-white" onChange={(event) => setTeamStatus(event.target.value === "inactive" ? "inactive" : "active")} value={teamStatus}>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </label>
-              <button className="rounded-md bg-blue-500 px-4 py-3 font-semibold text-white disabled:opacity-60" disabled={isSaving} onClick={() => void saveSetup({ actionType: "team", division: teamDivision, name: teamName, organizationId, season: teamSeason, status: teamStatus })} type="button">
-                Create Team
-              </button>
-            </div>
-            )}
-          </div>
-          <div className="border-t border-slate-800 pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-            <TeamLifecycleManager activeOrganizationId={organizationId} embedded teams={teams} />
-          </div>
+        <div className="max-w-xl">
+          <p className="text-sm text-slate-300">
+            Team creation, opening a team workspace, and removing teams now
+            live on the dedicated Teams screen.
+          </p>
+          <Link
+            className="mt-4 inline-flex rounded-md bg-blue-500 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-600"
+            href={withActiveOrganization("/admin/teams#create-team", organizationId)}
+          >
+            Open Teams
+          </Link>
         </div>
       </SetupHubSection>
 
