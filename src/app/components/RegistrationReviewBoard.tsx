@@ -41,7 +41,6 @@ import RegistrationStatusBadge from "./RegistrationStatusBadge";
 import { useRegistrationRequirements } from "./registrationRequirementState";
 import {
   useRegistrationStatus,
-  useRegistrationSummary,
 } from "./registrationStatusState";
 
 type RegistrationReviewBoardProps = {
@@ -86,50 +85,50 @@ const paymentDecisionOptions: PaymentRequirementStatus[] = [
 
 function getRequirementTone(status: RegistrationRequirementStatus) {
   if (status === "Approved" || status === "Waived") {
-    return "bg-blue-500/20 text-blue-300";
+    return "bg-blue-500/20 text-blue-700";
   }
 
   if (status === "Submitted" || status === "Uploaded") {
-    return "bg-yellow-500/20 text-yellow-200";
+    return "bg-yellow-500/20 text-orange-700";
   }
 
   if (status === "Rejected") {
-    return "bg-red-500/20 text-red-300";
+    return "bg-red-500/20 text-red-700";
   }
 
-  return "bg-slate-700 text-slate-300";
+  return "bg-slate-700 text-slate-600";
 }
 
 function getDocumentTone(status: DocumentRequirementStatus) {
   if (status === "Approved" || status === "Waived") {
-    return "bg-blue-500/20 text-blue-300";
+    return "bg-blue-500/20 text-blue-700";
   }
 
   if (status === "Submitted" || status === "Uploaded") {
-    return "bg-yellow-500/20 text-yellow-200";
+    return "bg-yellow-500/20 text-orange-700";
   }
 
   if (status === "Rejected") {
-    return "bg-red-500/20 text-red-300";
+    return "bg-red-500/20 text-red-700";
   }
 
-  return "bg-slate-700 text-slate-300";
+  return "bg-slate-700 text-slate-600";
 }
 
 function getPaymentTone(status: PaymentRequirementStatus) {
   if (status === "Paid" || status === "Waived") {
-    return "bg-blue-500/20 text-blue-300";
+    return "bg-blue-500/20 text-blue-700";
   }
 
   if (status === "Submitted") {
-    return "bg-yellow-500/20 text-yellow-200";
+    return "bg-yellow-500/20 text-orange-700";
   }
 
   if (status === "Rejected") {
-    return "bg-red-500/20 text-red-300";
+    return "bg-red-500/20 text-red-700";
   }
 
-  return "bg-slate-700 text-slate-300";
+  return "bg-slate-700 text-slate-600";
 }
 
 async function getResponseError(response: Response, fallback: string) {
@@ -211,11 +210,11 @@ function DocumentReviewSection({
   const summary = summarizeDocumentRequirements(documents);
 
   return (
-    <div className="mt-4 rounded-xl bg-slate-800 p-4 text-sm">
-      <p className="font-semibold text-white">Documents</p>
+    <div className="mt-4 rounded-xl bg-slate-50 p-4 text-sm">
+      <p className="font-semibold text-slate-950">Documents</p>
       <p
         className={`mt-2 ${
-          summary.open > 0 ? "text-yellow-200" : "text-blue-300"
+          summary.open > 0 ? "text-orange-700" : "text-blue-700"
         }`}
       >
         {summary.open > 0
@@ -225,11 +224,11 @@ function DocumentReviewSection({
       {openDocuments.length > 0 && (
         <div className="mt-3 space-y-3">
           {openDocuments.map((document) => (
-            <div key={document.id} className="rounded-xl bg-slate-900 p-3">
+            <div key={document.id} className="rounded-xl bg-white p-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-semibold text-white">{document.label}</p>
-                  <p className="mt-1 text-xs text-slate-400">
+                  <p className="font-semibold text-slate-950">{document.label}</p>
+                  <p className="mt-1 text-xs text-slate-500">
                     {isDocumentBlocked(document)
                       ? "Parent needs to resubmit this document."
                       : isDocumentMissing(document)
@@ -269,8 +268,8 @@ function DocumentReviewSection({
                     }}
                     className={`rounded-xl border px-2 py-2 ${
                       option === document.status
-                        ? "border-blue-500 bg-blue-500/20 text-blue-200"
-                        : "border-slate-700 bg-slate-950 text-slate-300"
+                        ? "border-blue-500 bg-blue-500/20 text-blue-700"
+                        : "border-slate-200 bg-white text-slate-600"
                     }`}
                   >
                     {option}
@@ -304,11 +303,11 @@ function PaymentReviewSection({
   const summary = summarizePaymentRequirements(payments);
 
   return (
-    <div className="mt-4 rounded-xl bg-slate-800 p-4 text-sm">
-      <p className="font-semibold text-white">Payments</p>
+    <div className="mt-4 rounded-xl bg-slate-50 p-4 text-sm">
+      <p className="font-semibold text-slate-950">Payments</p>
       <p
         className={`mt-2 ${
-          summary.open > 0 ? "text-yellow-200" : "text-blue-300"
+          summary.open > 0 ? "text-orange-700" : "text-blue-700"
         }`}
       >
         {summary.open > 0
@@ -318,11 +317,11 @@ function PaymentReviewSection({
       {openPayments.length > 0 && (
         <div className="mt-3 space-y-3">
           {openPayments.map((payment) => (
-            <div key={payment.id} className="rounded-xl bg-slate-900 p-3">
+            <div key={payment.id} className="rounded-xl bg-white p-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-semibold text-white">{payment.label}</p>
-                  <p className="mt-1 text-xs text-slate-400">
+                  <p className="font-semibold text-slate-950">{payment.label}</p>
+                  <p className="mt-1 text-xs text-slate-500">
                     {isPaymentBlocked(payment)
                       ? "Parent needs to resubmit this payment."
                       : isPaymentMissing(payment)
@@ -365,8 +364,8 @@ function PaymentReviewSection({
                     }}
                     className={`rounded-xl border px-2 py-2 ${
                       option === payment.status
-                        ? "border-blue-500 bg-blue-500/20 text-blue-200"
-                        : "border-slate-700 bg-slate-950 text-slate-300"
+                        ? "border-blue-500 bg-blue-500/20 text-blue-700"
+                        : "border-slate-200 bg-white text-slate-600"
                     }`}
                   >
                     {option === "Paid" ? "Mark Paid" : option}
@@ -446,32 +445,32 @@ function RegistrationReviewCard({
     registration.withdrawalRequest?.status === "pending";
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-lg">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
             {registration.teamId || "Team TBD"}
           </p>
           <h2 className="mt-2 text-xl font-bold">
             {registration.athleteName ?? registration.athleteId}
           </h2>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-slate-500">
             Parent: {registration.parentName}
           </p>
         </div>
         <RegistrationStatusBadge status={status} />
       </div>
 
-      <p className="mt-4 text-sm text-slate-300">
+      <p className="mt-4 text-sm text-slate-600">
         {getStatusDetails(status, registration.details)}
       </p>
 
       {registration.parentChangeRequest?.status === "pending" && (
         <div className="mt-4 rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-sm">
-          <p className="font-semibold text-yellow-100">
+          <p className="font-semibold text-orange-800">
             Parent Correction Request
           </p>
-          <div className="mt-3 space-y-1 text-slate-300">
+          <div className="mt-3 space-y-1 text-slate-600">
             <p>
               Athlete: {registration.parentChangeRequest.correction.athleteFirstName}{" "}
               {registration.parentChangeRequest.correction.athleteLastName}
@@ -485,7 +484,7 @@ function RegistrationReviewCard({
           <div className="mt-3 grid grid-cols-2 gap-2 font-semibold">
             {(["approve", "reject"] as const).map((decision) => (
               <button
-                className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 capitalize text-white"
+                className="rounded-xl border border-slate-200 bg-white px-3 py-3 capitalize text-slate-950"
                 key={decision}
                 onClick={() =>
                   saveAdminReviewChange({
@@ -511,16 +510,16 @@ function RegistrationReviewCard({
 
       {registration.withdrawalRequest?.status === "pending" && (
         <div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm">
-          <p className="font-semibold text-red-100">
+          <p className="font-semibold text-red-800">
             Parent Withdrawal Request
           </p>
-          <p className="mt-2 text-slate-300">
+          <p className="mt-2 text-slate-600">
             {registration.withdrawalRequest.reason || "No reason provided."}
           </p>
           <div className="mt-3 grid grid-cols-2 gap-2 font-semibold">
             {(["approve", "reject"] as const).map((decision) => (
               <button
-                className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 capitalize text-white"
+                className="rounded-xl border border-slate-200 bg-white px-3 py-3 capitalize text-slate-950"
                 key={decision}
                 onClick={() =>
                   saveAdminReviewChange({
@@ -544,21 +543,21 @@ function RegistrationReviewCard({
         </div>
       )}
 
-      <div className="mt-4 rounded-xl bg-slate-800 p-4 text-sm">
+      <div className="mt-4 rounded-xl bg-slate-50 p-4 text-sm">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="font-semibold text-white">Roster Status</p>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="font-semibold text-slate-950">Roster Status</p>
+            <p className="mt-1 text-xs text-slate-500">
               Coach rosters only include rostered athletes.
             </p>
           </div>
           <span
             className={`rounded-full px-3 py-1 text-xs font-semibold ${
               rosterStatus === "rostered"
-                ? "bg-blue-500/20 text-blue-300"
+                ? "bg-blue-500/20 text-blue-700"
                 : rosterStatus === "inactive"
-                  ? "bg-red-500/20 text-red-300"
-                  : "bg-yellow-500/20 text-yellow-200"
+                  ? "bg-red-500/20 text-red-700"
+                  : "bg-yellow-500/20 text-orange-700"
             }`}
           >
             {getRosterStatusLabel(rosterStatus)}
@@ -592,8 +591,8 @@ function RegistrationReviewCard({
               }}
               className={`rounded-xl border px-2 py-2 disabled:cursor-not-allowed disabled:opacity-50 ${
                 option === rosterStatus
-                  ? "border-blue-500 bg-blue-500/20 text-blue-200"
-                  : "border-slate-700 bg-slate-950 text-slate-300"
+                  ? "border-blue-500 bg-blue-500/20 text-blue-700"
+                  : "border-slate-200 bg-white text-slate-600"
               }`}
             >
               {getRosterStatusLabel(option)}
@@ -602,11 +601,11 @@ function RegistrationReviewCard({
         </div>
       </div>
 
-      <div className="mt-4 rounded-xl bg-slate-800 p-4 text-sm">
-        <p className="font-semibold text-white">Requirements</p>
+      <div className="mt-4 rounded-xl bg-slate-50 p-4 text-sm">
+        <p className="font-semibold text-slate-950">Requirements</p>
         <p
           className={`mt-2 ${
-            requirementSummary.open > 0 ? "text-yellow-200" : "text-blue-300"
+            requirementSummary.open > 0 ? "text-orange-700" : "text-blue-700"
           }`}
         >
           {requirementSummary.open > 0
@@ -620,14 +619,14 @@ function RegistrationReviewCard({
             {openRequirements.map((requirement) => (
               <div
                 key={requirement.label}
-                className="rounded-xl bg-slate-900 p-3"
+                className="rounded-xl bg-white p-3"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-semibold text-white">
+                    <p className="font-semibold text-slate-950">
                       {requirement.label}
                     </p>
-                    <p className="mt-1 text-xs text-slate-400">
+                    <p className="mt-1 text-xs text-slate-500">
                       {isRequirementBlocked(requirement)
                         ? "Parent needs to resubmit this item."
                         : isRequirementMissing(requirement)
@@ -666,8 +665,8 @@ function RegistrationReviewCard({
                       }}
                       className={`rounded-xl border px-2 py-2 ${
                         option === requirement.status
-                          ? "border-blue-500 bg-blue-500/20 text-blue-200"
-                          : "border-slate-700 bg-slate-950 text-slate-300"
+                          ? "border-blue-500 bg-blue-500/20 text-blue-700"
+                          : "border-slate-200 bg-white text-slate-600"
                       }`}
                     >
                       {option}
@@ -718,8 +717,8 @@ function RegistrationReviewCard({
             }}
             className={`rounded-xl border px-2 py-3 disabled:cursor-not-allowed disabled:opacity-50 ${
               option === status
-                ? "border-blue-500 bg-blue-500/20 text-blue-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-blue-500 bg-blue-500/20 text-blue-700"
+                : "border-slate-200 bg-white text-slate-600"
             }`}
           >
             {option === "Incomplete" ? "Incomplete" : option}
@@ -728,7 +727,7 @@ function RegistrationReviewCard({
       </div>
 
       {registration.submittedDate && (
-        <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
           Submitted {registration.submittedDate}
         </p>
       )}
@@ -744,60 +743,22 @@ export default function RegistrationReviewBoard({
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [reviewMessage, setReviewMessage] = useState<string | null>(null);
 
-  const summary = useRegistrationSummary(registrations);
-  const documents = useDocumentRequirements(
-    registrations.flatMap(getRegistrationDocumentRequirements),
-  );
-  const payments = usePaymentRequirements(
-    registrations.flatMap((registration) => registration.paymentRequirements ?? []),
-  );
-  const documentSummary = summarizeDocumentRequirements(documents);
-  const paymentSummary = summarizePaymentRequirements(payments);
-
   return (
-    <>
-      <div className="mt-6 grid grid-cols-2 gap-3 text-sm">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
-          <p className="text-slate-400">Pending</p>
-          <p className="mt-2 text-2xl font-bold text-white">
-            {summary.pendingRegistrations}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
-          <p className="text-slate-400">Incomplete</p>
-          <p className="mt-2 text-2xl font-bold text-red-300">
-            {summary.incompleteRegistrations}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
-          <p className="text-slate-400">Missing Docs</p>
-          <p className="mt-2 text-2xl font-bold text-red-300">
-            {documentSummary.missing}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
-          <p className="text-slate-400">Payments Open</p>
-          <p className="mt-2 text-2xl font-bold text-yellow-200">
-            {paymentSummary.open}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-6 space-y-4">
+      <div className="mt-5 space-y-3">
         {reviewMessage && (
-          <p className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-3 text-sm font-semibold text-blue-200">
+          <p className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm font-bold text-blue-700">
             {reviewMessage}
           </p>
         )}
         {reviewError && (
-          <p className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm font-semibold text-red-300">
+          <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-700">
             {reviewError}
           </p>
         )}
         {registrations.length === 0 && (
-          <p className="rounded-2xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300">
-            No registrations exist for the active organization yet. Use the
-            registration pipeline above to open or share a real invite.
+          <p className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-4 text-sm font-semibold text-slate-500">
+            No players have registered yet. Share an open registration link with
+            families.
           </p>
         )}
         {registrations.map((registration) => (
@@ -817,6 +778,5 @@ export default function RegistrationReviewBoard({
           />
         ))}
       </div>
-    </>
   );
 }

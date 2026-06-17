@@ -182,7 +182,7 @@ export function buildAdminSetupChecklist({
       status: hasActiveTeam ? "complete" : hasOrganization ? "next" : "waiting",
     },
     {
-      actionHref: "/admin/setup#registration-invites",
+      actionHref: "/admin/registrations",
       actionLabel: hasInvite
         ? isSingleTeamWorkspace
           ? "Manage link"
@@ -206,7 +206,7 @@ export function buildAdminSetupChecklist({
       status: hasInvite ? "complete" : hasActiveTeam ? "next" : "waiting",
     },
     {
-      actionHref: "/admin/setup#registration-invites",
+      actionHref: "/admin/registrations",
       actionLabel: hasOpenInvite
         ? isSingleTeamWorkspace
           ? "Copy join link"

@@ -17,7 +17,6 @@ import type { Organization } from "../data/organizations";
 import { withActiveOrganization } from "../data/activeOrganization";
 import { getOrganizationWorkspaceType } from "../data/organizations";
 import { isActiveTeam, type Team } from "../data/teams";
-import RegistrationInviteManager from "./RegistrationInviteManager";
 import TeamLifecycleManager from "./TeamLifecycleManager";
 import CoachAssignmentLifecycleManager from "./CoachAssignmentLifecycleManager";
 
@@ -162,10 +161,8 @@ export default function AdminSetupPanel({
   useEffect(() => {
     const sectionByHash: Record<string, SetupSectionId> = {
       "#coach-assignments": "coaches",
-      "#current-setup": "summary",
       "#members": "members",
       "#organization": "organization",
-      "#registration-invites": "invites",
       "#team": "teams",
     };
     const openHashSection = () => {
@@ -476,32 +473,17 @@ export default function AdminSetupPanel({
         }
         status={currentInviteCount > 0 ? "Configured" : activeTeams.length > 0 ? "Next" : "Waiting"}
       >
-        <RegistrationInviteManager
-          embedded
-          organizationId={organizationId}
-          registrationInvites={registrationInvites}
-          teams={teams}
-          workspaceType={isSingleTeamWorkspace ? "single_team" : "organization"}
-        />
-      </SetupHubSection>
-
-      <SetupHubSection
-        description="A compact count of the real records in this workspace."
-        id="current-setup"
-        isOpen={openSection === "summary"}
-        label="Current Setup Summary"
-        onToggle={() =>
-          setOpenSection(openSection === "summary" ? null : "summary")
-        }
-        status="Overview"
-      >
-        <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
-          {[{ label: "Workspaces", value: organizations.length }, { label: "Teams", value: teams.length }, { label: "Members", value: organizationMemberships.length }, { label: "Coach assignments", value: coachAssignments.length }, { label: "Invites", value: registrationInvites.length }].map((item) => (
-            <div className="rounded-md bg-slate-950 p-3" key={item.label}>
-              <p className="text-2xl font-bold text-white">{item.value}</p>
-              <p className="mt-1 text-xs text-slate-400">{item.label}</p>
-            </div>
-          ))}
+        <div className="max-w-xl">
+          <p className="text-sm text-slate-300">
+            Create, open, copy, and manage parent registration links from the
+            dedicated Registration screen.
+          </p>
+          <Link
+            className="mt-4 inline-flex rounded-md bg-blue-500 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-600"
+            href={withActiveOrganization("/admin/registrations", organizationId)}
+          >
+            Open Registration
+          </Link>
         </div>
       </SetupHubSection>
     </div>

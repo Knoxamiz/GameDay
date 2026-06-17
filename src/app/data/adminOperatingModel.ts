@@ -265,7 +265,7 @@ export function buildAdminOperatingModel({
       description: isSingleTeamWorkspace
         ? "Create the real join link parents will use to register players."
         : "Create the invite parents will use to register athletes.",
-      href: "/admin/setup#registration-invites",
+      href: "/admin/registrations",
       id: "create-invite",
       label: isSingleTeamWorkspace
         ? "Create registration link"
@@ -276,7 +276,7 @@ export function buildAdminOperatingModel({
       description: isSingleTeamWorkspace
         ? "Open the team registration link so parents can register."
         : "Open a valid invite so parents can register.",
-      href: "/admin/setup#registration-invites",
+      href: "/admin/registrations",
       id: "open-registration",
       label: isSingleTeamWorkspace
         ? "Open team registration"
@@ -287,7 +287,7 @@ export function buildAdminOperatingModel({
       description: isSingleTeamWorkspace
         ? "Share the open team join link with families."
         : "Share the open invite link with families.",
-      href: "/admin/setup#registration-invites",
+      href: "/admin/registrations",
       id: "copy-join-link",
       joinPath,
       label: isSingleTeamWorkspace ? "Copy team join link" : "Copy join link",

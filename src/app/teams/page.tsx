@@ -325,7 +325,7 @@ export default async function TeamsHome({
                       <Link
                         className="rounded-md border border-slate-700 px-3 py-2 text-slate-200"
                         href={withActiveOrganization(
-                          "/admin/setup#registration-invites",
+                          "/admin/registrations",
                           activeOrganizationId,
                         )}
                       >

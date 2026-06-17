@@ -11,6 +11,7 @@ import {
   sortEventsByStartDate,
 } from "../data/events";
 import {
+  getOrganizationWorkspaceType,
   getOrganizationWorkspaceTypeLabel,
   type Organization,
 } from "../data/organizations";
@@ -20,6 +21,8 @@ import AdminAnnouncementForm from "./AdminAnnouncementForm";
 import AdminArchiveButton from "./AdminArchiveButton";
 import AdminOrgMembersManager from "./AdminOrgMembersManager";
 import BackButton from "./BackButton";
+import RegistrationInviteManager from "./RegistrationInviteManager";
+import RegistrationReviewBoard from "./RegistrationReviewBoard";
 import SessionControls from "./SessionControls";
 
 type AdminOrganizationWorkspaceHomeProps = {
@@ -30,8 +33,10 @@ type AdminOrganizationWorkspaceHomeProps = {
     | "announcements"
     | "overview"
     | "people"
+    | "registration"
     | "teamDetails"
     | "teams";
+  registrationReviewSource?: "empty" | "firestore";
   operatingModel: AdminOperatingModel;
   organizations: Organization[];
   readModel: AdminHomeReadModel;
@@ -215,9 +220,10 @@ function StatusPill({
   tone = "green",
 }: {
   children: string;
-  tone?: "green" | "orange" | "red" | "slate";
+  tone?: "blue" | "green" | "orange" | "red" | "slate";
 }) {
   const toneClass = {
+    blue: "bg-blue-50 text-blue-700",
     green: "bg-emerald-50 text-emerald-700",
     orange: "bg-orange-50 text-orange-700",
     red: "bg-red-50 text-red-700",
@@ -244,6 +250,7 @@ export default function AdminOrganizationWorkspaceHome({
   activeOrganizationId,
   currentSection = "overview",
   operatingModel,
+  registrationReviewSource = "firestore",
   organizations,
   readModel,
   selectedTeamId,
@@ -278,7 +285,7 @@ export default function AdminOrganizationWorkspaceHome({
       : null,
     currentInvites.length === 0 && activeTeams.length > 0
       ? {
-          href: "/admin/setup#registration-invites",
+          href: "/admin/registrations",
           label: "Create a registration invite or link.",
           tone: "orange" as const,
         }
@@ -327,6 +334,8 @@ export default function AdminOrganizationWorkspaceHome({
         ? "/admin/announcements"
         : currentSection === "people"
           ? "/admin/people"
+          : currentSection === "registration"
+            ? "/admin/registrations"
         : currentSection === "teams" || currentSection === "teamDetails"
           ? "/admin/teams"
           : "/admin";
@@ -341,6 +350,8 @@ export default function AdminOrganizationWorkspaceHome({
       ? "Teams"
       : currentSection === "people"
         ? "Org Members"
+        : currentSection === "registration"
+          ? "Registration"
       : currentSection === "teamDetails" && selectedTeam
         ? selectedTeam.name
         : organization.name;
@@ -349,6 +360,8 @@ export default function AdminOrganizationWorkspaceHome({
       ? "Team workspaces"
       : currentSection === "people"
         ? "Permissions, titles, and points of contact"
+        : currentSection === "registration"
+          ? "Links, submitted players, and roster review"
       : currentSection === "teamDetails"
         ? "Team workspace"
         : `${workspaceTypeLabel} Workspace`;
@@ -647,6 +660,50 @@ export default function AdminOrganizationWorkspaceHome({
                       </EmptyState>
                     )}
                   </div>
+                </section>
+              </div>
+            ) : currentSection === "registration" ? (
+              <div className="mt-5 space-y-4">
+                <RegistrationInviteManager
+                  organizationId={activeOrganizationId}
+                  registrationInvites={readModel.registrationInvites}
+                  teams={readModel.teams}
+                  workspaceType={getOrganizationWorkspaceType(organization)}
+                />
+
+                <section
+                  className="scroll-mt-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+                  id="review"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h2 className="text-2xl font-black">
+                        Registered Players
+                      </h2>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Review submitted players and move approved athletes onto
+                        the roster.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <StatusPill tone="orange">
+                        {`${operatingModel.pendingRegistrations.length} pending`}
+                      </StatusPill>
+                      <StatusPill tone="blue">
+                        {`${operatingModel.approvedNotRosteredRegistrations.length} ready`}
+                      </StatusPill>
+                      <StatusPill tone="green">
+                        {`${operatingModel.rosteredRegistrations.length} rostered`}
+                      </StatusPill>
+                    </div>
+                  </div>
+                  <div className="scroll-mt-4" id="roster" />
+                  <div className="scroll-mt-4" id="readiness" />
+                  <RegistrationReviewBoard
+                    activeOrganizationId={activeOrganizationId}
+                    registrations={readModel.registrations}
+                    source={registrationReviewSource}
+                  />
                 </section>
               </div>
             ) : currentSection === "people" ? (

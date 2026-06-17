@@ -549,7 +549,9 @@ export default async function TeamDetails({
           : []),
         ...(paymentSummary.open > 0
           ? [
-              `${paymentSummary.open} Payments Open`,
+              `${paymentSummary.open} payment item${
+                paymentSummary.open === 1 ? "" : "s"
+              } open`,
             ]
           : []),
       ]
