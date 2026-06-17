@@ -382,12 +382,19 @@ export default function AdminOrganizationWorkspaceHome({
       <div className="flex min-h-screen">
         <aside className="block w-14 shrink-0 border-r border-slate-200 bg-white lg:w-60">
           <div className="flex h-16 items-center justify-center gap-2 border-b border-slate-200 px-2 lg:justify-start lg:px-5">
-            <span className="flex size-8 items-center justify-center rounded-md bg-blue-600 text-sm font-black text-white">
-              G
-            </span>
-            <span className="hidden font-black text-slate-950 lg:inline">
-              GameDay
-            </span>
+            <Link
+              aria-label="Back to Admin welcome"
+              className="flex items-center gap-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              href="/admin"
+              title="Back to Admin welcome"
+            >
+              <span className="flex size-8 items-center justify-center rounded-md bg-blue-600 text-sm font-black text-white">
+                G
+              </span>
+              <span className="hidden font-black text-slate-950 lg:inline">
+                GameDay
+              </span>
+            </Link>
           </div>
           <nav className="space-y-1 px-2 py-5 lg:px-3">
             {sidebarItems.map((item) => (
