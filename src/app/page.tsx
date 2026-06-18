@@ -72,12 +72,12 @@ const scheduleRows = [
 
 function LogoMark() {
   return (
-    <span className="flex items-center gap-3">
-      <span className="relative flex size-10 items-center justify-center rounded-lg bg-blue-600 shadow-[0_0_28px_rgba(37,99,235,0.65)]">
+    <span className="flex items-center gap-2.5">
+      <span className="relative flex size-8 items-center justify-center rounded-lg bg-blue-600 shadow-[0_0_24px_rgba(37,99,235,0.6)]">
         <span className="absolute inset-1 rounded-md border border-blue-200/40" />
-        <span className="text-xl font-black text-white">G</span>
+        <span className="text-base font-black text-white">G</span>
       </span>
-      <span className="text-2xl font-black tracking-wide text-white sm:text-3xl">
+      <span className="text-xl font-black tracking-wide text-white sm:text-2xl">
         GAMEDAY
       </span>
     </span>
@@ -86,7 +86,7 @@ function LogoMark() {
 
 function MiniIcon({ name }: { name: string }) {
   const commonProps = {
-    className: "size-6",
+    className: "size-5",
     fill: "none",
     stroke: "currentColor",
     strokeLinecap: "round" as const,
@@ -125,23 +125,23 @@ function MiniIcon({ name }: { name: string }) {
 
 function ProductPreview() {
   return (
-    <div className="relative mx-auto w-full max-w-3xl">
-      <div className="absolute -right-14 bottom-4 hidden size-52 rounded-full border border-blue-300/20 bg-[radial-gradient(circle_at_35%_35%,#334155_0,#111827_38%,#020617_72%)] shadow-[0_0_80px_rgba(37,99,235,0.4)] lg:block">
+    <div className="relative mx-auto w-full max-w-2xl">
+      <div className="absolute -right-12 bottom-4 hidden size-44 rounded-full border border-blue-300/20 bg-[radial-gradient(circle_at_35%_35%,#334155_0,#111827_38%,#020617_72%)] shadow-[0_0_70px_rgba(37,99,235,0.35)] lg:block">
         <div className="absolute left-1/2 top-0 h-full w-px bg-blue-200/15" />
         <div className="absolute left-0 top-1/2 h-px w-full bg-blue-200/15" />
         <div className="absolute inset-8 rounded-full border border-blue-200/10" />
       </div>
 
-      <div className="relative rounded-3xl border border-blue-300/25 bg-slate-950/90 p-4 shadow-[0_0_70px_rgba(29,78,216,0.45)] backdrop-blur">
-        <div className="grid gap-4 lg:grid-cols-[150px_1fr]">
-          <aside className="hidden rounded-2xl border border-slate-800 bg-slate-950/80 p-3 lg:block">
-            <div className="mb-5 flex size-7 items-center justify-center rounded-md bg-blue-600 text-sm font-black">
+      <div className="relative rounded-2xl border border-blue-300/25 bg-slate-950/90 p-3 shadow-[0_0_56px_rgba(29,78,216,0.38)] backdrop-blur">
+        <div className="grid gap-3 lg:grid-cols-[132px_1fr]">
+          <aside className="hidden rounded-xl border border-slate-800 bg-slate-950/80 p-2.5 lg:block">
+            <div className="mb-4 flex size-6 items-center justify-center rounded-md bg-blue-600 text-xs font-black">
               G
             </div>
             {["Home", "Teams", "Registrations", "Schedule", "Messages", "Reports"].map(
               (item, index) => (
                 <div
-                  className={`mb-2 rounded-lg px-3 py-3 text-sm font-bold ${
+                  className={`mb-1.5 rounded-lg px-2.5 py-2 text-xs font-bold ${
                     index === 0
                       ? "bg-blue-600/30 text-white"
                       : "text-slate-400"
@@ -157,20 +157,20 @@ function ProductPreview() {
           <section className="min-w-0">
             <div className="flex flex-wrap items-center justify-between gap-3 px-1 py-2">
               <div>
-                <h2 className="text-xl font-black text-white">
+                <h2 className="text-lg font-black text-white">
                   Good evening, Coach!
                 </h2>
                 <p className="mt-1 text-xs font-semibold text-slate-400">
                   Here is what is happening with your club.
                 </p>
               </div>
-              <div className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-bold text-slate-200">
+              <div className="rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-2 text-xs font-bold text-slate-200">
                 Kings Basketball Club
               </div>
             </div>
 
-            <div className="mt-3 grid gap-4 md:grid-cols-2">
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
+            <div className="mt-2 grid gap-3 md:grid-cols-2">
+              <div className="rounded-xl border border-slate-800 bg-slate-900/90 p-3">
                 <div className="flex items-center justify-between">
                   <h3 className="font-black text-white">Upcoming Games</h3>
                   <span className="text-xs font-black text-blue-400">
@@ -180,14 +180,14 @@ function ProductPreview() {
                 <div className="mt-3 space-y-3">
                   {scheduleRows.map(([month, day, time, opponent]) => (
                     <div
-                      className="grid grid-cols-[54px_1fr] gap-3 border-b border-slate-800 pb-3 last:border-0 last:pb-0"
+                      className="grid grid-cols-[48px_1fr] gap-3 border-b border-slate-800 pb-3 last:border-0 last:pb-0"
                       key={`${day}-${opponent}`}
                     >
                       <div className="rounded-lg bg-slate-950/80 p-2 text-center">
                         <p className="text-[10px] font-black text-slate-400">
                           {month}
                         </p>
-                        <p className="text-xl font-black text-white">{day}</p>
+                        <p className="text-lg font-black text-white">{day}</p>
                       </div>
                       <div className="min-w-0">
                         <p className="text-xs font-bold text-slate-400">
@@ -205,17 +205,17 @@ function ProductPreview() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
+              <div className="rounded-xl border border-slate-800 bg-slate-900/90 p-3">
                 <div className="flex items-center justify-between">
                   <h3 className="font-black text-white">Registrations</h3>
                   <span className="text-xs font-black text-blue-400">
                     Preview
                   </span>
                 </div>
-                <div className="mt-5 flex items-center gap-5">
-                  <div className="flex size-28 items-center justify-center rounded-full border-[12px] border-blue-600 border-l-blue-950 bg-slate-950 text-center">
+                <div className="mt-4 flex items-center gap-4">
+                  <div className="flex size-24 items-center justify-center rounded-full border-[10px] border-blue-600 border-l-blue-950 bg-slate-950 text-center">
                     <span>
-                      <span className="block text-3xl font-black text-white">
+                      <span className="block text-2xl font-black text-white">
                         128
                       </span>
                       <span className="text-xs text-slate-400">Registered</span>
@@ -238,7 +238,7 @@ function ProductPreview() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
+              <div className="rounded-xl border border-slate-800 bg-slate-900/90 p-3">
                 <div className="flex items-center justify-between">
                   <h3 className="font-black text-white">Alerts</h3>
                   <span className="text-xs font-black text-blue-400">
@@ -250,7 +250,7 @@ function ProductPreview() {
                     (alert, index) => (
                       <div className="flex items-center gap-3" key={alert}>
                         <span
-                          className={`flex size-8 items-center justify-center rounded-lg ${
+                          className={`flex size-7 items-center justify-center rounded-lg ${
                             index === 0
                               ? "bg-orange-500/15 text-orange-300"
                               : index === 1
@@ -261,7 +261,7 @@ function ProductPreview() {
                           !
                         </span>
                         <span>
-                          <span className="block text-sm font-black text-white">
+                          <span className="block text-xs font-black text-white">
                             {alert}
                           </span>
                           <span className="text-xs text-slate-500">
@@ -274,15 +274,15 @@ function ProductPreview() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
+              <div className="rounded-xl border border-slate-800 bg-slate-900/90 p-3">
                 <div className="flex items-center justify-between">
                   <h3 className="font-black text-white">Announcements</h3>
                   <span className="text-xs font-black text-blue-400">
                     Preview
                   </span>
                 </div>
-                <div className="mt-4 rounded-xl border border-blue-300/10 bg-[linear-gradient(135deg,rgba(37,99,235,0.45),rgba(15,23,42,0.9))] p-4">
-                  <p className="text-lg font-black text-white">
+                <div className="mt-3 rounded-xl border border-blue-300/10 bg-[linear-gradient(135deg,rgba(37,99,235,0.45),rgba(15,23,42,0.9))] p-3">
+                  <p className="text-base font-black text-white">
                     Championship weekend!
                   </p>
                   <p className="mt-2 text-xs leading-5 text-slate-300">
@@ -314,12 +314,12 @@ export default async function Home() {
       </div>
 
       <header className="relative z-10 border-b border-white/10">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-5 sm:px-8">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <Link aria-label="GameDay home" href="/">
             <LogoMark />
           </Link>
 
-          <nav className="hidden items-center gap-8 text-sm font-bold text-slate-200 lg:flex">
+          <nav className="hidden items-center gap-5 text-sm font-bold text-slate-200 lg:flex">
             {navItems.map((item) => (
               <a
                 className="hover:text-white"
@@ -333,13 +333,13 @@ export default async function Home() {
 
           <div className="flex items-center gap-3">
             <Link
-              className="hidden rounded-xl border border-white/20 px-6 py-3 text-sm font-black text-white hover:bg-white/10 sm:inline-flex"
+              className="hidden rounded-lg border border-white/20 px-4 py-2.5 text-sm font-black text-white hover:bg-white/10 sm:inline-flex"
               href="/login"
             >
               Log in
             </Link>
             <Link
-              className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-black text-white shadow-[0_0_30px_rgba(37,99,235,0.45)] hover:bg-blue-500 sm:px-7"
+              className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-black text-white shadow-[0_0_26px_rgba(37,99,235,0.42)] hover:bg-blue-500 sm:px-5"
               href="/signup"
             >
               Sign up
@@ -348,29 +348,29 @@ export default async function Home() {
         </div>
       </header>
 
-      <section className="relative z-10 mx-auto grid min-h-[calc(100dvh-82px)] max-w-7xl items-center gap-10 px-5 py-10 sm:px-8 lg:grid-cols-[0.82fr_1.18fr] lg:py-16">
+      <section className="relative z-10 mx-auto grid min-h-[calc(100dvh-72px)] max-w-6xl items-center gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:py-12">
         <div className="max-w-2xl">
-          <h1 className="max-w-2xl text-6xl font-black leading-[0.95] tracking-tight text-white sm:text-7xl lg:text-8xl">
+          <h1 className="max-w-2xl text-4xl font-black leading-[0.95] tracking-tight text-white sm:text-5xl lg:text-6xl">
             Run game day
             <span className="block text-blue-500">with confidence.</span>
           </h1>
-          <div className="mt-8 h-1.5 w-14 rounded-full bg-blue-500" />
-          <p className="mt-8 max-w-xl text-lg font-semibold leading-8 text-slate-300 sm:text-xl">
+          <div className="mt-6 h-1 w-12 rounded-full bg-blue-500" />
+          <p className="mt-6 max-w-xl text-base font-semibold leading-7 text-slate-300 sm:text-lg">
             GameDay is the all-in-one platform for youth sports organizations.
             Organize teams, simplify registrations, share updates, and keep
             families in the loop so everyone knows what matters next.
           </p>
 
-          <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Link
-              className="inline-flex min-h-14 items-center justify-center gap-4 rounded-xl bg-blue-600 px-8 text-base font-black text-white shadow-[0_0_40px_rgba(37,99,235,0.45)] hover:bg-blue-500"
+              className="inline-flex min-h-12 items-center justify-center gap-3 rounded-lg bg-blue-600 px-6 text-sm font-black text-white shadow-[0_0_34px_rgba(37,99,235,0.42)] hover:bg-blue-500"
               href="/signup"
             >
               Sign up
               <span aria-hidden="true">-&gt;</span>
             </Link>
             <Link
-              className="inline-flex min-h-14 items-center justify-center gap-4 rounded-xl border border-white/20 bg-white/5 px-8 text-base font-black text-white hover:bg-white/10"
+              className="inline-flex min-h-12 items-center justify-center gap-3 rounded-lg border border-white/20 bg-white/5 px-6 text-sm font-black text-white hover:bg-white/10"
               href="/login"
             >
               Log in
@@ -378,7 +378,7 @@ export default async function Home() {
             </Link>
           </div>
 
-          <div className="mt-8 grid gap-3 text-sm font-bold text-slate-400 sm:grid-cols-3">
+          <div className="mt-6 grid gap-3 text-xs font-bold text-slate-400 sm:grid-cols-3">
             {["Secure & reliable", "Built for real teams", "Simple for families"].map(
               (item) => (
                 <p className="flex items-center gap-2" key={item}>
@@ -396,25 +396,25 @@ export default async function Home() {
       </section>
 
       <section
-        className="relative z-10 mx-auto grid max-w-7xl gap-5 px-5 pb-10 sm:px-8 md:grid-cols-2 xl:grid-cols-4"
+        className="relative z-10 mx-auto grid max-w-6xl gap-4 px-4 pb-8 sm:px-6 md:grid-cols-2 xl:grid-cols-4"
         id="features"
       >
         {featureCards.map((feature) => (
           <article
-            className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl backdrop-blur"
+            className="rounded-xl border border-white/10 bg-white/[0.04] p-4 shadow-2xl backdrop-blur"
             key={feature.title}
           >
-            <div className="flex size-14 items-center justify-center rounded-full bg-blue-600/20 text-blue-400">
+            <div className="flex size-11 items-center justify-center rounded-full bg-blue-600/20 text-blue-400">
               <MiniIcon name={feature.icon} />
             </div>
-            <h2 className="mt-5 text-xl font-black text-white">
+            <h2 className="mt-4 text-lg font-black text-white">
               {feature.title}
             </h2>
-            <p className="mt-3 min-h-12 text-sm font-semibold leading-6 text-slate-400">
+            <p className="mt-2 min-h-10 text-sm font-semibold leading-5 text-slate-400">
               {feature.description}
             </p>
             <Link
-              className="mt-6 inline-flex items-center gap-2 text-sm font-black text-blue-400 hover:text-blue-300"
+              className="mt-5 inline-flex items-center gap-2 text-sm font-black text-blue-400 hover:text-blue-300"
               href={feature.href}
             >
               Learn more
@@ -425,17 +425,17 @@ export default async function Home() {
       </section>
 
       <section
-        className="relative z-10 mx-auto grid max-w-7xl gap-5 px-5 pb-10 sm:px-8 lg:grid-cols-3"
+        className="relative z-10 mx-auto grid max-w-6xl gap-4 px-4 pb-8 sm:px-6 lg:grid-cols-3"
         id="get-started"
       >
-        <div className="rounded-2xl border border-blue-400/20 bg-blue-600/10 p-6 shadow-2xl backdrop-blur lg:col-span-3">
+        <div className="rounded-xl border border-blue-400/20 bg-blue-600/10 p-4 shadow-2xl backdrop-blur lg:col-span-3">
           <p className="text-sm font-black uppercase tracking-wide text-blue-300">
             Get Started
           </p>
-          <h2 className="mt-2 text-3xl font-black text-white">
+          <h2 className="mt-2 text-2xl font-black text-white">
             Choose who is creating the workspace.
           </h2>
-          <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-slate-300">
+          <p className="mt-2 max-w-3xl text-sm font-semibold leading-5 text-slate-300">
             Organization owners create paid orgs. Coaches can create one free
             team. Parents join through registration.
           </p>
@@ -443,15 +443,15 @@ export default async function Home() {
 
         {getStartedCards.map((card) => (
           <Link
-            className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl backdrop-blur hover:border-blue-400/40 hover:bg-blue-500/10"
+            className="rounded-xl border border-white/10 bg-white/[0.04] p-4 shadow-2xl backdrop-blur hover:border-blue-400/40 hover:bg-blue-500/10"
             href={card.href}
             key={card.title}
           >
-            <h3 className="text-xl font-black text-white">{card.title}</h3>
-            <p className="mt-3 min-h-16 text-sm font-semibold leading-6 text-slate-400">
+            <h3 className="text-lg font-black text-white">{card.title}</h3>
+            <p className="mt-2 min-h-12 text-sm font-semibold leading-5 text-slate-400">
               {card.description}
             </p>
-            <span className="mt-5 inline-flex items-center gap-2 text-sm font-black text-blue-400">
+            <span className="mt-4 inline-flex items-center gap-2 text-sm font-black text-blue-400">
               {card.cta}
               <span aria-hidden="true">-&gt;</span>
             </span>
@@ -460,114 +460,114 @@ export default async function Home() {
       </section>
 
       <section
-        className="relative z-10 mx-auto grid max-w-7xl gap-5 px-5 pb-10 sm:px-8 lg:grid-cols-3"
+        className="relative z-10 mx-auto grid max-w-6xl gap-4 px-4 pb-8 sm:px-6 lg:grid-cols-3"
         id="organizations"
       >
-        <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl backdrop-blur lg:col-span-2">
+        <article className="rounded-xl border border-white/10 bg-white/[0.04] p-4 shadow-2xl backdrop-blur lg:col-span-2">
           <p className="text-sm font-black uppercase tracking-wide text-blue-300">
             For Organizations
           </p>
-          <h2 className="mt-2 text-3xl font-black text-white">
+          <h2 className="mt-2 text-2xl font-black text-white">
             One club, one workspace, every team separated cleanly.
           </h2>
-          <p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+          <p className="mt-3 text-sm font-semibold leading-6 text-slate-300">
             Admins open the organization, manage teams, publish registration
             links, post schedules, and keep roster issues in one place without
             mixing data between clubs.
           </p>
         </article>
         <Link
-          className="rounded-2xl border border-blue-400/20 bg-blue-600/10 p-6 shadow-2xl backdrop-blur hover:bg-blue-500/20"
+          className="rounded-xl border border-blue-400/20 bg-blue-600/10 p-4 shadow-2xl backdrop-blur hover:bg-blue-500/20"
           href="/signup?intent=organization"
         >
-          <h3 className="text-xl font-black text-white">
+          <h3 className="text-lg font-black text-white">
             Open organization tools
           </h3>
-          <p className="mt-3 text-sm font-semibold leading-6 text-slate-300">
+          <p className="mt-2 text-sm font-semibold leading-5 text-slate-300">
             Sign up to create or manage an organization workspace.
           </p>
-          <span className="mt-5 inline-flex text-sm font-black text-blue-300">
+          <span className="mt-4 inline-flex text-sm font-black text-blue-300">
             Start organization -&gt;
           </span>
         </Link>
       </section>
 
       <section
-        className="relative z-10 mx-auto grid max-w-7xl gap-5 px-5 pb-10 sm:px-8 lg:grid-cols-2"
+        className="relative z-10 mx-auto grid max-w-6xl gap-4 px-4 pb-8 sm:px-6 lg:grid-cols-2"
         id="coaches"
       >
-        <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl backdrop-blur">
+        <article className="rounded-xl border border-white/10 bg-white/[0.04] p-4 shadow-2xl backdrop-blur">
           <p className="text-sm font-black uppercase tracking-wide text-blue-300">
             For Coaches
           </p>
-          <h2 className="mt-2 text-3xl font-black text-white">
+          <h2 className="mt-2 text-2xl font-black text-white">
             Roster first, schedule next, parents informed.
           </h2>
-          <p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+          <p className="mt-3 text-sm font-semibold leading-6 text-slate-300">
             Coaches get assigned team access, roster context, event responses,
             and parent contact visibility without needing the full admin setup
             screen.
           </p>
         </article>
         <Link
-          className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl backdrop-blur hover:border-blue-400/40 hover:bg-blue-500/10"
+          className="rounded-xl border border-white/10 bg-white/[0.04] p-4 shadow-2xl backdrop-blur hover:border-blue-400/40 hover:bg-blue-500/10"
           href="/signup?intent=team"
         >
-          <h3 className="text-xl font-black text-white">
+          <h3 className="text-lg font-black text-white">
             Create or open a team
           </h3>
-          <p className="mt-3 text-sm font-semibold leading-6 text-slate-400">
+          <p className="mt-2 text-sm font-semibold leading-5 text-slate-400">
             Sign in, then GameDay opens your coach team or lets you create one.
           </p>
-          <span className="mt-5 inline-flex text-sm font-black text-blue-400">
+          <span className="mt-4 inline-flex text-sm font-black text-blue-400">
             Continue -&gt;
           </span>
         </Link>
       </section>
 
       <section
-        className="relative z-10 mx-auto grid max-w-7xl gap-5 px-5 pb-10 sm:px-8 lg:grid-cols-2"
+        className="relative z-10 mx-auto grid max-w-6xl gap-4 px-4 pb-8 sm:px-6 lg:grid-cols-2"
         id="parents"
       >
-        <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl backdrop-blur">
+        <article className="rounded-xl border border-white/10 bg-white/[0.04] p-4 shadow-2xl backdrop-blur">
           <p className="text-sm font-black uppercase tracking-wide text-blue-300">
             For Parents
           </p>
-          <h2 className="mt-2 text-3xl font-black text-white">
+          <h2 className="mt-2 text-2xl font-black text-white">
             Know exactly what your player needs now.
           </h2>
-          <p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+          <p className="mt-3 text-sm font-semibold leading-6 text-slate-300">
             Parent screens stay player-focused: next event, attendance,
             transportation, missing requirements, and registration status only
             when those things matter.
           </p>
         </article>
         <Link
-          className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl backdrop-blur hover:border-blue-400/40 hover:bg-blue-500/10"
+          className="rounded-xl border border-white/10 bg-white/[0.04] p-4 shadow-2xl backdrop-blur hover:border-blue-400/40 hover:bg-blue-500/10"
           href="/registration"
         >
-          <h3 className="text-xl font-black text-white">Find a team</h3>
-          <p className="mt-3 text-sm font-semibold leading-6 text-slate-400">
+          <h3 className="text-lg font-black text-white">Find a team</h3>
+          <p className="mt-2 text-sm font-semibold leading-5 text-slate-400">
             Open the live registration path for parents and players.
           </p>
-          <span className="mt-5 inline-flex text-sm font-black text-blue-400">
+          <span className="mt-4 inline-flex text-sm font-black text-blue-400">
             Find registration -&gt;
           </span>
         </Link>
       </section>
 
       <section
-        className="relative z-10 mx-auto max-w-7xl px-5 pb-14 sm:px-8"
+        className="relative z-10 mx-auto max-w-6xl px-4 pb-12 sm:px-6"
         id="help"
       >
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl backdrop-blur">
+        <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4 shadow-2xl backdrop-blur">
           <p className="text-sm font-black uppercase tracking-wide text-blue-300">
             Help
           </p>
-          <h2 className="mt-2 text-3xl font-black text-white">
+          <h2 className="mt-2 text-2xl font-black text-white">
             Need to get into the right place?
           </h2>
-          <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
+          <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-slate-300">
             Use Log in if you already have an account. Use Find registration if
             you are a parent joining a team. Use Sign up when you need to create
             a paid organization or free single-team workspace.

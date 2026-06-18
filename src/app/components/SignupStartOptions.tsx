@@ -69,7 +69,7 @@ function IntentCard({
 }) {
   return (
     <button
-      className={`rounded-2xl border p-5 text-left shadow-2xl backdrop-blur ${
+      className={`rounded-xl border p-4 text-left shadow-2xl backdrop-blur ${
         active
           ? "border-blue-400 bg-blue-600/15"
           : "border-white/10 bg-white/[0.04] hover:border-blue-400/40"
@@ -86,15 +86,15 @@ function CardContent({ card }: { card: (typeof intentCards)[number] }) {
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-xs font-black uppercase text-blue-300">
+        <span className="rounded-full border border-blue-400/30 bg-blue-500/10 px-2.5 py-1 text-[11px] font-black uppercase text-blue-300">
           {card.label}
         </span>
-        <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black text-slate-200">
+        <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-black text-slate-200">
           {card.plan}
         </span>
       </div>
-      <h2 className="mt-5 text-2xl font-black text-white">{card.title}</h2>
-      <p className="mt-3 text-sm font-semibold leading-6 text-slate-300">
+      <h2 className="mt-4 text-xl font-black text-white">{card.title}</h2>
+      <p className="mt-2 text-sm font-semibold leading-5 text-slate-300">
         {card.description}
       </p>
     </>
@@ -122,7 +122,7 @@ function AccountFields({
         <span className="text-sm font-black text-slate-200">Your name</span>
         <input
           autoComplete="name"
-          className="mt-2 w-full rounded-xl border border-white/15 bg-slate-950/80 px-4 py-3 text-white outline-none focus:border-blue-400"
+          className="mt-2 w-full rounded-lg border border-white/15 bg-slate-950/80 px-3 py-2.5 text-white outline-none focus:border-blue-400"
           onChange={(event) => onAccountNameChange(event.target.value)}
           placeholder="Coach Taylor"
           required
@@ -133,7 +133,7 @@ function AccountFields({
         <span className="text-sm font-black text-slate-200">Email</span>
         <input
           autoComplete="email"
-          className="mt-2 w-full rounded-xl border border-white/15 bg-slate-950/80 px-4 py-3 text-white outline-none focus:border-blue-400"
+          className="mt-2 w-full rounded-lg border border-white/15 bg-slate-950/80 px-3 py-2.5 text-white outline-none focus:border-blue-400"
           onChange={(event) => onEmailChange(event.target.value)}
           required
           type="email"
@@ -144,7 +144,7 @@ function AccountFields({
         <span className="text-sm font-black text-slate-200">Password</span>
         <input
           autoComplete="new-password"
-          className="mt-2 w-full rounded-xl border border-white/15 bg-slate-950/80 px-4 py-3 text-white outline-none focus:border-blue-400"
+          className="mt-2 w-full rounded-lg border border-white/15 bg-slate-950/80 px-3 py-2.5 text-white outline-none focus:border-blue-400"
           minLength={6}
           onChange={(event) => onPasswordChange(event.target.value)}
           required
@@ -285,8 +285,8 @@ export default function SignupStartOptions({
   }
 
   return (
-    <div className="space-y-5">
-      <div className="grid gap-4 lg:grid-cols-3">
+    <div className="space-y-4">
+      <div className="grid gap-3 lg:grid-cols-3">
         {intentCards.map((card) => (
           <IntentCard
             active={activeIntent === card.intent}
@@ -299,16 +299,16 @@ export default function SignupStartOptions({
 
       {activeIntent === "organization" && (
         <form
-          className="rounded-2xl border border-blue-400/20 bg-blue-600/10 p-5 shadow-2xl backdrop-blur"
+          className="rounded-xl border border-blue-400/20 bg-blue-600/10 p-4 shadow-2xl backdrop-blur"
           onSubmit={createOrganization}
         >
           <p className="text-xs font-black uppercase tracking-wide text-blue-300">
             Paid organization
           </p>
-          <h2 className="mt-1 text-2xl font-black text-white">
+          <h2 className="mt-1 text-xl font-black text-white">
             Create an organization
           </h2>
-          <p className="mt-2 text-sm font-semibold leading-6 text-slate-300">
+          <p className="mt-2 text-sm font-semibold leading-5 text-slate-300">
             Best for clubs, leagues, and multi-team groups. Billing starts here
             as an organization plan and can be completed when payments are
             turned on.
@@ -328,7 +328,7 @@ export default function SignupStartOptions({
               Organization name
             </span>
             <input
-              className="mt-2 w-full rounded-xl border border-white/15 bg-slate-950/80 px-4 py-3 text-white outline-none focus:border-blue-400"
+              className="mt-2 w-full rounded-lg border border-white/15 bg-slate-950/80 px-3 py-2.5 text-white outline-none focus:border-blue-400"
               onChange={(event) => setName(event.target.value)}
               placeholder="PineWood Tackle Football Club"
               required
@@ -336,12 +336,12 @@ export default function SignupStartOptions({
             />
           </label>
           {error && activeIntent === "organization" && (
-            <p className="mt-3 rounded-xl border border-red-400/30 bg-red-500/10 p-3 text-sm font-black text-red-200">
+            <p className="mt-3 rounded-lg border border-red-400/30 bg-red-500/10 p-3 text-sm font-black text-red-200">
               {error}
             </p>
           )}
           <button
-            className="mt-4 w-full rounded-xl bg-blue-600 px-5 py-3 text-sm font-black text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-4 w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-black text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isSaving}
             type="submit"
           >
@@ -352,16 +352,16 @@ export default function SignupStartOptions({
 
       {activeIntent === "team" && (
         <form
-          className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-5 shadow-2xl backdrop-blur"
+          className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 p-4 shadow-2xl backdrop-blur"
           onSubmit={createTeam}
         >
           <p className="text-xs font-black uppercase tracking-wide text-emerald-200">
             Free single team
           </p>
-          <h2 className="mt-1 text-2xl font-black text-white">
+          <h2 className="mt-1 text-xl font-black text-white">
             Create one team
           </h2>
-          <p className="mt-2 text-sm font-semibold leading-6 text-slate-300">
+          <p className="mt-2 text-sm font-semibold leading-5 text-slate-300">
             Best for a coach running one roster, one schedule, and one parent
             registration link.
           </p>
@@ -381,7 +381,7 @@ export default function SignupStartOptions({
                 Team name
               </span>
               <input
-                className="mt-2 w-full rounded-xl border border-white/15 bg-slate-950/80 px-4 py-3 text-white outline-none focus:border-emerald-300"
+                className="mt-2 w-full rounded-lg border border-white/15 bg-slate-950/80 px-3 py-2.5 text-white outline-none focus:border-emerald-300"
                 onChange={(event) => setName(event.target.value)}
                 placeholder="Pineboys Tackle"
                 required
@@ -393,7 +393,7 @@ export default function SignupStartOptions({
                 Division
               </span>
               <input
-                className="mt-2 w-full rounded-xl border border-white/15 bg-slate-950/80 px-4 py-3 text-white outline-none focus:border-emerald-300"
+                className="mt-2 w-full rounded-lg border border-white/15 bg-slate-950/80 px-3 py-2.5 text-white outline-none focus:border-emerald-300"
                 onChange={(event) => setDivision(event.target.value)}
                 placeholder="10U"
                 required
@@ -403,7 +403,7 @@ export default function SignupStartOptions({
             <label className="block sm:col-span-2">
               <span className="text-sm font-black text-slate-200">Season</span>
               <input
-                className="mt-2 w-full rounded-xl border border-white/15 bg-slate-950/80 px-4 py-3 text-white outline-none focus:border-emerald-300"
+                className="mt-2 w-full rounded-lg border border-white/15 bg-slate-950/80 px-3 py-2.5 text-white outline-none focus:border-emerald-300"
                 onChange={(event) => setSeason(event.target.value)}
                 required
                 value={season}
@@ -411,12 +411,12 @@ export default function SignupStartOptions({
             </label>
           </div>
           {error && activeIntent === "team" && (
-            <p className="mt-3 rounded-xl border border-red-400/30 bg-red-500/10 p-3 text-sm font-black text-red-200">
+            <p className="mt-3 rounded-lg border border-red-400/30 bg-red-500/10 p-3 text-sm font-black text-red-200">
               {error}
             </p>
           )}
           <button
-            className="mt-4 w-full rounded-xl bg-emerald-600 px-5 py-3 text-sm font-black text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-4 w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-black text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isSaving}
             type="submit"
           >
@@ -426,19 +426,19 @@ export default function SignupStartOptions({
       )}
 
       {activeIntent === "parent" && (
-        <section className="rounded-2xl border border-orange-300/20 bg-orange-500/10 p-5 shadow-2xl backdrop-blur">
+        <section className="rounded-xl border border-orange-300/20 bg-orange-500/10 p-4 shadow-2xl backdrop-blur">
           <p className="text-xs font-black uppercase tracking-wide text-orange-200">
             Free parent access
           </p>
-          <h2 className="mt-1 text-2xl font-black text-white">
+          <h2 className="mt-1 text-xl font-black text-white">
             Join through a team
           </h2>
-          <p className="mt-2 text-sm font-semibold leading-6 text-slate-300">
+          <p className="mt-2 text-sm font-semibold leading-5 text-slate-300">
             Parents attach to an organization or team through registration.
             They never create an organization or team workspace.
           </p>
           <Link
-            className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-orange-500 px-5 text-sm font-black text-white hover:bg-orange-400"
+            className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-orange-500 px-4 text-sm font-black text-white hover:bg-orange-400"
             href="/registration"
           >
             Find registration
