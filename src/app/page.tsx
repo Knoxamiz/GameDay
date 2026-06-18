@@ -6,33 +6,60 @@ import { getLandingRouteForSession } from "./data/sessionAccess.server";
 export const dynamic = "force-dynamic";
 
 const navItems = [
-  "For Organizations",
-  "For Coaches",
-  "For Parents",
-  "Features",
-  "Help",
+  { href: "#organizations", label: "For Organizations" },
+  { href: "#coaches", label: "For Coaches" },
+  { href: "#parents", label: "For Parents" },
+  { href: "#features", label: "Features" },
+  { href: "#help", label: "Help" },
 ];
 
 const featureCards = [
   {
     description: "Streamline sign-ups, payments, waivers, and player needs.",
+    href: "#organizations",
     icon: "people",
     title: "Registrations",
   },
   {
     description: "Manage rosters, roles, and player info in one place.",
+    href: "#coaches",
     icon: "team",
     title: "Team Management",
   },
   {
     description: "Send important updates and keep everyone informed.",
+    href: "#parents",
     icon: "megaphone",
     title: "Alerts & Announcements",
   },
   {
     description: "Organize games, practices, and events without the mess.",
+    href: "#organizations",
     icon: "calendar",
     title: "Schedules",
+  },
+];
+
+const getStartedCards = [
+  {
+    cta: "Log in",
+    description:
+      "Open the account, workspace, teams, and players already tied to you.",
+    href: "/login",
+    title: "I already have an account",
+  },
+  {
+    cta: "Start after login",
+    description:
+      "Create one team or manage an organization once your account is verified.",
+    href: "/login",
+    title: "I run a team or organization",
+  },
+  {
+    cta: "Find registration",
+    description: "Use an existing team invite or find an open registration path.",
+    href: "/registration",
+    title: "I am registering a player",
   },
 ];
 
@@ -53,25 +80,6 @@ function LogoMark() {
         GAMEDAY
       </span>
     </span>
-  );
-}
-
-function Chevron() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="size-4"
-      fill="none"
-      viewBox="0 0 24 24"
-    >
-      <path
-        d="m6 9 6 6 6-6"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-      />
-    </svg>
   );
 }
 
@@ -165,7 +173,7 @@ function ProductPreview() {
                 <div className="flex items-center justify-between">
                   <h3 className="font-black text-white">Upcoming Games</h3>
                   <span className="text-xs font-black text-blue-400">
-                    View all
+                    Preview
                   </span>
                 </div>
                 <div className="mt-3 space-y-3">
@@ -200,7 +208,7 @@ function ProductPreview() {
                 <div className="flex items-center justify-between">
                   <h3 className="font-black text-white">Registrations</h3>
                   <span className="text-xs font-black text-blue-400">
-                    View all
+                    Preview
                   </span>
                 </div>
                 <div className="mt-5 flex items-center gap-5">
@@ -233,7 +241,7 @@ function ProductPreview() {
                 <div className="flex items-center justify-between">
                   <h3 className="font-black text-white">Alerts</h3>
                   <span className="text-xs font-black text-blue-400">
-                    View all
+                    Preview
                   </span>
                 </div>
                 <div className="mt-3 space-y-3">
@@ -269,7 +277,7 @@ function ProductPreview() {
                 <div className="flex items-center justify-between">
                   <h3 className="font-black text-white">Announcements</h3>
                   <span className="text-xs font-black text-blue-400">
-                    View all
+                    Preview
                   </span>
                 </div>
                 <div className="mt-4 rounded-xl border border-blue-300/10 bg-[linear-gradient(135deg,rgba(37,99,235,0.45),rgba(15,23,42,0.9))] p-4">
@@ -312,9 +320,12 @@ export default async function Home() {
 
           <nav className="hidden items-center gap-8 text-sm font-bold text-slate-200 lg:flex">
             {navItems.map((item) => (
-              <a className="flex items-center gap-2 hover:text-white" href="#features" key={item}>
-                {item}
-                <Chevron />
+              <a
+                className="hover:text-white"
+                href={item.href}
+                key={item.href}
+              >
+                {item.label}
               </a>
             ))}
           </nav>
@@ -328,7 +339,7 @@ export default async function Home() {
             </Link>
             <Link
               className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-black text-white shadow-[0_0_30px_rgba(37,99,235,0.45)] hover:bg-blue-500 sm:px-7"
-              href="/login"
+              href="#get-started"
             >
               Sign up
             </Link>
@@ -352,7 +363,7 @@ export default async function Home() {
           <div className="mt-8 flex flex-col gap-4 sm:flex-row">
             <Link
               className="inline-flex min-h-14 items-center justify-center gap-4 rounded-xl bg-blue-600 px-8 text-base font-black text-white shadow-[0_0_40px_rgba(37,99,235,0.45)] hover:bg-blue-500"
-              href="/login"
+              href="#get-started"
             >
               Sign up
               <span aria-hidden="true">-&gt;</span>
@@ -370,8 +381,8 @@ export default async function Home() {
             {["Secure & reliable", "Built for real teams", "Simple for families"].map(
               (item) => (
                 <p className="flex items-center gap-2" key={item}>
-                  <span className="flex size-5 items-center justify-center rounded-full border border-blue-400 text-blue-300">
-                    ✓
+                  <span className="flex size-5 items-center justify-center rounded-full border border-blue-400 text-[10px] text-blue-300">
+                    OK
                   </span>
                   {item}
                 </p>
@@ -403,13 +414,178 @@ export default async function Home() {
             </p>
             <Link
               className="mt-6 inline-flex items-center gap-2 text-sm font-black text-blue-400 hover:text-blue-300"
-              href="/login"
+              href={feature.href}
             >
               Learn more
               <span aria-hidden="true">-&gt;</span>
             </Link>
           </article>
         ))}
+      </section>
+
+      <section
+        className="relative z-10 mx-auto grid max-w-7xl gap-5 px-5 pb-10 sm:px-8 lg:grid-cols-3"
+        id="get-started"
+      >
+        <div className="rounded-2xl border border-blue-400/20 bg-blue-600/10 p-6 shadow-2xl backdrop-blur lg:col-span-3">
+          <p className="text-sm font-black uppercase tracking-wide text-blue-300">
+            Get Started
+          </p>
+          <h2 className="mt-2 text-3xl font-black text-white">
+            Choose the path that matches what you need today.
+          </h2>
+          <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-slate-300">
+            Pick the closest job. Every option below opens a live GameDay path,
+            not a placeholder.
+          </p>
+        </div>
+
+        {getStartedCards.map((card) => (
+          <Link
+            className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl backdrop-blur hover:border-blue-400/40 hover:bg-blue-500/10"
+            href={card.href}
+            key={card.title}
+          >
+            <h3 className="text-xl font-black text-white">{card.title}</h3>
+            <p className="mt-3 min-h-16 text-sm font-semibold leading-6 text-slate-400">
+              {card.description}
+            </p>
+            <span className="mt-5 inline-flex items-center gap-2 text-sm font-black text-blue-400">
+              {card.cta}
+              <span aria-hidden="true">-&gt;</span>
+            </span>
+          </Link>
+        ))}
+      </section>
+
+      <section
+        className="relative z-10 mx-auto grid max-w-7xl gap-5 px-5 pb-10 sm:px-8 lg:grid-cols-3"
+        id="organizations"
+      >
+        <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl backdrop-blur lg:col-span-2">
+          <p className="text-sm font-black uppercase tracking-wide text-blue-300">
+            For Organizations
+          </p>
+          <h2 className="mt-2 text-3xl font-black text-white">
+            One club, one workspace, every team separated cleanly.
+          </h2>
+          <p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+            Admins open the organization, manage teams, publish registration
+            links, post schedules, and keep roster issues in one place without
+            mixing data between clubs.
+          </p>
+        </article>
+        <Link
+          className="rounded-2xl border border-blue-400/20 bg-blue-600/10 p-6 shadow-2xl backdrop-blur hover:bg-blue-500/20"
+          href="/login"
+        >
+          <h3 className="text-xl font-black text-white">
+            Open organization tools
+          </h3>
+          <p className="mt-3 text-sm font-semibold leading-6 text-slate-300">
+            Sign in to create or manage an organization workspace.
+          </p>
+          <span className="mt-5 inline-flex text-sm font-black text-blue-300">
+            Log in -&gt;
+          </span>
+        </Link>
+      </section>
+
+      <section
+        className="relative z-10 mx-auto grid max-w-7xl gap-5 px-5 pb-10 sm:px-8 lg:grid-cols-2"
+        id="coaches"
+      >
+        <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl backdrop-blur">
+          <p className="text-sm font-black uppercase tracking-wide text-blue-300">
+            For Coaches
+          </p>
+          <h2 className="mt-2 text-3xl font-black text-white">
+            Roster first, schedule next, parents informed.
+          </h2>
+          <p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+            Coaches get assigned team access, roster context, event responses,
+            and parent contact visibility without needing the full admin setup
+            screen.
+          </p>
+        </article>
+        <Link
+          className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl backdrop-blur hover:border-blue-400/40 hover:bg-blue-500/10"
+          href="/login"
+        >
+          <h3 className="text-xl font-black text-white">
+            Create or open a team
+          </h3>
+          <p className="mt-3 text-sm font-semibold leading-6 text-slate-400">
+            Sign in, then GameDay opens your coach team or lets you create one.
+          </p>
+          <span className="mt-5 inline-flex text-sm font-black text-blue-400">
+            Continue -&gt;
+          </span>
+        </Link>
+      </section>
+
+      <section
+        className="relative z-10 mx-auto grid max-w-7xl gap-5 px-5 pb-10 sm:px-8 lg:grid-cols-2"
+        id="parents"
+      >
+        <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl backdrop-blur">
+          <p className="text-sm font-black uppercase tracking-wide text-blue-300">
+            For Parents
+          </p>
+          <h2 className="mt-2 text-3xl font-black text-white">
+            Know exactly what your player needs now.
+          </h2>
+          <p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+            Parent screens stay player-focused: next event, attendance,
+            transportation, missing requirements, and registration status only
+            when those things matter.
+          </p>
+        </article>
+        <Link
+          className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl backdrop-blur hover:border-blue-400/40 hover:bg-blue-500/10"
+          href="/registration"
+        >
+          <h3 className="text-xl font-black text-white">Find a team</h3>
+          <p className="mt-3 text-sm font-semibold leading-6 text-slate-400">
+            Open the live registration path for parents and players.
+          </p>
+          <span className="mt-5 inline-flex text-sm font-black text-blue-400">
+            Find registration -&gt;
+          </span>
+        </Link>
+      </section>
+
+      <section
+        className="relative z-10 mx-auto max-w-7xl px-5 pb-14 sm:px-8"
+        id="help"
+      >
+        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl backdrop-blur">
+          <p className="text-sm font-black uppercase tracking-wide text-blue-300">
+            Help
+          </p>
+          <h2 className="mt-2 text-3xl font-black text-white">
+            Need to get into the right place?
+          </h2>
+          <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
+            Use Log in if you already have an account. Use Find registration if
+            you are a parent joining a team. Public signup will become its own
+            path when account onboarding is ready.
+          </p>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <Link
+              className="inline-flex min-h-12 items-center justify-center rounded-xl bg-blue-600 px-6 text-sm font-black text-white hover:bg-blue-500"
+              href="/login"
+            >
+              Log in
+            </Link>
+            <Link
+              className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/20 px-6 text-sm font-black text-white hover:bg-white/10"
+              href="/registration"
+            >
+              Find registration
+            </Link>
+          </div>
+        </div>
       </section>
     </main>
   );
