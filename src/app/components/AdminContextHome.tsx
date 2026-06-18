@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { FormEvent, ReactNode, SVGProps, useState } from "react";
 import { withActiveOrganization } from "../data/activeOrganization";
-import type { Organization } from "../data/organizations";
+import type {
+  Organization,
+  OrganizationWorkspaceType,
+} from "../data/organizations";
 import { createFirebaseClientAuthAdapter } from "../infrastructure/firebaseClientAuth";
 import AdminArchiveButton from "./AdminArchiveButton";
 
@@ -14,6 +17,7 @@ export type AdminTeamChoice = {
   name: string;
   organizationId: string;
   organizationName: string;
+  organizationWorkspaceType: OrganizationWorkspaceType;
   season?: string;
 };
 
@@ -265,22 +269,20 @@ export default function AdminContextHome({
   const [teamBuilderSeason, setTeamBuilderSeason] = useState(
     getCurrentSeasonLabel(),
   );
-  const [teamName, setTeamName] = useState("");
-  const [teamDivision, setTeamDivision] = useState("");
-  const [teamSeason, setTeamSeason] = useState(getCurrentSeasonLabel());
   const [isSavingOrganization, setIsSavingOrganization] = useState(false);
   const [isSavingTeamBuilder, setIsSavingTeamBuilder] = useState(false);
-  const [isSavingTeam, setIsSavingTeam] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [organizationError, setOrganizationError] = useState<string | null>(null);
   const [teamBuilderError, setTeamBuilderError] = useState<string | null>(null);
-  const [teamError, setTeamError] = useState<string | null>(null);
   const displayName = getDisplayName(accountLabel);
   const initials = getInitials(displayName);
-  const activeOrganizationTeams = activeOrganizationId
-    ? teams.filter((team) => team.organizationId === activeOrganizationId)
-    : teams;
+  const singleTeamWorkspaceTeams = teams.filter(
+    (team) => team.organizationWorkspaceType === "single_team",
+  );
+  const organizationOwnedTeamCount = teams.filter(
+    (team) => team.organizationWorkspaceType !== "single_team",
+  ).length;
 
   function togglePanel(panel: Exclude<PanelMode, null>) {
     setActivePanel((currentPanel) => (currentPanel === panel ? null : panel));
@@ -357,49 +359,6 @@ export default function AdminContextHome({
         error instanceof Error ? error.message : "Could not create Team Builder.",
       );
       setIsSavingTeamBuilder(false);
-    }
-  }
-
-  async function createTeam(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!activeOrganizationId) {
-      setTeamError("Select an organization before creating a team.");
-      return;
-    }
-
-    setTeamError(null);
-    setIsSavingTeam(true);
-
-    try {
-      const response = await fetch("/api/admin/setup", {
-        body: JSON.stringify({
-          activeOrganizationId,
-          actionType: "team",
-          division: teamDivision,
-          name: teamName,
-          organizationId: activeOrganizationId,
-          season: teamSeason,
-          status: "active",
-        }),
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        method: "POST",
-      });
-      const body = (await response.json().catch(() => null)) as
-        | SetupResponse
-        | null;
-
-      if (!response.ok || !body?.id) {
-        throw new Error(body?.error ?? "Could not create team.");
-      }
-
-      window.location.assign(
-        withActiveOrganization(`/admin/teams/${body.id}`, activeOrganizationId),
-      );
-    } catch (error) {
-      setTeamError(error instanceof Error ? error.message : "Could not create team.");
-      setIsSavingTeam(false);
     }
   }
 
@@ -629,7 +588,7 @@ export default function AdminContextHome({
 
           <div className="space-y-3">
             <CardShell
-              body="Manage an existing single team workspace."
+              body="Open a standalone team workspace. Organization teams stay inside their organization."
               icon={<GroupIcon className="size-12 sm:size-14" />}
               iconTone="purple"
               isActive={activePanel === "select-team"}
@@ -641,13 +600,13 @@ export default function AdminContextHome({
                 <h2 className="text-xl font-bold">Select Team</h2>
                 {activeOrganizationId && (
                   <p className="mt-1 text-sm text-slate-500">
-                    Open an existing team or create a new one in the selected
-                    organization.
+                    Standalone team workspaces are separate from organization
+                    workspaces.
                   </p>
                 )}
-                {activeOrganizationTeams.length > 0 ? (
+                {singleTeamWorkspaceTeams.length > 0 ? (
                   <div className="mt-4 space-y-3">
-                    {activeOrganizationTeams.map((team) => (
+                    {singleTeamWorkspaceTeams.map((team) => (
                       <Link
                         className="block rounded-lg border border-slate-200 p-4 transition hover:border-violet-300 hover:bg-violet-50"
                         href={withActiveOrganization(
@@ -670,73 +629,16 @@ export default function AdminContextHome({
                   </div>
                 ) : (
                   <div className="mt-4 rounded-md bg-slate-50 p-4 text-slate-600">
-                    <p>No teams found for this organization yet.</p>
+                    <p>No standalone team workspaces on this account yet.</p>
                   </div>
                 )}
 
-                {activeOrganizationId ? (
-                  <form
-                    className="mt-5 border-t border-slate-200 pt-5"
-                    onSubmit={createTeam}
-                  >
-                    <h3 className="text-lg font-bold">Create Team</h3>
-                    <div className="mt-4 space-y-3">
-                      <label className="block">
-                        <span className="text-sm font-semibold text-slate-600">
-                          Team name
-                        </span>
-                        <input
-                          className="mt-2 w-full rounded-md border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-violet-500"
-                          disabled={isSavingTeam}
-                          onChange={(event) => setTeamName(event.target.value)}
-                          required
-                          value={teamName}
-                        />
-                      </label>
-                      <label className="block">
-                        <span className="text-sm font-semibold text-slate-600">
-                          Division
-                        </span>
-                        <input
-                          className="mt-2 w-full rounded-md border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-violet-500"
-                          disabled={isSavingTeam}
-                          onChange={(event) =>
-                            setTeamDivision(event.target.value)
-                          }
-                          placeholder="10U, Varsity, Rec"
-                          required
-                          value={teamDivision}
-                        />
-                      </label>
-                      <label className="block">
-                        <span className="text-sm font-semibold text-slate-600">
-                          Season
-                        </span>
-                        <input
-                          className="mt-2 w-full rounded-md border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-violet-500"
-                          disabled={isSavingTeam}
-                          onChange={(event) => setTeamSeason(event.target.value)}
-                          required
-                          value={teamSeason}
-                        />
-                      </label>
-                    </div>
-                    <button
-                      className="mt-4 rounded-md bg-violet-600 px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-                      disabled={isSavingTeam}
-                      type="submit"
-                    >
-                      {isSavingTeam ? "Creating..." : "Create team"}
-                    </button>
-                    {teamError && (
-                      <p className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
-                        {teamError}
-                      </p>
-                    )}
-                  </form>
-                ) : (
-                  <p className="mt-4 rounded-md bg-slate-50 p-4 text-slate-600">
-                    Select an organization first, then create or open a team.
+                {organizationOwnedTeamCount > 0 && (
+                  <p className="mt-4 rounded-md bg-violet-50 p-4 text-sm font-semibold text-violet-800">
+                    {organizationOwnedTeamCount} organization team
+                    {organizationOwnedTeamCount === 1 ? "" : "s"} live inside
+                    their organization workspace. Use Select Organization to
+                    manage those teams.
                   </p>
                 )}
               </InlineDropdown>

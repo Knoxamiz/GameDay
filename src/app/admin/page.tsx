@@ -67,6 +67,9 @@ export default async function AdminHome({ searchParams }: AdminHomeProps) {
               (organization) => organization.id === team.organizationId,
             )?.name ||
             team.organizationId,
+          organizationWorkspaceType: getOrganizationWorkspaceType(
+            readModel.organization,
+          ),
           season: team.season,
         })),
   );
