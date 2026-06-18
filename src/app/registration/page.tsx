@@ -90,7 +90,7 @@ export default async function RegistrationHome({
           <p className="text-sm font-black uppercase text-blue-700">
             Registration
           </p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
+          <h1 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">
             Find registration
           </h1>
           <p className="mt-2 max-w-2xl text-sm font-semibold text-slate-600">

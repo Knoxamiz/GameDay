@@ -101,33 +101,33 @@ function CardShell({
   return (
     <button
       aria-expanded={isActive}
-      className={`group flex min-h-48 w-full items-center gap-8 rounded-lg border bg-white px-10 py-9 text-left shadow-[0_16px_34px_rgba(15,23,42,0.08)] transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_22px_44px_rgba(15,23,42,0.12)] ${
+      className={`group flex min-h-32 w-full items-center gap-5 rounded-lg border bg-white px-5 py-5 text-left shadow-[0_12px_26px_rgba(15,23,42,0.08)] transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_18px_36px_rgba(15,23,42,0.12)] sm:px-6 ${
         isActive ? "border-blue-300 ring-4 ring-blue-100" : "border-slate-200"
       }`}
       onClick={onClick}
       type="button"
     >
       <span
-        className={`flex size-36 shrink-0 items-center justify-center rounded-full ${toneClass}`}
+        className={`flex size-20 shrink-0 items-center justify-center rounded-full sm:size-24 ${toneClass}`}
       >
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-3xl font-bold leading-tight text-[#071635]">
+        <span className="block text-xl font-bold leading-tight text-[#071635] sm:text-2xl">
           {title}
         </span>
-        <span className="mt-5 block max-w-md text-2xl leading-snug text-slate-600">
+        <span className="mt-2 block max-w-md text-base leading-snug text-slate-600 sm:text-lg">
           {body}
         </span>
       </span>
-      <ChevronRightIcon className={`size-10 shrink-0 ${arrowClass}`} />
+      <ChevronRightIcon className={`size-7 shrink-0 sm:size-8 ${arrowClass}`} />
     </button>
   );
 }
 
 function InlineDropdown({ children }: { children: ReactNode }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-[0_12px_28px_rgba(15,23,42,0.08)]">
+    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-[0_10px_24px_rgba(15,23,42,0.08)]">
       {children}
     </section>
   );
@@ -406,35 +406,35 @@ export default function AdminContextHome({
   return (
     <main className="min-h-screen bg-[#fafbfe] text-[#071635]">
       <header className="border-b border-slate-200 bg-white">
-        <div className="flex min-h-28 items-center justify-between px-10">
-          <div className="flex items-center gap-9">
-            <Link className="flex items-center gap-4" href="/admin">
-              <ShieldLogoIcon className="size-12" />
-              <span className="text-3xl font-bold tracking-tight">GameDay</span>
+        <div className="flex min-h-16 items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center gap-5">
+            <Link className="flex items-center gap-2.5" href="/admin">
+              <ShieldLogoIcon className="size-8" />
+              <span className="text-xl font-bold tracking-tight">GameDay</span>
             </Link>
-            <span className="border-b-[3px] border-blue-600 px-2 py-10 text-2xl font-semibold text-blue-600">
+            <span className="border-b-2 border-blue-600 px-1.5 py-5 text-sm font-semibold text-blue-600">
               Admin
             </span>
           </div>
 
           <div className="relative">
             <button
-              className="flex items-center gap-5 rounded-lg px-3 py-2 text-left hover:bg-slate-50"
+              className="flex items-center gap-3 rounded-lg px-2 py-1.5 text-left hover:bg-slate-50"
               onClick={() => setIsProfileOpen((currentValue) => !currentValue)}
               type="button"
             >
-              <span className="flex size-14 items-center justify-center rounded-full border-2 border-emerald-600 text-xl font-bold text-emerald-700">
+              <span className="flex size-9 items-center justify-center rounded-full border-2 border-emerald-600 text-sm font-bold text-emerald-700">
                 {initials}
               </span>
-              <span>
-                <span className="block text-xl font-bold leading-tight">
+              <span className="hidden sm:block">
+                <span className="block text-sm font-bold leading-tight">
                   {displayName}
                 </span>
-                <span className="block text-lg leading-tight text-slate-500">
+                <span className="block text-xs leading-tight text-slate-500">
                   Admin
                 </span>
               </span>
-              <ChevronDownIcon className="size-7 text-slate-500" />
+              <ChevronDownIcon className="size-5 text-slate-500" />
             </button>
             {isProfileOpen && (
               <div className="absolute right-0 top-full z-10 mt-2 w-56 rounded-lg border border-slate-200 bg-white p-2 shadow-xl">
@@ -457,21 +457,21 @@ export default function AdminContextHome({
         </div>
       </header>
 
-      <section className="mx-auto max-w-[1320px] px-8 pb-16 pt-20">
+      <section className="mx-auto max-w-[1040px] px-4 pb-10 pt-10 sm:px-6">
         <div className="text-center">
-          <h1 className="text-5xl font-bold tracking-tight sm:text-6xl">
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
             Welcome to GameDay Admin
           </h1>
-          <p className="mt-7 text-3xl text-slate-500">
+          <p className="mt-3 text-xl text-slate-500 sm:text-2xl">
             What would you like to manage today?
           </p>
         </div>
 
-        <div className="mt-14 grid items-start gap-7 lg:grid-cols-2">
+        <div className="mt-8 grid items-start gap-4 lg:grid-cols-2">
           <div className="space-y-3">
             <CardShell
               body="Manage an existing club, league, or multi-team organization."
-              icon={<BuildingIcon className="size-20" />}
+              icon={<BuildingIcon className="size-12 sm:size-14" />}
               iconTone="blue"
               isActive={activePanel === "select-organization"}
               onClick={() => togglePanel("select-organization")}
@@ -537,7 +537,7 @@ export default function AdminContextHome({
           <div className="space-y-3">
             <CardShell
               body="Start a club, league, or multi-team organization from scratch."
-              icon={<ShieldPlusIcon className="size-20" />}
+              icon={<ShieldPlusIcon className="size-12 sm:size-14" />}
               iconTone="green"
               isActive={activePanel === "create-organization"}
               onClick={() => togglePanel("create-organization")}
@@ -546,7 +546,7 @@ export default function AdminContextHome({
             {activePanel === "create-organization" && (
               <InlineDropdown>
                 <form onSubmit={createOrganization}>
-                  <h2 className="text-2xl font-bold">Create New Organization</h2>
+                  <h2 className="text-xl font-bold">Create New Organization</h2>
                   <label className="mt-4 block">
                     <span className="text-sm font-semibold text-slate-600">
                       Organization name
@@ -584,7 +584,7 @@ export default function AdminContextHome({
           <div className="space-y-3">
             <CardShell
               body="Manage an existing single team workspace."
-              icon={<GroupIcon className="size-20" />}
+              icon={<GroupIcon className="size-12 sm:size-14" />}
               iconTone="purple"
               isActive={activePanel === "select-team"}
               onClick={() => togglePanel("select-team")}
@@ -592,7 +592,7 @@ export default function AdminContextHome({
             />
             {activePanel === "select-team" && (
               <InlineDropdown>
-                <h2 className="text-2xl font-bold">Select Team</h2>
+                <h2 className="text-xl font-bold">Select Team</h2>
                 {activeOrganizationId && (
                   <p className="mt-1 text-sm text-slate-500">
                     Open an existing team or create a new one in the selected
@@ -633,7 +633,7 @@ export default function AdminContextHome({
                     className="mt-5 border-t border-slate-200 pt-5"
                     onSubmit={createTeam}
                   >
-                    <h3 className="text-xl font-bold">Create Team</h3>
+                    <h3 className="text-lg font-bold">Create Team</h3>
                     <div className="mt-4 space-y-3">
                       <label className="block">
                         <span className="text-sm font-semibold text-slate-600">
@@ -700,7 +700,7 @@ export default function AdminContextHome({
           <div className="space-y-3">
             <CardShell
               body="Start one team, create a registration link, and get parents signed up."
-              icon={<WhistleIcon className="size-20" />}
+              icon={<WhistleIcon className="size-12 sm:size-14" />}
               iconTone="orange"
               isActive={activePanel === "create-team-builder"}
               onClick={() => togglePanel("create-team-builder")}
@@ -709,7 +709,7 @@ export default function AdminContextHome({
             {activePanel === "create-team-builder" && (
               <InlineDropdown>
                 <form onSubmit={createTeamBuilder}>
-                  <h2 className="text-2xl font-bold">Create Team Builder</h2>
+                  <h2 className="text-xl font-bold">Create Team Builder</h2>
                   <div className="mt-4 space-y-3">
                     <label className="block">
                       <span className="text-sm font-semibold text-slate-600">
@@ -771,17 +771,17 @@ export default function AdminContextHome({
           </div>
         </div>
 
-        <footer className="pt-20 text-center">
-          <p className="flex items-center justify-center gap-5 text-xl text-slate-500">
-            <LockIcon className="size-7" />
+        <footer className="pt-12 text-center">
+          <p className="flex items-center justify-center gap-3 text-sm text-slate-500">
+            <LockIcon className="size-5" />
             <span>Your access is based on your verified role and memberships.</span>
           </p>
           <a
-            className="mt-8 inline-flex items-center gap-3 text-xl font-semibold text-blue-600"
+            className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-blue-600"
             href="mailto:support@gameday.app"
           >
             Need help? Contact support
-            <ExternalLinkIcon className="size-6" />
+            <ExternalLinkIcon className="size-4" />
           </a>
         </footer>
       </section>

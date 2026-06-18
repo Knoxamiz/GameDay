@@ -350,7 +350,7 @@ export default async function Home() {
 
       <section className="relative z-10 mx-auto grid min-h-[calc(100dvh-72px)] max-w-6xl items-center gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:py-12">
         <div className="max-w-2xl">
-          <h1 className="max-w-2xl text-4xl font-black leading-[0.95] tracking-tight text-white sm:text-5xl lg:text-6xl">
+          <h1 className="max-w-2xl text-3xl font-black leading-[0.95] tracking-tight text-white sm:text-4xl lg:text-5xl">
             Run game day
             <span className="block text-blue-500">with confidence.</span>
           </h1>

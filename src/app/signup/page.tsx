@@ -59,7 +59,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           <p className="text-sm font-black uppercase tracking-wide text-blue-300">
             Signup
           </p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">
+          <h1 className="mt-2 text-2xl font-black tracking-tight text-white sm:text-3xl">
             Start with the role that creates the work.
           </h1>
           <p className="mt-3 text-sm font-semibold leading-6 text-slate-300">
