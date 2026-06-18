@@ -30,8 +30,6 @@ type AdminContextHomeProps = {
 };
 
 type PanelMode =
-  | "create-organization"
-  | "create-team-builder"
   | "select-organization"
   | "select-team"
   | null;
@@ -90,25 +88,25 @@ function CardShell({
   title: string;
 }) {
   const iconClass = {
-    blue: "bg-blue-50 text-blue-600 ring-blue-100",
-    green: "bg-emerald-50 text-emerald-600 ring-emerald-100",
-    orange: "bg-orange-50 text-orange-500 ring-orange-100",
-    purple: "bg-violet-50 text-violet-600 ring-violet-100",
+    blue: "bg-blue-500/10 text-blue-300 ring-blue-400/20",
+    green: "bg-emerald-500/10 text-emerald-300 ring-emerald-400/20",
+    orange: "bg-orange-500/10 text-orange-300 ring-orange-400/20",
+    purple: "bg-violet-500/10 text-violet-300 ring-violet-400/20",
   }[iconTone];
   const cardClass = {
-    blue: "border-blue-100 bg-[linear-gradient(135deg,#ffffff_0%,#eff6ff_100%)] hover:border-blue-300",
+    blue: "border-blue-400/20 bg-[linear-gradient(135deg,rgba(15,23,42,0.94)_0%,rgba(15,40,82,0.88)_100%)] hover:border-blue-300/60",
     green:
-      "border-emerald-100 bg-[linear-gradient(135deg,#ffffff_0%,#ecfdf5_100%)] hover:border-emerald-300",
+      "border-emerald-400/20 bg-[linear-gradient(135deg,rgba(15,23,42,0.94)_0%,rgba(12,64,52,0.82)_100%)] hover:border-emerald-300/60",
     orange:
-      "border-orange-100 bg-[linear-gradient(135deg,#ffffff_0%,#fff7ed_100%)] hover:border-orange-300",
+      "border-orange-400/20 bg-[linear-gradient(135deg,rgba(15,23,42,0.94)_0%,rgba(82,45,14,0.78)_100%)] hover:border-orange-300/60",
     purple:
-      "border-violet-100 bg-[linear-gradient(135deg,#ffffff_0%,#f5f3ff_100%)] hover:border-violet-300",
+      "border-violet-400/20 bg-[linear-gradient(135deg,rgba(15,23,42,0.94)_0%,rgba(55,36,105,0.82)_100%)] hover:border-violet-300/60",
   }[iconTone];
   const arrowClass = {
-    blue: "text-blue-600",
-    green: "text-emerald-600",
-    orange: "text-orange-500",
-    purple: "text-violet-600",
+    blue: "text-blue-300",
+    green: "text-emerald-300",
+    orange: "text-orange-300",
+    purple: "text-violet-300",
   }[iconTone];
   const railClass = {
     blue: "bg-blue-600",
@@ -120,8 +118,8 @@ function CardShell({
   return (
     <button
       aria-expanded={isActive}
-      className={`group relative flex min-h-28 w-full overflow-hidden rounded-lg border px-4 py-4 text-left shadow-[0_14px_30px_rgba(15,23,42,0.09)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_40px_rgba(15,23,42,0.13)] sm:px-5 ${cardClass} ${
-        isActive ? "ring-4 ring-blue-100" : ""
+      className={`group relative flex min-h-24 w-full overflow-hidden rounded-lg border px-4 py-4 text-left shadow-[0_18px_42px_rgba(0,0,0,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_54px_rgba(37,99,235,0.18)] ${cardClass} ${
+        isActive ? "ring-2 ring-blue-400/35" : ""
       }`}
       onClick={onClick}
       type="button"
@@ -130,19 +128,19 @@ function CardShell({
       <span className={`absolute inset-0 ${cardClass}`} />
       <span className="relative flex w-full items-center gap-4">
       <span
-        className={`flex size-16 shrink-0 items-center justify-center rounded-lg ring-1 sm:size-20 ${iconClass}`}
+        className={`flex size-14 shrink-0 items-center justify-center rounded-lg ring-1 sm:size-16 ${iconClass}`}
       >
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-lg font-bold leading-tight text-[#071635] sm:text-xl">
+        <span className="block text-lg font-bold leading-tight text-white">
           {title}
         </span>
-        <span className="mt-1.5 block max-w-md text-sm leading-snug text-slate-600 sm:text-base">
+        <span className="mt-1.5 block max-w-md text-sm leading-snug text-slate-300">
           {body}
         </span>
       </span>
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/80 shadow-sm ring-1 ring-slate-200 transition group-hover:translate-x-0.5">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/10 shadow-sm ring-1 ring-white/15 transition group-hover:translate-x-0.5">
         <ChevronRightIcon className={`size-5 ${arrowClass}`} />
       </span>
       </span>
@@ -152,7 +150,7 @@ function CardShell({
 
 function InlineDropdown({ children }: { children: ReactNode }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-[0_10px_24px_rgba(15,23,42,0.08)]">
+    <section className="rounded-lg border border-white/10 bg-slate-950/80 p-4 text-white shadow-[0_18px_42px_rgba(0,0,0,0.24)]">
       {children}
     </section>
   );
@@ -185,27 +183,6 @@ function BuildingIcon(props: SVGProps<SVGSVGElement>) {
       <path d="M17 56V17h25v39" strokeLinejoin="round" />
       <path d="M42 31h9v25" strokeLinejoin="round" />
       <path d="M25 27h5M25 39h5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function ShieldPlusIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg fill="none" stroke="currentColor" strokeWidth="3.5" viewBox="0 0 64 64" {...props}>
-      <path d="M32 8 15 15v14c0 13.5 8 22 17 27 9-5 17-13.5 17-27V15L32 8Z" strokeLinejoin="round" />
-      <path d="M32 23v18M23 32h18" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function GroupIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg fill="none" stroke="currentColor" strokeWidth="3.5" viewBox="0 0 64 64" {...props}>
-      <circle cx="32" cy="23" r="7" />
-      <circle cx="17" cy="25" r="6" />
-      <circle cx="47" cy="25" r="6" />
-      <path d="M20 51c1.5-8 6-12 12-12s10.5 4 12 12" strokeLinecap="round" />
-      <path d="M5 50c1.3-6.8 5.2-10.2 11.5-10.2M59 50c-1.3-6.8-5.2-10.2-11.5-10.2" strokeLinecap="round" />
     </svg>
   );
 }
@@ -384,50 +361,54 @@ export default function AdminContextHome({
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[linear-gradient(135deg,#eef6ff_0%,#f8fbff_46%,#f9fafb_100%)] text-[#071635]">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[linear-gradient(180deg,rgba(37,99,235,0.14),transparent)]" />
-      <div className="pointer-events-none absolute inset-x-0 top-24 h-px bg-[linear-gradient(90deg,transparent,rgba(37,99,235,0.28),transparent)]" />
+    <main className="relative min-h-screen overflow-hidden bg-[#020817] text-white">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(37,99,235,0.34),transparent_34%),linear-gradient(115deg,#020817_0%,#061431_56%,#0b2447_100%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-16 h-px bg-white/10" />
 
-      <header className="relative z-10 border-b border-white/70 bg-white/85 shadow-sm backdrop-blur">
-        <div className="flex min-h-16 items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-5">
-            <Link className="flex items-center gap-2.5" href="/admin">
-              <ShieldLogoIcon className="size-8" />
-              <span className="text-xl font-bold tracking-tight">GameDay</span>
+      <header className="relative z-10 border-b border-white/10 bg-slate-950/70 backdrop-blur">
+        <div className="mx-auto flex min-h-16 max-w-[1120px] items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center gap-4">
+            <Link className="flex items-center gap-3" href="/admin">
+              <span className="flex size-9 items-center justify-center rounded-lg bg-blue-600 shadow-[0_0_30px_rgba(37,99,235,0.42)]">
+                <ShieldLogoIcon className="size-7" />
+              </span>
+              <span className="text-xl font-black uppercase tracking-wide">
+                GameDay
+              </span>
             </Link>
-            <span className="rounded-full bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-700 ring-1 ring-blue-100">
+            <span className="rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-xs font-bold text-blue-200">
               Admin
             </span>
           </div>
 
           <div className="relative">
             <button
-              className="flex items-center gap-3 rounded-lg px-2 py-1.5 text-left hover:bg-slate-50"
+              className="flex items-center gap-3 rounded-lg px-2 py-1.5 text-left hover:bg-white/10"
               onClick={() => setIsProfileOpen((currentValue) => !currentValue)}
               type="button"
             >
-              <span className="flex size-9 items-center justify-center rounded-full border-2 border-emerald-600 text-sm font-bold text-emerald-700">
+              <span className="flex size-9 items-center justify-center rounded-full border border-emerald-300/70 bg-emerald-400/10 text-sm font-bold text-emerald-100">
                 {initials}
               </span>
               <span className="hidden sm:block">
                 <span className="block text-sm font-bold leading-tight">
                   {displayName}
                 </span>
-                <span className="block text-xs leading-tight text-slate-500">
+                <span className="block text-xs leading-tight text-slate-400">
                   Admin
                 </span>
               </span>
-              <ChevronDownIcon className="size-5 text-slate-500" />
+              <ChevronDownIcon className="size-5 text-slate-300" />
             </button>
             {isProfileOpen && (
-              <div className="absolute right-0 top-full z-10 mt-2 w-56 rounded-lg border border-slate-200 bg-white p-2 shadow-xl">
+              <div className="absolute right-0 top-full z-10 mt-2 w-56 rounded-lg border border-white/10 bg-slate-950 p-2 shadow-xl">
                 {accountLabel && (
-                  <p className="break-all px-3 py-2 text-sm text-slate-500">
+                  <p className="break-all px-3 py-2 text-sm text-slate-400">
                     {accountLabel}
                   </p>
                 )}
                 <button
-                  className="w-full rounded-md px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                  className="w-full rounded-md px-3 py-2 text-left text-sm font-semibold text-slate-100 hover:bg-white/10 disabled:opacity-60"
                   disabled={isSigningOut}
                   onClick={handleSignOut}
                   type="button"
@@ -440,292 +421,308 @@ export default function AdminContextHome({
         </div>
       </header>
 
-      <section className="relative z-10 mx-auto max-w-[1040px] px-4 pb-10 pt-7 sm:px-6">
-        <div className="overflow-hidden rounded-lg border border-slate-900/10 bg-[#061431] px-5 py-5 text-white shadow-[0_22px_52px_rgba(15,23,42,0.22)] sm:px-7">
-          <div className="relative">
-            <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(37,99,235,0.26),transparent_55%)]" />
-            <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-200">
-                  Admin command center
-                </p>
-                <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-                  Welcome to GameDay Admin
-                </h1>
-                <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-blue-100/80 sm:text-base">
-                  Choose the workspace path first. Everything else opens inside
-                  that organization or team.
-                </p>
+      <section className="relative z-10 mx-auto max-w-[1120px] px-4 pb-10 pt-8 sm:px-6">
+        <div className="grid gap-7 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.26em] text-blue-300">
+              Admin workspace
+            </p>
+            <h1 className="mt-4 max-w-md text-4xl font-black leading-none tracking-tight sm:text-5xl">
+              Pick the lane,
+              <span className="block text-blue-500">then run the day.</span>
+            </h1>
+            <p className="mt-5 max-w-md text-base font-semibold leading-7 text-slate-300">
+              Open an organization or a standalone team first. Creation lives
+              inside the same lane so the screen stays clean.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3 text-xs font-semibold text-slate-300">
+              <span className="rounded-full border border-blue-400/30 px-3 py-1">
+                Secure access
+              </span>
+              <span className="rounded-full border border-blue-400/30 px-3 py-1">
+                Separate workspaces
+              </span>
+              <span className="rounded-full border border-blue-400/30 px-3 py-1">
+                Real teams only
+              </span>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-blue-300/20 bg-slate-950/56 p-4 shadow-[0_0_80px_rgba(37,99,235,0.2)] backdrop-blur">
+            <div className="grid items-start gap-4">
+              <div className="space-y-3">
+                <CardShell
+                  body="Open or create a club, league, or multi-team workspace."
+                  icon={<BuildingIcon className="size-11 sm:size-12" />}
+                  iconTone="blue"
+                  isActive={activePanel === "select-organization"}
+                  onClick={() => togglePanel("select-organization")}
+                  title="Organizations"
+                />
+                {activePanel === "select-organization" && (
+                  <InlineDropdown>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h2 className="text-lg font-bold">Organizations</h2>
+                        <p className="mt-1 text-sm text-slate-400">
+                          Each organization is a separate workspace.
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-blue-500/15 px-3 py-1 text-xs font-bold text-blue-200">
+                        {organizations.length} active
+                      </span>
+                    </div>
+
+                    <div className="mt-4 space-y-2">
+                      {organizations.length > 0 ? (
+                        organizations.map((organization) => {
+                          const isActive =
+                            organization.id === activeOrganizationId;
+
+                          return (
+                            <div
+                              className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] p-3"
+                              key={organization.id}
+                            >
+                              <Link
+                                aria-current={isActive ? "page" : undefined}
+                                className="min-w-0 flex-1 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                href={withActiveOrganization(
+                                  "/admin",
+                                  organization.id,
+                                )}
+                              >
+                                <span className="block truncate text-sm font-bold text-white">
+                                  {organization.name}
+                                </span>
+                                <span className="mt-1 block text-xs font-semibold text-blue-200">
+                                  {isActive ? "Current workspace" : "Open workspace"}
+                                </span>
+                              </Link>
+                              <Link
+                                className="rounded-md bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-500"
+                                href={withActiveOrganization(
+                                  "/admin",
+                                  organization.id,
+                                )}
+                              >
+                                Open
+                              </Link>
+                              <AdminArchiveButton
+                                buttonLabel="Remove"
+                                confirmMessage={`Remove ${organization.name}? Teams, events, invites, and coach assignments will be archived. Historical registrations and documents will be preserved.`}
+                                payload={{
+                                  activeOrganizationId: organization.id,
+                                  actionType: "organization-archive",
+                                  organizationId: organization.id,
+                                }}
+                                redirectHref="/admin"
+                              />
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <p className="rounded-md border border-dashed border-white/15 p-3 text-sm font-semibold text-slate-400">
+                          No organizations on this account yet.
+                        </p>
+                      )}
+                    </div>
+
+                    <details className="mt-4 rounded-lg border border-blue-400/20 bg-blue-500/10 p-3">
+                      <summary className="cursor-pointer text-sm font-bold text-blue-100">
+                        Create new organization +
+                      </summary>
+                      <form className="mt-4" onSubmit={createOrganization}>
+                        <label className="block">
+                          <span className="text-xs font-bold uppercase tracking-wide text-slate-300">
+                            Organization name
+                          </span>
+                          <input
+                            className="mt-2 w-full rounded-md border border-white/10 bg-slate-950 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-400"
+                            disabled={
+                              !canCreateOrganization || isSavingOrganization
+                            }
+                            onChange={(event) =>
+                              setOrganizationName(event.target.value)
+                            }
+                            required
+                            value={organizationName}
+                          />
+                        </label>
+                        <button
+                          className="mt-3 rounded-md bg-blue-600 px-4 py-2.5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={
+                            !canCreateOrganization || isSavingOrganization
+                          }
+                          type="submit"
+                        >
+                          {isSavingOrganization
+                            ? "Creating..."
+                            : "Create organization"}
+                        </button>
+                        {organizationError && (
+                          <p className="mt-3 rounded-md border border-red-400/30 bg-red-500/10 p-3 text-sm font-semibold text-red-100">
+                            {organizationError}
+                          </p>
+                        )}
+                        {!canCreateOrganization && (
+                          <p className="mt-3 text-sm text-slate-400">
+                            This account cannot create organizations.
+                          </p>
+                        )}
+                      </form>
+                    </details>
+                  </InlineDropdown>
+                )}
               </div>
-              <div className="grid grid-cols-3 gap-2 text-center text-xs font-bold text-blue-100">
-                <span className="rounded-md border border-white/10 bg-white/10 px-3 py-2">
-                  Orgs
-                </span>
-                <span className="rounded-md border border-white/10 bg-white/10 px-3 py-2">
-                  Teams
-                </span>
-                <span className="rounded-md border border-white/10 bg-white/10 px-3 py-2">
-                  Setup
-                </span>
+
+              <div className="space-y-3">
+                <CardShell
+                  body="Open or create a single-team workspace outside an organization."
+                  icon={<WhistleIcon className="size-11 sm:size-12" />}
+                  iconTone="orange"
+                  isActive={activePanel === "select-team"}
+                  onClick={() => togglePanel("select-team")}
+                  title="Single Teams"
+                />
+                {activePanel === "select-team" && (
+                  <InlineDropdown>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h2 className="text-lg font-bold">Single Teams</h2>
+                        <p className="mt-1 text-sm text-slate-400">
+                          Standalone teams stay separate from organizations.
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-orange-500/15 px-3 py-1 text-xs font-bold text-orange-200">
+                        {singleTeamWorkspaceTeams.length} active
+                      </span>
+                    </div>
+
+                    <div className="mt-4 space-y-2">
+                      {singleTeamWorkspaceTeams.length > 0 ? (
+                        singleTeamWorkspaceTeams.map((team) => (
+                          <Link
+                            className="block rounded-lg border border-white/10 bg-white/[0.04] p-3 transition hover:border-orange-300/50 hover:bg-orange-500/10"
+                            href={withActiveOrganization(
+                              `/admin/teams/${team.id}`,
+                              team.organizationId,
+                            )}
+                            key={`${team.organizationId}-${team.id}`}
+                          >
+                            <span className="block text-sm font-bold text-white">
+                              {team.name}
+                            </span>
+                            <span className="mt-1 block text-xs font-semibold text-orange-100">
+                              {[team.division ?? team.label, team.season]
+                                .filter(Boolean)
+                                .join(" / ")}
+                            </span>
+                          </Link>
+                        ))
+                      ) : (
+                        <p className="rounded-md border border-dashed border-white/15 p-3 text-sm font-semibold text-slate-400">
+                          No standalone team workspaces on this account yet.
+                        </p>
+                      )}
+                    </div>
+
+                    {organizationOwnedTeamCount > 0 && (
+                      <p className="mt-4 rounded-md border border-violet-400/20 bg-violet-500/10 p-3 text-sm font-semibold text-violet-100">
+                        {organizationOwnedTeamCount} organization team
+                        {organizationOwnedTeamCount === 1 ? "" : "s"} live
+                        inside their organization workspace.
+                      </p>
+                    )}
+
+                    <details className="mt-4 rounded-lg border border-orange-400/20 bg-orange-500/10 p-3">
+                      <summary className="cursor-pointer text-sm font-bold text-orange-100">
+                        Create single team +
+                      </summary>
+                      <form className="mt-4" onSubmit={createTeamBuilder}>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <label className="block sm:col-span-2">
+                            <span className="text-xs font-bold uppercase tracking-wide text-slate-300">
+                              Team name
+                            </span>
+                            <input
+                              className="mt-2 w-full rounded-md border border-white/10 bg-slate-950 px-3 py-2.5 text-sm text-white outline-none focus:border-orange-400"
+                              disabled={
+                                !canCreateOrganization || isSavingTeamBuilder
+                              }
+                              onChange={(event) =>
+                                setTeamBuilderName(event.target.value)
+                              }
+                              required
+                              value={teamBuilderName}
+                            />
+                          </label>
+                          <label className="block">
+                            <span className="text-xs font-bold uppercase tracking-wide text-slate-300">
+                              Division
+                            </span>
+                            <input
+                              className="mt-2 w-full rounded-md border border-white/10 bg-slate-950 px-3 py-2.5 text-sm text-white outline-none focus:border-orange-400"
+                              disabled={
+                                !canCreateOrganization || isSavingTeamBuilder
+                              }
+                              onChange={(event) =>
+                                setTeamBuilderDivision(event.target.value)
+                              }
+                              placeholder="10U"
+                              required
+                              value={teamBuilderDivision}
+                            />
+                          </label>
+                          <label className="block">
+                            <span className="text-xs font-bold uppercase tracking-wide text-slate-300">
+                              Season
+                            </span>
+                            <input
+                              className="mt-2 w-full rounded-md border border-white/10 bg-slate-950 px-3 py-2.5 text-sm text-white outline-none focus:border-orange-400"
+                              disabled={
+                                !canCreateOrganization || isSavingTeamBuilder
+                              }
+                              onChange={(event) =>
+                                setTeamBuilderSeason(event.target.value)
+                              }
+                              required
+                              value={teamBuilderSeason}
+                            />
+                          </label>
+                        </div>
+                        <button
+                          className="mt-3 rounded-md bg-orange-500 px-4 py-2.5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={
+                            !canCreateOrganization || isSavingTeamBuilder
+                          }
+                          type="submit"
+                        >
+                          {isSavingTeamBuilder
+                            ? "Creating..."
+                            : "Create single team"}
+                        </button>
+                        {teamBuilderError && (
+                          <p className="mt-3 rounded-md border border-red-400/30 bg-red-500/10 p-3 text-sm font-semibold text-red-100">
+                            {teamBuilderError}
+                          </p>
+                        )}
+                      </form>
+                    </details>
+                  </InlineDropdown>
+                )}
               </div>
             </div>
           </div>
         </div>
 
-        <div className="mt-5 grid items-start gap-4 lg:grid-cols-2">
-          <div className="space-y-3">
-            <CardShell
-              body="Manage an existing club, league, or multi-team organization."
-              icon={<BuildingIcon className="size-12 sm:size-14" />}
-              iconTone="blue"
-              isActive={activePanel === "select-organization"}
-              onClick={() => togglePanel("select-organization")}
-              title="Select Organization"
-            />
-            {activePanel === "select-organization" && (
-              <InlineDropdown>
-                {organizations.length > 0 ? (
-                  <ul className="divide-y divide-slate-200" aria-label="Organizations">
-                    {organizations.map((organization) => {
-                      const isActive = organization.id === activeOrganizationId;
-
-                      return (
-                        <li key={organization.id}>
-                          <div className="flex flex-col gap-3 rounded-md px-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-                            <Link
-                              aria-current={isActive ? "page" : undefined}
-                              className="min-w-0 flex-1 rounded-md text-left transition hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              href={withActiveOrganization(
-                                "/admin",
-                                organization.id,
-                              )}
-                            >
-                              <span className="min-w-0">
-                                <span className="block truncate text-lg font-bold text-[#071635]">
-                                  {organization.name}
-                                </span>
-                                {isActive && (
-                                  <span className="mt-1 block text-sm font-semibold text-blue-600">
-                                    Current workspace
-                                  </span>
-                                )}
-                              </span>
-                              <span className="mt-2 flex shrink-0 items-center gap-3 text-sm font-semibold text-blue-600">
-                                Open
-                                <ChevronRightIcon className="size-5" />
-                              </span>
-                            </Link>
-                            <AdminArchiveButton
-                              buttonLabel="Remove"
-                              confirmMessage={`Remove ${organization.name}? Teams, events, invites, and coach assignments will be archived. Historical registrations and documents will be preserved.`}
-                              payload={{
-                                activeOrganizationId: organization.id,
-                                actionType: "organization-archive",
-                                organizationId: organization.id,
-                              }}
-                              redirectHref="/admin"
-                            />
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                ) : (
-                  <p className="rounded-md bg-slate-50 p-4 text-sm font-semibold text-slate-600">
-                    No organizations on this account yet.
-                  </p>
-                )}
-              </InlineDropdown>
-            )}
-          </div>
-
-          <div className="space-y-3">
-            <CardShell
-              body="Start a club, league, or multi-team organization from scratch."
-              icon={<ShieldPlusIcon className="size-12 sm:size-14" />}
-              iconTone="green"
-              isActive={activePanel === "create-organization"}
-              onClick={() => togglePanel("create-organization")}
-              title="Create New Organization"
-            />
-            {activePanel === "create-organization" && (
-              <InlineDropdown>
-                <form onSubmit={createOrganization}>
-                  <h2 className="text-xl font-bold">Create New Organization</h2>
-                  <label className="mt-4 block">
-                    <span className="text-sm font-semibold text-slate-600">
-                      Organization name
-                    </span>
-                    <input
-                      className="mt-2 w-full rounded-md border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-blue-500"
-                      disabled={!canCreateOrganization || isSavingOrganization}
-                      onChange={(event) => setOrganizationName(event.target.value)}
-                      required
-                      value={organizationName}
-                    />
-                  </label>
-                  <button
-                    className="mt-4 rounded-md bg-blue-600 px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={!canCreateOrganization || isSavingOrganization}
-                    type="submit"
-                  >
-                    {isSavingOrganization ? "Creating..." : "Create organization"}
-                  </button>
-                  {organizationError && (
-                    <p className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
-                      {organizationError}
-                    </p>
-                  )}
-                  {!canCreateOrganization && (
-                    <p className="mt-3 text-sm text-slate-500">
-                      This account cannot create organizations.
-                    </p>
-                  )}
-                </form>
-              </InlineDropdown>
-            )}
-          </div>
-
-          <div className="space-y-3">
-            <CardShell
-              body="Open a standalone team workspace. Organization teams stay inside their organization."
-              icon={<GroupIcon className="size-12 sm:size-14" />}
-              iconTone="purple"
-              isActive={activePanel === "select-team"}
-              onClick={() => togglePanel("select-team")}
-              title="Select Team"
-            />
-            {activePanel === "select-team" && (
-              <InlineDropdown>
-                <h2 className="text-xl font-bold">Select Team</h2>
-                {activeOrganizationId && (
-                  <p className="mt-1 text-sm text-slate-500">
-                    Standalone team workspaces are separate from organization
-                    workspaces.
-                  </p>
-                )}
-                {singleTeamWorkspaceTeams.length > 0 ? (
-                  <div className="mt-4 space-y-3">
-                    {singleTeamWorkspaceTeams.map((team) => (
-                      <Link
-                        className="block rounded-lg border border-slate-200 p-4 transition hover:border-violet-300 hover:bg-violet-50"
-                        href={withActiveOrganization(
-                          `/admin/teams/${team.id}`,
-                          team.organizationId,
-                        )}
-                        key={`${team.organizationId}-${team.id}`}
-                      >
-                        <p className="font-bold">{team.name}</p>
-                        <p className="mt-1 text-sm text-slate-500">
-                          {team.organizationName}
-                        </p>
-                        <p className="mt-2 text-sm text-slate-500">
-                          {[team.division ?? team.label, team.season]
-                            .filter(Boolean)
-                            .join(" / ")}
-                        </p>
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="mt-4 rounded-md bg-slate-50 p-4 text-slate-600">
-                    <p>No standalone team workspaces on this account yet.</p>
-                  </div>
-                )}
-
-                {organizationOwnedTeamCount > 0 && (
-                  <p className="mt-4 rounded-md bg-violet-50 p-4 text-sm font-semibold text-violet-800">
-                    {organizationOwnedTeamCount} organization team
-                    {organizationOwnedTeamCount === 1 ? "" : "s"} live inside
-                    their organization workspace. Use Select Organization to
-                    manage those teams.
-                  </p>
-                )}
-              </InlineDropdown>
-            )}
-          </div>
-
-          <div className="space-y-3">
-            <CardShell
-              body="Start one team, create a registration link, and get parents signed up."
-              icon={<WhistleIcon className="size-12 sm:size-14" />}
-              iconTone="orange"
-              isActive={activePanel === "create-team-builder"}
-              onClick={() => togglePanel("create-team-builder")}
-              title="Create Team Builder"
-            />
-            {activePanel === "create-team-builder" && (
-              <InlineDropdown>
-                <form onSubmit={createTeamBuilder}>
-                  <h2 className="text-xl font-bold">Create Team Builder</h2>
-                  <div className="mt-4 space-y-3">
-                    <label className="block">
-                      <span className="text-sm font-semibold text-slate-600">
-                        Team name
-                      </span>
-                      <input
-                        className="mt-2 w-full rounded-md border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-orange-500"
-                        disabled={!canCreateOrganization || isSavingTeamBuilder}
-                        onChange={(event) => setTeamBuilderName(event.target.value)}
-                        required
-                        value={teamBuilderName}
-                      />
-                    </label>
-                    <label className="block">
-                      <span className="text-sm font-semibold text-slate-600">
-                        Division
-                      </span>
-                      <input
-                        className="mt-2 w-full rounded-md border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-orange-500"
-                        disabled={!canCreateOrganization || isSavingTeamBuilder}
-                        onChange={(event) =>
-                          setTeamBuilderDivision(event.target.value)
-                        }
-                        placeholder="10U, Varsity, Rec"
-                        required
-                        value={teamBuilderDivision}
-                      />
-                    </label>
-                    <label className="block">
-                      <span className="text-sm font-semibold text-slate-600">
-                        Season
-                      </span>
-                      <input
-                        className="mt-2 w-full rounded-md border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-orange-500"
-                        disabled={!canCreateOrganization || isSavingTeamBuilder}
-                        onChange={(event) =>
-                          setTeamBuilderSeason(event.target.value)
-                        }
-                        required
-                        value={teamBuilderSeason}
-                      />
-                    </label>
-                  </div>
-                  <button
-                    className="mt-4 rounded-md bg-orange-500 px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={!canCreateOrganization || isSavingTeamBuilder}
-                    type="submit"
-                  >
-                    {isSavingTeamBuilder ? "Creating..." : "Create Team Builder"}
-                  </button>
-                  {teamBuilderError && (
-                    <p className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
-                      {teamBuilderError}
-                    </p>
-                  )}
-                </form>
-              </InlineDropdown>
-            )}
-          </div>
-        </div>
-
-        <footer className="pt-10 text-center">
-          <p className="flex items-center justify-center gap-3 text-sm text-slate-600">
+        <footer className="pt-8 text-center">
+          <p className="flex items-center justify-center gap-3 text-sm text-slate-400">
             <LockIcon className="size-5" />
             <span>Your access is based on your verified role and memberships.</span>
           </p>
           <a
-            className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-blue-600"
+            className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-blue-300"
             href="mailto:support@gameday.app"
           >
             Need help? Contact support
