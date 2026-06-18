@@ -20,8 +20,89 @@ export type RegistrationInviteReadModel = {
   team?: Team;
 };
 
+export type PublicRegistrationInviteLookup = {
+  models: RegistrationInviteReadModel[];
+  query: string;
+  reason:
+    | "code-not-found"
+    | "empty"
+    | "query-too-short"
+    | "searched"
+    | "service-unavailable";
+};
+
+const publicRegistrationSearchResultLimit = 20;
+
 function uniqueById<TRecord extends { id: string }>(records: TRecord[]) {
   return [...new Map(records.map((record) => [record.id, record])).values()];
+}
+
+function normalizeLookupText(value?: string | null) {
+  return (value ?? "").trim().replace(/\s+/g, " ").slice(0, 120);
+}
+
+function normalizeSearchText(value?: string | null) {
+  return normalizeLookupText(value).toLowerCase();
+}
+
+function extractInviteCode(value?: string | null) {
+  const normalizedValue = normalizeLookupText(value);
+
+  if (!normalizedValue) {
+    return "";
+  }
+
+  try {
+    const parsedUrl = new URL(normalizedValue);
+    const joinSegmentIndex = parsedUrl.pathname
+      .split("/")
+      .findIndex((segment) => segment.toLowerCase() === "join");
+
+    if (joinSegmentIndex >= 0) {
+      return decodeURIComponent(
+        parsedUrl.pathname.split("/")[joinSegmentIndex + 1] ?? "",
+      ).trim();
+    }
+  } catch {
+    // Plain invite codes are expected here too.
+  }
+
+  return normalizedValue.replace(/^\/?join\//i, "").trim();
+}
+
+function getInviteSearchHaystack(model: RegistrationInviteReadModel) {
+  return [
+    model.invite?.inviteCode,
+    model.invite?.code,
+    model.invite?.title,
+    model.invite?.description,
+    model.organization?.id,
+    model.organization?.name,
+    model.organization?.slug,
+    model.team?.id,
+    model.team?.name,
+    model.team?.division,
+    model.team?.season,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function inviteMatchesQuery(model: RegistrationInviteReadModel, query: string) {
+  const tokens = normalizeSearchText(query)
+    .split(" ")
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 2)
+    .slice(0, 6);
+
+  if (tokens.length === 0) {
+    return false;
+  }
+
+  const haystack = getInviteSearchHaystack(model);
+
+  return tokens.every((token) => haystack.includes(token));
 }
 
 async function getInviteRegistrationCount(invite: NormalizedRegistrationInvite) {
@@ -162,6 +243,61 @@ export async function getPublicRegistrationInviteReadModels(): Promise<
 
     return [];
   }
+}
+
+export async function lookupPublicRegistrationInviteReadModels({
+  code,
+  query,
+}: {
+  code?: string | null;
+  query?: string | null;
+}): Promise<PublicRegistrationInviteLookup> {
+  if (!getFirebaseAdminConfig()) {
+    return {
+      models: [],
+      query: "",
+      reason: "service-unavailable",
+    };
+  }
+
+  const inviteCode = extractInviteCode(code);
+  const searchQuery = normalizeLookupText(query);
+
+  if (inviteCode) {
+    const model = await getRegistrationInviteReadModelByCode(inviteCode);
+
+    return {
+      models: model.availability.available && model.invite ? [model] : [],
+      query: inviteCode,
+      reason: model.availability.available ? "searched" : "code-not-found",
+    };
+  }
+
+  if (!searchQuery) {
+    return {
+      models: [],
+      query: "",
+      reason: "empty",
+    };
+  }
+
+  if (normalizeSearchText(searchQuery).length < 2) {
+    return {
+      models: [],
+      query: searchQuery,
+      reason: "query-too-short",
+    };
+  }
+
+  const models = await getPublicRegistrationInviteReadModels();
+
+  return {
+    models: models
+      .filter((model) => inviteMatchesQuery(model, searchQuery))
+      .slice(0, publicRegistrationSearchResultLimit),
+    query: searchQuery,
+    reason: "searched",
+  };
 }
 
 export async function getRegistrationInviteReadModelByCode(
