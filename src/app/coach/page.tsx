@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import CoachTeamWorkspaceCreateForm from "../components/CoachTeamWorkspaceCreateForm";
 import CoachTeamCard from "../components/CoachTeamCard";
 import SessionControls from "../components/SessionControls";
 import {
@@ -9,7 +10,6 @@ import {
 import { getCoachHomeReadModel } from "../data/coachRead.server";
 import { getCurrentAuthSession } from "../data/currentUser.server";
 import { getOrganizationContext } from "../data/organizationContext.server";
-import { getLandingRouteForClaims } from "../infrastructure/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -107,10 +107,6 @@ export default async function CoachHome() {
 
   if (!session) {
     redirect("/login");
-  }
-
-  if (session.claims.role !== "coach") {
-    redirect(getLandingRouteForClaims(session.claims));
   }
 
   const {
@@ -267,25 +263,44 @@ export default async function CoachHome() {
                     No team assigned yet.
                   </p>
                   <p className="mt-3">
-                    An admin needs to add this coach account to a team before
-                    roster, attendance, schedule, and parent contact tools
-                    appear.
+                    Create your own team workspace, or have an organization add
+                    this coach account to one of their teams.
                   </p>
-                  <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      Coach login email
-                    </p>
-                    <p className="mt-2 break-words font-bold text-slate-950">
-                      {currentCoach.email ||
-                        session.user.email ||
-                        "Not available"}
-                    </p>
+
+                  <div className="mt-4">
+                    <CoachTeamWorkspaceCreateForm />
                   </div>
-                  <p className="mt-3 text-xs leading-5 text-slate-500">
-                    Admin path: open the organization, choose a team, then use
-                    Players & Coaches &gt; Coaches &gt; Add coach with that
-                    exact login email.
-                  </p>
+
+                  <details className="group mt-4 rounded-md border border-slate-200 bg-slate-50">
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
+                      <span>
+                        <span className="block font-black text-slate-950">
+                          Already part of an organization?
+                        </span>
+                        <span className="mt-1 block text-xs font-semibold text-slate-500">
+                          Use this when another admin owns the workspace.
+                        </span>
+                      </span>
+                      <span className="text-2xl font-black text-blue-600 transition group-open:rotate-90">
+                        &rsaquo;
+                      </span>
+                    </summary>
+                    <div className="border-t border-slate-200 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Coach login email
+                      </p>
+                      <p className="mt-2 break-words font-bold text-slate-950">
+                        {currentCoach.email ||
+                          session.user.email ||
+                          "Not available"}
+                      </p>
+                      <p className="mt-3 text-xs leading-5 text-slate-500">
+                        Admin path: open the organization, choose a team, then
+                        use Players & Coaches &gt; Coaches &gt; Add coach with
+                        that exact login email.
+                      </p>
+                    </div>
+                  </details>
                 </div>
               )}
 

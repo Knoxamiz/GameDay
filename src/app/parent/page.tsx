@@ -34,7 +34,6 @@ import {
   hasPendingParentLifecycleRequest,
   isParentEventEligibleRegistration,
 } from "../data/registrations";
-import { getLandingRouteForClaims } from "../infrastructure/auth";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 
 export const dynamic = "force-dynamic";
@@ -132,10 +131,6 @@ export default async function ParentHome() {
 
   if (!session) {
     redirect("/login");
-  }
-
-  if (session.claims.role !== "parent") {
-    redirect(getLandingRouteForClaims(session.claims));
   }
 
   const currentUser = await getCurrentParentUser();

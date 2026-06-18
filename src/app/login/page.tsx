@@ -1,11 +1,7 @@
 import { redirect } from "next/navigation";
-import MvpNav from "../components/MvpNav";
 import ParentLoginForm from "../components/ParentLoginForm";
 import { getCurrentAuthSession } from "../data/currentUser.server";
-import {
-  getLandingRouteForSession,
-  resolveSessionAccessRole,
-} from "../data/sessionAccess.server";
+import { getLandingRouteForSession } from "../data/sessionAccess.server";
 
 export const dynamic = "force-dynamic";
 
@@ -13,23 +9,20 @@ export default async function LoginPage() {
   const session = await getCurrentAuthSession();
 
   if (session) {
-    const role = await resolveSessionAccessRole(session);
-
-    if (role !== "authenticated") {
-      redirect(await getLandingRouteForSession(session, role));
-    }
+    redirect(await getLandingRouteForSession(session));
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <section className="mx-auto max-w-md px-5 py-6">
-        <MvpNav />
-
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-          <h1 className="text-3xl font-bold">GameDay</h1>
-          <p className="mt-3 text-sm text-slate-300">
-            Sign in with your GameDay account. Your verified role and active
-            organization memberships determine the access you receive.
+    <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
+      <section className="mx-auto max-w-md px-5 py-8">
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-xs font-black uppercase text-blue-700">
+            GameDay Account
+          </p>
+          <h1 className="mt-1 text-3xl font-black tracking-tight">Sign in</h1>
+          <p className="mt-3 text-sm font-semibold leading-5 text-slate-600">
+            Use one GameDay account. After sign-in, we open the parent, coach,
+            or admin workspace tied to this account.
           </p>
         </div>
 

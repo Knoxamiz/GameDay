@@ -68,7 +68,7 @@ export async function getCurrentParentUser(): Promise<CurrentParentUser> {
   const parentId = getLiveParentId(session);
   const parentUid = getLiveParentUid(session);
 
-  if (session?.claims.role === "parent" && parentId && parentUid) {
+  if (session && parentId && parentUid) {
     return {
       athleteIds: session.claims.athleteIds,
       organizationIds: session.claims.organizationIds,

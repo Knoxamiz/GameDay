@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createFirebaseClientAuthAdapter } from "../infrastructure/firebaseClientAuth";
 
-type SessionControlsRole = "parent" | "coach" | "admin";
+type SessionControlsRole = "account" | "parent" | "coach" | "admin";
 
 type SessionControlsProps = {
   compact?: boolean;
@@ -12,6 +12,10 @@ type SessionControlsProps = {
 };
 
 function getRoleLabel(role: SessionControlsRole) {
+  if (role === "account") {
+    return "GameDay";
+  }
+
   if (role === "admin") {
     return "Admin";
   }

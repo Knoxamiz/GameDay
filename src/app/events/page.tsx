@@ -68,7 +68,7 @@ export default async function EventsHome({
   const role = await resolveSessionAccessRole(session);
 
   if (role === "authenticated") {
-    redirect("/login");
+    redirect("/account");
   }
   const resolvedSearchParams = await searchParams;
   const requestedOrganizationId = getRequestedOrganizationId(

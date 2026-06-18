@@ -35,7 +35,7 @@ export default async function EventDetailsPage({
   const role = await resolveSessionAccessRole(session);
 
   if (role === "authenticated") {
-    redirect("/login");
+    redirect("/account");
   }
   const activeContext =
     role === "admin"

@@ -200,7 +200,7 @@ async function getAssignmentCoachProfile(
 export async function resolveCoachAssignmentScope(
   session: AuthSession | null,
 ): Promise<CoachAssignmentScope> {
-  if (session?.claims.role !== "coach") {
+  if (!session) {
     return getEmptyCoachScope(session);
   }
 
@@ -231,6 +231,10 @@ export async function resolveCoachAssignmentScope(
       source: "legacy-coach",
       teamIds: [],
     };
+  }
+
+  if (session.claims.role !== "coach") {
+    return getEmptyCoachScope(session);
   }
 
   const fallbackCoach = getSessionCoachFallback(session);

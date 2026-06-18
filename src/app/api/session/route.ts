@@ -40,10 +40,6 @@ function getCookieOptions(maxAge: number) {
 async function getSessionResponseBody(session: AuthSession) {
   const role = await resolveSessionAccessRole(session);
 
-  if (role === "authenticated") {
-    return null;
-  }
-
   return {
     adminId: session.claims.adminId,
     coachId: session.claims.coachId,
@@ -115,13 +111,6 @@ export async function GET(request: NextRequest) {
 
     const responseBody = await getSessionResponseBody(session);
 
-    if (!responseBody) {
-      return NextResponse.json({
-        configured: true,
-        status: "signed-out",
-      });
-    }
-
     return NextResponse.json({
       configured: true,
       ...responseBody,
@@ -179,8 +168,7 @@ export async function POST(request: NextRequest) {
     if (!session) {
       return NextResponse.json(
         {
-          error:
-            "This session endpoint requires a valid parent, coach, or admin role.",
+          error: "This session endpoint requires a valid GameDay sign-in.",
         },
         { status: 403 },
       );
@@ -208,16 +196,6 @@ export async function POST(request: NextRequest) {
     }
 
     const responseBody = await getSessionResponseBody(session);
-
-    if (!responseBody) {
-      return NextResponse.json(
-        {
-          error:
-            "This account does not have an active GameDay role or organization membership.",
-        },
-        { status: 403 },
-      );
-    }
 
     const response = NextResponse.json({
       ...responseBody,

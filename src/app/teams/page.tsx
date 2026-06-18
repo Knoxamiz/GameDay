@@ -79,7 +79,7 @@ export default async function TeamsHome({
   const role = await resolveSessionAccessRole(session);
 
   if (role === "authenticated") {
-    redirect("/login");
+    redirect("/account");
   }
   const requestedOrganizationId = getRequestedOrganizationId(
     (await searchParams)?.organizationId,

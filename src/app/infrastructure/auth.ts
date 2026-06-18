@@ -146,6 +146,6 @@ export function canAccessAthlete(claims: AuthRoleClaims, athleteId: string) {
 
 export function getLandingRouteForClaims(claims: AuthRoleClaims) {
   return claims.role === "authenticated"
-    ? "/login"
+    ? "/account"
     : getRoleDefinition(claims.role).landingRoute;
 }

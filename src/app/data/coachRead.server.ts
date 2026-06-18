@@ -71,12 +71,6 @@ async function getAuthSessionSource(): Promise<AuthSessionSource> {
   };
 }
 
-function isValidCoachSession(
-  session: AuthSession | null,
-): session is AuthSession {
-  return session?.claims.role === "coach";
-}
-
 function uniqueById<TRecord extends { id: string }>(records: TRecord[]) {
   return [...new Map(records.map((record) => [record.id, record])).values()];
 }
@@ -201,7 +195,7 @@ export async function getCoachHomeReadModel(): Promise<CoachHomeReadModel> {
     const authProvider = new FirebaseAdminAuthProvider();
     const session = await authProvider.verifySession(await getAuthSessionSource());
 
-    if (!isValidCoachSession(session)) {
+    if (!session) {
       return getEmptyCoachHomeReadModel(session);
     }
 

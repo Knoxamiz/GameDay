@@ -33,7 +33,7 @@ export default async function TeamDetailsPage({
   const role = await resolveSessionAccessRole(session);
 
   if (role === "authenticated") {
-    redirect("/login");
+    redirect("/account");
   }
   const activeContext =
     role === "admin"

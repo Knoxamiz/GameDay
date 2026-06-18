@@ -1,5 +1,11 @@
 export type OrganizationWorkspaceType = "organization" | "single_team";
 export type OrganizationLifecycleStatus = "active" | "archived";
+export type OrganizationPlanTier = "club" | "starter" | "team_pro";
+export type OrganizationBillingStatus =
+  | "active"
+  | "not_configured"
+  | "past_due"
+  | "trialing";
 
 export type Organization = {
   adminIds?: string[];
@@ -14,6 +20,9 @@ export type Organization = {
   organizationId?: string;
   ownerUid?: string;
   ownerUids?: string[];
+  billingOwnerUid?: string;
+  billingStatus?: OrganizationBillingStatus;
+  planTier?: OrganizationPlanTier;
   slug?: string;
   status: {
     registeredPlayers: number;

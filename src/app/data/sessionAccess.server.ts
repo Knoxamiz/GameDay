@@ -3,10 +3,7 @@ import {
   resolveAdminOrganizationScope,
 } from "./adminOrganizationScope.server";
 import type { AuthSession } from "../infrastructure/auth";
-import {
-  getRoleDefinition,
-  type AuthSessionRole,
-} from "../infrastructure/auth";
+import { type AuthSessionRole } from "../infrastructure/auth";
 
 export async function resolveSessionAccessRole(
   session: AuthSession,
@@ -20,15 +17,8 @@ export async function getLandingRouteForSession(
   session: AuthSession,
   resolvedRole?: AuthSessionRole,
 ) {
-  const role = resolvedRole ?? (await resolveSessionAccessRole(session));
+  void session;
+  void resolvedRole;
 
-  if (role === "authenticated") {
-    return "/login";
-  }
-
-  if (role === "admin") {
-    return "/admin";
-  }
-
-  return getRoleDefinition(role).landingRoute;
+  return "/account";
 }

@@ -43,7 +43,10 @@ const utilityItemsByRole: Record<
   MvpNavRole,
   { href: string; label: string }[]
 > = {
-  authenticated: [{ href: "/login", label: "Sign In" }],
+  authenticated: [
+    { href: "/account", label: "Account" },
+    { href: "/registration", label: "Find Team" },
+  ],
   parent: [
     { href: "/parent", label: "Athletes" },
     { href: "/events", label: "Schedule" },
