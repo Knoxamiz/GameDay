@@ -85,11 +85,20 @@ function CardShell({
   onClick: () => void;
   title: string;
 }) {
-  const toneClass = {
-    blue: "bg-blue-50 text-blue-600",
-    green: "bg-emerald-50 text-emerald-600",
-    orange: "bg-orange-50 text-orange-500",
-    purple: "bg-violet-50 text-violet-600",
+  const iconClass = {
+    blue: "bg-blue-50 text-blue-600 ring-blue-100",
+    green: "bg-emerald-50 text-emerald-600 ring-emerald-100",
+    orange: "bg-orange-50 text-orange-500 ring-orange-100",
+    purple: "bg-violet-50 text-violet-600 ring-violet-100",
+  }[iconTone];
+  const cardClass = {
+    blue: "border-blue-100 bg-[linear-gradient(135deg,#ffffff_0%,#eff6ff_100%)] hover:border-blue-300",
+    green:
+      "border-emerald-100 bg-[linear-gradient(135deg,#ffffff_0%,#ecfdf5_100%)] hover:border-emerald-300",
+    orange:
+      "border-orange-100 bg-[linear-gradient(135deg,#ffffff_0%,#fff7ed_100%)] hover:border-orange-300",
+    purple:
+      "border-violet-100 bg-[linear-gradient(135deg,#ffffff_0%,#f5f3ff_100%)] hover:border-violet-300",
   }[iconTone];
   const arrowClass = {
     blue: "text-blue-600",
@@ -97,30 +106,42 @@ function CardShell({
     orange: "text-orange-500",
     purple: "text-violet-600",
   }[iconTone];
+  const railClass = {
+    blue: "bg-blue-600",
+    green: "bg-emerald-600",
+    orange: "bg-orange-500",
+    purple: "bg-violet-600",
+  }[iconTone];
 
   return (
     <button
       aria-expanded={isActive}
-      className={`group flex min-h-32 w-full items-center gap-5 rounded-lg border bg-white px-5 py-5 text-left shadow-[0_12px_26px_rgba(15,23,42,0.08)] transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_18px_36px_rgba(15,23,42,0.12)] sm:px-6 ${
-        isActive ? "border-blue-300 ring-4 ring-blue-100" : "border-slate-200"
+      className={`group relative flex min-h-28 w-full overflow-hidden rounded-lg border px-4 py-4 text-left shadow-[0_14px_30px_rgba(15,23,42,0.09)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_40px_rgba(15,23,42,0.13)] sm:px-5 ${cardClass} ${
+        isActive ? "ring-4 ring-blue-100" : ""
       }`}
       onClick={onClick}
       type="button"
     >
+      <span className={`absolute inset-x-0 top-0 h-1 ${railClass}`} />
+      <span className={`absolute inset-0 ${cardClass}`} />
+      <span className="relative flex w-full items-center gap-4">
       <span
-        className={`flex size-20 shrink-0 items-center justify-center rounded-full sm:size-24 ${toneClass}`}
+        className={`flex size-16 shrink-0 items-center justify-center rounded-lg ring-1 sm:size-20 ${iconClass}`}
       >
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-xl font-bold leading-tight text-[#071635] sm:text-2xl">
+        <span className="block text-lg font-bold leading-tight text-[#071635] sm:text-xl">
           {title}
         </span>
-        <span className="mt-2 block max-w-md text-base leading-snug text-slate-600 sm:text-lg">
+        <span className="mt-1.5 block max-w-md text-sm leading-snug text-slate-600 sm:text-base">
           {body}
         </span>
       </span>
-      <ChevronRightIcon className={`size-7 shrink-0 sm:size-8 ${arrowClass}`} />
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/80 shadow-sm ring-1 ring-slate-200 transition group-hover:translate-x-0.5">
+        <ChevronRightIcon className={`size-5 ${arrowClass}`} />
+      </span>
+      </span>
     </button>
   );
 }
@@ -404,15 +425,18 @@ export default function AdminContextHome({
   }
 
   return (
-    <main className="min-h-screen bg-[#fafbfe] text-[#071635]">
-      <header className="border-b border-slate-200 bg-white">
+    <main className="relative min-h-screen overflow-hidden bg-[linear-gradient(135deg,#eef6ff_0%,#f8fbff_46%,#f9fafb_100%)] text-[#071635]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[linear-gradient(180deg,rgba(37,99,235,0.14),transparent)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-24 h-px bg-[linear-gradient(90deg,transparent,rgba(37,99,235,0.28),transparent)]" />
+
+      <header className="relative z-10 border-b border-white/70 bg-white/85 shadow-sm backdrop-blur">
         <div className="flex min-h-16 items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-5">
             <Link className="flex items-center gap-2.5" href="/admin">
               <ShieldLogoIcon className="size-8" />
               <span className="text-xl font-bold tracking-tight">GameDay</span>
             </Link>
-            <span className="border-b-2 border-blue-600 px-1.5 py-5 text-sm font-semibold text-blue-600">
+            <span className="rounded-full bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-700 ring-1 ring-blue-100">
               Admin
             </span>
           </div>
@@ -457,17 +481,39 @@ export default function AdminContextHome({
         </div>
       </header>
 
-      <section className="mx-auto max-w-[1040px] px-4 pb-10 pt-10 sm:px-6">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Welcome to GameDay Admin
-          </h1>
-          <p className="mt-3 text-xl text-slate-500 sm:text-2xl">
-            What would you like to manage today?
-          </p>
+      <section className="relative z-10 mx-auto max-w-[1040px] px-4 pb-10 pt-7 sm:px-6">
+        <div className="overflow-hidden rounded-lg border border-slate-900/10 bg-[#061431] px-5 py-5 text-white shadow-[0_22px_52px_rgba(15,23,42,0.22)] sm:px-7">
+          <div className="relative">
+            <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(37,99,235,0.26),transparent_55%)]" />
+            <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-200">
+                  Admin command center
+                </p>
+                <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+                  Welcome to GameDay Admin
+                </h1>
+                <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-blue-100/80 sm:text-base">
+                  Choose the workspace path first. Everything else opens inside
+                  that organization or team.
+                </p>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-center text-xs font-bold text-blue-100">
+                <span className="rounded-md border border-white/10 bg-white/10 px-3 py-2">
+                  Orgs
+                </span>
+                <span className="rounded-md border border-white/10 bg-white/10 px-3 py-2">
+                  Teams
+                </span>
+                <span className="rounded-md border border-white/10 bg-white/10 px-3 py-2">
+                  Setup
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="mt-8 grid items-start gap-4 lg:grid-cols-2">
+        <div className="mt-5 grid items-start gap-4 lg:grid-cols-2">
           <div className="space-y-3">
             <CardShell
               body="Manage an existing club, league, or multi-team organization."
@@ -771,8 +817,8 @@ export default function AdminContextHome({
           </div>
         </div>
 
-        <footer className="pt-12 text-center">
-          <p className="flex items-center justify-center gap-3 text-sm text-slate-500">
+        <footer className="pt-10 text-center">
+          <p className="flex items-center justify-center gap-3 text-sm text-slate-600">
             <LockIcon className="size-5" />
             <span>Your access is based on your verified role and memberships.</span>
           </p>
