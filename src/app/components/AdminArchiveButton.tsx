@@ -65,7 +65,7 @@ export default function AdminArchiveButton({
   return (
     <span className="inline-flex flex-col items-start gap-2">
       <button
-        className="rounded-md border border-red-200 px-3 py-2 text-sm font-black text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+        className="rounded-md border border-red-300/30 bg-red-500/10 px-3 py-2 text-sm font-black text-red-100 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
         disabled={isSaving}
         onClick={() => void archiveRecord()}
         type="button"
@@ -73,10 +73,10 @@ export default function AdminArchiveButton({
         {isSaving ? "Removing..." : buttonLabel}
       </button>
       {message && (
-        <span className="text-xs font-semibold text-blue-700">{message}</span>
+        <span className="text-xs font-semibold text-blue-200">{message}</span>
       )}
       {error && (
-        <span className="text-xs font-semibold text-red-700">{error}</span>
+        <span className="text-xs font-semibold text-red-200">{error}</span>
       )}
     </span>
   );

@@ -215,10 +215,10 @@ function ShellLink({
   return (
     <Link
       aria-current={active ? "page" : undefined}
-      className={`flex items-center justify-center gap-0 rounded-md px-3 py-2.5 text-sm font-semibold lg:justify-start lg:gap-3 ${
+      className={`flex items-center justify-center gap-0 rounded-lg px-3 py-2.5 text-sm font-bold lg:justify-start lg:gap-3 ${
         active
-          ? "bg-blue-50 text-blue-700"
-          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          ? "bg-blue-600 text-white shadow-[0_0_24px_rgba(37,99,235,0.22)]"
+          : "text-slate-300 hover:bg-white/10 hover:text-white"
       }`}
       href={withActiveOrganization(href, organizationId)}
     >
@@ -236,11 +236,11 @@ function StatusPill({
   tone?: "blue" | "green" | "orange" | "red" | "slate";
 }) {
   const toneClass = {
-    blue: "bg-blue-50 text-blue-700",
-    green: "bg-emerald-50 text-emerald-700",
-    orange: "bg-orange-50 text-orange-700",
-    red: "bg-red-50 text-red-700",
-    slate: "bg-slate-100 text-slate-600",
+    blue: "bg-blue-500/15 text-blue-100 ring-1 ring-blue-300/20",
+    green: "bg-emerald-500/15 text-emerald-100 ring-1 ring-emerald-300/20",
+    orange: "bg-orange-500/15 text-orange-100 ring-1 ring-orange-300/20",
+    red: "bg-red-500/15 text-red-100 ring-1 ring-red-300/20",
+    slate: "bg-white/10 text-slate-200 ring-1 ring-white/10",
   }[tone];
 
   return (
@@ -252,7 +252,7 @@ function StatusPill({
 
 function EmptyState({ children }: { children: string }) {
   return (
-    <p className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+    <p className="rounded-md border border-dashed border-white/15 bg-white/[0.04] p-4 text-sm font-semibold text-slate-400">
       {children}
     </p>
   );
@@ -429,20 +429,21 @@ export default function AdminOrganizationWorkspaceHome({
   const scheduleTeamMap = new Map(readModel.teams.map((team) => [team.id, team]));
 
   return (
-    <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
+    <main className="relative min-h-screen overflow-hidden bg-[#020817] text-white">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_84%_12%,rgba(37,99,235,0.26),transparent_30%),linear-gradient(115deg,#020817_0%,#061431_58%,#0b2447_100%)]" />
       <div className="flex min-h-screen">
-        <aside className="block w-14 shrink-0 border-r border-slate-200 bg-white lg:w-60">
-          <div className="flex h-16 items-center justify-center gap-2 border-b border-slate-200 px-2 lg:justify-start lg:px-5">
+        <aside className="relative z-10 block w-14 shrink-0 border-r border-white/10 bg-slate-950/70 backdrop-blur lg:w-60">
+          <div className="flex h-16 items-center justify-center gap-2 border-b border-white/10 px-2 lg:justify-start lg:px-5">
             <Link
               aria-label="Back to Admin welcome"
-              className="flex items-center gap-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex items-center gap-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
               href="/admin"
               title="Back to Admin welcome"
             >
-              <span className="flex size-8 items-center justify-center rounded-md bg-blue-600 text-sm font-black text-white">
+              <span className="flex size-8 items-center justify-center rounded-md bg-blue-600 text-sm font-black text-white shadow-[0_0_24px_rgba(37,99,235,0.35)]">
                 G
               </span>
-              <span className="hidden font-black text-slate-950 lg:inline">
+              <span className="hidden font-black text-white lg:inline">
                 GameDay
               </span>
             </Link>
@@ -461,7 +462,7 @@ export default function AdminOrganizationWorkspaceHome({
           </nav>
           <div className="absolute bottom-4 hidden px-3 lg:block">
             <Link
-              className="rounded-md px-3 py-2 text-sm font-semibold text-slate-500 hover:bg-slate-100"
+              className="rounded-md px-3 py-2 text-sm font-bold text-slate-300 hover:bg-white/10 hover:text-white"
               href="/admin"
             >
               Switch workspace
@@ -469,18 +470,18 @@ export default function AdminOrganizationWorkspaceHome({
           </div>
         </aside>
 
-        <div className="min-w-0 flex-1">
-          <header className="flex min-h-16 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 sm:px-6">
+        <div className="relative z-10 min-w-0 flex-1">
+          <header className="flex min-h-16 items-center justify-between gap-3 border-b border-white/10 bg-slate-950/55 px-4 backdrop-blur sm:px-6">
             <div className="flex min-w-0 items-center gap-3">
               <BackButton fallbackHref={backFallbackHref} />
-              <p className="truncate text-sm font-semibold text-slate-500">
+              <p className="truncate text-sm font-bold text-slate-300">
                 Organizations / {organization.name}
               </p>
             </div>
             <div className="flex items-center gap-3">
               {organizations.length > 1 && (
                 <Link
-                  className="rounded-md border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                  className="rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm font-bold text-white hover:bg-white/10"
                   href="/admin"
                 >
                   Switch
@@ -488,14 +489,14 @@ export default function AdminOrganizationWorkspaceHome({
               )}
               <SessionControls compact role="admin" />
               <div className="hidden items-center gap-3 sm:flex">
-                <span className="flex size-9 items-center justify-center rounded-full bg-blue-100 text-sm font-black text-blue-700">
+                <span className="flex size-9 items-center justify-center rounded-full border border-blue-300/30 bg-blue-500/15 text-sm font-black text-blue-100">
                   {getInitial(displayName)}
                 </span>
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-bold">
                     {displayName}
                   </span>
-                  <span className="block text-xs text-slate-500">Admin</span>
+                  <span className="block text-xs text-slate-400">Admin</span>
                 </span>
               </div>
             </div>
@@ -503,21 +504,21 @@ export default function AdminOrganizationWorkspaceHome({
 
           <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
             <div>
-              <h1 className="text-3xl font-black tracking-tight">
+              <h1 className="text-3xl font-black tracking-tight text-white">
                 {pageTitle}
               </h1>
-              <p className="mt-1 text-sm font-semibold text-slate-500">
+              <p className="mt-1 text-sm font-semibold text-slate-300">
                 {pageSubtitle}
               </p>
             </div>
 
             {currentSection === "overview" && (
               <div className="mt-5 grid gap-4 lg:grid-cols-2">
-                <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                <section className="rounded-xl border border-white/10 bg-slate-950/70 p-4 shadow-[0_18px_42px_rgba(0,0,0,0.24)] backdrop-blur">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <h2 className="text-lg font-black">Announcements</h2>
-                      <p className="mt-1 text-sm text-slate-500">
+                      <p className="mt-1 text-sm text-slate-400">
                         New announcements and organization updates.
                       </p>
                     </div>
@@ -526,7 +527,7 @@ export default function AdminOrganizationWorkspaceHome({
                         {`${recentAnnouncements.length} new`}
                       </StatusPill>
                       <Link
-                        className="rounded-md bg-blue-600 px-3 py-2 text-sm font-black text-white hover:bg-blue-700"
+                        className="rounded-md bg-blue-600 px-3 py-2 text-sm font-black text-white hover:bg-blue-500"
                         href={withActiveOrganization(
                           "/admin/announcements?action=create#create-announcement",
                           activeOrganizationId,
@@ -542,28 +543,28 @@ export default function AdminOrganizationWorkspaceHome({
                         <p className="truncate text-sm font-black">
                           {recentAnnouncements[0].subject}
                         </p>
-                        <p className="mt-1 line-clamp-2 text-sm text-slate-500">
+                        <p className="mt-1 line-clamp-2 text-sm text-slate-400">
                           {recentAnnouncements[0].content}
                         </p>
                       </div>
                     ) : (
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-slate-400">
                         No announcements have been created for this organization.
                       </p>
                     )}
                   </div>
                 </section>
 
-                <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                <section className="rounded-xl border border-white/10 bg-slate-950/70 p-4 shadow-[0_18px_42px_rgba(0,0,0,0.24)] backdrop-blur">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h2 className="text-lg font-black">Alerts</h2>
-                      <p className="mt-1 text-sm text-slate-500">
+                      <p className="mt-1 text-sm text-slate-400">
                         Items that need attention.
                       </p>
                     </div>
                     <Link
-                      className="text-sm font-bold text-blue-600"
+                      className="text-sm font-bold text-blue-300"
                       href={withActiveOrganization(
                         "/admin/alerts",
                         activeOrganizationId,
@@ -575,7 +576,7 @@ export default function AdminOrganizationWorkspaceHome({
                   <div className="mt-3">
                     {alertItems[0] ? (
                       <Link
-                        className="flex items-center justify-between gap-3 rounded-md bg-orange-50 px-3 py-2 text-sm font-bold text-orange-800"
+                        className="flex items-center justify-between gap-3 rounded-md border border-orange-300/20 bg-orange-500/10 px-3 py-2 text-sm font-bold text-orange-100"
                         href={withActiveOrganization(
                           alertItems[0].href,
                           activeOrganizationId,
@@ -585,7 +586,7 @@ export default function AdminOrganizationWorkspaceHome({
                         <span>Open</span>
                       </Link>
                     ) : (
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-slate-400">
                         No active alerts for this organization.
                       </p>
                     )}
@@ -595,11 +596,11 @@ export default function AdminOrganizationWorkspaceHome({
             )}
 
             {currentSection === "alerts" ? (
-              <section className="mt-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+              <section className="mt-5 rounded-xl border border-white/10 bg-slate-950/70 p-5 shadow-[0_18px_42px_rgba(0,0,0,0.24)] backdrop-blur">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <h2 className="text-2xl font-black">Alerts</h2>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-slate-400">
                       Each alert opens the exact place where the issue can be
                       fixed or reviewed.
                     </p>
@@ -614,7 +615,7 @@ export default function AdminOrganizationWorkspaceHome({
                   ) : (
                     alertItems.map((item) => (
                       <Link
-                        className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 px-4 py-4 transition hover:border-blue-200 hover:bg-blue-50"
+                        className="flex items-center justify-between gap-4 rounded-lg border border-white/10 bg-white/[0.04] px-4 py-4 transition hover:border-blue-300/40 hover:bg-blue-500/10"
                         href={withActiveOrganization(
                           item.href,
                           activeOrganizationId,
@@ -625,10 +626,10 @@ export default function AdminOrganizationWorkspaceHome({
                           <span
                             className={`flex size-10 shrink-0 items-center justify-center rounded-full ${
                               item.tone === "red"
-                                ? "bg-red-50 text-red-600"
+                                ? "bg-red-500/15 text-red-100"
                                 : item.tone === "orange"
-                                  ? "bg-orange-50 text-orange-600"
-                                  : "bg-slate-100 text-slate-600"
+                                  ? "bg-orange-500/15 text-orange-100"
+                                  : "bg-white/10 text-slate-200"
                             }`}
                           >
                             <WorkspaceIcon className="size-5" name="alert" />
@@ -637,7 +638,7 @@ export default function AdminOrganizationWorkspaceHome({
                             <span className="block truncate text-base font-black">
                               {item.label}
                             </span>
-                            <span className="mt-1 block text-sm text-slate-500">
+                            <span className="mt-1 block text-sm text-slate-400">
                               Open the related workflow.
                             </span>
                           </span>
@@ -654,10 +655,10 @@ export default function AdminOrganizationWorkspaceHome({
                   activeOrganizationId={activeOrganizationId}
                 />
 
-                <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                <section className="rounded-xl border border-white/10 bg-slate-950/70 p-5 shadow-[0_18px_42px_rgba(0,0,0,0.24)] backdrop-blur">
                   <div>
                     <h2 className="text-2xl font-black">Announcements</h2>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-slate-400">
                       Recent organization updates.
                     </p>
                   </div>
@@ -666,20 +667,20 @@ export default function AdminOrganizationWorkspaceHome({
                     {recentAnnouncements.length > 0 ? (
                       recentAnnouncements.map((announcement) => (
                         <article
-                          className="rounded-md border border-slate-200 bg-slate-50 p-3"
+                          className="rounded-md border border-white/10 bg-white/[0.04] p-3"
                           key={announcement.id}
                         >
                           <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
                             <h3 className="text-sm font-black">
                               {announcement.subject}
                             </h3>
-                            <time className="text-xs font-semibold text-slate-500">
+                            <time className="text-xs font-semibold text-slate-400">
                               {new Date(
                                 announcement.timestamp,
                               ).toLocaleDateString()}
                             </time>
                           </div>
-                          <p className="mt-2 text-sm text-slate-600">
+                          <p className="mt-2 text-sm text-slate-300">
                             {announcement.content}
                           </p>
                         </article>
@@ -702,7 +703,7 @@ export default function AdminOrganizationWorkspaceHome({
                 />
 
                 <section
-                  className="scroll-mt-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+                  className="scroll-mt-4 rounded-xl border border-white/10 bg-slate-950/70 p-5 shadow-[0_18px_42px_rgba(0,0,0,0.24)] backdrop-blur"
                   id="review"
                 >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -710,7 +711,7 @@ export default function AdminOrganizationWorkspaceHome({
                       <h2 className="text-2xl font-black">
                         Registered Players
                       </h2>
-                      <p className="mt-1 text-sm text-slate-500">
+                      <p className="mt-1 text-sm text-slate-400">
                         Review submitted players and move approved athletes onto
                         the roster.
                       </p>
@@ -740,7 +741,7 @@ export default function AdminOrganizationWorkspaceHome({
               <div className="mt-5 space-y-4">
                 <div className="flex justify-end">
                   <a
-                    className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 shadow-sm hover:bg-slate-50"
+                    className="rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm font-black text-white shadow-sm hover:bg-white/10"
                     href={withActiveOrganization(
                       "/calendar.ics",
                       activeOrganizationId,
@@ -761,11 +762,11 @@ export default function AdminOrganizationWorkspaceHome({
                   teams={readModel.teams}
                 />
 
-                <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                <section className="rounded-xl border border-white/10 bg-slate-950/70 p-5 shadow-[0_18px_42px_rgba(0,0,0,0.24)] backdrop-blur">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <h2 className="text-2xl font-black">Upcoming Events</h2>
-                      <p className="mt-1 text-sm text-slate-500">
+                      <p className="mt-1 text-sm text-slate-400">
                         Published, draft, and canceled events still ahead.
                       </p>
                     </div>
@@ -814,7 +815,7 @@ export default function AdminOrganizationWorkspaceHome({
 
                         return (
                           <Link
-                            className="flex flex-col gap-3 rounded-lg border border-slate-200 px-4 py-3 transition hover:border-blue-200 hover:bg-blue-50 sm:flex-row sm:items-center sm:justify-between"
+                            className="flex flex-col gap-3 rounded-lg border border-white/10 bg-white/[0.04] px-4 py-3 transition hover:border-blue-300/40 hover:bg-blue-500/10 sm:flex-row sm:items-center sm:justify-between"
                             href={withActiveOrganization(
                               `/admin/schedule/${event.id}`,
                               activeOrganizationId,
@@ -822,17 +823,17 @@ export default function AdminOrganizationWorkspaceHome({
                             key={event.id}
                           >
                             <div className="min-w-0 sm:w-44 sm:shrink-0">
-                              <p className="text-sm font-black text-slate-950">
+                              <p className="text-sm font-black text-white">
                                 {getEventDateLabel(event)}
                               </p>
-                              <p className="mt-1 text-xs font-semibold text-slate-500">
+                              <p className="mt-1 text-xs font-semibold text-slate-400">
                                 {getEventTimeLabel(event)}
                               </p>
                             </div>
 
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-2">
-                                <p className="text-xs font-bold uppercase text-slate-500">
+                                <p className="text-xs font-bold uppercase text-slate-400">
                                   {event.type}
                                 </p>
                                 <StatusPill tone={statusTone}>
@@ -842,26 +843,26 @@ export default function AdminOrganizationWorkspaceHome({
                               <h3 className="mt-1 truncate text-base font-black">
                                 {event.title}
                               </h3>
-                              <p className="mt-1 truncate text-sm font-semibold text-slate-500">
+                              <p className="mt-1 truncate text-sm font-semibold text-slate-400">
                                 {eventTeams.map((team) => team?.name).join(", ") ||
                                   "Organization"}{" "}
                                 / {getEventLocationLabel(event)}
                               </p>
                             </div>
                             <div className="grid grid-cols-2 gap-2 text-sm sm:w-48 sm:shrink-0">
-                              <div className="rounded-md bg-slate-50 p-3">
-                                <p className="font-black text-slate-900">
+                              <div className="rounded-md bg-white/[0.06] p-3">
+                                <p className="font-black text-white">
                                   {attendance.attending}
                                 </p>
-                                <p className="mt-1 font-semibold text-slate-500">
+                                <p className="mt-1 font-semibold text-slate-400">
                                   attending
                                 </p>
                               </div>
-                              <div className="rounded-md bg-slate-50 p-3">
-                                <p className="font-black text-slate-900">
+                              <div className="rounded-md bg-white/[0.06] p-3">
+                                <p className="font-black text-white">
                                   {transportation.needsRide}
                                 </p>
-                                <p className="mt-1 font-semibold text-slate-500">
+                                <p className="mt-1 font-semibold text-slate-400">
                                   need ride
                                 </p>
                               </div>
@@ -899,11 +900,11 @@ export default function AdminOrganizationWorkspaceHome({
                   }
                 />
 
-                <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                <section className="rounded-xl border border-white/10 bg-slate-950/70 p-5 shadow-[0_18px_42px_rgba(0,0,0,0.24)] backdrop-blur">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <h2 className="text-2xl font-black">Current Teams</h2>
-                      <p className="mt-1 text-sm text-slate-500">
+                      <p className="mt-1 text-sm text-slate-400">
                         Open one team workspace.
                       </p>
                     </div>
@@ -921,11 +922,11 @@ export default function AdminOrganizationWorkspaceHome({
 
                         return (
                           <div
-                            className="flex flex-col gap-3 rounded-lg border border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+                            className="flex flex-col gap-3 rounded-lg border border-white/10 bg-white/[0.04] px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
                             key={team.id}
                           >
                             <Link
-                              className="flex min-w-0 flex-1 flex-col gap-3 transition hover:text-blue-700 sm:flex-row sm:items-center sm:justify-between"
+                              className="flex min-w-0 flex-1 flex-col gap-3 transition hover:text-blue-300 sm:flex-row sm:items-center sm:justify-between"
                               href={withActiveOrganization(
                                 `/admin/teams/${team.id}`,
                                 activeOrganizationId,
@@ -935,11 +936,11 @@ export default function AdminOrganizationWorkspaceHome({
                                 <span className="block truncate text-base font-black">
                                   {team.name}
                                 </span>
-                                <span className="mt-1 block truncate text-xs text-slate-500">
+                                <span className="mt-1 block truncate text-xs text-slate-400">
                                   {getTeamLabel(team) || "Team workspace"}
                                 </span>
                               </span>
-                              <span className="hidden items-center gap-2 text-xs font-bold text-slate-500 sm:flex">
+                              <span className="hidden items-center gap-2 text-xs font-bold text-slate-400 sm:flex">
                                 <span>{rosteredCount} rostered</span>
                                 <span>{coachCount} coaches</span>
                               </span>
@@ -951,7 +952,7 @@ export default function AdminOrganizationWorkspaceHome({
                                     ? getTeamStatusLabel(team)
                                     : "Needs coach"}
                                 </StatusPill>
-                                <span className="text-sm font-black text-blue-600">
+                                <span className="text-sm font-black text-blue-300">
                                   Open
                                 </span>
                               </span>
@@ -980,18 +981,18 @@ export default function AdminOrganizationWorkspaceHome({
             ) : currentSection === "teamDetails" ? (
               <section className="mt-5">
                 {!selectedTeam ? (
-                  <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                  <section className="rounded-xl border border-white/10 bg-slate-950/70 p-5 shadow-[0_18px_42px_rgba(0,0,0,0.24)] backdrop-blur">
                     <EmptyState>Team not found in this organization.</EmptyState>
                   </section>
                 ) : (
                   <div className="space-y-4">
-                    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                    <section className="rounded-xl border border-white/10 bg-slate-950/70 p-5 shadow-[0_18px_42px_rgba(0,0,0,0.24)] backdrop-blur">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div>
                           <h2 className="text-2xl font-black">
                             {selectedTeam.name}
                           </h2>
-                          <p className="mt-1 text-sm text-slate-500">
+                          <p className="mt-1 text-sm text-slate-400">
                             {getTeamLabel(selectedTeam) || "Team workspace"}
                           </p>
                         </div>
@@ -1023,24 +1024,24 @@ export default function AdminOrganizationWorkspaceHome({
                       </div>
 
                       <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                        <div className="rounded-md bg-slate-50 p-3">
-                          <p className="text-xs font-bold uppercase text-slate-500">
+                        <div className="rounded-md bg-white/[0.06] p-3">
+                          <p className="text-xs font-bold uppercase text-slate-400">
                             Rostered
                           </p>
                           <p className="mt-1 text-2xl font-black">
                             {selectedTeamRosteredRegistrations.length}
                           </p>
                         </div>
-                        <div className="rounded-md bg-slate-50 p-3">
-                          <p className="text-xs font-bold uppercase text-slate-500">
+                        <div className="rounded-md bg-white/[0.06] p-3">
+                          <p className="text-xs font-bold uppercase text-slate-400">
                             Coaches
                           </p>
                           <p className="mt-1 text-2xl font-black">
                             {selectedTeamCoachCount}
                           </p>
                         </div>
-                        <div className="rounded-md bg-slate-50 p-3">
-                          <p className="text-xs font-bold uppercase text-slate-500">
+                        <div className="rounded-md bg-white/[0.06] p-3">
+                          <p className="text-xs font-bold uppercase text-slate-400">
                             Next Event
                           </p>
                           <p className="mt-1 truncate text-sm font-black">
@@ -1058,26 +1059,26 @@ export default function AdminOrganizationWorkspaceHome({
                         rosteredRegistrations={selectedTeamRosteredRegistrations}
                         teamId={selectedTeam.id}
                       />
-                      <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                      <details className="group overflow-hidden rounded-xl border border-white/10 bg-slate-950/70 shadow-[0_18px_42px_rgba(0,0,0,0.24)] backdrop-blur">
                         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
                           <span>
-                            <span className="block text-lg font-black text-slate-950">
+                            <span className="block text-lg font-black text-white">
                               Next Event
                             </span>
-                            <span className="mt-1 block text-sm text-slate-500">
+                            <span className="mt-1 block text-sm text-slate-400">
                               {selectedTeamNextEvent
                                 ? selectedTeamNextEvent.title
                                 : "None scheduled"}
                             </span>
                           </span>
-                          <span className="text-2xl font-black text-blue-600 transition group-open:rotate-90">
+                          <span className="text-2xl font-black text-blue-300 transition group-open:rotate-90">
                             &rsaquo;
                           </span>
                         </summary>
-                        <div className="border-t border-slate-200 p-4">
+                        <div className="border-t border-white/10 p-4">
                           {selectedTeamNextEvent ? (
                             <Link
-                              className="block rounded-md border border-slate-200 p-4 transition hover:border-blue-200 hover:bg-blue-50"
+                              className="block rounded-md border border-white/10 bg-white/[0.04] p-4 transition hover:border-blue-300/40 hover:bg-blue-500/10"
                               href={withActiveOrganization(
                                 `/admin/schedule/${selectedTeamNextEvent.id}`,
                                 activeOrganizationId,
@@ -1086,7 +1087,7 @@ export default function AdminOrganizationWorkspaceHome({
                               <p className="font-black">
                                 {selectedTeamNextEvent.title}
                               </p>
-                              <p className="mt-2 text-sm text-slate-500">
+                              <p className="mt-2 text-sm text-slate-400">
                                 {getEventShortDateLabel(
                                   selectedTeamNextEvent,
                                 )}{" "}
@@ -1106,16 +1107,16 @@ export default function AdminOrganizationWorkspaceHome({
               </section>
             ) : (
             <>
-              <section className="mt-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+              <section className="mt-5 rounded-xl border border-white/10 bg-slate-950/70 p-5 shadow-[0_18px_42px_rgba(0,0,0,0.24)] backdrop-blur">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-2xl font-black">Current Teams</h2>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-slate-400">
                       Teams in this organization.
                     </p>
                   </div>
                   <Link
-                    className="text-sm font-bold text-blue-600"
+                    className="text-sm font-bold text-blue-300"
                     href={withActiveOrganization(
                       "/admin/teams",
                       activeOrganizationId,
@@ -1130,7 +1131,7 @@ export default function AdminOrganizationWorkspaceHome({
                   ) : (
                     activeTeams.slice(0, 6).map((team) => (
                       <Link
-                        className="flex items-center justify-between gap-3 rounded-md border border-slate-200 px-4 py-4 hover:bg-slate-50"
+                        className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/[0.04] px-4 py-4 hover:border-blue-300/40 hover:bg-blue-500/10"
                         href={withActiveOrganization(
                           `/admin/teams/${team.id}`,
                           activeOrganizationId,
@@ -1141,7 +1142,7 @@ export default function AdminOrganizationWorkspaceHome({
                           <span className="block truncate text-base font-black">
                             {team.name}
                           </span>
-                          <span className="mt-1 block truncate text-xs text-slate-500">
+                          <span className="mt-1 block truncate text-xs text-slate-400">
                             {getTeamLabel(team) || "Team workspace"} ·{" "}
                             {team.playerCount} members
                           </span>
@@ -1152,7 +1153,7 @@ export default function AdminOrganizationWorkspaceHome({
                   )}
                 </div>
                 <Link
-                  className="mt-4 inline-flex rounded-md px-2 py-1 text-sm font-bold text-blue-600 hover:bg-blue-50"
+                  className="mt-4 inline-flex rounded-md px-2 py-1 text-sm font-bold text-blue-300 hover:bg-white/10"
                   href={withActiveOrganization(
                     "/admin/teams#create-team",
                     activeOrganizationId,

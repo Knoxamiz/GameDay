@@ -24,7 +24,7 @@ export default function BackButton({
 
   return (
     <button
-      className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 shadow-sm hover:bg-slate-50"
+      className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm font-black text-white shadow-sm hover:bg-white/10"
       onClick={goBack}
       type="button"
     >
