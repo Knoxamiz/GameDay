@@ -5,11 +5,50 @@ import { getLandingRouteForSession } from "../data/sessionAccess.server";
 
 export const dynamic = "force-dynamic";
 
-export default async function LoginPage() {
+type LoginPageProps = {
+  searchParams?: Promise<{
+    intent?: string | string[];
+    next?: string | string[];
+  }>;
+};
+
+function getFirstParam(value?: string | string[]) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function getSafeNextPath(params?: {
+  intent?: string | string[];
+  next?: string | string[];
+}) {
+  const next = getFirstParam(params?.next);
+  const intent = getFirstParam(params?.intent);
+
+  if (next !== "/signup") {
+    return undefined;
+  }
+
+  const searchParams = new URLSearchParams();
+
+  if (
+    intent === "organization" ||
+    intent === "team" ||
+    intent === "parent"
+  ) {
+    searchParams.set("intent", intent);
+  }
+
+  return searchParams.size > 0
+    ? `/signup?${searchParams.toString()}`
+    : "/signup";
+}
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const resolvedSearchParams = await searchParams;
+  const nextPath = getSafeNextPath(resolvedSearchParams);
   const session = await getCurrentAuthSession();
 
   if (session) {
-    redirect(await getLandingRouteForSession(session));
+    redirect(nextPath ?? (await getLandingRouteForSession(session)));
   }
 
   return (
@@ -26,7 +65,7 @@ export default async function LoginPage() {
           </p>
         </div>
 
-        <ParentLoginForm />
+        <ParentLoginForm nextPath={nextPath} />
       </section>
     </main>
   );

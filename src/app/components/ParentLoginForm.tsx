@@ -14,7 +14,11 @@ type SessionResponse = {
   status?: "signed-in" | "signed-out";
 };
 
-export default function ParentLoginForm() {
+type ParentLoginFormProps = {
+  nextPath?: string;
+};
+
+export default function ParentLoginForm({ nextPath }: ParentLoginFormProps) {
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,7 +62,7 @@ export default function ParentLoginForm() {
         throw new Error("GameDay could not open this account.");
       }
 
-      window.location.assign(body.landingRoute);
+      window.location.assign(nextPath ?? body.landingRoute);
     } catch (loginError) {
       setError(
         loginError instanceof Error

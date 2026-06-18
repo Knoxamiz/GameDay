@@ -272,7 +272,7 @@ export async function createCoachSingleTeamWorkspace(
 
     const organization: Organization = {
       billingOwnerUid: session.user.id,
-      billingStatus: "not_configured",
+      billingStatus: "active",
       createdAt: now,
       createdByUid: session.user.id,
       id: organizationId,

@@ -1,7 +1,10 @@
 import { cookies, headers } from "next/headers";
 import { type AuthSessionSource } from "../infrastructure/auth";
 import { getFirebaseAdminConfig } from "../infrastructure/firebase";
-import { getFirebaseAdminUser } from "../infrastructure/firebaseAuth";
+import {
+  FirebaseAdminAuthProvider,
+  getFirebaseAdminUser,
+} from "../infrastructure/firebaseAuth";
 import {
   createFirestoreRepositories,
   runFirestoreTransaction,
@@ -353,7 +356,10 @@ function createSetupError(
 
 async function requireAdminSetupScope(
   source: AuthSessionSource,
-  options: { requireOrganizationScope?: boolean } = {},
+  options: {
+    allowAccountProvisioning?: boolean;
+    requireOrganizationScope?: boolean;
+  } = {},
 ) {
   if (!getFirebaseAdminConfig()) {
     createSetupError(
@@ -363,19 +369,25 @@ async function requireAdminSetupScope(
     );
   }
 
-  const session = await verifyAdminAccessSession(source);
+  const session = options.allowAccountProvisioning
+    ? await new FirebaseAdminAuthProvider().verifySession(source)
+    : await verifyAdminAccessSession(source);
 
   if (!session) {
     createSetupError(
-      "admin-session-required",
-      "Please sign in as an admin before managing setup.",
+      options.allowAccountProvisioning
+        ? "session-required"
+        : "admin-session-required",
+      options.allowAccountProvisioning
+        ? "Please sign in before creating a workspace."
+        : "Please sign in as an admin before managing setup.",
       403,
     );
   }
 
   const scope = await resolveAdminOrganizationScope(session);
 
-  if (!canUseAdminSetup(scope)) {
+  if (!options.allowAccountProvisioning && !canUseAdminSetup(scope)) {
     createSetupError(
       "admin-setup-capability-required",
       "This admin cannot manage organization setup.",
@@ -1121,6 +1133,8 @@ async function createProvisionedWorkspace(
   const organization: Organization = {
     adminIds: uniqueStringList([session.claims.adminId]),
     adminUids: [session.user.id],
+    billingOwnerUid: session.user.id,
+    billingStatus: workspaceType === "single_team" ? "active" : "not_configured",
     createdAt: now,
     createdByUid: session.user.id,
     id: organizationId,
@@ -1128,6 +1142,7 @@ async function createProvisionedWorkspace(
     organizationId,
     ownerUid: session.user.id,
     ownerUids: [session.user.id],
+    planTier: workspaceType === "single_team" ? "starter" : "club",
     slug: getSlugFromId(organizationId),
     status: getOrganizationStatus({
       coachAssignments: [],
@@ -2468,7 +2483,11 @@ export async function createAdminSetupRecord(
   payload: AdminSetupPayload,
   options: AdminSetupWriteOptions,
 ): Promise<AdminSetupResult> {
+  const isWorkspaceProvisioning =
+    payload.actionType === "organization-provisioning" ||
+    payload.actionType === "workspace-provisioning";
   const scope = await requireAdminSetupScope(options.sessionSource, {
+    allowAccountProvisioning: isWorkspaceProvisioning,
     requireOrganizationScope:
       payload.actionType !== "organization-provisioning" &&
       payload.actionType !== "workspace-provisioning",

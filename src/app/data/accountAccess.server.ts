@@ -152,15 +152,23 @@ export async function getAccountAccessReadModel(
   if (!hasEstablishedContext) {
     options.push(
       {
-        badge: "Coach",
-        description: "Create one team workspace and invite parents.",
-        href: "/coach",
-        id: "start-team",
-        kind: "start",
-        title: "Create a team",
+        badge: "Paid org",
+        description: "Create a club, league, or multi-team organization.",
+        href: "/signup?intent=organization",
+        id: "start-organization",
+        kind: "admin",
+        title: "Create organization",
       },
       {
-        badge: "Parent",
+        badge: "Free team",
+        description: "Create one team workspace and invite parents.",
+        href: "/signup?intent=team",
+        id: "start-team",
+        kind: "start",
+        title: "Create single team",
+      },
+      {
+        badge: "Free parent",
         description: "Find an open registration or use a team invite.",
         href: "/registration",
         id: "join-team",

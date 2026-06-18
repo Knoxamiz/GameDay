@@ -32,6 +32,11 @@ type FirebaseAuthCredential = {
 };
 
 type FirebaseClientAuthModule = {
+  createUserWithEmailAndPassword: (
+    auth: FirebaseClientAuth,
+    email: string,
+    password: string,
+  ) => Promise<FirebaseAuthCredential>;
   getAuth: (app: unknown) => FirebaseClientAuth;
   onAuthStateChanged: (
     auth: FirebaseClientAuth,
@@ -43,6 +48,10 @@ type FirebaseClientAuthModule = {
     password: string,
   ) => Promise<FirebaseAuthCredential>;
   signOut: (auth: FirebaseClientAuth) => Promise<void>;
+  updateProfile: (
+    user: FirebaseClientUser,
+    profile: { displayName?: string },
+  ) => Promise<void>;
 };
 
 async function loadFirebaseClientAuthModule() {
@@ -143,6 +152,40 @@ export async function signInFirebaseUserWithEmailPassword(
     credentials.email,
     credentials.password,
   );
+  const [idToken, session] = await Promise.all([
+    credential.user.getIdToken(),
+    buildSessionFromClientUser(credential.user),
+  ]);
+
+  return {
+    idToken,
+    session,
+  };
+}
+
+export async function createFirebaseUserWithEmailPassword(
+  credentials: AuthCredentials & { displayName?: string },
+) {
+  const app = await getFirebaseClientApp();
+  const firebaseAuth = await loadFirebaseClientAuthModule();
+
+  if (!app || !firebaseAuth) {
+    return null;
+  }
+
+  const auth = firebaseAuth.getAuth(app);
+  const credential = await firebaseAuth.createUserWithEmailAndPassword(
+    auth,
+    credentials.email,
+    credentials.password,
+  );
+
+  if (credentials.displayName) {
+    await firebaseAuth.updateProfile(credential.user, {
+      displayName: credentials.displayName,
+    });
+  }
+
   const [idToken, session] = await Promise.all([
     credential.user.getIdToken(),
     buildSessionFromClientUser(credential.user),

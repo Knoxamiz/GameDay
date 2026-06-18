@@ -42,24 +42,25 @@ const featureCards = [
 
 const getStartedCards = [
   {
-    cta: "Log in",
+    cta: "Create organization",
     description:
-      "Open the account, workspace, teams, and players already tied to you.",
-    href: "/login",
-    title: "I already have an account",
+      "Start a paid workspace for a club, league, or multi-team organization.",
+    href: "/signup?intent=organization",
+    title: "Organization",
   },
   {
-    cta: "Start after login",
+    cta: "Create team",
     description:
-      "Create one team or manage an organization once your account is verified.",
-    href: "/login",
-    title: "I run a team or organization",
+      "Start one free team workspace, roster players, and invite parents.",
+    href: "/signup?intent=team",
+    title: "Single team",
   },
   {
     cta: "Find registration",
-    description: "Use an existing team invite or find an open registration path.",
+    description:
+      "Parents join a real team or organization through registration.",
     href: "/registration",
-    title: "I am registering a player",
+    title: "Parent / Player",
   },
 ];
 
@@ -339,7 +340,7 @@ export default async function Home() {
             </Link>
             <Link
               className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-black text-white shadow-[0_0_30px_rgba(37,99,235,0.45)] hover:bg-blue-500 sm:px-7"
-              href="#get-started"
+              href="/signup"
             >
               Sign up
             </Link>
@@ -363,7 +364,7 @@ export default async function Home() {
           <div className="mt-8 flex flex-col gap-4 sm:flex-row">
             <Link
               className="inline-flex min-h-14 items-center justify-center gap-4 rounded-xl bg-blue-600 px-8 text-base font-black text-white shadow-[0_0_40px_rgba(37,99,235,0.45)] hover:bg-blue-500"
-              href="#get-started"
+              href="/signup"
             >
               Sign up
               <span aria-hidden="true">-&gt;</span>
@@ -432,11 +433,11 @@ export default async function Home() {
             Get Started
           </p>
           <h2 className="mt-2 text-3xl font-black text-white">
-            Choose the path that matches what you need today.
+            Choose who is creating the workspace.
           </h2>
           <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-slate-300">
-            Pick the closest job. Every option below opens a live GameDay path,
-            not a placeholder.
+            Organization owners create paid orgs. Coaches can create one free
+            team. Parents join through registration.
           </p>
         </div>
 
@@ -477,16 +478,16 @@ export default async function Home() {
         </article>
         <Link
           className="rounded-2xl border border-blue-400/20 bg-blue-600/10 p-6 shadow-2xl backdrop-blur hover:bg-blue-500/20"
-          href="/login"
+          href="/signup?intent=organization"
         >
           <h3 className="text-xl font-black text-white">
             Open organization tools
           </h3>
           <p className="mt-3 text-sm font-semibold leading-6 text-slate-300">
-            Sign in to create or manage an organization workspace.
+            Sign up to create or manage an organization workspace.
           </p>
           <span className="mt-5 inline-flex text-sm font-black text-blue-300">
-            Log in -&gt;
+            Start organization -&gt;
           </span>
         </Link>
       </section>
@@ -510,7 +511,7 @@ export default async function Home() {
         </article>
         <Link
           className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl backdrop-blur hover:border-blue-400/40 hover:bg-blue-500/10"
-          href="/login"
+          href="/signup?intent=team"
         >
           <h3 className="text-xl font-black text-white">
             Create or open a team
@@ -568,15 +569,15 @@ export default async function Home() {
           </h2>
           <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
             Use Log in if you already have an account. Use Find registration if
-            you are a parent joining a team. Public signup will become its own
-            path when account onboarding is ready.
+            you are a parent joining a team. Use Sign up when you need to create
+            a paid organization or free single-team workspace.
           </p>
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
             <Link
               className="inline-flex min-h-12 items-center justify-center rounded-xl bg-blue-600 px-6 text-sm font-black text-white hover:bg-blue-500"
-              href="/login"
+              href="/signup"
             >
-              Log in
+              Sign up
             </Link>
             <Link
               className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/20 px-6 text-sm font-black text-white hover:bg-white/10"
