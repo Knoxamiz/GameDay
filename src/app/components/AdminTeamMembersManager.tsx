@@ -281,7 +281,7 @@ export default function AdminTeamMembersManager({
   }
 
   return (
-    <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+    <details className="gd-card-light gd-card-interactive group overflow-hidden rounded-lg">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3">
         <span>
           <span className="block text-base font-black text-slate-950">
@@ -309,7 +309,7 @@ export default function AdminTeamMembersManager({
       )}
 
       <div className="space-y-2 border-t border-slate-200 p-3">
-        <details className="group/player overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <details className="gd-card-light group/player overflow-hidden rounded-lg">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3">
             <span>
               <span className="block font-black text-slate-950">Players</span>
@@ -322,7 +322,7 @@ export default function AdminTeamMembersManager({
             </span>
           </summary>
           <div className="border-t border-slate-200 p-3">
-            <details className="group/add-player overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+            <details className="group/add-player overflow-hidden rounded-lg border border-blue-100/70 bg-white/70">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
                 <span className="font-black text-slate-950">Add player</span>
                 <span className="text-xl font-black text-blue-600 transition group-open/add-player:rotate-90">
@@ -404,7 +404,7 @@ export default function AdminTeamMembersManager({
               ) : (
                 rosteredRegistrations.map((registration) => (
                   <div
-                    className="flex items-center justify-between gap-3 rounded-md border border-slate-200 px-3 py-2"
+                    className="flex items-center justify-between gap-3 rounded-md border border-blue-100/70 bg-white/70 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]"
                     key={registration.id}
                   >
                     <span className="min-w-0 truncate text-sm font-black">
@@ -427,7 +427,7 @@ export default function AdminTeamMembersManager({
           </div>
         </details>
 
-        <details className="group/coach overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <details className="gd-card-light group/coach overflow-hidden rounded-lg">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3">
             <span>
               <span className="block font-black text-slate-950">Coaches</span>
@@ -440,7 +440,7 @@ export default function AdminTeamMembersManager({
             </span>
           </summary>
           <div className="border-t border-slate-200 p-3">
-            <details className="group/add-coach overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+            <details className="group/add-coach overflow-hidden rounded-lg border border-blue-100/70 bg-white/70">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
                 <span className="font-black text-slate-950">Add coach</span>
                 <span className="text-xl font-black text-blue-600 transition group-open/add-coach:rotate-90">
@@ -484,7 +484,7 @@ export default function AdminTeamMembersManager({
               ) : (
                 activeTeamCoachAssignments.map((assignment) => (
                   <div
-                    className="flex items-center justify-between gap-3 rounded-md border border-slate-200 px-3 py-2"
+                    className="flex items-center justify-between gap-3 rounded-md border border-blue-100/70 bg-white/70 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]"
                     key={assignment.id}
                   >
                     <span className="min-w-0">

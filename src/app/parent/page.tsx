@@ -284,7 +284,7 @@ export default async function ParentHome() {
         )}
 
         {source !== "error" && !hasRegistrations && (
-          <section className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3 shadow-sm">
+          <section className="gd-card-light mt-3 rounded-lg p-3">
             <h2 className="text-lg font-black">Find your team</h2>
             <p className="mt-1 text-sm font-semibold text-slate-600">
               Search open GameDay registrations by organization and team.
@@ -307,7 +307,7 @@ export default async function ParentHome() {
           </div>
           <div className="mt-2 space-y-2">
             {athleteRows.length === 0 ? (
-              <p className="rounded-lg border border-dashed border-slate-300 bg-white p-3 text-sm font-semibold text-slate-500">
+              <p className="gd-card-light rounded-lg border-dashed p-3 text-sm font-semibold text-slate-500">
                 No players registered yet.
               </p>
             ) : (

@@ -213,19 +213,19 @@ export default async function CoachHome() {
                 </p>
               </div>
               <div className="grid grid-cols-3 gap-2 text-center text-xs font-bold lg:w-80">
-                <div className="rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm">
+                <div className="gd-card-light rounded-lg p-2.5">
                   <p className="text-slate-500">Teams</p>
                   <p className="mt-0.5 text-lg text-slate-950">
                     {coachTeams.length}
                   </p>
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm">
+                <div className="gd-card-light rounded-lg p-2.5">
                   <p className="text-slate-500">Rostered</p>
                   <p className="mt-0.5 text-lg text-slate-950">
                     {coachRosterRegistrations.length}
                   </p>
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm">
+                <div className="gd-card-light rounded-lg p-2.5">
                   <p className="text-slate-500">Actions</p>
                   <p
                     className={`mt-0.5 text-lg ${
@@ -239,7 +239,7 @@ export default async function CoachHome() {
             </div>
 
             {upcomingEventCount > 0 && (
-              <p className="mt-3 rounded-lg border border-blue-100 bg-blue-50 p-2.5 text-xs font-semibold text-blue-800">
+              <p className="gd-card-light mt-3 rounded-lg p-2.5 text-xs font-semibold text-blue-800">
                 {upcomingEventCount} assigned team
                 {upcomingEventCount === 1 ? " has" : "s have"} an upcoming
                 visible event.
@@ -258,7 +258,7 @@ export default async function CoachHome() {
               )}
 
               {source !== "error" && coachTeamCards.length === 0 && (
-                <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-600 shadow-sm">
+                <div className="gd-card-light rounded-lg p-3 text-sm text-slate-600">
                   <p className="text-base font-black text-slate-950">
                     No team assigned yet.
                   </p>

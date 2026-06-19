@@ -72,7 +72,7 @@ export default function ParentAthleteCard({
   const actionHref = nextAction.href ?? `/athletes/${athleteId}`;
 
   return (
-    <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+    <details className="gd-card-light gd-card-interactive group overflow-hidden rounded-lg">
       <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 transition hover:bg-blue-50 [&::-webkit-details-marker]:hidden">
         <span className="min-w-0">
           <span className="block truncate text-base font-black">
@@ -127,13 +127,13 @@ export default function ParentAthleteCard({
 
         <div className="mt-2 space-y-1.5">
           {scheduleItems.length === 0 ? (
-            <p className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-2.5 text-xs font-semibold text-slate-500">
+            <p className="rounded-md border border-dashed border-blue-200/70 bg-white/70 p-2.5 text-xs font-semibold text-slate-500">
               No upcoming schedule for this player.
             </p>
           ) : (
             scheduleItems.map((event) => (
               <Link
-                className={`flex items-center justify-between gap-2 rounded-md border px-2.5 py-2 transition hover:border-blue-200 hover:bg-blue-50 ${
+                className={`flex items-center justify-between gap-2 rounded-md border px-2.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] transition hover:border-blue-300 hover:bg-blue-50 ${
                   event.isToday
                     ? "border-emerald-300 bg-emerald-50 ring-1 ring-emerald-200"
                     : "border-slate-200 bg-white"

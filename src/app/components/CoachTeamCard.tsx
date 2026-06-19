@@ -101,7 +101,7 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
   });
 
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+    <article className="gd-card-light rounded-lg p-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h2 className="truncate text-lg font-black text-slate-950">
@@ -150,13 +150,13 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
       </div>
 
       <div className="mt-2.5 grid grid-cols-3 gap-2 text-center text-xs font-bold">
-        <div className="rounded-md bg-slate-50 p-2.5">
+        <div className="rounded-md border border-blue-100/70 bg-white/65 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
           <p className="text-slate-500">Roster</p>
           <p className="mt-0.5 text-base text-slate-950">
             {registrations.length}
           </p>
         </div>
-        <div className="rounded-md bg-slate-50 p-2.5">
+        <div className="rounded-md border border-blue-100/70 bg-white/65 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
           <p className="text-slate-500">Ready</p>
           <p
             className={`mt-0.5 text-base ${
@@ -166,7 +166,7 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
             {readiness.readyAthletes}
           </p>
         </div>
-        <div className="rounded-md bg-slate-50 p-2.5">
+        <div className="rounded-md border border-blue-100/70 bg-white/65 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
           <p className="text-slate-500">Open</p>
           <p
             className={`mt-0.5 text-base ${
@@ -178,7 +178,7 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
         </div>
       </div>
 
-      <section className="mt-2.5 rounded-lg border border-slate-200 bg-white p-3">
+      <section className="gd-card-light mt-2.5 rounded-lg p-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs font-black uppercase tracking-wide text-slate-500">
@@ -215,13 +215,13 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
 
         {nextEvent && (
           <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-            <div className="rounded-md bg-slate-50 p-2.5">
+            <div className="rounded-md border border-blue-100/70 bg-white/65 p-2.5">
               <p className="font-semibold text-slate-500">Attendance</p>
               <p className="mt-0.5 font-black text-slate-950">
                 {responseSummary.attendanceSubmitted} of {registrations.length}
               </p>
             </div>
-            <div className="rounded-md bg-slate-50 p-2.5">
+            <div className="rounded-md border border-blue-100/70 bg-white/65 p-2.5">
               <p className="font-semibold text-slate-500">Transportation</p>
               <p className="mt-0.5 font-black text-slate-950">
                 {responseSummary.transportationSubmitted} of{" "}
@@ -232,7 +232,7 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
         )}
       </section>
 
-      <details className="group mt-2.5 overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <details className="gd-card-light gd-card-interactive group mt-2.5 overflow-hidden rounded-lg">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3">
           <span>
             <span className="block font-black text-slate-950">
@@ -250,7 +250,7 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
           {rosterPreview.length > 0 ? (
             rosterPreview.map((player) => (
               <div
-                className="rounded-md border border-slate-200 bg-slate-50 p-2.5"
+                className="rounded-md border border-blue-100/70 bg-white/70 p-2.5"
                 key={player.registration.id}
               >
                 <div className="flex items-start justify-between gap-3">

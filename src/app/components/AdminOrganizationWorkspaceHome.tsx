@@ -514,7 +514,7 @@ export default function AdminOrganizationWorkspaceHome({
 
             {currentSection === "overview" && (
               <div className="mt-3 grid gap-3 lg:grid-cols-2">
-                <section className="rounded-lg border border-white/10 bg-slate-950/70 p-3 shadow-[0_14px_32px_rgba(0,0,0,0.22)] backdrop-blur">
+                <section className="gd-card-dark rounded-lg p-3 backdrop-blur">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <h2 className="text-base font-black">Announcements</h2>
@@ -555,7 +555,7 @@ export default function AdminOrganizationWorkspaceHome({
                   </div>
                 </section>
 
-                <section className="rounded-lg border border-white/10 bg-slate-950/70 p-3 shadow-[0_14px_32px_rgba(0,0,0,0.22)] backdrop-blur">
+                <section className="gd-card-dark rounded-lg p-3 backdrop-blur">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h2 className="text-base font-black">Alerts</h2>
@@ -596,7 +596,7 @@ export default function AdminOrganizationWorkspaceHome({
             )}
 
             {currentSection === "alerts" ? (
-              <section className="mt-3 rounded-lg border border-white/10 bg-slate-950/70 p-4 shadow-[0_14px_32px_rgba(0,0,0,0.22)] backdrop-blur">
+              <section className="gd-card-dark mt-3 rounded-lg p-4 backdrop-blur">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <h2 className="text-xl font-black">Alerts</h2>
@@ -615,7 +615,7 @@ export default function AdminOrganizationWorkspaceHome({
                   ) : (
                     alertItems.map((item) => (
                       <Link
-                        className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-3 transition hover:border-blue-300/40 hover:bg-blue-500/10"
+                        className="gd-card-dark gd-card-interactive flex items-center justify-between gap-3 rounded-lg px-3 py-3"
                         href={withActiveOrganization(
                           item.href,
                           activeOrganizationId,
@@ -655,7 +655,7 @@ export default function AdminOrganizationWorkspaceHome({
                   activeOrganizationId={activeOrganizationId}
                 />
 
-                <section className="rounded-lg border border-white/10 bg-slate-950/70 p-4 shadow-[0_14px_32px_rgba(0,0,0,0.22)] backdrop-blur">
+                <section className="gd-card-dark rounded-lg p-4 backdrop-blur">
                   <div>
                     <h2 className="text-xl font-black">Announcements</h2>
                     <p className="mt-1 text-sm text-slate-400">
@@ -667,7 +667,7 @@ export default function AdminOrganizationWorkspaceHome({
                     {recentAnnouncements.length > 0 ? (
                       recentAnnouncements.map((announcement) => (
                         <article
-                          className="rounded-md border border-white/10 bg-white/[0.04] p-3"
+                          className="rounded-md border border-blue-300/10 bg-white/[0.045] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
                           key={announcement.id}
                         >
                           <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
@@ -703,7 +703,7 @@ export default function AdminOrganizationWorkspaceHome({
                 />
 
                 <section
-                  className="scroll-mt-4 rounded-lg border border-white/10 bg-slate-950/70 p-4 shadow-[0_14px_32px_rgba(0,0,0,0.22)] backdrop-blur"
+                  className="gd-card-dark scroll-mt-4 rounded-lg p-4 backdrop-blur"
                   id="review"
                 >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -762,7 +762,7 @@ export default function AdminOrganizationWorkspaceHome({
                   teams={readModel.teams}
                 />
 
-                <section className="rounded-lg border border-white/10 bg-slate-950/70 p-4 shadow-[0_14px_32px_rgba(0,0,0,0.22)] backdrop-blur">
+                <section className="gd-card-dark rounded-lg p-4 backdrop-blur">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <h2 className="text-xl font-black">Upcoming Events</h2>
@@ -815,7 +815,7 @@ export default function AdminOrganizationWorkspaceHome({
 
                         return (
                           <Link
-                            className="flex flex-col gap-3 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2.5 transition hover:border-blue-300/40 hover:bg-blue-500/10 sm:flex-row sm:items-center sm:justify-between"
+                            className="gd-card-dark gd-card-interactive flex flex-col gap-3 rounded-lg px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
                             href={withActiveOrganization(
                               `/admin/schedule/${event.id}`,
                               activeOrganizationId,
@@ -900,7 +900,7 @@ export default function AdminOrganizationWorkspaceHome({
                   }
                 />
 
-                <section className="rounded-lg border border-white/10 bg-slate-950/70 p-4 shadow-[0_14px_32px_rgba(0,0,0,0.22)] backdrop-blur">
+                <section className="gd-card-dark rounded-lg p-4 backdrop-blur">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <h2 className="text-xl font-black">Current Teams</h2>
@@ -922,7 +922,7 @@ export default function AdminOrganizationWorkspaceHome({
 
                         return (
                           <div
-                            className="flex flex-col gap-3 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
+                            className="gd-card-dark gd-card-interactive flex flex-col gap-3 rounded-lg px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
                             key={team.id}
                           >
                             <Link
@@ -981,12 +981,12 @@ export default function AdminOrganizationWorkspaceHome({
             ) : currentSection === "teamDetails" ? (
               <section className="mt-3">
                 {!selectedTeam ? (
-                  <section className="rounded-lg border border-white/10 bg-slate-950/70 p-4 shadow-[0_14px_32px_rgba(0,0,0,0.22)] backdrop-blur">
+                  <section className="gd-card-dark rounded-lg p-4 backdrop-blur">
                     <EmptyState>Team not found in this organization.</EmptyState>
                   </section>
                 ) : (
                   <div className="space-y-4">
-                    <section className="rounded-lg border border-white/10 bg-slate-950/70 p-4 shadow-[0_14px_32px_rgba(0,0,0,0.22)] backdrop-blur">
+                    <section className="gd-card-dark rounded-lg p-4 backdrop-blur">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div>
                           <h2 className="text-xl font-black">
@@ -1059,7 +1059,7 @@ export default function AdminOrganizationWorkspaceHome({
                         rosteredRegistrations={selectedTeamRosteredRegistrations}
                         teamId={selectedTeam.id}
                       />
-                      <details className="group overflow-hidden rounded-xl border border-white/10 bg-slate-950/70 shadow-[0_18px_42px_rgba(0,0,0,0.24)] backdrop-blur">
+                      <details className="gd-card-dark group overflow-hidden rounded-lg backdrop-blur">
                         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
                           <span>
                             <span className="block text-lg font-black text-white">
@@ -1078,7 +1078,7 @@ export default function AdminOrganizationWorkspaceHome({
                         <div className="border-t border-white/10 p-3">
                           {selectedTeamNextEvent ? (
                             <Link
-                              className="block rounded-md border border-white/10 bg-white/[0.04] p-3 transition hover:border-blue-300/40 hover:bg-blue-500/10"
+                              className="gd-card-dark gd-card-interactive block rounded-md p-3"
                               href={withActiveOrganization(
                                 `/admin/schedule/${selectedTeamNextEvent.id}`,
                                 activeOrganizationId,
@@ -1107,7 +1107,7 @@ export default function AdminOrganizationWorkspaceHome({
               </section>
             ) : (
             <>
-              <section className="mt-3 rounded-lg border border-white/10 bg-slate-950/70 p-4 shadow-[0_14px_32px_rgba(0,0,0,0.22)] backdrop-blur">
+              <section className="gd-card-dark mt-3 rounded-lg p-4 backdrop-blur">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-black">Current Teams</h2>
@@ -1131,7 +1131,7 @@ export default function AdminOrganizationWorkspaceHome({
                   ) : (
                     activeTeams.slice(0, 6).map((team) => (
                       <Link
-                        className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-3 hover:border-blue-300/40 hover:bg-blue-500/10"
+                        className="gd-card-dark gd-card-interactive flex items-center justify-between gap-3 rounded-lg px-3 py-3"
                         href={withActiveOrganization(
                           `/admin/teams/${team.id}`,
                           activeOrganizationId,
