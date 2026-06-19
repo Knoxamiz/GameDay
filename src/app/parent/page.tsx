@@ -29,6 +29,7 @@ import {
   getParentNextAction,
   type ParentNextAction,
 } from "../data/parentDashboard";
+import { getParentRegistrationInviteReadModels } from "../data/registrationInviteRead.server";
 import {
   getRegistrationRosterStatus,
   hasPendingParentLifecycleRequest,
@@ -172,7 +173,12 @@ export default async function ParentHome() {
   );
   const repositories = createFirestoreRepositories();
   const parentTeamIds = [
-    ...new Set(parentAthletes.map((athlete) => athlete.teamId).filter(Boolean)),
+    ...new Set(
+      [
+        ...parentAthletes.map((athlete) => athlete.teamId),
+        ...registrations.map((registration) => registration.teamId),
+      ].filter(Boolean),
+    ),
   ];
   const parentAthleteIdSet = new Set(
     parentAthletes.map((athlete) => athlete.id),
@@ -180,7 +186,7 @@ export default async function ParentHome() {
   const teamNameById = new Map(
     schedule.teams.map((team) => [team.id, team.name]),
   );
-  const [attendanceEntries, transportationEntries, teamMessageLists] =
+  const [attendanceEntries, transportationEntries, teamMessageLists, inviteModels] =
     await Promise.all([
       Promise.all(
         parentAthletes.map((athlete) =>
@@ -197,7 +203,25 @@ export default async function ParentHome() {
           repositories.messages.listByTeamId(teamId),
         ),
       ),
+      getParentRegistrationInviteReadModels(),
     ]);
+  const availableCurrentTeamInviteOptions = inviteModels
+    .flatMap((model) =>
+      model.invite && model.team
+        ? [{ invite: model.invite, team: model.team }]
+        : [],
+    )
+    .sort((first, second) =>
+      first.team.name.localeCompare(second.team.name),
+    );
+  const addPlayerInviteOptions = [
+    ...new Map(
+      availableCurrentTeamInviteOptions.map((option) => [
+        option.invite.teamId,
+        option,
+      ]),
+    ).values(),
+  ];
   const parentTeamMessages = [
     ...new Map(
       teamMessageLists
@@ -263,6 +287,7 @@ export default async function ParentHome() {
         athleteScheduleEvents,
         now,
       ),
+      teamLabel: teamNameById.get(athlete.teamId) ?? athlete.teamId,
     };
   });
   const hasRegistrations = parentAthletes.length > 0 || registrations.length > 0;
@@ -301,9 +326,9 @@ export default async function ParentHome() {
           </div>
           <Link
             className="shrink-0 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-black text-slate-700 shadow-sm hover:bg-slate-50"
-            href="/registration"
+            href={hasRegistrations ? "#add-player" : "/registration"}
           >
-            Find Team
+            {hasRegistrations ? "Add Player" : "Find Team"}
           </Link>
         </div>
 
@@ -330,6 +355,67 @@ export default async function ParentHome() {
               Find open registration
             </Link>
           </section>
+        )}
+
+        {source !== "error" && hasRegistrations && (
+          <details
+            className="gd-card-light gd-card-interactive group mt-3 overflow-hidden rounded-lg"
+            id="add-player"
+          >
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
+              <span>
+                <span className="block text-sm font-black">Add Player</span>
+                <span className="mt-0.5 block text-xs font-semibold text-slate-500">
+                  Use a team you already belong to, or find a different team.
+                </span>
+              </span>
+              <span className="text-sm font-black text-blue-700 transition group-open:rotate-90">
+                &gt;
+              </span>
+            </summary>
+            <div className="space-y-1.5 border-t border-slate-200 px-3 py-2.5">
+              {addPlayerInviteOptions.length > 0 ? (
+                addPlayerInviteOptions.map(({ invite, team }) => (
+                  <Link
+                    className="flex items-center justify-between gap-3 rounded-md border border-blue-100/70 bg-white/70 px-2.5 py-2"
+                    href={`/join/${invite.inviteCode}`}
+                    key={invite.id}
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-black">
+                        {team.name}
+                      </span>
+                      <span className="mt-0.5 block truncate text-[11px] font-semibold text-slate-500">
+                        Add another player to this team
+                      </span>
+                    </span>
+                    <span className="text-sm font-black text-blue-700">
+                      &gt;
+                    </span>
+                  </Link>
+                ))
+              ) : (
+                <p className="rounded-md border border-dashed border-blue-200/70 bg-white/70 p-2.5 text-xs font-semibold text-slate-500">
+                  No open registration links are available for your current
+                  teams.
+                </p>
+              )}
+              <Link
+                className="flex items-center justify-between gap-3 rounded-md border border-blue-100/70 bg-white/70 px-2.5 py-2"
+                href="/registration"
+              >
+                <span>
+                  <span className="block text-sm font-black">
+                    Find another team
+                  </span>
+                  <span className="mt-0.5 block text-[11px] font-semibold text-slate-500">
+                    Use search or an invite code for a new team.
+                  </span>
+                </span>
+                <span className="text-sm font-black text-blue-700">&gt;</span>
+              </Link>
+            </div>
+          </details>
         )}
 
         {parentTeamMessages.length > 0 && (
@@ -385,7 +471,7 @@ export default async function ParentHome() {
               </p>
             ) : (
               athleteRows.map(
-                ({ athlete, nextAction, scheduleItems, status }) => (
+                ({ athlete, nextAction, scheduleItems, status, teamLabel }) => (
                   <ParentAthleteCard
                     athleteId={athlete.id}
                     athleteName={athlete.name}
@@ -393,6 +479,7 @@ export default async function ParentHome() {
                     nextAction={nextAction}
                     scheduleItems={scheduleItems}
                     status={status}
+                    teamLabel={teamLabel}
                   />
                 ),
               )
@@ -405,7 +492,10 @@ export default async function ParentHome() {
           items={[
             { href: "/parent", label: "Home" },
             { href: "/events", label: "Schedule" },
-            { href: "/registration", label: "Find Team" },
+            {
+              href: hasRegistrations ? "#add-player" : "/registration",
+              label: hasRegistrations ? "Add Player" : "Find Team",
+            },
           ]}
         />
       </section>

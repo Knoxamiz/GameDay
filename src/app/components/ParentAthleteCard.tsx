@@ -27,6 +27,7 @@ type ParentAthleteCardProps = {
   nextAction: ParentNextAction;
   scheduleItems: ParentPlayerScheduleItem[];
   status: ParentPlayerStatus;
+  teamLabel?: string;
 };
 
 function getStatusLightClass(tone: ParentPlayerStatusTone) {
@@ -67,6 +68,7 @@ export default function ParentAthleteCard({
   nextAction,
   scheduleItems,
   status,
+  teamLabel,
 }: ParentAthleteCardProps) {
   const hasAccountAlert = status.tone === "red";
   const actionHref = nextAction.href ?? `/athletes/${athleteId}`;
@@ -78,6 +80,11 @@ export default function ParentAthleteCard({
           <span className="block truncate text-sm font-black">
             {athleteName}
           </span>
+          {teamLabel && (
+            <span className="mt-0.5 block truncate text-[11px] font-semibold text-slate-500">
+              {teamLabel}
+            </span>
+          )}
         </span>
         <span className="flex shrink-0 items-center gap-2">
           <span
