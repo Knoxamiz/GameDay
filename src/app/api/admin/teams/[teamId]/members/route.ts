@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   addAdminTeamPlayer,
+  addAdminTeamPlayers,
   AdminTeamMemberError,
   removeAdminTeamPlayer,
+  type AdminTeamMemberPlayerInput,
   type AdminTeamMemberPayload,
 } from "../../../../../data/adminTeamMembers.server";
 
@@ -38,6 +40,41 @@ function getAddPlayerPayload(
     parentName: getText(body.parentName),
     parentPhone: getText(body.parentPhone),
     school: getText(body.school),
+    teamId,
+  };
+}
+
+function getBulkAddPlayerPayload(
+  teamId: string,
+  body: Record<string, unknown> | null,
+): Extract<AdminTeamMemberPayload, { actionType: "players-bulk-add" }> | null {
+  if (body?.actionType !== "players-bulk-add" || !Array.isArray(body.players)) {
+    return null;
+  }
+
+  const players = body.players
+    .filter(
+      (player): player is Record<string, unknown> =>
+        player !== null && typeof player === "object",
+    )
+    .map(
+      (player): AdminTeamMemberPlayerInput => ({
+        athleteFirstName: getText(player.athleteFirstName),
+        athleteLastName: getText(player.athleteLastName),
+        dateOfBirth: getText(player.dateOfBirth),
+        grade: getText(player.grade),
+        jerseySize: getText(player.jerseySize),
+        parentEmail: getText(player.parentEmail),
+        parentName: getText(player.parentName),
+        parentPhone: getText(player.parentPhone),
+        school: getText(player.school),
+      }),
+    );
+
+  return {
+    actionType: "players-bulk-add",
+    organizationId: getText(body.organizationId),
+    players,
     teamId,
   };
 }
@@ -92,7 +129,8 @@ export async function POST(
     string,
     unknown
   > | null;
-  const payload = getAddPlayerPayload(teamId, body);
+  const payload =
+    getBulkAddPlayerPayload(teamId, body) ?? getAddPlayerPayload(teamId, body);
 
   if (!payload) {
     return NextResponse.json(
@@ -105,13 +143,24 @@ export async function POST(
   }
 
   try {
-    const result = await addAdminTeamPlayer(payload, {
-      activeOrganizationId: getText(body?.activeOrganizationId),
-      sessionSource: {
-        authorizationHeader: request.headers.get("authorization") ?? undefined,
-        cookieHeader: request.headers.get("cookie") ?? undefined,
-      },
-    });
+    const result =
+      payload.actionType === "players-bulk-add"
+        ? await addAdminTeamPlayers(payload, {
+            activeOrganizationId: getText(body?.activeOrganizationId),
+            sessionSource: {
+              authorizationHeader:
+                request.headers.get("authorization") ?? undefined,
+              cookieHeader: request.headers.get("cookie") ?? undefined,
+            },
+          })
+        : await addAdminTeamPlayer(payload, {
+            activeOrganizationId: getText(body?.activeOrganizationId),
+            sessionSource: {
+              authorizationHeader:
+                request.headers.get("authorization") ?? undefined,
+              cookieHeader: request.headers.get("cookie") ?? undefined,
+            },
+          });
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {

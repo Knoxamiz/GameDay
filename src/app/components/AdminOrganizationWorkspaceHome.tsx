@@ -5,10 +5,8 @@ import type { AdminHomeReadModel } from "../data/adminHomeRead.server";
 import type { AdminOperatingModel } from "../data/adminOperatingModel";
 import { isActiveCoachAssignment } from "../data/coachAssignmentRecords";
 import {
-  eventHasTeamId,
   getEventDateLabel,
   getEventLocationLabel,
-  getEventShortDateLabel,
   getEventStatusLabel,
   getEventTeamIds,
   getEventTimeLabel,
@@ -421,21 +419,10 @@ export default function AdminOrganizationWorkspaceHome({
     return Math.max(team.coachIds.length, assignmentCoachIds.size);
   }
 
-  function getNextTeamEvent(teamId: string) {
-    return readModel.events
-      .filter((event) => event.status !== "archived")
-      .filter((event) => eventHasTeamId(event, teamId))
-      .filter((event) => isUpcomingEvent(event))
-      .sort(sortEventsByStartDate)[0];
-  }
-
   const selectedTeamRosteredRegistrations = selectedTeam
     ? getTeamRosteredRegistrations(selectedTeam.id)
     : [];
   const selectedTeamCoachCount = selectedTeam ? getCoachCount(selectedTeam) : 0;
-  const selectedTeamNextEvent = selectedTeam
-    ? getNextTeamEvent(selectedTeam.id)
-    : undefined;
   const selectedTeamInvites = selectedTeam
     ? readModel.registrationInvites
         .filter((invite) => invite.teamId === selectedTeam.id)
@@ -1207,7 +1194,7 @@ export default function AdminOrganizationWorkspaceHome({
                   </section>
                 ) : (
                   <div className="space-y-3">
-                    <section className="gd-card-dark rounded-lg px-3 py-3 backdrop-blur">
+                    <section className="gd-card-dark rounded-lg p-3 backdrop-blur">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <h2 className="text-2xl font-black">
@@ -1227,13 +1214,11 @@ export default function AdminOrganizationWorkspaceHome({
                             : "Needs coach"}
                         </StatusPill>
                       </div>
-                    </section>
 
-                    <section className="gd-card-dark rounded-lg p-3 backdrop-blur">
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="mt-3 flex flex-col gap-2 border-t border-white/10 pt-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                          <h2 className="text-lg font-black">Invite</h2>
-                          <p className="mt-0.5 text-sm text-slate-400">
+                          <h3 className="text-base font-black">Invite</h3>
+                          <p className="mt-0.5 text-xs font-semibold text-slate-400">
                             QR team link parents scan or open directly.
                           </p>
                         </div>
@@ -1249,7 +1234,7 @@ export default function AdminOrganizationWorkspaceHome({
                       </div>
 
                       {selectedTeamPrimaryInvite && selectedTeamJoinPath ? (
-                        <div className="mt-3 grid gap-2 lg:grid-cols-[1fr_auto]">
+                        <div className="mt-2 grid gap-2 lg:grid-cols-[1fr_auto]">
                           <div className="rounded-md border border-blue-300/10 bg-white/[0.045] px-3 py-2">
                             <div className="flex flex-wrap items-center gap-2">
                               <span className="text-sm font-black">
@@ -1289,11 +1274,10 @@ export default function AdminOrganizationWorkspaceHome({
                           </div>
                         </div>
                       ) : (
-                        <div className="mt-3 flex flex-col gap-3 rounded-md border border-dashed border-blue-300/25 bg-white/[0.035] px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="mt-2 flex flex-col gap-2 rounded-md border border-dashed border-blue-300/25 bg-white/[0.035] px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
                           <p className="text-sm font-semibold text-slate-300">
-                            No invite link exists for this team yet. Create the
-                            link parents will use from QR codes, texts, and
-                            handouts.
+                            No invite link yet. Create the link parents use from
+                            QR codes, texts, and handouts.
                           </p>
                           <Link
                             className="inline-flex shrink-0 items-center justify-center rounded-md bg-blue-600 px-3 py-2 text-xs font-black text-white hover:bg-blue-500"
@@ -1320,80 +1304,40 @@ export default function AdminOrganizationWorkspaceHome({
                         teamId={selectedTeam.id}
                         title="Editable roster"
                       />
-                      <details className="gd-card-dark group overflow-hidden rounded-lg backdrop-blur">
-                        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
-                          <span>
-                            <span className="block text-lg font-black text-white">
-                              Team controls
-                            </span>
-                            <span className="mt-1 block text-sm text-slate-400">
-                              Coach assignment, schedule, and archive actions.
-                            </span>
-                          </span>
-                          <span className="text-xl font-black text-blue-300 transition group-open:rotate-90">
-                            &rsaquo;
-                          </span>
-                        </summary>
-                        <div className="grid gap-2 border-t border-white/10 p-3 sm:grid-cols-3">
-                          <Link
-                            className="rounded-md border border-white/15 px-3 py-2 text-sm font-black text-slate-100 hover:bg-white/10"
-                            href={withActiveOrganization(
-                              "/admin/people",
-                              activeOrganizationId,
-                            )}
-                          >
-                            Manage coaches
-                          </Link>
-                          <Link
-                            className="rounded-md border border-white/15 px-3 py-2 text-sm font-black text-slate-100 hover:bg-white/10"
-                            href={withActiveOrganization(
-                              "/admin/schedule",
-                              activeOrganizationId,
-                            )}
-                          >
-                            Open schedule
-                          </Link>
-                          <AdminArchiveButton
-                            buttonLabel="Remove team"
-                            confirmMessage={`Remove ${selectedTeam.name}? This archives the team and preserves registrations, events, invites, and assignments.`}
-                            payload={{
-                              activeOrganizationId,
-                              actionType: "team-archive",
-                              organizationId: activeOrganizationId,
-                              teamId: selectedTeam.id,
-                            }}
-                            redirectHref={withActiveOrganization(
-                              "/admin/teams",
-                              activeOrganizationId,
-                            )}
-                          />
-                        </div>
-                        <div className="border-t border-white/10 p-3">
-                          {selectedTeamNextEvent ? (
-                            <Link
-                              className="gd-card-dark gd-card-interactive block rounded-md p-3"
-                              href={withActiveOrganization(
-                                `/admin/schedule/${selectedTeamNextEvent.id}`,
-                                activeOrganizationId,
-                              )}
-                            >
-                              <p className="font-black">
-                                {selectedTeamNextEvent.title}
-                              </p>
-                              <p className="mt-2 text-sm text-slate-400">
-                                {getEventShortDateLabel(
-                                  selectedTeamNextEvent,
-                                )}{" "}
-                                {getEventTimeLabel(
-                                  selectedTeamNextEvent,
-                                )}
-                              </p>
-                            </Link>
-                          ) : (
-                            <EmptyState>No upcoming event.</EmptyState>
+                      <div className="flex flex-wrap items-center gap-2 text-xs font-black">
+                        <Link
+                          className="rounded-md border border-white/15 px-2.5 py-1.5 text-slate-100 hover:bg-white/10"
+                          href={withActiveOrganization(
+                            "/admin/people",
+                            activeOrganizationId,
                           )}
-                        </div>
-                      </details>
+                        >
+                          Coaches
+                        </Link>
+                        <Link
+                          className="rounded-md border border-white/15 px-2.5 py-1.5 text-slate-100 hover:bg-white/10"
+                          href={withActiveOrganization(
+                            "/admin/schedule",
+                            activeOrganizationId,
+                          )}
+                        >
+                          Schedule
+                        </Link>
+                        <AdminArchiveButton
+                          buttonLabel="Remove team"
+                          confirmMessage={`Remove ${selectedTeam.name}? This archives the team and preserves registrations, events, invites, and assignments.`}
+                          payload={{
+                            activeOrganizationId,
+                            actionType: "team-archive",
+                            organizationId: activeOrganizationId,
+                            teamId: selectedTeam.id,
+                          }}
+                          redirectHref={withActiveOrganization(
+                            "/admin/teams",
+                            activeOrganizationId,
+                          )}
+                        />
+                      </div>
                     </div>
                   </div>
                 )}

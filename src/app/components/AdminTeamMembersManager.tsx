@@ -50,6 +50,32 @@ function getCoachName(
   return coach?.name || assignment.email || fallbackName;
 }
 
+function getEmailFromLine(line: string) {
+  return line.match(/[^\s,;|<>]+@[^\s,;|<>]+/)?.[0] ?? "";
+}
+
+function parseRosterLines(value: string) {
+  return value
+    .split(/\r?\n/)
+    .map((line) => line.trim().replace(/^[-*]\s*/, ""))
+    .filter(Boolean)
+    .map((line) => {
+      const parentEmail = getEmailFromLine(line);
+      const namePart = line
+        .replace(parentEmail, "")
+        .replace(/[|,;-]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      const [athleteFirstName = "", ...lastNameParts] = namePart.split(" ");
+
+      return {
+        athleteFirstName,
+        athleteLastName: lastNameParts.join(" "),
+        parentEmail,
+      };
+    });
+}
+
 export default function AdminTeamMembersManager({
   activeOrganizationId,
   coachAssignments,
@@ -72,6 +98,7 @@ export default function AdminTeamMembersManager({
   const [parentPhone, setParentPhone] = useState("");
   const [coachName, setCoachName] = useState("");
   const [coachEmail, setCoachEmail] = useState("");
+  const [bulkRosterText, setBulkRosterText] = useState("");
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -136,6 +163,56 @@ export default function AdminTeamMembersManager({
     } catch (addError) {
       setError(
         addError instanceof Error ? addError.message : "Could not add this player.",
+      );
+      setSavingKey(null);
+    }
+  }
+
+  async function addBulkPlayers() {
+    clearStatus();
+    const players = parseRosterLines(bulkRosterText);
+
+    if (players.length === 0) {
+      setError("Enter at least one player name.");
+      return;
+    }
+
+    if (
+      players.some(
+        (player) => !player.athleteFirstName || !player.athleteLastName,
+      )
+    ) {
+      setError("Each line needs a first and last name.");
+      return;
+    }
+
+    setSavingKey("players-bulk-add");
+
+    try {
+      const response = await fetch(`/api/admin/teams/${teamId}/members`, {
+        body: JSON.stringify({
+          activeOrganizationId,
+          actionType: "players-bulk-add",
+          organizationId: activeOrganizationId,
+          players,
+        }),
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      const body = (await response.json().catch(() => null)) as
+        | ApiResponse
+        | null;
+
+      if (!response.ok) {
+        throw new Error(body?.error ?? "Could not save this roster.");
+      }
+
+      setBulkRosterText("");
+      refreshAfterSuccess(body?.message ?? "Roster saved.");
+    } catch (addError) {
+      setError(
+        addError instanceof Error ? addError.message : "Could not save this roster.",
       );
       setSavingKey(null);
     }
@@ -286,6 +363,82 @@ export default function AdminTeamMembersManager({
       );
       setSavingKey(null);
     }
+  }
+
+  if (!showCoaches) {
+    return (
+      <section className="gd-card-dark rounded-lg p-3 backdrop-blur">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="text-lg font-black text-white">{title}</h2>
+            <p className="mt-0.5 text-sm text-slate-400">
+              Paste names, then save once. Add parent email after a comma when
+              you have it.
+            </p>
+          </div>
+          <span className="rounded-full bg-white/10 px-2 py-1 text-xs font-black text-blue-100">
+            {rosteredRegistrations.length} rostered
+          </span>
+        </div>
+
+        {message && (
+          <p className="mt-2 rounded-md border border-emerald-300/25 bg-emerald-500/10 p-2 text-xs font-bold text-emerald-100">
+            {message}
+          </p>
+        )}
+        {error && (
+          <p className="mt-2 rounded-md border border-red-300/25 bg-red-500/10 p-2 text-xs font-bold text-red-100">
+            {error}
+          </p>
+        )}
+
+        <div className="mt-3 grid gap-2 lg:grid-cols-[1fr_auto]">
+          <textarea
+            className="min-h-24 rounded-md border border-blue-300/15 bg-slate-950/60 px-3 py-2 text-sm font-semibold text-white outline-none placeholder:text-slate-500 focus:border-blue-300"
+            onChange={(event) => setBulkRosterText(event.target.value)}
+            placeholder={"Zimmy Zith, parent@email.com\nAlex Morgan\nTaylor Smith"}
+            value={bulkRosterText}
+          />
+          <button
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-black text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60 lg:self-start"
+            disabled={Boolean(savingKey)}
+            onClick={() => void addBulkPlayers()}
+            type="button"
+          >
+            {savingKey === "players-bulk-add" ? "Saving..." : "Save roster"}
+          </button>
+        </div>
+
+        <div className="mt-3 divide-y divide-white/10 rounded-md border border-blue-300/10 bg-white/[0.035]">
+          {rosteredRegistrations.length === 0 ? (
+            <p className="px-3 py-2 text-sm font-semibold text-slate-400">
+              No rostered players yet.
+            </p>
+          ) : (
+            rosteredRegistrations.map((registration) => (
+              <div
+                className="flex items-center justify-between gap-3 px-3 py-2"
+                key={registration.id}
+              >
+                <span className="min-w-0 truncate text-sm font-black text-white">
+                  {registration.athleteName ?? "Rostered player"}
+                </span>
+                <button
+                  className="rounded-md border border-red-300/25 px-2 py-1 text-xs font-black text-red-100 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={Boolean(savingKey)}
+                  onClick={() => void removePlayer(registration)}
+                  type="button"
+                >
+                  {savingKey === `player-remove-${registration.id}`
+                    ? "Removing..."
+                    : "Remove"}
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+    );
   }
 
   return (
