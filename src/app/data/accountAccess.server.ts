@@ -75,22 +75,34 @@ export async function getAccountAccessReadModel(
   session: AuthSession,
 ): Promise<AccountAccessReadModel> {
   const repositories = createFirestoreRepositories();
-  const [adminScope, coachScope, parentRegistrations] = await Promise.all([
-    resolveAdminOrganizationScope(session),
-    resolveCoachAssignmentScope(session),
-    getParentOwnedRegistrations(session),
-  ]);
+  const [adminScope, coachScope, parentRegistrations, accountMemberships] =
+    await Promise.all([
+      resolveAdminOrganizationScope(session),
+      resolveCoachAssignmentScope(session),
+      getParentOwnedRegistrations(session),
+      repositories.organizationMemberships.listByUid(session.user.id),
+    ]);
   const adminCanOpen = canAccessAdmin(adminScope);
-  const [adminOrganizations, coachTeams] = await Promise.all([
-    adminCanOpen
-      ? Promise.all(
-          adminScope.organizationIds.map((organizationId) =>
-            repositories.organizations.getById(organizationId),
-          ),
-        )
-      : [],
-    getCoachAssignedTeams(coachScope),
-  ]);
+  const activeCoachMemberships = accountMemberships.filter(
+    (membership) =>
+      membership.status === "active" && membership.role === "coach",
+  );
+  const [adminOrganizations, coachTeams, coachMemberOrganizations] =
+    await Promise.all([
+      adminCanOpen
+        ? Promise.all(
+            adminScope.organizationIds.map((organizationId) =>
+              repositories.organizations.getById(organizationId),
+            ),
+          )
+        : [],
+      getCoachAssignedTeams(coachScope),
+      Promise.all(
+        activeCoachMemberships.map((membership) =>
+          repositories.organizations.getById(membership.organizationId),
+        ),
+      ),
+    ]);
   const activeAdminOrganizations = adminOrganizations
     .filter((organization): organization is Organization =>
       Boolean(organization),
@@ -128,6 +140,27 @@ export async function getAccountAccessReadModel(
       id: "coach",
       kind: "coach",
       title: coachTeams.length === 1 ? coachTeams[0].name : "Coach teams",
+    });
+  }
+
+  if (coachTeams.length === 0 && activeCoachMemberships.length > 0) {
+    const activeCoachOrganizations = coachMemberOrganizations
+      .filter((organization): organization is Organization =>
+        Boolean(organization),
+      )
+      .filter((organization) => !isArchivedOrganization(organization));
+
+    options.push({
+      badge: "Waiting assignment",
+      description:
+        "Your coach invite is connected. A team assignment unlocks roster and attendance.",
+      href: "/coach",
+      id: "coach-pending",
+      kind: "coach",
+      title:
+        activeCoachOrganizations.length === 1
+          ? `${activeCoachOrganizations[0].name} coach access`
+          : "Coach access pending",
     });
   }
 

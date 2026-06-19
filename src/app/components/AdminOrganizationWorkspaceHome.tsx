@@ -545,7 +545,7 @@ export default function AdminOrganizationWorkspaceHome({
         </aside>
 
         <div className="relative z-10 min-w-0 flex-1">
-          <header className="flex min-h-12 items-center justify-between gap-2 border-b border-white/10 bg-slate-950/55 px-3 backdrop-blur sm:px-5">
+          <header className="relative z-40 flex min-h-12 items-center justify-between gap-2 border-b border-white/10 bg-slate-950/55 px-3 backdrop-blur sm:px-5">
             <div className="flex min-w-0 items-center gap-3">
               <BackButton fallbackHref={backFallbackHref} />
               <p className="truncate text-xs font-bold text-slate-300 sm:text-sm">

@@ -4,14 +4,18 @@ import { useState } from "react";
 
 type AdminJoinLinkButtonProps = {
   className?: string;
+  errorMessage?: string;
   joinPath: string;
   label?: string;
+  successMessage?: string;
 };
 
 export default function AdminJoinLinkButton({
   className,
+  errorMessage = "Could not copy the join link.",
   joinPath,
   label = "Copy join link",
+  successMessage = "Join link copied.",
 }: AdminJoinLinkButtonProps) {
   const [message, setMessage] = useState<string | null>(null);
 
@@ -24,9 +28,9 @@ export default function AdminJoinLinkButton({
             await navigator.clipboard.writeText(
               `${window.location.origin}${joinPath}`,
             );
-            setMessage("Join link copied.");
+            setMessage(successMessage);
           } catch {
-            setMessage("Could not copy the join link.");
+            setMessage(errorMessage);
           }
         }}
         type="button"

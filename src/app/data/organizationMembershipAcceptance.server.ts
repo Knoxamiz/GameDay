@@ -21,11 +21,8 @@ function normalizeEmail(value: unknown) {
   return typeof value === "string" ? value.trim().toLowerCase() : "";
 }
 
-function isAdminInvitation(membership: OrganizationMembership) {
-  return (
-    membership.status === "invited" &&
-    (membership.role === "owner" || membership.role === "admin")
-  );
+function isOpenInvitation(membership: OrganizationMembership) {
+  return membership.status === "invited";
 }
 
 export async function acceptOrganizationMembershipInvitations(
@@ -40,7 +37,7 @@ export async function acceptOrganizationMembershipInvitations(
   const repositories = createFirestoreRepositories();
   const invitedMemberships = (
     await repositories.organizationMemberships.list({ scope: { email } })
-  ).filter(isAdminInvitation);
+  ).filter(isOpenInvitation);
 
   if (invitedMemberships.length === 0) {
     return [];
@@ -56,13 +53,23 @@ export async function acceptOrganizationMembershipInvitations(
     );
   }
 
+  if (normalizeEmail(firebaseUser.email) !== email) {
+    throw new OrganizationMembershipAcceptanceError(
+      "invited-email-required",
+      "Sign in with the invited email address before accepting organization access.",
+      403,
+    );
+  }
+
   if (
-    !firebaseUser.emailVerified ||
-    normalizeEmail(firebaseUser.email) !== email
+    invitedMemberships.some(
+      (membership) => membership.role === "owner" || membership.role === "admin",
+    ) &&
+    !firebaseUser.emailVerified
   ) {
     throw new OrganizationMembershipAcceptanceError(
       "verified-email-required",
-      "Verify the invited email address in Firebase before accepting organization access.",
+      "Verify the invited email address in Firebase before accepting owner or admin access.",
       403,
     );
   }
@@ -81,7 +88,7 @@ export async function acceptOrganizationMembershipInvitations(
       ).filter(
         (membership): membership is OrganizationMembership =>
           membership !== null &&
-          isAdminInvitation(membership) &&
+          isOpenInvitation(membership) &&
           normalizeEmail(membership.email) === email,
       );
       const organizationIds = [

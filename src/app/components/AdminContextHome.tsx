@@ -365,7 +365,7 @@ export default function AdminContextHome({
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(37,99,235,0.34),transparent_34%),linear-gradient(115deg,#020817_0%,#061431_56%,#0b2447_100%)]" />
       <div className="pointer-events-none absolute inset-x-0 top-16 h-px bg-white/10" />
 
-      <header className="relative z-10 border-b border-white/10 bg-slate-950/70 backdrop-blur">
+      <header className="relative z-50 border-b border-white/10 bg-slate-950/70 backdrop-blur">
         <div className="mx-auto flex min-h-16 max-w-[1120px] items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-4">
             <Link className="flex items-center gap-3" href="/admin">
@@ -401,7 +401,7 @@ export default function AdminContextHome({
               <ChevronDownIcon className="size-5 text-slate-300" />
             </button>
             {isProfileOpen && (
-              <div className="absolute right-0 top-full z-10 mt-2 w-56 rounded-lg border border-white/10 bg-slate-950 p-2 shadow-xl">
+              <div className="absolute right-0 top-full z-[100] mt-2 w-56 rounded-lg border border-white/10 bg-slate-950 p-2 shadow-xl">
                 {accountLabel && (
                   <p className="break-all px-3 py-2 text-sm text-slate-400">
                     {accountLabel}
@@ -474,6 +474,17 @@ export default function AdminContextHome({
                     </div>
 
                     <div className="mt-3 space-y-2">
+                      {accountLabel && (
+                        <p className="rounded-md border border-white/10 bg-white/[0.035] p-2.5 text-xs font-semibold text-slate-300">
+                          Showing workspaces connected to{" "}
+                          <span className="font-black text-white">
+                            {accountLabel}
+                          </span>
+                          . To see an org created with another email, sign out
+                          and use that email, or invite this email from that
+                          org&apos;s Org Members page.
+                        </p>
+                      )}
                       {organizations.length > 0 ? (
                         organizations.map((organization) => {
                           const isActive =

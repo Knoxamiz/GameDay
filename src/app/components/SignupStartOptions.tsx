@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { createFirebaseUserWithEmailPassword } from "../infrastructure/firebaseClientAuth";
 
-export type SignupIntent = "organization" | "parent" | "team";
+export type SignupIntent = "invite" | "organization" | "parent" | "team";
 
 type SignupStartOptionsProps = {
   initialIntent?: SignupIntent;
@@ -279,6 +279,24 @@ export default function SignupStartOptions({
     }
   }
 
+  async function createInvitedAccount(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setIsSaving(true);
+
+    try {
+      await ensureSignedInSession();
+      window.location.assign("/account");
+    } catch (createError) {
+      setError(
+        createError instanceof Error
+          ? createError.message
+          : "Could not create invited account.",
+      );
+      setIsSaving(false);
+    }
+  }
+
   function handleIntentChange(intent: SignupIntent) {
     setActiveIntent(intent);
     setError(null);
@@ -450,6 +468,50 @@ export default function SignupStartOptions({
             Find registration
           </Link>
         </section>
+      )}
+
+      {activeIntent === "invite" && (
+        <form
+          className="rounded-lg border border-blue-400/20 bg-blue-600/10 p-3 shadow-[0_18px_48px_rgba(2,6,23,0.28)] backdrop-blur"
+          onSubmit={createInvitedAccount}
+        >
+          <p className="text-xs font-black uppercase tracking-wide text-blue-300">
+            Invited access
+          </p>
+          <h2 className="mt-1 text-base font-black text-white">
+            Open your GameDay invite
+          </h2>
+          <p className="mt-1 text-xs font-semibold leading-5 text-slate-300">
+            Use the exact email your organization invited. After sign-in,
+            GameDay connects the matching membership to this account.
+          </p>
+          {needsAccount ? (
+            <AccountFields
+              accountName={accountName}
+              email={email}
+              onAccountNameChange={setAccountName}
+              onEmailChange={setEmail}
+              onPasswordChange={setPassword}
+              password={password}
+            />
+          ) : (
+            <p className="mt-3 rounded-md border border-blue-300/20 bg-blue-500/10 p-2.5 text-xs font-black text-blue-100">
+              You are already signed in. Continue to your account.
+            </p>
+          )}
+          {error && activeIntent === "invite" && (
+            <p className="mt-3 rounded-md border border-red-400/30 bg-red-500/10 p-2.5 text-xs font-black text-red-200">
+              {error}
+            </p>
+          )}
+          <button
+            className="mt-3 w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-black text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={isSaving}
+            type="submit"
+          >
+            {isSaving ? "Opening invite..." : "Open invited account"}
+          </button>
+        </form>
       )}
     </div>
   );

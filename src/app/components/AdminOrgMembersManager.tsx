@@ -5,6 +5,7 @@ import type {
   OrganizationMembership,
   OrganizationMembershipRole,
 } from "../data/organizationMemberships";
+import AdminJoinLinkButton from "./AdminJoinLinkButton";
 
 type MembershipAuthority = "admin" | "bootstrap-admin" | "owner";
 
@@ -111,6 +112,8 @@ function MemberCard({
   const ownerRestricted = membership.role === "owner" && authority !== "owner";
   const canEdit = Boolean(authority) && !isRemoved && !ownerRestricted;
   const canRestore = membership.status === "suspended" && Boolean(membership.uid);
+  const accessLinkLabel =
+    membership.role === "coach" ? "Copy coach access link" : "Copy access link";
 
   function save(operation: "activate" | "remove" | "suspend" | "update") {
     return onSave(membership.id, {
@@ -156,6 +159,22 @@ function MemberCard({
         <p className="break-all text-xs font-semibold text-slate-400">
           {membership.email}
         </p>
+        {membership.status === "invited" && (
+          <div className="mt-2 flex flex-col gap-2 rounded-md border border-blue-300/20 bg-blue-500/10 p-2.5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs font-semibold text-blue-100">
+              Send this to the invited person. They must use{" "}
+              <span className="font-black">{membership.email}</span>. Coach
+              roster access appears after a team assignment is saved.
+            </p>
+            <AdminJoinLinkButton
+              className="shrink-0 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-black text-white hover:bg-blue-500"
+              errorMessage="Could not copy the access link."
+              joinPath="/signup?intent=invite"
+              label={accessLinkLabel}
+              successMessage="Access link copied."
+            />
+          </div>
+        )}
 
         <div className="mt-2.5 grid gap-2 lg:grid-cols-[1fr_1fr_150px]">
         <label className="block">
@@ -265,7 +284,7 @@ export default function AdminOrgMembersManager({
 }: AdminOrgMembersManagerProps) {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<OrganizationMembershipRole>("staff");
+  const [role, setRole] = useState<OrganizationMembershipRole>("coach");
   const [savingId, setSavingId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -391,7 +410,7 @@ export default function AdminOrgMembersManager({
             <input
               className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
               onChange={(event) => setTitle(event.target.value)}
-              placeholder="Board Member"
+              placeholder="10u Coach, Board Member, Team Mom"
               value={title}
             />
           </label>

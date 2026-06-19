@@ -17,6 +17,7 @@ function getIntent(value?: string | string[]): SignupIntent {
 
   if (
     intent === "organization" ||
+    intent === "invite" ||
     intent === "team" ||
     intent === "parent"
   ) {
@@ -32,6 +33,14 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
     searchParams,
   ]);
   const intent = getIntent(resolvedSearchParams?.intent);
+  const heading =
+    intent === "invite"
+      ? "Open your invited GameDay access."
+      : "Start with the role that creates the work.";
+  const subheading =
+    intent === "invite"
+      ? "Use the same email your organization invited. GameDay will connect the matching membership when you sign in."
+      : "Admins create paid organization workspaces. Coaches can create one free team. Parents are free and attach to a real team through registration.";
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#020713] text-white">
@@ -60,12 +69,10 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
             Signup
           </p>
           <h1 className="mt-1 text-xl font-black tracking-tight text-white sm:text-2xl">
-            Start with the role that creates the work.
+            {heading}
           </h1>
           <p className="mt-2 text-xs font-semibold leading-5 text-slate-300">
-            Admins create paid organization workspaces. Coaches can create one
-            free team. Parents are free and attach to a real team through
-            registration.
+            {subheading}
           </p>
           {session?.user.email && (
             <p className="mt-3 inline-flex rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1.5 text-xs font-black text-blue-200">
