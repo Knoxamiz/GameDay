@@ -116,6 +116,10 @@ export default function AdminTeamMembersManager({
         ),
     [coachAssignments, coaches, teamId],
   );
+  const parsedBulkRosterPlayers = useMemo(
+    () => parseRosterLines(bulkRosterText),
+    [bulkRosterText],
+  );
 
   function clearStatus() {
     setError(null);
@@ -177,12 +181,8 @@ export default function AdminTeamMembersManager({
       return;
     }
 
-    if (
-      players.some(
-        (player) => !player.athleteFirstName || !player.athleteLastName,
-      )
-    ) {
-      setError("Each line needs a first and last name.");
+    if (players.some((player) => !player.athleteFirstName)) {
+      setError("Each line needs a player name.");
       return;
     }
 
@@ -370,15 +370,19 @@ export default function AdminTeamMembersManager({
       <section className="gd-card-dark rounded-lg p-3 backdrop-blur">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-lg font-black text-white">{title}</h2>
+            <h2 className="text-lg font-black text-white">Roster list</h2>
             <p className="mt-0.5 text-sm text-slate-400">
-              Paste names, then save once. Add parent email after a comma when
-              you have it.
+              Type one player per line. First name is enough to start.
             </p>
           </div>
-          <span className="rounded-full bg-white/10 px-2 py-1 text-xs font-black text-blue-100">
-            {rosteredRegistrations.length} rostered
-          </span>
+          <div className="flex flex-wrap gap-2">
+            <span className="rounded-full bg-white/10 px-2 py-1 text-xs font-black text-blue-100">
+              {rosteredRegistrations.length} rostered
+            </span>
+            <span className="rounded-full bg-blue-500/20 px-2 py-1 text-xs font-black text-blue-100">
+              {parsedBulkRosterPlayers.length} ready
+            </span>
+          </div>
         </div>
 
         {message && (
@@ -392,21 +396,60 @@ export default function AdminTeamMembersManager({
           </p>
         )}
 
-        <div className="mt-3 grid gap-2 lg:grid-cols-[1fr_auto]">
-          <textarea
-            className="min-h-24 rounded-md border border-blue-300/15 bg-slate-950/60 px-3 py-2 text-sm font-semibold text-white outline-none placeholder:text-slate-500 focus:border-blue-300"
-            onChange={(event) => setBulkRosterText(event.target.value)}
-            placeholder={"Zimmy Zith, parent@email.com\nAlex Morgan\nTaylor Smith"}
-            value={bulkRosterText}
-          />
-          <button
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-black text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60 lg:self-start"
-            disabled={Boolean(savingKey)}
-            onClick={() => void addBulkPlayers()}
-            type="button"
-          >
-            {savingKey === "players-bulk-add" ? "Saving..." : "Save roster"}
-          </button>
+        <div className="mt-3 rounded-lg border border-blue-300/15 bg-slate-950/35 p-2">
+          <div className="grid gap-2 lg:grid-cols-[1fr_auto]">
+            <textarea
+              className="min-h-28 rounded-md border border-blue-300/20 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none placeholder:text-slate-500 focus:border-blue-300"
+              onChange={(event) => {
+                setBulkRosterText(event.target.value);
+                setError(null);
+              }}
+              placeholder={
+                "Ryan\nBri\nKali\nChloe\nZimmy Zith, parent@email.com"
+              }
+              value={bulkRosterText}
+            />
+            <button
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-black text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60 lg:self-start"
+              disabled={Boolean(savingKey) || parsedBulkRosterPlayers.length === 0}
+              onClick={() => void addBulkPlayers()}
+              type="button"
+            >
+              {savingKey === "players-bulk-add"
+                ? "Saving..."
+                : parsedBulkRosterPlayers.length > 0
+                  ? `Save ${parsedBulkRosterPlayers.length}`
+                  : "Save roster"}
+            </button>
+          </div>
+
+          <div className="mt-2 rounded-md border border-white/10 bg-white/[0.035] px-2 py-2">
+            {parsedBulkRosterPlayers.length === 0 ? (
+              <p className="text-xs font-semibold text-slate-400">
+                Example: one name per line. Add parent email after a comma when
+                you have it.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {parsedBulkRosterPlayers.slice(0, 12).map((player, index) => (
+                  <span
+                    className="rounded-full border border-blue-300/15 bg-blue-500/10 px-2 py-1 text-xs font-black text-blue-50"
+                    key={`${player.athleteFirstName}-${player.athleteLastName}-${index}`}
+                  >
+                    {[player.athleteFirstName, player.athleteLastName]
+                      .filter(Boolean)
+                      .join(" ")}
+                    {player.parentEmail ? " + email" : ""}
+                  </span>
+                ))}
+                {parsedBulkRosterPlayers.length > 12 && (
+                  <span className="rounded-full bg-white/10 px-2 py-1 text-xs font-black text-slate-200">
+                    +{parsedBulkRosterPlayers.length - 12} more
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="mt-3 divide-y divide-white/10 rounded-md border border-blue-300/10 bg-white/[0.035]">

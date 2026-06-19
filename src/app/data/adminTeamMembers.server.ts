@@ -431,14 +431,10 @@ export async function addAdminTeamPlayers(
     );
   }
 
-  if (
-    players.some(
-      (player) => !player.athleteFirstName || !player.athleteLastName,
-    )
-  ) {
+  if (players.some((player) => !player.athleteFirstName)) {
     createTeamMemberError(
       "invalid-player-bulk-name",
-      "Each player needs a first and last name.",
+      "Each player needs a name.",
       400,
     );
   }
