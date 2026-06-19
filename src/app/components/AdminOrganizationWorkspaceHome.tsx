@@ -435,6 +435,62 @@ export default function AdminOrganizationWorkspaceHome({
     isUpcomingEvent(event),
   );
   const scheduleTeamMap = new Map(readModel.teams.map((team) => [team.id, team]));
+  const presidentAttentionItem = alertItems[0];
+  const organizationHealthTone =
+    alertItems.some((item) => item.tone === "red")
+      ? "red"
+      : alertItems.length > 0
+        ? "orange"
+        : "green";
+  const organizationHealthLabel =
+    organizationHealthTone === "green"
+      ? "Healthy"
+      : organizationHealthTone === "red"
+        ? "Urgent"
+        : "Needs attention";
+  const pulseItems = [
+    {
+      label: "Active teams",
+      tone: activeTeams.length > 0 ? "blue" : "orange",
+      value: activeTeams.length,
+    },
+    {
+      label: "Players",
+      tone: readModel.registrations.length > 0 ? "green" : "slate",
+      value: readModel.registrations.length,
+    },
+    {
+      label: "Need coaches",
+      tone:
+        operatingModel.teamsNeedingCoaches.length > 0 ? "orange" : "green",
+      value: operatingModel.teamsNeedingCoaches.length,
+    },
+    {
+      label: "Upcoming",
+      tone: upcomingScheduleEvents.length > 0 ? "blue" : "slate",
+      value: upcomingScheduleEvents.length,
+    },
+    {
+      label: "Pending review",
+      tone:
+        operatingModel.pendingRegistrations.length > 0 ? "orange" : "green",
+      value: operatingModel.pendingRegistrations.length,
+    },
+    {
+      label: "Open items",
+      tone: operatingModel.readinessIssueCount > 0 ? "orange" : "green",
+      value: operatingModel.readinessIssueCount,
+    },
+    {
+      label: "Messages",
+      tone: recentCommunications.length > 0 ? "blue" : "slate",
+      value: recentCommunications.length,
+    },
+  ] satisfies {
+    label: string;
+    tone: "blue" | "green" | "orange" | "slate";
+    value: number;
+  }[];
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#020817] text-white">
@@ -522,6 +578,103 @@ export default function AdminOrganizationWorkspaceHome({
 
             {currentSection === "overview" && (
               <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                <section className="gd-card-dark rounded-lg p-3 backdrop-blur lg:col-span-2">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="text-base font-black">
+                          Organization Pulse
+                        </h2>
+                        <StatusPill tone={organizationHealthTone}>
+                          {organizationHealthLabel}
+                        </StatusPill>
+                      </div>
+                      <p className="mt-1 text-sm font-semibold text-slate-300">
+                        {organization.name} is in {operatingModel.stageLabel}.
+                      </p>
+                      <p className="mt-0.5 text-xs text-slate-400">
+                        {operatingModel.stageDescription}
+                      </p>
+                    </div>
+                    <Link
+                      className="inline-flex shrink-0 items-center justify-center rounded-md bg-blue-600 px-3 py-2 text-xs font-black text-white hover:bg-blue-500"
+                      href={withActiveOrganization(
+                        operatingModel.nextAction.href,
+                        activeOrganizationId,
+                      )}
+                    >
+                      {operatingModel.nextAction.label}
+                    </Link>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+                    {pulseItems.map((item) => (
+                      <div
+                        className="rounded-md border border-blue-300/10 bg-white/[0.045] px-2.5 py-2"
+                        key={item.label}
+                      >
+                        <p className="text-lg font-black leading-none text-white">
+                          {item.value}
+                        </p>
+                        <div className="mt-1 flex items-center gap-1.5">
+                          <span
+                            className={`size-1.5 rounded-full ${
+                              item.tone === "green"
+                                ? "bg-emerald-300"
+                                : item.tone === "orange"
+                                  ? "bg-orange-300"
+                                  : item.tone === "blue"
+                                    ? "bg-blue-300"
+                                    : "bg-slate-400"
+                            }`}
+                          />
+                          <p className="truncate text-[11px] font-bold text-slate-400">
+                            {item.label}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                <section className="gd-card-dark rounded-lg p-3 backdrop-blur lg:col-span-2">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <h2 className="text-base font-black">
+                        Needs President Attention
+                      </h2>
+                      <p className="mt-1 text-sm text-slate-400">
+                        The first thing to handle from this workspace.
+                      </p>
+                    </div>
+                    <StatusPill
+                      tone={presidentAttentionItem ? "orange" : "green"}
+                    >
+                      {presidentAttentionItem ? "Open" : "Clear"}
+                    </StatusPill>
+                  </div>
+                  <div className="mt-2">
+                    {presidentAttentionItem ? (
+                      <Link
+                        className="flex items-center justify-between gap-3 rounded-md border border-orange-300/20 bg-orange-500/10 px-3 py-2 text-sm font-bold text-orange-100 hover:bg-orange-500/15"
+                        href={withActiveOrganization(
+                          presidentAttentionItem.href,
+                          activeOrganizationId,
+                        )}
+                      >
+                        <span className="truncate">
+                          {presidentAttentionItem.label}
+                        </span>
+                        <span className="shrink-0">Open</span>
+                      </Link>
+                    ) : (
+                      <p className="rounded-md border border-emerald-300/15 bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-100">
+                        Nothing needs president attention right now.
+                      </p>
+                    )}
+                  </div>
+                </section>
+
                 <section className="gd-card-dark rounded-lg p-3 backdrop-blur">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div>
@@ -597,6 +750,69 @@ export default function AdminOrganizationWorkspaceHome({
                       <p className="text-sm text-slate-400">
                         No active alerts for this organization.
                       </p>
+                    )}
+                  </div>
+                </section>
+
+                <section className="gd-card-dark rounded-lg p-3 backdrop-blur lg:col-span-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h2 className="text-base font-black">Current Teams</h2>
+                      <p className="mt-1 text-sm text-slate-400">
+                        Team workspaces in this organization.
+                      </p>
+                    </div>
+                    <Link
+                      className="text-sm font-bold text-blue-300"
+                      href={withActiveOrganization(
+                        "/admin/teams",
+                        activeOrganizationId,
+                      )}
+                    >
+                      View all &gt;
+                    </Link>
+                  </div>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {visibleTeams.length === 0 ? (
+                      <p className="rounded-md border border-dashed border-white/15 bg-white/[0.04] p-3 text-sm font-semibold text-slate-400 sm:col-span-2">
+                        No teams in this organization yet.
+                      </p>
+                    ) : (
+                      visibleTeams.slice(0, 4).map((team) => {
+                        const rosteredCount = getTeamRosteredRegistrations(
+                          team.id,
+                        ).length;
+                        const coachCount = getCoachCount(team);
+
+                        return (
+                          <Link
+                            className="flex items-center justify-between gap-3 rounded-md border border-blue-300/10 bg-white/[0.045] px-3 py-2 hover:border-blue-300/30 hover:bg-blue-500/10"
+                            href={withActiveOrganization(
+                              `/admin/teams/${team.id}`,
+                              activeOrganizationId,
+                            )}
+                            key={team.id}
+                          >
+                            <span className="min-w-0">
+                              <span className="block truncate text-sm font-black">
+                                {team.name}
+                              </span>
+                              <span className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-xs text-slate-400">
+                                <span>{getTeamLabel(team) || "Team"}</span>
+                                <span>{rosteredCount} players</span>
+                                <span>{coachCount} coaches</span>
+                              </span>
+                            </span>
+                            <StatusPill
+                              tone={coachCount > 0 ? "green" : "orange"}
+                            >
+                              {coachCount > 0
+                                ? getTeamStatusLabel(team)
+                                : "Needs coach"}
+                            </StatusPill>
+                          </Link>
+                        );
+                      })
                     )}
                   </div>
                 </section>
