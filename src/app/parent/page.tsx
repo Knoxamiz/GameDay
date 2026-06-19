@@ -324,12 +324,14 @@ export default async function ParentHome() {
               Hi, {parentDisplayName}
             </h1>
           </div>
-          <Link
-            className="shrink-0 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-black text-slate-700 shadow-sm hover:bg-slate-50"
-            href={hasRegistrations ? "#add-player" : "/registration"}
-          >
-            {hasRegistrations ? "Add Player" : "Find Team"}
-          </Link>
+          {!hasRegistrations && (
+            <Link
+              className="shrink-0 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-black text-slate-700 shadow-sm hover:bg-slate-50"
+              href="/registration"
+            >
+              Find Team
+            </Link>
+          )}
         </div>
 
         {source === "error" && (
@@ -355,67 +357,6 @@ export default async function ParentHome() {
               Find open registration
             </Link>
           </section>
-        )}
-
-        {source !== "error" && hasRegistrations && (
-          <details
-            className="gd-card-light gd-card-interactive group mt-3 overflow-hidden rounded-lg"
-            id="add-player"
-          >
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
-              <span>
-                <span className="block text-sm font-black">Add Player</span>
-                <span className="mt-0.5 block text-xs font-semibold text-slate-500">
-                  Use a team you already belong to, or find a different team.
-                </span>
-              </span>
-              <span className="text-sm font-black text-blue-700 transition group-open:rotate-90">
-                &gt;
-              </span>
-            </summary>
-            <div className="space-y-1.5 border-t border-slate-200 px-3 py-2.5">
-              {addPlayerInviteOptions.length > 0 ? (
-                addPlayerInviteOptions.map(({ invite, team }) => (
-                  <Link
-                    className="flex items-center justify-between gap-3 rounded-md border border-blue-100/70 bg-white/70 px-2.5 py-2"
-                    href={`/join/${invite.inviteCode}`}
-                    key={invite.id}
-                  >
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-black">
-                        {team.name}
-                      </span>
-                      <span className="mt-0.5 block truncate text-[11px] font-semibold text-slate-500">
-                        Add another player to this team
-                      </span>
-                    </span>
-                    <span className="text-sm font-black text-blue-700">
-                      &gt;
-                    </span>
-                  </Link>
-                ))
-              ) : (
-                <p className="rounded-md border border-dashed border-blue-200/70 bg-white/70 p-2.5 text-xs font-semibold text-slate-500">
-                  No open registration links are available for your current
-                  teams.
-                </p>
-              )}
-              <Link
-                className="flex items-center justify-between gap-3 rounded-md border border-blue-100/70 bg-white/70 px-2.5 py-2"
-                href="/registration"
-              >
-                <span>
-                  <span className="block text-sm font-black">
-                    Find another team
-                  </span>
-                  <span className="mt-0.5 block text-[11px] font-semibold text-slate-500">
-                    Use search or an invite code for a new team.
-                  </span>
-                </span>
-                <span className="text-sm font-black text-blue-700">&gt;</span>
-              </Link>
-            </div>
-          </details>
         )}
 
         {parentTeamMessages.length > 0 && (
@@ -460,9 +401,64 @@ export default async function ParentHome() {
         <section className="mt-3">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-base font-black">Players</h2>
-            <p className="text-sm font-bold text-slate-500">
-              {athleteRows.length}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-bold text-slate-500">
+                {athleteRows.length}
+              </p>
+              {source !== "error" && hasRegistrations && (
+                <details className="group relative" id="add-player">
+                  <summary className="cursor-pointer list-none rounded-md border border-white/15 bg-white/10 px-2.5 py-1 text-[11px] font-black text-white/80 shadow-sm hover:bg-white/15 [&::-webkit-details-marker]:hidden">
+                    Add player
+                  </summary>
+                  <div className="absolute right-0 z-20 mt-2 w-72 max-w-[calc(100vw-2rem)] space-y-1.5 rounded-lg border border-blue-300/25 bg-slate-950/95 p-2 text-white shadow-2xl shadow-blue-950/50 ring-1 ring-white/10 backdrop-blur">
+                    <p className="px-1 text-[11px] font-bold text-slate-300">
+                      Add to an existing team, or find a new one.
+                    </p>
+                    {addPlayerInviteOptions.length > 0 ? (
+                      addPlayerInviteOptions.map(({ invite, team }) => (
+                        <Link
+                          className="flex items-center justify-between gap-3 rounded-md border border-blue-400/20 bg-blue-500/10 px-2.5 py-2 hover:bg-blue-500/20"
+                          href={`/join/${invite.inviteCode}`}
+                          key={invite.id}
+                        >
+                          <span className="min-w-0">
+                            <span className="block truncate text-xs font-black">
+                              {team.name}
+                            </span>
+                            <span className="mt-0.5 block truncate text-[11px] font-semibold text-slate-300">
+                              Add another player
+                            </span>
+                          </span>
+                          <span className="text-sm font-black text-blue-200">
+                            &gt;
+                          </span>
+                        </Link>
+                      ))
+                    ) : (
+                      <p className="rounded-md border border-dashed border-blue-300/30 bg-white/5 p-2.5 text-[11px] font-semibold text-slate-300">
+                        No open links for your current teams.
+                      </p>
+                    )}
+                    <Link
+                      className="flex items-center justify-between gap-3 rounded-md border border-white/10 bg-white/5 px-2.5 py-2 hover:bg-white/10"
+                      href="/registration"
+                    >
+                      <span>
+                        <span className="block text-xs font-black">
+                          Find another team
+                        </span>
+                        <span className="mt-0.5 block text-[11px] font-semibold text-slate-300">
+                          Search or enter an invite code.
+                        </span>
+                      </span>
+                      <span className="text-sm font-black text-blue-200">
+                        &gt;
+                      </span>
+                    </Link>
+                  </div>
+                </details>
+              )}
+            </div>
           </div>
           <div className="mt-2 space-y-1.5">
             {athleteRows.length === 0 ? (
@@ -489,14 +485,17 @@ export default async function ParentHome() {
 
         <BottomNav
           surface="light"
-          items={[
-            { href: "/parent", label: "Home" },
-            { href: "/events", label: "Schedule" },
-            {
-              href: hasRegistrations ? "#add-player" : "/registration",
-              label: hasRegistrations ? "Add Player" : "Find Team",
-            },
-          ]}
+          items={
+            hasRegistrations
+              ? [
+                  { href: "/parent", label: "Home" },
+                  { href: "/events", label: "Schedule" },
+                ]
+              : [
+                  { href: "/parent", label: "Home" },
+                  { href: "/registration", label: "Find Team" },
+                ]
+          }
         />
       </section>
     </main>
