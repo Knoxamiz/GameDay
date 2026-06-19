@@ -64,31 +64,43 @@ export default function AdminAnnouncementForm({
   }
 
   return (
-    <section
-      className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+    <details
+      className="gd-card-light gd-card-interactive group overflow-hidden rounded-lg"
       id="create-announcement"
     >
-      <div>
-        <h2 className="text-xl font-black">Create Announcement</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Post an organization update for parents, coaches, and admins.
-        </p>
-      </div>
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
+        <span>
+          <span className="block text-base font-black text-slate-950">
+            Create announcement
+          </span>
+          <span className="mt-0.5 block text-xs font-semibold text-slate-500">
+            Post an organization update for families and staff.
+          </span>
+        </span>
+        <span className="rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-black text-white transition group-open:hidden">
+          Create +
+        </span>
+        <span className="hidden text-base font-black text-blue-700 transition group-open:block group-open:rotate-90">
+          &gt;
+        </span>
+      </summary>
 
       {message && (
-        <p className="mt-4 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm font-semibold text-blue-700">
+        <p className="mx-3 mt-2 rounded-md border border-blue-200 bg-blue-50 p-2.5 text-xs font-semibold text-blue-700">
           {message}
         </p>
       )}
       {error && (
-        <p className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
+        <p className="mx-3 mt-2 rounded-md border border-red-200 bg-red-50 p-2.5 text-xs font-semibold text-red-700">
           {error}
         </p>
       )}
 
-      <div className="mt-4 space-y-4">
+      <div className="space-y-3 border-t border-blue-100/70 px-3 pb-3 pt-2.5">
         <label className="block">
-          <span className="text-sm font-bold text-slate-700">Title</span>
+          <span className="text-xs font-bold uppercase text-slate-500">
+            Title
+          </span>
           <input
             className="mt-2 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             onChange={(event) => setSubject(event.target.value)}
@@ -97,16 +109,18 @@ export default function AdminAnnouncementForm({
         </label>
 
         <label className="block">
-          <span className="text-sm font-bold text-slate-700">Details</span>
+          <span className="text-xs font-bold uppercase text-slate-500">
+            Details
+          </span>
           <textarea
-            className="mt-2 min-h-32 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            className="mt-2 min-h-24 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             onChange={(event) => setContent(event.target.value)}
             value={content}
           />
         </label>
 
         <button
-          className="w-full rounded-md bg-blue-600 px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          className="w-full rounded-md bg-blue-600 px-3 py-2 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           disabled={isSaving}
           onClick={() => void saveAnnouncement()}
           type="button"
@@ -114,6 +128,6 @@ export default function AdminAnnouncementForm({
           {isSaving ? "Creating..." : "Create Announcement"}
         </button>
       </div>
-    </section>
+    </details>
   );
 }
