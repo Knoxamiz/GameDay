@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { CoachAssignment } from "../data/coachAssignmentRecords";
 import type { Coach } from "../data/coaches";
 import type { Registration } from "../data/registrations";
@@ -20,6 +20,14 @@ type AdminTeamMembersManagerProps = {
 type ApiResponse = {
   error?: string;
   message?: string;
+};
+
+type RosterDraftRow = {
+  athleteFirstName: string;
+  athleteLastName: string;
+  id: string;
+  parentEmail: string;
+  parentPhone: string;
 };
 
 function normalizeText(value: string) {
@@ -54,6 +62,29 @@ function getEmailFromLine(line: string) {
   return line.match(/[^\s,;|<>]+@[^\s,;|<>]+/)?.[0] ?? "";
 }
 
+function getPhoneFromLine(line: string) {
+  return (
+    line.match(
+      /(?:\+?1[\s.-]?)?(?:\(?\d{3}\)?[\s.-]?)\d{3}[\s.-]?\d{4}/,
+    )?.[0] ?? ""
+  );
+}
+
+function createRosterDraftRow(
+  values: Partial<Omit<RosterDraftRow, "id">> = {},
+): RosterDraftRow {
+  return {
+    athleteFirstName: values.athleteFirstName ?? "",
+    athleteLastName: values.athleteLastName ?? "",
+    id:
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random()}`,
+    parentEmail: values.parentEmail ?? "",
+    parentPhone: values.parentPhone ?? "",
+  };
+}
+
 function parseRosterLines(value: string) {
   return value
     .split(/\r?\n/)
@@ -61,8 +92,10 @@ function parseRosterLines(value: string) {
     .filter(Boolean)
     .map((line) => {
       const parentEmail = getEmailFromLine(line);
+      const parentPhone = getPhoneFromLine(line);
       const namePart = line
         .replace(parentEmail, "")
+        .replace(parentPhone, "")
         .replace(/[|,;-]+/g, " ")
         .replace(/\s+/g, " ")
         .trim();
@@ -72,6 +105,7 @@ function parseRosterLines(value: string) {
         athleteFirstName,
         athleteLastName: lastNameParts.join(" "),
         parentEmail,
+        parentPhone,
       };
     });
 }
@@ -99,6 +133,10 @@ export default function AdminTeamMembersManager({
   const [coachName, setCoachName] = useState("");
   const [coachEmail, setCoachEmail] = useState("");
   const [bulkRosterText, setBulkRosterText] = useState("");
+  const [draftRosterRows, setDraftRosterRows] = useState<RosterDraftRow[]>([
+    createRosterDraftRow(),
+  ]);
+  const pasteRosterTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -116,10 +154,60 @@ export default function AdminTeamMembersManager({
         ),
     [coachAssignments, coaches, teamId],
   );
-  const parsedBulkRosterPlayers = useMemo(
-    () => parseRosterLines(bulkRosterText),
-    [bulkRosterText],
+  const readyRosterRows = useMemo(
+    () =>
+      draftRosterRows.filter((row) => normalizeText(row.athleteFirstName)),
+    [draftRosterRows],
   );
+
+  function updateDraftRosterRow(
+    rowId: string,
+    field: keyof Omit<RosterDraftRow, "id">,
+    value: string,
+  ) {
+    setDraftRosterRows((rows) =>
+      rows.map((row) => (row.id === rowId ? { ...row, [field]: value } : row)),
+    );
+    setError(null);
+  }
+
+  function addDraftRosterRow() {
+    setDraftRosterRows((rows) => [...rows, createRosterDraftRow()]);
+    setError(null);
+  }
+
+  function removeDraftRosterRow(rowId: string) {
+    setDraftRosterRows((rows) => {
+      const nextRows = rows.filter((row) => row.id !== rowId);
+
+      return nextRows.length > 0 ? nextRows : [createRosterDraftRow()];
+    });
+    setError(null);
+  }
+
+  function clearDraftRosterRows() {
+    setBulkRosterText("");
+    setDraftRosterRows([createRosterDraftRow()]);
+    setError(null);
+  }
+
+  function pasteRosterRows() {
+    const rows = parseRosterLines(bulkRosterText).map((player) =>
+      createRosterDraftRow(player),
+    );
+
+    if (rows.length === 0) {
+      setError("Paste at least one player name.");
+      return;
+    }
+
+    setDraftRosterRows((currentRows) => [
+      ...currentRows.filter((row) => normalizeText(row.athleteFirstName)),
+      ...rows,
+    ]);
+    setBulkRosterText("");
+    setError(null);
+  }
 
   function clearStatus() {
     setError(null);
@@ -174,7 +262,12 @@ export default function AdminTeamMembersManager({
 
   async function addBulkPlayers() {
     clearStatus();
-    const players = parseRosterLines(bulkRosterText);
+    const players = readyRosterRows.map((row) => ({
+      athleteFirstName: normalizeText(row.athleteFirstName),
+      athleteLastName: normalizeText(row.athleteLastName),
+      parentEmail: normalizeEmail(row.parentEmail),
+      parentPhone: normalizeText(row.parentPhone),
+    }));
 
     if (players.length === 0) {
       setError("Enter at least one player name.");
@@ -209,6 +302,7 @@ export default function AdminTeamMembersManager({
       }
 
       setBulkRosterText("");
+      setDraftRosterRows([createRosterDraftRow()]);
       refreshAfterSuccess(body?.message ?? "Roster saved.");
     } catch (addError) {
       setError(
@@ -368,20 +462,43 @@ export default function AdminTeamMembersManager({
   if (!showCoaches) {
     return (
       <section className="gd-card-dark rounded-lg p-3 backdrop-blur">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-2 border-b border-white/10 pb-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-lg font-black text-white">Roster list</h2>
-            <p className="mt-0.5 text-sm text-slate-400">
-              Type one player per line. First name is enough to start.
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-lg font-black text-white">Roster Builder</h2>
+              <span className="rounded-full bg-white/10 px-2 py-1 text-[11px] font-black text-blue-100">
+                {rosteredRegistrations.length} rostered
+              </span>
+              <span className="rounded-full bg-emerald-400/15 px-2 py-1 text-[11px] font-black text-emerald-100">
+                {readyRosterRows.length} ready
+              </span>
+            </div>
+            <p className="mt-1 text-xs font-semibold text-slate-400">
+              Add players quickly, then review each row before saving.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <span className="rounded-full bg-white/10 px-2 py-1 text-xs font-black text-blue-100">
-              {rosteredRegistrations.length} rostered
-            </span>
-            <span className="rounded-full bg-blue-500/20 px-2 py-1 text-xs font-black text-blue-100">
-              {parsedBulkRosterPlayers.length} ready
-            </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-black text-white hover:bg-blue-500"
+              onClick={addDraftRosterRow}
+              type="button"
+            >
+              + Add player
+            </button>
+            <button
+              className="rounded-md border border-white/15 px-3 py-1.5 text-xs font-black text-slate-100 hover:bg-white/10"
+              onClick={() => pasteRosterTextareaRef.current?.focus()}
+              type="button"
+            >
+              Paste list
+            </button>
+            <button
+              className="px-1.5 py-1 text-xs font-black text-blue-200 hover:text-white"
+              onClick={clearDraftRosterRows}
+              type="button"
+            >
+              Clear all
+            </button>
           </div>
         </div>
 
@@ -396,61 +513,155 @@ export default function AdminTeamMembersManager({
           </p>
         )}
 
-        <div className="mt-3 rounded-lg border border-blue-300/15 bg-slate-950/35 p-2">
-          <div className="grid gap-2 lg:grid-cols-[1fr_auto]">
+        <div className="mt-3 overflow-hidden rounded-lg border border-blue-300/15 bg-slate-950/25">
+          <div className="hidden grid-cols-[1.2rem_1fr_1fr_1.25fr_1fr_4.5rem_2.25rem] gap-2 border-b border-white/10 px-3 py-2 text-[10px] font-black uppercase tracking-wide text-slate-400 lg:grid">
+            <span />
+            <span>First name</span>
+            <span>Last name</span>
+            <span>Parent email</span>
+            <span>Parent phone</span>
+            <span>Status</span>
+            <span />
+          </div>
+          {draftRosterRows.map((row, index) => {
+            const isReady = Boolean(normalizeText(row.athleteFirstName));
+
+            return (
+              <div
+                className="grid gap-2 border-b border-white/10 p-2 last:border-b-0 lg:grid-cols-[1.2rem_1fr_1fr_1.25fr_1fr_4.5rem_2.25rem] lg:items-end"
+                key={row.id}
+              >
+                <span className="hidden items-center pb-1.5 text-sm font-black text-slate-500 lg:flex">
+                  {index + 1}
+                </span>
+                <label className="block">
+                  <span className="text-[10px] font-black uppercase text-slate-400 lg:hidden">
+                    First name
+                  </span>
+                  <input
+                    className="mt-1 w-full rounded-md border border-blue-300/20 bg-slate-950/70 px-2 py-1.5 text-sm font-semibold text-white outline-none placeholder:text-slate-500 focus:border-blue-300 lg:mt-0"
+                    onChange={(event) =>
+                      updateDraftRosterRow(
+                        row.id,
+                        "athleteFirstName",
+                        event.target.value,
+                      )
+                    }
+                    placeholder={index === 0 ? "Ryan" : "First name"}
+                    value={row.athleteFirstName}
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-[10px] font-black uppercase text-slate-400 lg:hidden">
+                    Last name
+                  </span>
+                  <input
+                    className="mt-1 w-full rounded-md border border-blue-300/20 bg-slate-950/70 px-2 py-1.5 text-sm font-semibold text-white outline-none placeholder:text-slate-500 focus:border-blue-300 lg:mt-0"
+                    onChange={(event) =>
+                      updateDraftRosterRow(
+                        row.id,
+                        "athleteLastName",
+                        event.target.value,
+                      )
+                    }
+                    placeholder="Last name"
+                    value={row.athleteLastName}
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-[10px] font-black uppercase text-slate-400 lg:hidden">
+                    Parent email
+                  </span>
+                  <input
+                    className="mt-1 w-full rounded-md border border-blue-300/20 bg-slate-950/70 px-2 py-1.5 text-sm font-semibold text-white outline-none placeholder:text-slate-500 focus:border-blue-300 lg:mt-0"
+                    onChange={(event) =>
+                      updateDraftRosterRow(
+                        row.id,
+                        "parentEmail",
+                        event.target.value,
+                      )
+                    }
+                    placeholder="Parent email"
+                    value={row.parentEmail}
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-[10px] font-black uppercase text-slate-400 lg:hidden">
+                    Parent phone
+                  </span>
+                  <input
+                    className="mt-1 w-full rounded-md border border-blue-300/20 bg-slate-950/70 px-2 py-1.5 text-sm font-semibold text-white outline-none placeholder:text-slate-500 focus:border-blue-300 lg:mt-0"
+                    onChange={(event) =>
+                      updateDraftRosterRow(
+                        row.id,
+                        "parentPhone",
+                        event.target.value,
+                      )
+                    }
+                    placeholder="Parent phone"
+                    value={row.parentPhone}
+                  />
+                </label>
+                <span
+                  className={`self-end rounded-full px-2 py-1 text-center text-[11px] font-black ${
+                    isReady
+                      ? "bg-emerald-400/20 text-emerald-100"
+                      : "bg-white/10 text-slate-300"
+                  }`}
+                >
+                  {isReady ? "Ready" : "Draft"}
+                </span>
+                <button
+                  aria-label="Remove row"
+                  className="self-end rounded-md border border-white/15 px-2 py-1 text-xs font-black text-slate-200 hover:bg-white/10"
+                  onClick={() => removeDraftRosterRow(row.id)}
+                  type="button"
+                >
+                  X
+                </button>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="mt-3 grid gap-2 rounded-lg border border-dashed border-blue-300/20 bg-white/[0.025] p-2 lg:grid-cols-[11rem_1fr_auto]">
+          <p className="text-xs font-bold text-slate-300">
+            <span className="mb-1 block text-[10px] font-black uppercase text-slate-500">
+              Bulk add
+            </span>
+              Paste names one per line, or use: Ryan Smith,
+              parent@email.com
+            </p>
             <textarea
-              className="min-h-28 rounded-md border border-blue-300/20 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none placeholder:text-slate-500 focus:border-blue-300"
+              ref={pasteRosterTextareaRef}
+              className="min-h-16 rounded-md border border-blue-300/20 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none placeholder:text-slate-500 focus:border-blue-300"
               onChange={(event) => {
                 setBulkRosterText(event.target.value);
                 setError(null);
               }}
-              placeholder={
-                "Ryan\nBri\nKali\nChloe\nZimmy Zith, parent@email.com"
-              }
+              placeholder="Paste or type to add multiple players..."
               value={bulkRosterText}
             />
             <button
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-black text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60 lg:self-start"
-              disabled={Boolean(savingKey) || parsedBulkRosterPlayers.length === 0}
-              onClick={() => void addBulkPlayers()}
+              className="rounded-md border border-white/15 px-3 py-2 text-xs font-black text-slate-100 hover:bg-white/10"
+              onClick={pasteRosterRows}
               type="button"
             >
-              {savingKey === "players-bulk-add"
-                ? "Saving..."
-                : parsedBulkRosterPlayers.length > 0
-                  ? `Save ${parsedBulkRosterPlayers.length}`
-                  : "Save roster"}
+              Add from paste
             </button>
-          </div>
-
-          <div className="mt-2 rounded-md border border-white/10 bg-white/[0.035] px-2 py-2">
-            {parsedBulkRosterPlayers.length === 0 ? (
-              <p className="text-xs font-semibold text-slate-400">
-                Example: one name per line. Add parent email after a comma when
-                you have it.
-              </p>
-            ) : (
-              <div className="flex flex-wrap gap-1.5">
-                {parsedBulkRosterPlayers.slice(0, 12).map((player, index) => (
-                  <span
-                    className="rounded-full border border-blue-300/15 bg-blue-500/10 px-2 py-1 text-xs font-black text-blue-50"
-                    key={`${player.athleteFirstName}-${player.athleteLastName}-${index}`}
-                  >
-                    {[player.athleteFirstName, player.athleteLastName]
-                      .filter(Boolean)
-                      .join(" ")}
-                    {player.parentEmail ? " + email" : ""}
-                  </span>
-                ))}
-                {parsedBulkRosterPlayers.length > 12 && (
-                  <span className="rounded-full bg-white/10 px-2 py-1 text-xs font-black text-slate-200">
-                    +{parsedBulkRosterPlayers.length - 12} more
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
         </div>
+
+        <button
+          className="mt-3 w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-black text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={Boolean(savingKey) || readyRosterRows.length === 0}
+          onClick={() => void addBulkPlayers()}
+          type="button"
+        >
+          {savingKey === "players-bulk-add" ? "Saving..." : "Save roster"}
+        </button>
+        <p className="mt-2 text-center text-[11px] font-semibold text-slate-500">
+          No changes are saved until you click Save roster.
+        </p>
 
         <div className="mt-3 divide-y divide-white/10 rounded-md border border-blue-300/10 bg-white/[0.035]">
           {rosteredRegistrations.length === 0 ? (
