@@ -180,7 +180,7 @@ export default async function CoachHome() {
         </aside>
 
         <div className="min-w-0 flex-1">
-          <header className="flex min-h-16 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 sm:px-6">
+          <header className="flex min-h-14 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 sm:px-5">
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-slate-500">
                 Coach / {organizationLabel}
@@ -189,7 +189,7 @@ export default async function CoachHome() {
             <div className="flex items-center gap-3">
               <SessionControls compact role="coach" surface="light" />
               <div className="hidden items-center gap-3 sm:flex">
-                <span className="flex size-9 items-center justify-center rounded-full bg-blue-100 text-sm font-black text-blue-700">
+                <span className="flex size-8 items-center justify-center rounded-full bg-blue-100 text-xs font-black text-blue-700">
                   {getInitial(displayName)}
                 </span>
                 <span className="min-w-0">
@@ -202,10 +202,10 @@ export default async function CoachHome() {
             </div>
           </header>
 
-          <section className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <section className="mx-auto max-w-5xl px-3 py-4 sm:px-5">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <h1 className="text-3xl font-black tracking-tight">
+                <h1 className="text-2xl font-black tracking-tight">
                   Coach Home
                 </h1>
                 <p className="mt-1 text-sm font-semibold text-slate-500">
@@ -213,22 +213,22 @@ export default async function CoachHome() {
                 </p>
               </div>
               <div className="grid grid-cols-3 gap-2 text-center text-xs font-bold lg:w-80">
-                <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+                <div className="rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm">
                   <p className="text-slate-500">Teams</p>
-                  <p className="mt-1 text-xl text-slate-950">
+                  <p className="mt-0.5 text-lg text-slate-950">
                     {coachTeams.length}
                   </p>
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+                <div className="rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm">
                   <p className="text-slate-500">Rostered</p>
-                  <p className="mt-1 text-xl text-slate-950">
+                  <p className="mt-0.5 text-lg text-slate-950">
                     {coachRosterRegistrations.length}
                   </p>
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+                <div className="rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm">
                   <p className="text-slate-500">Actions</p>
                   <p
-                    className={`mt-1 text-xl ${
+                    className={`mt-0.5 text-lg ${
                       actionCount > 0 ? "text-orange-600" : "text-blue-600"
                     }`}
                   >
@@ -239,16 +239,16 @@ export default async function CoachHome() {
             </div>
 
             {upcomingEventCount > 0 && (
-              <p className="mt-4 rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm font-semibold text-blue-800">
+              <p className="mt-3 rounded-lg border border-blue-100 bg-blue-50 p-2.5 text-xs font-semibold text-blue-800">
                 {upcomingEventCount} assigned team
                 {upcomingEventCount === 1 ? " has" : "s have"} an upcoming
                 visible event.
               </p>
             )}
 
-            <div className="mt-5 space-y-4">
+            <div className="mt-3 space-y-3">
               {source === "error" && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-5 text-sm text-red-700 shadow-sm">
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 shadow-sm">
                   <p className="font-black">Coach dashboard could not load.</p>
                   <p className="mt-2">
                     {errorMessage ??
@@ -258,21 +258,21 @@ export default async function CoachHome() {
               )}
 
               {source !== "error" && coachTeamCards.length === 0 && (
-                <div className="rounded-lg border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-sm">
-                  <p className="text-lg font-black text-slate-950">
+                <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-600 shadow-sm">
+                  <p className="text-base font-black text-slate-950">
                     No team assigned yet.
                   </p>
-                  <p className="mt-3">
+                  <p className="mt-2">
                     Create your own team workspace, or have an organization add
                     this coach account to one of their teams.
                   </p>
 
-                  <div className="mt-4">
+                  <div className="mt-3">
                     <CoachTeamWorkspaceCreateForm />
                   </div>
 
-                  <details className="group mt-4 rounded-md border border-slate-200 bg-slate-50">
-                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
+                  <details className="group mt-3 rounded-md border border-slate-200 bg-slate-50">
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
                       <span>
                         <span className="block font-black text-slate-950">
                           Already part of an organization?
@@ -281,11 +281,11 @@ export default async function CoachHome() {
                           Use this when another admin owns the workspace.
                         </span>
                       </span>
-                      <span className="text-2xl font-black text-blue-600 transition group-open:rotate-90">
+                      <span className="text-lg font-black text-blue-600 transition group-open:rotate-90">
                         &rsaquo;
                       </span>
                     </summary>
-                    <div className="border-t border-slate-200 p-4">
+                    <div className="border-t border-slate-200 p-3">
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                         Coach login email
                       </p>

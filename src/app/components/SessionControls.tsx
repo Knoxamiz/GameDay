@@ -60,9 +60,9 @@ export default function SessionControls({
 
   if (compact) {
     return (
-      <div className="text-right text-sm">
+      <div className="text-right text-xs">
         <button
-          className={`rounded-md border px-3 py-2 font-semibold disabled:cursor-not-allowed disabled:opacity-60 ${
+          className={`rounded-md border px-2.5 py-1.5 font-semibold disabled:cursor-not-allowed disabled:opacity-60 ${
             surface === "light"
               ? "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
               : "border-slate-700 text-slate-200"
@@ -84,7 +84,7 @@ export default function SessionControls({
 
   return (
     <div
-      className={`mt-4 rounded-2xl border p-4 text-sm shadow-lg ${
+      className={`mt-3 rounded-lg border p-3 text-sm shadow-lg ${
         surface === "light"
           ? "border-slate-200 bg-white"
           : "border-slate-800 bg-slate-900"
@@ -109,7 +109,7 @@ export default function SessionControls({
         </div>
 
         <button
-          className={`shrink-0 rounded-xl border px-4 py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-60 ${
+          className={`shrink-0 rounded-md border px-3 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60 ${
             surface === "light"
               ? "border-slate-200 text-slate-700 hover:bg-slate-50"
               : "border-slate-700 text-white"

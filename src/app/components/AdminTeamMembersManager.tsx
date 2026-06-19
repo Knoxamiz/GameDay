@@ -282,46 +282,46 @@ export default function AdminTeamMembersManager({
 
   return (
     <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3">
         <span>
-          <span className="block text-lg font-black text-slate-950">
+          <span className="block text-base font-black text-slate-950">
             Players & Coaches
           </span>
-          <span className="mt-1 block text-sm text-slate-500">
+          <span className="mt-0.5 block text-xs text-slate-500">
             {rosteredRegistrations.length} rostered /{" "}
             {activeTeamCoachAssignments.length} coaches
           </span>
         </span>
-        <span className="text-2xl font-black text-blue-600 transition group-open:rotate-90">
+        <span className="text-lg font-black text-blue-600 transition group-open:rotate-90">
           &rsaquo;
         </span>
       </summary>
 
       {message && (
-        <p className="mx-4 mb-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm font-bold text-emerald-700">
+        <p className="mx-3 mb-3 rounded-md border border-emerald-200 bg-emerald-50 p-2.5 text-xs font-bold text-emerald-700">
           {message}
         </p>
       )}
       {error && (
-        <p className="mx-4 mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-700">
+        <p className="mx-3 mb-3 rounded-md border border-red-200 bg-red-50 p-2.5 text-xs font-bold text-red-700">
           {error}
         </p>
       )}
 
-      <div className="space-y-2 border-t border-slate-200 p-4">
+      <div className="space-y-2 border-t border-slate-200 p-3">
         <details className="group/player overflow-hidden rounded-lg border border-slate-200 bg-white">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3">
             <span>
               <span className="block font-black text-slate-950">Players</span>
-              <span className="mt-1 block text-sm text-slate-500">
+              <span className="mt-0.5 block text-xs text-slate-500">
                 {rosteredRegistrations.length} rostered
               </span>
             </span>
-            <span className="text-2xl font-black text-blue-600 transition group-open/player:rotate-90">
+            <span className="text-lg font-black text-blue-600 transition group-open/player:rotate-90">
               &rsaquo;
             </span>
           </summary>
-          <div className="border-t border-slate-200 p-4">
+          <div className="border-t border-slate-200 p-3">
             <details className="group/add-player overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
                 <span className="font-black text-slate-950">Add player</span>
@@ -428,18 +428,18 @@ export default function AdminTeamMembersManager({
         </details>
 
         <details className="group/coach overflow-hidden rounded-lg border border-slate-200 bg-white">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3">
             <span>
               <span className="block font-black text-slate-950">Coaches</span>
-              <span className="mt-1 block text-sm text-slate-500">
+              <span className="mt-0.5 block text-xs text-slate-500">
                 {activeTeamCoachAssignments.length} assigned
               </span>
             </span>
-            <span className="text-2xl font-black text-blue-600 transition group-open/coach:rotate-90">
+            <span className="text-lg font-black text-blue-600 transition group-open/coach:rotate-90">
               &rsaquo;
             </span>
           </summary>
-          <div className="border-t border-slate-200 p-4">
+          <div className="border-t border-slate-200 p-3">
             <details className="group/add-coach overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
                 <span className="font-black text-slate-950">Add coach</span>

@@ -24,11 +24,11 @@ export default function BackButton({
 
   return (
     <button
-      className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm font-black text-white shadow-sm hover:bg-white/10"
+      className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-md border border-white/15 bg-white/5 px-2.5 py-1.5 text-xs font-black text-white shadow-sm hover:bg-white/10"
       onClick={goBack}
       type="button"
     >
-      <span aria-hidden="true" className="text-lg leading-none">
+      <span aria-hidden="true" className="text-base leading-none">
         &larr;
       </span>
       <span className="hidden sm:inline">{label}</span>

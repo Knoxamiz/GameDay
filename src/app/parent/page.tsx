@@ -237,8 +237,8 @@ export default async function ParentHome() {
   return (
     <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <Link className="text-xl font-black" href="/parent">
+        <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-3 py-2.5 sm:px-5">
+          <Link className="text-lg font-black" href="/parent">
             GameDay
           </Link>
           <div className="flex items-center gap-3">
@@ -255,18 +255,18 @@ export default async function ParentHome() {
         </div>
       </header>
 
-      <section className="mx-auto max-w-2xl px-4 py-4 pb-24 sm:px-6">
+      <section className="mx-auto max-w-2xl px-3 py-3 pb-20 sm:px-5">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs font-black uppercase text-blue-700">
               Parent Home
             </p>
-            <h1 className="truncate text-2xl font-black tracking-tight">
+            <h1 className="truncate text-xl font-black tracking-tight">
               Hi, {parentDisplayName}
             </h1>
           </div>
           <Link
-            className="shrink-0 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 shadow-sm hover:bg-slate-50"
+            className="shrink-0 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-black text-slate-700 shadow-sm hover:bg-slate-50"
             href="/registration"
           >
             Find Team
@@ -274,7 +274,7 @@ export default async function ParentHome() {
         </div>
 
         {source === "error" && (
-          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
             <p className="font-black">Parent dashboard could not load.</p>
             <p className="mt-2">
               {errorMessage ??
@@ -284,13 +284,13 @@ export default async function ParentHome() {
         )}
 
         {source !== "error" && !hasRegistrations && (
-          <section className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4 shadow-sm">
-            <h2 className="text-xl font-black">Find your team</h2>
-            <p className="mt-2 text-sm font-semibold text-slate-600">
+          <section className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3 shadow-sm">
+            <h2 className="text-lg font-black">Find your team</h2>
+            <p className="mt-1 text-sm font-semibold text-slate-600">
               Search open GameDay registrations by organization and team.
             </p>
             <Link
-              className="mt-4 inline-flex rounded-md bg-blue-600 px-4 py-3 text-sm font-black text-white hover:bg-blue-700"
+              className="mt-3 inline-flex rounded-md bg-blue-600 px-3 py-2 text-xs font-black text-white hover:bg-blue-700"
               href="/registration"
             >
               Find open registration
@@ -298,16 +298,16 @@ export default async function ParentHome() {
           </section>
         )}
 
-        <section className="mt-4">
+        <section className="mt-3">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-xl font-black">Players</h2>
+            <h2 className="text-lg font-black">Players</h2>
             <p className="text-sm font-bold text-slate-500">
               {athleteRows.length}
             </p>
           </div>
           <div className="mt-2 space-y-2">
             {athleteRows.length === 0 ? (
-              <p className="rounded-lg border border-dashed border-slate-300 bg-white p-4 text-sm font-semibold text-slate-500">
+              <p className="rounded-lg border border-dashed border-slate-300 bg-white p-3 text-sm font-semibold text-slate-500">
                 No players registered yet.
               </p>
             ) : (

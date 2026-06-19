@@ -101,13 +101,13 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
   });
 
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <article className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h2 className="truncate text-xl font-black text-slate-950">
+          <h2 className="truncate text-lg font-black text-slate-950">
             {team.name}
           </h2>
-          <p className="mt-1 truncate text-sm font-semibold text-slate-500">
+          <p className="mt-0.5 truncate text-xs font-semibold text-slate-500">
             {card.organization?.name ?? "Organization unavailable"}
           </p>
           {[team.division, team.season].filter(Boolean).length > 0 && (
@@ -116,30 +116,30 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
             </p>
           )}
         </div>
-        <span className="w-fit rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">
+        <span className="w-fit rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-black text-blue-700">
           {registrations.length} rostered
         </span>
       </div>
 
       <div
-        className={`mt-4 rounded-lg border p-4 ${getActionToneClasses(
+        className={`mt-3 rounded-lg border p-3 ${getActionToneClasses(
           nextAction.tone,
         )}`}
       >
         <p className="text-xs font-black uppercase tracking-wide opacity-80">
           Main target
         </p>
-        <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-1.5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-lg font-black">{nextAction.label}</p>
-            <p className="mt-1 text-sm font-semibold opacity-90">
+            <p className="text-base font-black">{nextAction.label}</p>
+            <p className="mt-0.5 text-xs font-semibold opacity-90">
               {nextAction.description}
             </p>
           </div>
           {nextAction.href && (
             <Link
               href={nextAction.href}
-              className={`rounded-md px-4 py-3 text-center text-sm font-black ${getActionButtonClass(
+              className={`rounded-md px-3 py-2 text-center text-xs font-black ${getActionButtonClass(
                 nextAction.tone,
               )}`}
             >
@@ -149,25 +149,27 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs font-bold">
-        <div className="rounded-md bg-slate-50 p-3">
+      <div className="mt-2.5 grid grid-cols-3 gap-2 text-center text-xs font-bold">
+        <div className="rounded-md bg-slate-50 p-2.5">
           <p className="text-slate-500">Roster</p>
-          <p className="mt-1 text-lg text-slate-950">{registrations.length}</p>
+          <p className="mt-0.5 text-base text-slate-950">
+            {registrations.length}
+          </p>
         </div>
-        <div className="rounded-md bg-slate-50 p-3">
+        <div className="rounded-md bg-slate-50 p-2.5">
           <p className="text-slate-500">Ready</p>
           <p
-            className={`mt-1 text-lg ${
+            className={`mt-0.5 text-base ${
               readiness.openItems > 0 ? "text-orange-600" : "text-blue-600"
             }`}
           >
             {readiness.readyAthletes}
           </p>
         </div>
-        <div className="rounded-md bg-slate-50 p-3">
+        <div className="rounded-md bg-slate-50 p-2.5">
           <p className="text-slate-500">Open</p>
           <p
-            className={`mt-1 text-lg ${
+            className={`mt-0.5 text-base ${
               readiness.openItems > 0 ? "text-orange-600" : "text-blue-600"
             }`}
           >
@@ -176,7 +178,7 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
         </div>
       </div>
 
-      <section className="mt-3 rounded-lg border border-slate-200 bg-white p-4">
+      <section className="mt-2.5 rounded-lg border border-slate-200 bg-white p-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs font-black uppercase tracking-wide text-slate-500">
@@ -184,25 +186,25 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
             </p>
             {nextEvent ? (
               <>
-                <p className="mt-2 truncate font-black text-slate-950">
+                <p className="mt-1 truncate text-sm font-black text-slate-950">
                   {nextEvent.title}
                 </p>
-                <p className="mt-1 text-sm font-semibold text-slate-600">
+                <p className="mt-0.5 text-xs font-semibold text-slate-600">
                   {getEventDateLabel(nextEvent)} · {getEventTimeLabel(nextEvent)}
                 </p>
-                <p className="mt-1 truncate text-sm text-slate-500">
+                <p className="mt-0.5 truncate text-xs text-slate-500">
                   {getEventLocationLabel(nextEvent)}
                 </p>
               </>
             ) : (
-              <p className="mt-2 text-sm font-semibold text-slate-500">
+              <p className="mt-1 text-xs font-semibold text-slate-500">
                 No upcoming events scheduled for this team.
               </p>
             )}
           </div>
           {nextEvent && (
             <span
-              className={`shrink-0 rounded-full px-3 py-1 text-xs font-black ${getEventTone(
+              className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-black ${getEventTone(
                 nextEvent.status,
               )}`}
             >
@@ -212,16 +214,16 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
         </div>
 
         {nextEvent && (
-          <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-            <div className="rounded-md bg-slate-50 p-3">
+          <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+            <div className="rounded-md bg-slate-50 p-2.5">
               <p className="font-semibold text-slate-500">Attendance</p>
-              <p className="mt-1 font-black text-slate-950">
+              <p className="mt-0.5 font-black text-slate-950">
                 {responseSummary.attendanceSubmitted} of {registrations.length}
               </p>
             </div>
-            <div className="rounded-md bg-slate-50 p-3">
+            <div className="rounded-md bg-slate-50 p-2.5">
               <p className="font-semibold text-slate-500">Transportation</p>
-              <p className="mt-1 font-black text-slate-950">
+              <p className="mt-0.5 font-black text-slate-950">
                 {responseSummary.transportationSubmitted} of{" "}
                 {registrations.length}
               </p>
@@ -230,25 +232,25 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
         )}
       </section>
 
-      <details className="group mt-3 overflow-hidden rounded-lg border border-slate-200 bg-white">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
+      <details className="group mt-2.5 overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3">
           <span>
             <span className="block font-black text-slate-950">
               Roster & parent contact
             </span>
-            <span className="mt-1 block text-sm font-semibold text-slate-500">
+            <span className="mt-0.5 block text-xs font-semibold text-slate-500">
               Open only when you need player contact or response details.
             </span>
           </span>
-          <span className="text-2xl font-black text-blue-600 transition group-open:rotate-90">
+          <span className="text-lg font-black text-blue-600 transition group-open:rotate-90">
             &rsaquo;
           </span>
         </summary>
-        <div className="space-y-2 border-t border-slate-200 p-4 text-sm">
+        <div className="space-y-2 border-t border-slate-200 p-3 text-sm">
           {rosterPreview.length > 0 ? (
             rosterPreview.map((player) => (
               <div
-                className="rounded-md border border-slate-200 bg-slate-50 p-3"
+                className="rounded-md border border-slate-200 bg-slate-50 p-2.5"
                 key={player.registration.id}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -270,7 +272,7 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
                     {player.attendanceStatus}
                   </span>
                 </div>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
+                <div className="mt-2 flex flex-wrap items-center gap-2">
                   <span
                     className={`rounded-full px-2.5 py-1 text-xs font-black ${getResponseTone(
                       player.transportationStatus,
@@ -316,18 +318,18 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
         </div>
       </details>
 
-      <div className={`mt-3 grid gap-2 ${nextEvent ? "grid-cols-2" : ""}`}>
+      <div className={`mt-2.5 grid gap-2 ${nextEvent ? "grid-cols-2" : ""}`}>
         {nextEvent && (
           <Link
             href={`/events/${nextEvent.id}`}
-            className="block rounded-md bg-blue-600 py-3 text-center text-sm font-black text-white hover:bg-blue-700"
+            className="block rounded-md bg-blue-600 py-2 text-center text-xs font-black text-white hover:bg-blue-700"
           >
             Event Details
           </Link>
         )}
         <Link
           href={teamHref}
-          className="block rounded-md border border-slate-200 bg-white py-3 text-center text-sm font-black text-slate-700 hover:bg-slate-50"
+          className="block rounded-md border border-slate-200 bg-white py-2 text-center text-xs font-black text-slate-700 hover:bg-slate-50"
         >
           Team Details
         </Link>

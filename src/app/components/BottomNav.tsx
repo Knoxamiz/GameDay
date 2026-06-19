@@ -13,7 +13,7 @@ type BottomNavProps = {
 export default function BottomNav({ items, surface = "dark" }: BottomNavProps) {
   return (
     <nav
-      className={`mt-8 grid gap-2 pb-4 text-center text-sm font-semibold ${
+      className={`mt-5 grid gap-2 pb-3 text-center text-xs font-bold ${
         surface === "light" ? "text-slate-600" : "text-slate-400"
       }`}
       style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
@@ -22,7 +22,7 @@ export default function BottomNav({ items, surface = "dark" }: BottomNavProps) {
         <Link
           key={`${item.href}-${item.label}`}
           href={item.href}
-          className={`min-h-11 rounded-full px-3 py-3 ${
+          className={`min-h-9 rounded-full px-3 py-2 ${
             surface === "light"
               ? "border border-slate-200 bg-white shadow-sm"
               : "bg-slate-900"
