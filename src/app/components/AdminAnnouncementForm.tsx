@@ -65,22 +65,22 @@ export default function AdminAnnouncementForm({
 
   return (
     <details
-      className="gd-card-light gd-card-interactive group overflow-hidden rounded-lg"
+      className="gd-card-dark gd-card-interactive group overflow-hidden rounded-lg"
       id="create-announcement"
     >
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
         <span>
-          <span className="block text-base font-black text-slate-950">
+          <span className="block text-base font-black text-white">
             Create announcement
           </span>
-          <span className="mt-0.5 block text-xs font-semibold text-slate-500">
+          <span className="mt-0.5 block text-xs font-semibold text-slate-400">
             Post an organization update for families and staff.
           </span>
         </span>
         <span className="rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-black text-white transition group-open:hidden">
           Create +
         </span>
-        <span className="hidden text-base font-black text-blue-700 transition group-open:block group-open:rotate-90">
+        <span className="hidden text-base font-black text-blue-300 transition group-open:block group-open:rotate-90">
           &gt;
         </span>
       </summary>
@@ -96,24 +96,24 @@ export default function AdminAnnouncementForm({
         </p>
       )}
 
-      <div className="space-y-3 border-t border-blue-100/70 px-3 pb-3 pt-2.5">
+      <div className="space-y-3 border-t border-white/10 px-3 pb-3 pt-2.5">
         <label className="block">
-          <span className="text-xs font-bold uppercase text-slate-500">
+          <span className="text-xs font-bold uppercase text-slate-400">
             Title
           </span>
           <input
-            className="mt-2 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
             onChange={(event) => setSubject(event.target.value)}
             value={subject}
           />
         </label>
 
         <label className="block">
-          <span className="text-xs font-bold uppercase text-slate-500">
+          <span className="text-xs font-bold uppercase text-slate-400">
             Details
           </span>
           <textarea
-            className="mt-2 min-h-16 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            className="mt-1 min-h-16 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
             onChange={(event) => setContent(event.target.value)}
             value={content}
           />

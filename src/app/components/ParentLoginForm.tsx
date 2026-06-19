@@ -27,11 +27,17 @@ export default function ParentLoginForm({ nextPath }: ParentLoginFormProps) {
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+
+    if (!email.trim() || !password) {
+      setError("Enter your email and password.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       const loginResult = await signInFirebaseUserWithEmailPassword({
-        email,
+        email: email.trim(),
         password,
       });
 
@@ -82,7 +88,7 @@ export default function ParentLoginForm({ nextPath }: ParentLoginFormProps) {
         records.
       </p>
 
-      <form className="mt-3 space-y-3" onSubmit={handleLogin}>
+      <form className="mt-3 space-y-2.5" noValidate onSubmit={handleLogin}>
         <label className="block">
           <span className="text-xs font-black uppercase text-slate-500">
             Email
@@ -91,7 +97,6 @@ export default function ParentLoginForm({ nextPath }: ParentLoginFormProps) {
             autoComplete="email"
             className="mt-1.5 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             onChange={(event) => setEmail(event.target.value)}
-            required
             type="email"
             value={email}
           />
@@ -104,7 +109,6 @@ export default function ParentLoginForm({ nextPath }: ParentLoginFormProps) {
             autoComplete="current-password"
             className="mt-1.5 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             onChange={(event) => setPassword(event.target.value)}
-            required
             type="password"
             value={password}
           />

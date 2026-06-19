@@ -415,15 +415,15 @@ export default function AdminEventForm({
 
   return (
     <details
-      className="gd-card-light gd-card-interactive rounded-lg"
+      className="gd-card-dark gd-card-interactive rounded-lg"
       id="create-event"
       open={defaultOpen}
     >
       <summary className="cursor-pointer list-none px-3 py-2.5 [&::-webkit-details-marker]:hidden">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-base font-black">Create schedule</h2>
-            <p className="mt-0.5 text-xs font-semibold text-slate-500">
+            <h2 className="text-base font-black text-white">Create schedule</h2>
+            <p className="mt-0.5 text-xs font-semibold text-slate-400">
               Click a day for one event, or repeat events across the season.
             </p>
           </div>
@@ -433,7 +433,7 @@ export default function AdminEventForm({
         </div>
       </summary>
 
-      <div className="border-t border-blue-100/70 p-3">
+      <div className="border-t border-white/10 p-3">
         {message && (
           <p className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm font-bold text-blue-700">
             {message}
@@ -446,17 +446,17 @@ export default function AdminEventForm({
         )}
 
         {availableTeams.length === 0 ? (
-          <p className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-3 text-sm font-semibold text-slate-500">
+          <p className="rounded-md border border-dashed border-white/15 bg-white/5 p-3 text-sm font-semibold text-slate-400">
             Create or activate a team before adding events.
           </p>
         ) : (
           <div className="space-y-3">
-            <div className="grid grid-cols-2 rounded-md bg-slate-100 p-1 text-sm font-black">
+            <div className="grid grid-cols-2 rounded-md bg-slate-950/80 p-1 text-sm font-black">
               <button
                 className={`rounded px-3 py-1.5 ${
                   mode === "single"
-                    ? "bg-white text-blue-700 shadow-sm"
-                    : "text-slate-600"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "text-slate-400"
                 }`}
                 onClick={() => setMode("single")}
                 type="button"
@@ -466,8 +466,8 @@ export default function AdminEventForm({
               <button
                 className={`rounded px-3 py-1.5 ${
                   mode === "repeat"
-                    ? "bg-white text-blue-700 shadow-sm"
-                    : "text-slate-600"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "text-slate-400"
                 }`}
                 onClick={() => setMode("repeat")}
                 type="button"
@@ -477,7 +477,7 @@ export default function AdminEventForm({
             </div>
 
             <fieldset>
-              <legend className="text-sm font-black text-slate-700">
+              <legend className="text-sm font-black text-slate-200">
                 Teams
               </legend>
               <div className="mt-2 flex flex-wrap gap-2">
@@ -485,8 +485,8 @@ export default function AdminEventForm({
                   <label
                     className={`inline-flex cursor-pointer items-center rounded-full border px-3 py-2 text-sm font-black ${
                       selectedTeamIds.includes(team.id)
-                        ? "border-blue-600 bg-blue-50 text-blue-700"
-                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                        ? "border-blue-400 bg-blue-500/20 text-blue-100"
+                        : "border-white/15 bg-slate-950/70 text-slate-300 hover:bg-white/10"
                     }`}
                     key={team.id}
                   >
@@ -504,10 +504,10 @@ export default function AdminEventForm({
 
             {mode === "single" ? (
               <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_18rem]">
-                <section className="rounded-lg border border-slate-200 p-3">
+                <section className="rounded-lg border border-white/10 bg-slate-950/45 p-3">
                   <div className="flex items-center justify-between gap-3">
                     <button
-                      className="rounded-md border border-slate-200 px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50"
+                      className="rounded-md border border-white/15 px-3 py-2 text-sm font-black text-slate-200 hover:bg-white/10"
                       onClick={() =>
                         setCalendarMonth(
                           new Date(
@@ -525,7 +525,7 @@ export default function AdminEventForm({
                       {getMonthTitle(calendarMonth)}
                     </h3>
                     <button
-                      className="rounded-md border border-slate-200 px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50"
+                      className="rounded-md border border-white/15 px-3 py-2 text-sm font-black text-slate-200 hover:bg-white/10"
                       onClick={() =>
                         setCalendarMonth(
                           new Date(
@@ -541,7 +541,7 @@ export default function AdminEventForm({
                     </button>
                   </div>
 
-                  <div className="mt-4 grid grid-cols-7 gap-1 text-center text-xs font-black uppercase text-slate-500">
+                  <div className="mt-4 grid grid-cols-7 gap-1 text-center text-xs font-black uppercase text-slate-400">
                     {weekdayOptions.map((weekday) => (
                       <span key={weekday.value}>{weekday.label}</span>
                     ))}
@@ -557,8 +557,8 @@ export default function AdminEventForm({
                         <button
                           className={`min-h-10 rounded-md border p-1 text-left text-xs font-black transition ${
                             isSelected
-                              ? "border-blue-600 bg-blue-50 text-blue-700"
-                              : "border-slate-200 bg-white text-slate-800 hover:border-blue-200 hover:bg-blue-50"
+                              ? "border-blue-400 bg-blue-500/20 text-blue-100"
+                              : "border-white/10 bg-slate-950/65 text-slate-200 hover:border-blue-300/50 hover:bg-blue-500/10"
                           }`}
                           key={dateValue}
                           onClick={() => selectDate(dateValue)}
@@ -568,7 +568,7 @@ export default function AdminEventForm({
                             {parseDateInput(dateValue)?.getDate() ?? ""}
                           </span>
                           {eventCount > 0 && (
-                            <span className="mt-1 block rounded-full bg-slate-100 px-1.5 py-0.5 text-center text-[10px] text-slate-600">
+                            <span className="mt-1 block rounded-full bg-white/10 px-1.5 py-0.5 text-center text-[10px] text-slate-300">
                               {eventCount}
                             </span>
                           )}
@@ -576,7 +576,7 @@ export default function AdminEventForm({
                       ) : (
                         <span
                           aria-hidden="true"
-                          className="min-h-10 rounded-md bg-slate-50"
+                          className="min-h-10 rounded-md bg-white/5"
                           key={`blank-${index}`}
                         />
                       );
@@ -584,20 +584,20 @@ export default function AdminEventForm({
                   </div>
                 </section>
 
-                <section className="rounded-lg border border-slate-200 p-3">
-                  <p className="text-sm font-black uppercase text-blue-700">
+                <section className="rounded-lg border border-white/10 bg-slate-950/45 p-3">
+                  <p className="text-sm font-black uppercase text-blue-200">
                     Selected day
                   </p>
-                  <p className="mt-1 text-base font-black">
+                  <p className="mt-1 text-base font-black text-white">
                     {getDisplayDate(selectedDate)}
                   </p>
                   <div className="mt-3 space-y-2.5">
                     <label className="block">
-                      <span className="text-sm font-black text-slate-700">
+                      <span className="text-sm font-black text-slate-300">
                         Title
                       </span>
                       <input
-                        className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                        className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                         onChange={(event) => setTitle(event.target.value)}
                         placeholder="Practice"
                         value={title}
@@ -605,22 +605,22 @@ export default function AdminEventForm({
                     </label>
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
                       <label className="block">
-                        <span className="text-sm font-black text-slate-700">
+                          <span className="text-sm font-black text-slate-300">
                           Starts
                         </span>
                         <input
-                          className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                          className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                           onChange={(event) => setStartTime(event.target.value)}
                           type="time"
                           value={startTime}
                         />
                       </label>
                       <label className="block">
-                        <span className="text-sm font-black text-slate-700">
+                          <span className="text-sm font-black text-slate-300">
                           Ends
                         </span>
                         <input
-                          className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                          className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                           onChange={(event) => setEndTime(event.target.value)}
                           type="time"
                           value={endTime}
@@ -631,11 +631,11 @@ export default function AdminEventForm({
                 </section>
               </div>
             ) : (
-              <section className="rounded-lg border border-slate-200 p-3">
+              <section className="rounded-lg border border-white/10 bg-slate-950/45 p-3">
                 <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_16rem]">
                   <div>
-                    <h3 className="text-base font-black">Repeat schedule</h3>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <h3 className="text-base font-black text-white">Repeat schedule</h3>
+                    <p className="mt-1 text-sm text-slate-400">
                       Choose days, date range, and time. Review the dates before
                       saving.
                     </p>
@@ -644,8 +644,8 @@ export default function AdminEventForm({
                         <label
                           className={`cursor-pointer rounded-full border px-3 py-2 text-sm font-black ${
                             repeatWeekdays.includes(weekday.value)
-                              ? "border-blue-600 bg-blue-50 text-blue-700"
-                              : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                              ? "border-blue-400 bg-blue-500/20 text-blue-100"
+                              : "border-white/15 bg-slate-950/70 text-slate-300 hover:bg-white/10"
                           }`}
                           key={weekday.value}
                         >
@@ -661,11 +661,11 @@ export default function AdminEventForm({
                     </div>
                     <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
                       <label className="block">
-                        <span className="text-sm font-black text-slate-700">
+                        <span className="text-sm font-black text-slate-300">
                           Starts after
                         </span>
                         <input
-                          className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                          className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                           onChange={(event) =>
                             setRepeatStartDate(event.target.value)
                           }
@@ -674,11 +674,11 @@ export default function AdminEventForm({
                         />
                       </label>
                       <label className="block">
-                        <span className="text-sm font-black text-slate-700">
+                        <span className="text-sm font-black text-slate-300">
                           Ends by
                         </span>
                         <input
-                          className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                          className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                           onChange={(event) =>
                             setRepeatEndDate(event.target.value)
                           }
@@ -689,22 +689,22 @@ export default function AdminEventForm({
                     </div>
                     <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
                       <label className="block">
-                        <span className="text-sm font-black text-slate-700">
+                        <span className="text-sm font-black text-slate-300">
                           Starts
                         </span>
                         <input
-                          className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                          className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                           onChange={(event) => setStartTime(event.target.value)}
                           type="time"
                           value={startTime}
                         />
                       </label>
                       <label className="block">
-                        <span className="text-sm font-black text-slate-700">
+                        <span className="text-sm font-black text-slate-300">
                           Ends
                         </span>
                         <input
-                          className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                          className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                           onChange={(event) => setEndTime(event.target.value)}
                           type="time"
                           value={endTime}
@@ -713,22 +713,22 @@ export default function AdminEventForm({
                     </div>
                   </div>
 
-                  <div className="rounded-md bg-slate-50 p-2.5">
-                    <p className="text-sm font-black text-slate-950">
+                  <div className="rounded-md border border-white/10 bg-white/5 p-2.5">
+                    <p className="text-sm font-black text-white">
                       Preview
                     </p>
-                    <p className="mt-1 text-xs font-semibold text-slate-500">
+                    <p className="mt-1 text-xs font-semibold text-slate-400">
                       {repeatingDates.length} events
                     </p>
                     <div className="mt-3 max-h-64 space-y-2 overflow-auto pr-1">
                       {repeatingDates.length === 0 ? (
-                        <p className="rounded-md border border-dashed border-slate-300 bg-white p-2.5 text-sm font-semibold text-slate-500">
+                        <p className="rounded-md border border-dashed border-white/15 bg-slate-950/70 p-2.5 text-sm font-semibold text-slate-400">
                           No dates match yet.
                         </p>
                       ) : (
                         repeatingDates.map((dateValue) => (
                           <p
-                            className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-black"
+                            className="rounded-md border border-white/10 bg-slate-950/70 px-3 py-2 text-sm font-black text-white"
                             key={dateValue}
                           >
                             {getDisplayDate(dateValue)}
@@ -741,14 +741,14 @@ export default function AdminEventForm({
               </section>
             )}
 
-              <section className="rounded-lg border border-slate-200 p-3">
+            <section className="rounded-lg border border-white/10 bg-slate-950/45 p-3">
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="block">
-                  <span className="text-sm font-black text-slate-700">
+                  <span className="text-sm font-black text-slate-300">
                     Type
                   </span>
                   <select
-                    className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                     onChange={(event) =>
                       setType(event.target.value as GameDayEventType)
                     }
@@ -762,11 +762,11 @@ export default function AdminEventForm({
                   </select>
                 </label>
                 <label className="block">
-                  <span className="text-sm font-black text-slate-700">
+                  <span className="text-sm font-black text-slate-300">
                     Status
                   </span>
                   <select
-                    className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                     onChange={(event) =>
                       setStatus(event.target.value as CreateEventStatus)
                     }
@@ -783,11 +783,11 @@ export default function AdminEventForm({
 
               {mode === "repeat" && (
                 <label className="mt-3 block">
-                  <span className="text-sm font-black text-slate-700">
+                    <span className="text-sm font-black text-slate-300">
                     Title
                   </span>
                   <input
-                    className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                     onChange={(event) => setTitle(event.target.value)}
                     placeholder="Practice"
                     value={title}
@@ -796,38 +796,38 @@ export default function AdminEventForm({
               )}
 
               <label className="mt-3 block">
-                <span className="text-sm font-black text-slate-700">
+                <span className="text-sm font-black text-slate-300">
                   Location
                 </span>
                 <input
-                  className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                   onChange={(event) => setLocationName(event.target.value)}
                   placeholder="Practice field"
                   value={locationName}
                 />
               </label>
 
-              <details className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3">
-                <summary className="cursor-pointer text-sm font-black text-slate-700">
+              <details className="mt-3 rounded-md border border-white/10 bg-white/5 p-3">
+                <summary className="cursor-pointer text-sm font-black text-slate-200">
                   More details
                 </summary>
                 <div className="mt-3 space-y-3">
                   <label className="block">
-                    <span className="text-xs font-bold uppercase text-slate-500">
+                    <span className="text-xs font-bold uppercase text-slate-400">
                       Address
                     </span>
                     <input
-                      className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                      className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                       onChange={(event) => setAddress(event.target.value)}
                       value={address}
                     />
                   </label>
                   <label className="block">
-                    <span className="text-xs font-bold uppercase text-slate-500">
+                    <span className="text-xs font-bold uppercase text-slate-400">
                       Notes
                     </span>
                     <textarea
-                      className="mt-1 min-h-16 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                      className="mt-1 min-h-16 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                       onChange={(event) => setNotes(event.target.value)}
                       value={notes}
                     />

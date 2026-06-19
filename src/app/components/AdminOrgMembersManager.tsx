@@ -125,13 +125,13 @@ function MemberCard({
   }
 
   return (
-    <details className="gd-card-light gd-card-interactive group overflow-hidden rounded-lg">
+    <details className="gd-card-dark gd-card-interactive group overflow-hidden rounded-lg">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
         <span className="min-w-0">
-          <span className="block truncate text-base font-black text-slate-950">
+          <span className="block truncate text-base font-black text-white">
             {getPrimaryName(membership)}
           </span>
-          <span className="mt-0.5 block truncate text-xs font-semibold text-slate-500">
+          <span className="mt-0.5 block truncate text-xs font-semibold text-slate-400">
             {membership.title || membership.email}
           </span>
         </span>
@@ -143,27 +143,27 @@ function MemberCard({
           >
             {membership.status}
           </span>
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-black text-slate-700">
+          <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-black text-slate-200">
             {getRoleLabel(membership.role)}
           </span>
-          <span className="text-base font-black text-blue-700 transition group-open:rotate-90">
+          <span className="text-base font-black text-blue-300 transition group-open:rotate-90">
             &gt;
           </span>
         </span>
       </summary>
 
-      <div className="border-t border-blue-100/70 px-3 pb-3 pt-2.5">
-        <p className="break-all text-xs font-semibold text-slate-500">
+      <div className="border-t border-white/10 px-3 pb-3 pt-2.5">
+        <p className="break-all text-xs font-semibold text-slate-400">
           {membership.email}
         </p>
 
         <div className="mt-2.5 grid gap-2 lg:grid-cols-[1fr_1fr_150px]">
         <label className="block">
-          <span className="text-xs font-bold uppercase text-slate-500">
+          <span className="text-xs font-bold uppercase text-slate-400">
             Contact Name
           </span>
           <input
-            className="mt-2 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50"
+            className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400 disabled:bg-slate-900/60"
             disabled={!canEdit}
             onChange={(event) => setDisplayName(event.target.value)}
             placeholder="Alex Morgan"
@@ -171,11 +171,11 @@ function MemberCard({
           />
         </label>
         <label className="block">
-          <span className="text-xs font-bold uppercase text-slate-500">
+          <span className="text-xs font-bold uppercase text-slate-400">
             Organization Title
           </span>
           <input
-            className="mt-2 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50"
+            className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400 disabled:bg-slate-900/60"
             disabled={!canEdit}
             onChange={(event) => setTitle(event.target.value)}
             placeholder="Head Coach, Board Member, Team Mom"
@@ -183,11 +183,11 @@ function MemberCard({
           />
         </label>
         <label className="block">
-          <span className="text-xs font-bold uppercase text-slate-500">
+          <span className="text-xs font-bold uppercase text-slate-400">
             App Permission
           </span>
           <select
-            className="mt-2 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50"
+            className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400 disabled:bg-slate-900/60"
             disabled={!canEdit}
             onChange={(event) =>
               setRole(event.target.value as OrganizationMembershipRole)
@@ -218,7 +218,7 @@ function MemberCard({
         </button>
         {membership.status === "active" && (
           <button
-            className="rounded-md border border-orange-200 px-2.5 py-1.5 text-xs font-black text-orange-700 hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-md border border-orange-400/30 px-2.5 py-1.5 text-xs font-black text-orange-200 hover:bg-orange-500/10 disabled:cursor-not-allowed disabled:opacity-60"
             disabled={!canEdit || isSaving}
             onClick={() => void save("suspend")}
             type="button"
@@ -228,7 +228,7 @@ function MemberCard({
         )}
         {canRestore && (
           <button
-            className="rounded-md border border-emerald-200 px-2.5 py-1.5 text-xs font-black text-emerald-700 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-md border border-emerald-400/30 px-2.5 py-1.5 text-xs font-black text-emerald-200 hover:bg-emerald-500/10 disabled:cursor-not-allowed disabled:opacity-60"
             disabled={!canEdit || isSaving}
             onClick={() => void save("activate")}
             type="button"
@@ -238,7 +238,7 @@ function MemberCard({
         )}
         {membership.status !== "removed" && (
           <button
-            className="rounded-md border border-red-200 px-2.5 py-1.5 text-xs font-black text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-md border border-red-400/30 px-2.5 py-1.5 text-xs font-black text-red-200 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-60"
             disabled={!canEdit || isSaving}
             onClick={() => void save("remove")}
             type="button"
@@ -249,7 +249,7 @@ function MemberCard({
       </div>
 
       {ownerRestricted && (
-        <p className="mt-3 text-xs font-semibold text-slate-500">
+        <p className="mt-3 text-xs font-semibold text-slate-400">
           Only an active owner can change owner access.
         </p>
       )}
@@ -324,50 +324,50 @@ export default function AdminOrgMembersManager({
         </p>
       )}
 
-      <details className="gd-card-light gd-card-interactive group overflow-hidden rounded-lg">
+      <details className="gd-card-dark gd-card-interactive group overflow-hidden rounded-lg">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
           <span>
-            <span className="block text-base font-black text-slate-950">
+            <span className="block text-base font-black text-white">
               Invite org member
             </span>
-            <span className="mt-0.5 block text-xs font-semibold text-slate-500">
+            <span className="mt-0.5 block text-xs font-semibold text-slate-400">
               Add coaches, staff, board members, or team contacts.
             </span>
           </span>
-          <span className="text-base font-black text-blue-700 transition group-open:rotate-90">
+          <span className="text-base font-black text-blue-300 transition group-open:rotate-90">
             &gt;
           </span>
         </summary>
 
-        <div className="grid gap-2 border-t border-blue-100/70 px-3 pb-3 pt-2.5 lg:grid-cols-[1fr_1fr_150px_1fr]">
+        <div className="grid gap-2 border-t border-white/10 px-3 pb-3 pt-2.5 lg:grid-cols-[1fr_1fr_150px_1fr]">
           <label className="block">
-            <span className="text-xs font-bold uppercase text-slate-500">
+            <span className="text-xs font-bold uppercase text-slate-400">
               Contact Name
             </span>
             <input
-              className="mt-2 w-full rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
               onChange={(event) => setDisplayName(event.target.value)}
               placeholder="Alex Morgan"
               value={displayName}
             />
           </label>
           <label className="block">
-            <span className="text-xs font-bold uppercase text-slate-500">
+            <span className="text-xs font-bold uppercase text-slate-400">
               Email
             </span>
             <input
-              className="mt-2 w-full rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
               onChange={(event) => setEmail(event.target.value)}
               type="email"
               value={email}
             />
           </label>
           <label className="block">
-            <span className="text-xs font-bold uppercase text-slate-500">
+            <span className="text-xs font-bold uppercase text-slate-400">
               Permission
             </span>
             <select
-              className="mt-2 w-full rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
               onChange={(event) =>
                 setRole(event.target.value as OrganizationMembershipRole)
               }
@@ -385,11 +385,11 @@ export default function AdminOrgMembersManager({
             </select>
           </label>
           <label className="block">
-            <span className="text-xs font-bold uppercase text-slate-500">
+            <span className="text-xs font-bold uppercase text-slate-400">
               Title
             </span>
             <input
-              className="mt-2 w-full rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
               onChange={(event) => setTitle(event.target.value)}
               placeholder="Board Member"
               value={title}
@@ -417,7 +417,7 @@ export default function AdminOrgMembersManager({
 
       <section className="grid gap-2">
         {sortedMemberships.length === 0 ? (
-          <p className="gd-card-light rounded-lg border-dashed p-3 text-sm font-semibold text-slate-500">
+          <p className="gd-card-dark rounded-lg border-dashed p-3 text-sm font-semibold text-slate-400">
             No organization members have been added yet.
           </p>
         ) : (
@@ -434,30 +434,30 @@ export default function AdminOrgMembersManager({
         )}
       </section>
 
-      <details className="gd-card-light group overflow-hidden rounded-lg">
+      <details className="gd-card-dark group overflow-hidden rounded-lg">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
           <span>
-            <span className="block text-base font-black text-slate-950">
+            <span className="block text-base font-black text-white">
               Permission guide
             </span>
-            <span className="mt-0.5 block text-xs font-semibold text-slate-500">
+            <span className="mt-0.5 block text-xs font-semibold text-slate-400">
               Owner, admin, coach, and staff access.
             </span>
           </span>
-          <span className="text-base font-black text-blue-700 transition group-open:rotate-90">
+          <span className="text-base font-black text-blue-300 transition group-open:rotate-90">
             &gt;
           </span>
         </summary>
-        <div className="grid gap-2 border-t border-blue-100/70 p-3 sm:grid-cols-2">
+        <div className="grid gap-2 border-t border-white/10 p-3 sm:grid-cols-2">
           {membershipRoles.map((membershipRole) => (
             <div
-              className="rounded-md border border-blue-100/70 bg-white/70 p-2.5"
+              className="rounded-md border border-white/10 bg-white/5 p-2.5"
               key={membershipRole.value}
             >
-              <p className="font-black text-slate-950">
+              <p className="font-black text-white">
                 {membershipRole.label}
               </p>
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-sm text-slate-300">
                 {membershipRole.description}
               </p>
             </div>
