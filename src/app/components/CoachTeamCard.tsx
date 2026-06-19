@@ -1,4 +1,5 @@
 import Link from "next/link";
+import CoachTeamMessageForm from "./CoachTeamMessageForm";
 import {
   getCoachTeamNextAction,
   getCoachTeamReadinessSummary,
@@ -55,6 +56,14 @@ function getResponseTone(status: string) {
   }
 
   return "bg-slate-100 text-slate-600";
+}
+
+function getMessageAudienceLabel(audience: string[]) {
+  const labels = audience.map((item) =>
+    item === "parent" ? "Parents" : item === "coach" ? "Coaches" : "Admins",
+  );
+
+  return labels.join(" + ");
 }
 
 export default function CoachTeamCard({ card }: CoachTeamCardProps) {
@@ -231,6 +240,56 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
           </div>
         )}
       </section>
+
+      <details className="gd-card-light gd-card-interactive group mt-2.5 overflow-hidden rounded-lg">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3">
+          <span>
+            <span className="block font-black text-slate-950">
+              Team messages
+            </span>
+            <span className="mt-0.5 block text-xs font-semibold text-slate-500">
+              Send updates to parents or coaches.
+            </span>
+          </span>
+          <span className="flex items-center gap-2">
+            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-black text-blue-700">
+              {card.teamMessages.length}
+            </span>
+            <span className="text-lg font-black text-blue-600 transition group-open:rotate-90">
+              &rsaquo;
+            </span>
+          </span>
+        </summary>
+        <div className="space-y-2 border-t border-slate-200 p-3 text-sm">
+          <CoachTeamMessageForm teamId={team.id} />
+          <div className="space-y-1.5">
+            {card.teamMessages.length > 0 ? (
+              card.teamMessages.map((message) => (
+                <article
+                  className="rounded-md border border-blue-100/70 bg-white/70 p-2.5"
+                  key={message.id}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="text-sm font-black text-slate-950">
+                      {message.subject}
+                    </h3>
+                    <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-black text-blue-700">
+                      {getMessageAudienceLabel(message.audience)}
+                    </span>
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-xs font-semibold text-slate-500">
+                    {message.content}
+                  </p>
+                </article>
+              ))
+            ) : (
+              <p className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-3 text-slate-500">
+                No team messages yet.
+              </p>
+            )}
+          </div>
+        </div>
+      </details>
 
       <details className="gd-card-light gd-card-interactive group mt-2.5 overflow-hidden rounded-lg">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3">

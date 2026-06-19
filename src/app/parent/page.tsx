@@ -171,18 +171,52 @@ export default async function ParentHome() {
     }),
   );
   const repositories = createFirestoreRepositories();
-  const [attendanceEntries, transportationEntries] = await Promise.all([
-    Promise.all(
-      parentAthletes.map((athlete) =>
-        repositories.attendance.listByAthleteId(athlete.id),
+  const parentTeamIds = [
+    ...new Set(parentAthletes.map((athlete) => athlete.teamId).filter(Boolean)),
+  ];
+  const parentAthleteIdSet = new Set(
+    parentAthletes.map((athlete) => athlete.id),
+  );
+  const teamNameById = new Map(
+    schedule.teams.map((team) => [team.id, team.name]),
+  );
+  const [attendanceEntries, transportationEntries, teamMessageLists] =
+    await Promise.all([
+      Promise.all(
+        parentAthletes.map((athlete) =>
+          repositories.attendance.listByAthleteId(athlete.id),
+        ),
+      ).then((entryLists) => entryLists.flat()),
+      Promise.all(
+        parentAthletes.map((athlete) =>
+          repositories.transportation.listByAthleteId(athlete.id),
+        ),
+      ).then((entryLists) => entryLists.flat()),
+      Promise.all(
+        parentTeamIds.map((teamId) =>
+          repositories.messages.listByTeamId(teamId),
+        ),
       ),
-    ).then((entryLists) => entryLists.flat()),
-    Promise.all(
-      parentAthletes.map((athlete) =>
-        repositories.transportation.listByAthleteId(athlete.id),
-      ),
-    ).then((entryLists) => entryLists.flat()),
-  ]);
+    ]);
+  const parentTeamMessages = [
+    ...new Map(
+      teamMessageLists
+        .flat()
+        .filter(
+          (message) =>
+            message.type === "Team Announcement" &&
+            message.audience.includes("parent") &&
+            (!message.recipientParentId ||
+              message.recipientParentId === currentUser.parentId) &&
+            (!message.recipientAthleteId ||
+              parentAthleteIdSet.has(message.recipientAthleteId)),
+        )
+        .sort((first, second) =>
+          second.timestamp.localeCompare(first.timestamp),
+        )
+        .map((message) => [message.id, message]),
+    ).values(),
+  ].slice(0, 3);
   const athleteRows = parentAthletes.map((athlete) => {
     const registration = getRegistrationByAthlete(athlete, registrations);
     const athleteHref = `/athletes/${athlete.id}`;
@@ -296,6 +330,45 @@ export default async function ParentHome() {
               Find open registration
             </Link>
           </section>
+        )}
+
+        {parentTeamMessages.length > 0 && (
+          <details className="gd-card-light gd-card-interactive group mt-3 overflow-hidden rounded-lg">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
+              <span>
+                <span className="block text-sm font-black">Messages</span>
+                <span className="mt-0.5 block text-xs font-semibold text-slate-500">
+                  Team updates for your players.
+                </span>
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-black text-blue-700">
+                  {parentTeamMessages.length}
+                </span>
+                <span className="text-sm font-black text-blue-700 transition group-open:rotate-90">
+                  &gt;
+                </span>
+              </span>
+            </summary>
+            <div className="space-y-1.5 border-t border-slate-200 px-3 py-2.5">
+              {parentTeamMessages.map((message) => (
+                <article
+                  className="rounded-md border border-blue-100/70 bg-white/70 p-2.5"
+                  key={message.id}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="text-sm font-black">{message.subject}</h3>
+                    <span className="shrink-0 text-[11px] font-bold text-slate-500">
+                      {teamNameById.get(message.teamId ?? "") ?? "Team"}
+                    </span>
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-xs font-semibold text-slate-500">
+                    {message.content}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </details>
         )}
 
         <section className="mt-3">

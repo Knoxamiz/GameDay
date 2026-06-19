@@ -22,6 +22,7 @@ import type { ParentGuardian } from "./parents";
 import type { Registration } from "./registrations";
 import type { Team } from "./teams";
 import type { TransportationEntry } from "./transportation";
+import type { GameDayMessage } from "./messages";
 
 export type CoachHomeReadSource = "empty" | "error" | "firestore";
 
@@ -32,6 +33,7 @@ export type CoachTeamHomeCard = {
   organization?: Organization;
   registrations: Registration[];
   rosterPlayers: CoachRosterPlayer[];
+  teamMessages: GameDayMessage[];
   team: Team;
   transportationEntries: TransportationEntry[];
 };
@@ -272,6 +274,25 @@ export async function getCoachHomeReadModel(): Promise<CoachHomeReadModel> {
                 ),
             ])
           : [[], []];
+        const coachSenderIds = [
+          coach.uid,
+          coach.id,
+          session.user.id,
+        ].filter(Boolean);
+        const teamMessages = (
+          await repositories.messages.listByTeamId(team.id)
+        )
+          .filter(
+            (message) =>
+              message.organizationId === team.organizationId &&
+              message.type === "Team Announcement" &&
+              (message.audience.includes("coach") ||
+                coachSenderIds.includes(message.senderId)),
+          )
+          .sort((first, second) =>
+            second.timestamp.localeCompare(first.timestamp),
+          )
+          .slice(0, 5);
 
         return {
           attendanceEntries,
@@ -280,6 +301,7 @@ export async function getCoachHomeReadModel(): Promise<CoachHomeReadModel> {
           organization: organizationById.get(team.organizationId),
           registrations,
           rosterPlayers,
+          teamMessages,
           team,
           transportationEntries,
         };

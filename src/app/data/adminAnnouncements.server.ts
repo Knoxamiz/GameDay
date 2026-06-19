@@ -8,13 +8,21 @@ import {
   verifyAdminAccessSession,
 } from "./adminOrganizationScope.server";
 import { createLiveRecordId } from "./liveIdentity";
-import type { GameDayMessage } from "./messages";
+import type {
+  GameDayMessage,
+  MessageAudience,
+  MessagePriority,
+} from "./messages";
 import type { Organization } from "./organizations";
+import type { Team } from "./teams";
 
 export type AdminAnnouncementPayload = {
+  audience?: MessageAudience[];
   content: string;
   organizationId: string;
+  priority?: MessagePriority;
   subject: string;
+  teamId?: string;
 };
 
 export type AdminAnnouncementResult = {
@@ -42,6 +50,38 @@ export class AdminAnnouncementError extends Error {
 
 function normalizeText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizeAudienceList(value: unknown): MessageAudience[] {
+  const values = Array.isArray(value) ? value : [];
+  const allowedAudiences = new Set<MessageAudience>([
+    "admin",
+    "coach",
+    "parent",
+  ]);
+
+  return [
+    ...new Set(
+      values
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter((item): item is MessageAudience =>
+          allowedAudiences.has(item as MessageAudience),
+        ),
+    ),
+  ];
+}
+
+function normalizePriority(value: unknown): MessagePriority {
+  if (
+    value === "Critical" ||
+    value === "Important" ||
+    value === "Informational"
+  ) {
+    return value;
+  }
+
+  return "Informational";
 }
 
 function createAdminAnnouncementError(
@@ -99,8 +139,11 @@ export async function createAdminAnnouncement(
   const scope = await requireAdminAnnouncementSession(options.sessionSource);
   const organizationId = normalizeText(payload.organizationId);
   const activeOrganizationId = normalizeText(options.activeOrganizationId);
+  const teamId = normalizeText(payload.teamId);
   const subject = normalizeText(payload.subject);
   const content = normalizeText(payload.content);
+  const audience = normalizeAudienceList(payload.audience);
+  const priority = normalizePriority(payload.priority);
 
   if (!organizationId) {
     createAdminAnnouncementError(
@@ -142,24 +185,33 @@ export async function createAdminAnnouncement(
     );
   }
 
+  const finalAudience =
+    audience.length > 0
+      ? audience
+      : (["admin", "coach", "parent"] satisfies MessageAudience[]);
   const now = new Date().toISOString();
   const announcement: GameDayMessage = {
-    audience: ["admin", "coach", "parent"],
+    audience: finalAudience,
     content,
-    id: createLiveRecordId("announcement", [organizationId, subject]),
+    id: createLiveRecordId(teamId ? "team-message" : "announcement", [
+      organizationId,
+      teamId,
+      subject,
+    ]),
     organizationId,
-    priority: "Informational",
+    priority,
     senderId: scope.session.user.id,
     subject,
+    teamId: teamId || undefined,
     timestamp: now,
-    type: "Organization Announcement",
+    type: teamId ? "Team Announcement" : "Organization Announcement",
   };
 
   await runFirestoreTransaction(async (transaction) => {
-    const organization = await transaction.get<Organization>(
-      "organizations",
-      organizationId,
-    );
+    const [organization, team] = await Promise.all([
+      transaction.get<Organization>("organizations", organizationId),
+      teamId ? transaction.get<Team>("teams", teamId) : Promise.resolve(null),
+    ]);
 
     if (!organization) {
       createAdminAnnouncementError(
@@ -169,13 +221,23 @@ export async function createAdminAnnouncement(
       );
     }
 
+    if (teamId && (!team || team.organizationId !== organizationId)) {
+      createAdminAnnouncementError(
+        "team-not-found",
+        "Choose a team from this organization before sending a team message.",
+        404,
+      );
+    }
+
     transaction.create("messages", announcement.id, announcement);
   });
 
   console.info("Admin announcement created.", {
     announcementId: announcement.id,
+    audience: announcement.audience,
     organizationId,
     senderUid: scope.session.user.id,
+    teamId: teamId || undefined,
   });
 
   return {

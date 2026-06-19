@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import type { MessageAudience, MessagePriority } from "../data/messages";
+import type { Team } from "../data/teams";
 
 type AdminAnnouncementFormProps = {
   activeOrganizationId: string;
+  teams?: Team[];
 };
 
 type AdminAnnouncementResponse = {
@@ -14,12 +17,28 @@ type AdminAnnouncementResponse = {
 
 export default function AdminAnnouncementForm({
   activeOrganizationId,
+  teams = [],
 }: AdminAnnouncementFormProps) {
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
+  const [priority, setPriority] =
+    useState<MessagePriority>("Informational");
+  const [selectedAudience, setSelectedAudience] = useState<MessageAudience[]>([
+    "coach",
+    "parent",
+  ]);
+  const [teamId, setTeamId] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  function toggleAudience(audience: MessageAudience) {
+    setSelectedAudience((currentAudience) =>
+      currentAudience.includes(audience)
+        ? currentAudience.filter((item) => item !== audience)
+        : [...currentAudience, audience],
+    );
+  }
 
   async function saveAnnouncement() {
     setError(null);
@@ -30,9 +49,12 @@ export default function AdminAnnouncementForm({
       const response = await fetch("/api/admin/announcements", {
         body: JSON.stringify({
           activeOrganizationId,
+          audience: selectedAudience,
           content,
           organizationId: activeOrganizationId,
+          priority,
           subject,
+          teamId,
         }),
         credentials: "same-origin",
         headers: {
@@ -50,6 +72,7 @@ export default function AdminAnnouncementForm({
 
       setSubject("");
       setContent("");
+      setTeamId("");
       setMessage(body?.message ?? "Announcement created.");
       window.location.reload();
     } catch (announcementError) {
@@ -71,10 +94,10 @@ export default function AdminAnnouncementForm({
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
         <span>
           <span className="block text-base font-black text-white">
-            Create announcement
+            Create communication
           </span>
           <span className="mt-0.5 block text-xs font-semibold text-slate-400">
-            Post an organization update for families and staff.
+            Send an organization or team update.
           </span>
         </span>
         <span className="rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-black text-white transition group-open:hidden">
@@ -97,6 +120,68 @@ export default function AdminAnnouncementForm({
       )}
 
       <div className="space-y-3 border-t border-white/10 px-3 pb-3 pt-2.5">
+        <div className="grid gap-2 sm:grid-cols-2">
+          <label className="block">
+            <span className="text-xs font-bold uppercase text-slate-400">
+              Send to
+            </span>
+            <select
+              className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
+              onChange={(event) => setTeamId(event.target.value)}
+              value={teamId}
+            >
+              <option value="">Whole organization</option>
+              {teams.map((team) => (
+                <option key={team.id} value={team.id}>
+                  {team.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="text-xs font-bold uppercase text-slate-400">
+              Priority
+            </span>
+            <select
+              className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
+              onChange={(event) =>
+                setPriority(event.target.value as MessagePriority)
+              }
+              value={priority}
+            >
+              <option value="Informational">Informational</option>
+              <option value="Important">Important</option>
+              <option value="Critical">Critical</option>
+            </select>
+          </label>
+        </div>
+
+        <div>
+          <p className="text-xs font-bold uppercase text-slate-400">
+            Audience
+          </p>
+          <div className="mt-1 flex flex-wrap gap-2">
+            {(["parent", "coach", "admin"] satisfies MessageAudience[]).map(
+              (audience) => (
+                <label
+                  className="inline-flex items-center gap-2 rounded-md border border-white/15 bg-slate-950/50 px-2.5 py-1.5 text-xs font-black text-slate-200"
+                  key={audience}
+                >
+                  <input
+                    checked={selectedAudience.includes(audience)}
+                    className="size-3"
+                    onChange={() => toggleAudience(audience)}
+                    type="checkbox"
+                  />
+                  {audience.charAt(0).toUpperCase()}
+                  {audience.slice(1)}
+                </label>
+              ),
+            )}
+          </div>
+        </div>
+
         <label className="block">
           <span className="text-xs font-bold uppercase text-slate-400">
             Title
@@ -125,7 +210,7 @@ export default function AdminAnnouncementForm({
           onClick={() => void saveAnnouncement()}
           type="button"
         >
-          {isSaving ? "Creating..." : "Create Announcement"}
+          {isSaving ? "Sending..." : "Send Communication"}
         </button>
       </div>
     </details>

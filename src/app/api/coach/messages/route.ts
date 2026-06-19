@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  AdminAnnouncementError,
-  createAdminAnnouncement,
-  type AdminAnnouncementPayload,
-} from "../../../data/adminAnnouncements.server";
+  CoachTeamMessageError,
+  createCoachTeamMessage,
+  type CoachTeamMessagePayload,
+} from "../../../data/coachMessages.server";
 
 export const runtime = "nodejs";
 
@@ -12,7 +12,7 @@ function getText(value: unknown) {
 }
 
 function getAudience(value: unknown) {
-  const allowed = new Set(["admin", "coach", "parent"]);
+  const allowed = new Set(["coach", "parent"]);
 
   return Array.isArray(value)
     ? value
@@ -31,32 +31,30 @@ function getPriority(value: unknown) {
     : undefined;
 }
 
-function getAnnouncementPayload(body: Record<string, unknown> | null) {
+function getTeamMessagePayload(body: Record<string, unknown> | null) {
   if (!body) {
     return null;
   }
 
   return {
-    audience: getAudience(body.audience) as AdminAnnouncementPayload["audience"],
+    audience: getAudience(body.audience) as CoachTeamMessagePayload["audience"],
     content: getText(body.content),
-    organizationId: getText(body.organizationId),
     priority: getPriority(body.priority),
     subject: getText(body.subject),
     teamId: getText(body.teamId),
-  } satisfies AdminAnnouncementPayload;
+  } satisfies CoachTeamMessagePayload;
 }
 
-function getAnnouncementErrorResponse(error: unknown) {
-  const status =
-    error instanceof AdminAnnouncementError ? error.status : 500;
+function getTeamMessageErrorResponse(error: unknown) {
+  const status = error instanceof CoachTeamMessageError ? error.status : 500;
   const message =
-    error instanceof Error ? error.message : "Could not create announcement.";
+    error instanceof Error ? error.message : "Could not send this message.";
   const reason =
-    error instanceof AdminAnnouncementError
+    error instanceof CoachTeamMessageError
       ? error.reason
-      : "admin-announcement-failed";
+      : "coach-team-message-failed";
 
-  console.warn("Admin announcement save failed.", {
+  console.warn("Coach team message failed.", {
     errorName: error instanceof Error ? error.name : typeof error,
     message,
     reason,
@@ -65,7 +63,7 @@ function getAnnouncementErrorResponse(error: unknown) {
 
   return NextResponse.json(
     {
-      error: status >= 500 ? "Could not create announcement." : message,
+      error: status >= 500 ? "Could not send this message." : message,
       reason,
     },
     { status },
@@ -77,21 +75,20 @@ export async function POST(request: NextRequest) {
     string,
     unknown
   > | null;
-  const payload = getAnnouncementPayload(body);
+  const payload = getTeamMessagePayload(body);
 
   if (!payload) {
     return NextResponse.json(
       {
-        error: "Enter announcement details.",
-        reason: "invalid-announcement-payload",
+        error: "Enter message details.",
+        reason: "invalid-team-message-payload",
       },
       { status: 400 },
     );
   }
 
   try {
-    const result = await createAdminAnnouncement(payload, {
-      activeOrganizationId: getText(body?.activeOrganizationId),
+    const result = await createCoachTeamMessage(payload, {
       sessionSource: {
         authorizationHeader: request.headers.get("authorization") ?? undefined,
         cookieHeader: request.headers.get("cookie") ?? undefined,
@@ -100,6 +97,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
-    return getAnnouncementErrorResponse(error);
+    return getTeamMessageErrorResponse(error);
   }
 }

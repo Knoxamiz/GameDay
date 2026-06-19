@@ -83,7 +83,7 @@ const sidebarItems: {
   {
     href: "/admin/announcements",
     icon: "message",
-    label: "Announcements",
+    label: "Messages",
   },
   { href: "/admin/alerts", icon: "alert", label: "Alerts" },
   { href: "/admin/setup", icon: "settings", label: "Settings" },
@@ -286,11 +286,15 @@ export default function AdminOrganizationWorkspaceHome({
   const activeCoachAssignments = readModel.coachAssignments.filter(
     isActiveCoachAssignment,
   );
-  const recentAnnouncements = readModel.communications
-    .filter((message) => message.type === "Organization Announcement")
+  const recentCommunications = readModel.communications
+    .filter(
+      (message) =>
+        message.type === "Organization Announcement" ||
+        message.type === "Team Announcement",
+    )
     .slice()
     .sort((first, second) => second.timestamp.localeCompare(first.timestamp))
-    .slice(0, 3);
+    .slice(0, 5);
   const alertItems = [
     activeTeams.length === 0
       ? {
@@ -372,6 +376,8 @@ export default function AdminOrganizationWorkspaceHome({
           ? "Registration"
           : currentSection === "schedule"
             ? "Schedule"
+            : currentSection === "announcements"
+              ? "Messages"
       : currentSection === "teamDetails" && selectedTeam
         ? selectedTeam.name
         : organization.name;
@@ -384,6 +390,8 @@ export default function AdminOrganizationWorkspaceHome({
           ? "Links, submitted players, and roster review"
           : currentSection === "schedule"
             ? "Create and manage real team events"
+            : currentSection === "announcements"
+              ? "Organization and team communication"
       : currentSection === "teamDetails"
         ? "Team workspace"
         : `${workspaceTypeLabel} Workspace`;
@@ -517,14 +525,14 @@ export default function AdminOrganizationWorkspaceHome({
                 <section className="gd-card-dark rounded-lg p-3 backdrop-blur">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <h2 className="text-base font-black">Announcements</h2>
+                      <h2 className="text-base font-black">Messages</h2>
                       <p className="mt-1 text-sm text-slate-400">
-                        New announcements and organization updates.
+                        Team and organization updates.
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
                       <StatusPill tone="slate">
-                        {`${recentAnnouncements.length} new`}
+                        {`${recentCommunications.length} recent`}
                       </StatusPill>
                       <Link
                         className="rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-black text-white hover:bg-blue-500"
@@ -533,23 +541,23 @@ export default function AdminOrganizationWorkspaceHome({
                           activeOrganizationId,
                         )}
                       >
-                        Create Announcement +
+                        Create Message +
                       </Link>
                     </div>
                   </div>
                   <div className="mt-2">
-                    {recentAnnouncements[0] ? (
+                    {recentCommunications[0] ? (
                       <div>
                         <p className="truncate text-sm font-black">
-                          {recentAnnouncements[0].subject}
+                          {recentCommunications[0].subject}
                         </p>
                         <p className="mt-1 line-clamp-2 text-sm text-slate-400">
-                          {recentAnnouncements[0].content}
+                          {recentCommunications[0].content}
                         </p>
                       </div>
                     ) : (
                       <p className="text-sm text-slate-400">
-                        No announcements have been created for this organization.
+                        No messages have been created for this organization.
                       </p>
                     )}
                   </div>
@@ -653,27 +661,40 @@ export default function AdminOrganizationWorkspaceHome({
               <div className="mt-3 space-y-3">
                 <AdminAnnouncementForm
                   activeOrganizationId={activeOrganizationId}
+                  teams={readModel.teams}
                 />
 
                 <section className="gd-card-dark rounded-lg p-4 backdrop-blur">
                   <div>
-                    <h2 className="text-xl font-black">Announcements</h2>
+                    <h2 className="text-xl font-black">Messages</h2>
                     <p className="mt-1 text-sm text-slate-400">
-                      Recent organization updates.
+                      Recent organization and team updates.
                     </p>
                   </div>
 
                   <div className="mt-4 space-y-3">
-                    {recentAnnouncements.length > 0 ? (
-                      recentAnnouncements.map((announcement) => (
+                    {recentCommunications.length > 0 ? (
+                      recentCommunications.map((announcement) => (
                         <article
                           className="rounded-md border border-blue-300/10 bg-white/[0.045] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
                           key={announcement.id}
                         >
                           <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-                            <h3 className="text-sm font-black">
-                              {announcement.subject}
-                            </h3>
+                            <div>
+                              <h3 className="text-sm font-black">
+                                {announcement.subject}
+                              </h3>
+                              <p className="mt-1 text-xs font-semibold text-blue-200">
+                                {announcement.teamId
+                                  ? `Team: ${
+                                      readModel.teams.find(
+                                        (team) =>
+                                          team.id === announcement.teamId,
+                                      )?.name ?? announcement.teamId
+                                    }`
+                                  : "Whole organization"}
+                              </p>
+                            </div>
                             <time className="text-xs font-semibold text-slate-400">
                               {new Date(
                                 announcement.timestamp,
@@ -687,7 +708,7 @@ export default function AdminOrganizationWorkspaceHome({
                       ))
                     ) : (
                       <EmptyState>
-                        No announcements have been created for this organization.
+                        No messages have been created for this organization.
                       </EmptyState>
                     )}
                   </div>

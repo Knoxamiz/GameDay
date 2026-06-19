@@ -779,7 +779,7 @@ export default async function TeamDetails({
 
         <details className="gd-card-dark group mt-3 overflow-hidden rounded-lg">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
-            <h2 className="text-base font-black">Team Announcements</h2>
+            <h2 className="text-base font-black">Team Messages</h2>
             <span className="text-lg font-black text-blue-300 transition group-open:rotate-90">
               &rsaquo;
             </span>
@@ -787,10 +787,18 @@ export default async function TeamDetails({
           <div className="space-y-2 border-t border-white/10 p-3 text-xs text-slate-300">
             {teamAnnouncements.length > 0 ? (
               teamAnnouncements.map((announcement) => (
-                <p key={announcement.id}>{announcement.content}</p>
+                <article
+                  className="rounded-md border border-blue-300/10 bg-white/[0.045] p-2.5"
+                  key={announcement.id}
+                >
+                  <p className="font-black text-white">
+                    {announcement.subject}
+                  </p>
+                  <p className="mt-1">{announcement.content}</p>
+                </article>
               ))
             ) : (
-              <p>No team announcements yet.</p>
+              <p>No team messages yet.</p>
             )}
           </div>
         </details>
