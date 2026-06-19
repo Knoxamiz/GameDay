@@ -9,8 +9,12 @@ type AdminTeamMembersManagerProps = {
   activeOrganizationId: string;
   coachAssignments: CoachAssignment[];
   coaches: Coach[];
+  defaultOpen?: boolean;
+  playersDefaultOpen?: boolean;
   rosteredRegistrations: Registration[];
+  showCoaches?: boolean;
   teamId: string;
+  title?: string;
 };
 
 type ApiResponse = {
@@ -50,8 +54,12 @@ export default function AdminTeamMembersManager({
   activeOrganizationId,
   coachAssignments,
   coaches,
+  defaultOpen = false,
+  playersDefaultOpen = false,
   rosteredRegistrations,
+  showCoaches = true,
   teamId,
+  title = "Players & Coaches",
 }: AdminTeamMembersManagerProps) {
   const [athleteFirstName, setAthleteFirstName] = useState("");
   const [athleteLastName, setAthleteLastName] = useState("");
@@ -281,15 +289,19 @@ export default function AdminTeamMembersManager({
   }
 
   return (
-    <details className="gd-card-light gd-card-interactive group overflow-hidden rounded-lg">
+    <details
+      className="gd-card-light gd-card-interactive group overflow-hidden rounded-lg"
+      open={defaultOpen}
+    >
       <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3">
         <span>
           <span className="block text-base font-black text-slate-950">
-            Players & Coaches
+            {title}
           </span>
           <span className="mt-0.5 block text-xs text-slate-500">
-            {rosteredRegistrations.length} rostered /{" "}
-            {activeTeamCoachAssignments.length} coaches
+            {showCoaches
+              ? `${rosteredRegistrations.length} rostered / ${activeTeamCoachAssignments.length} coaches`
+              : `${rosteredRegistrations.length} rostered players`}
           </span>
         </span>
         <span className="text-lg font-black text-blue-600 transition group-open:rotate-90">
@@ -309,7 +321,10 @@ export default function AdminTeamMembersManager({
       )}
 
       <div className="space-y-2 border-t border-slate-200 p-3">
-        <details className="gd-card-light group/player overflow-hidden rounded-lg">
+        <details
+          className="gd-card-light group/player overflow-hidden rounded-lg"
+          open={playersDefaultOpen}
+        >
           <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3">
             <span>
               <span className="block font-black text-slate-950">Players</span>
@@ -427,6 +442,7 @@ export default function AdminTeamMembersManager({
           </div>
         </details>
 
+        {showCoaches && (
         <details className="gd-card-light group/coach overflow-hidden rounded-lg">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3">
             <span>
@@ -511,6 +527,7 @@ export default function AdminTeamMembersManager({
             </div>
           </div>
         </details>
+        )}
       </div>
     </details>
   );
