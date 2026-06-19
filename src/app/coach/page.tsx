@@ -148,7 +148,7 @@ export default async function CoachHome() {
   }).length;
 
   return (
-    <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
+    <main className="gd-dark-scope min-h-screen text-white">
       <div className="flex min-h-screen">
         <aside className="block w-14 shrink-0 border-r border-slate-200 bg-white lg:w-60">
           <div className="flex h-16 items-center justify-center gap-2 border-b border-slate-200 px-2 lg:justify-start lg:px-5">

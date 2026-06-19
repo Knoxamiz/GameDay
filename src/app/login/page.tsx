@@ -52,7 +52,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   }
 
   return (
-    <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
+    <main className="gd-dark-scope min-h-screen text-white">
       <section className="mx-auto max-w-sm px-3 py-3 sm:px-5">
         <div className="gd-card-light rounded-lg p-3">
           <p className="text-xs font-black uppercase text-blue-700">

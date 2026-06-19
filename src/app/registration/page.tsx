@@ -70,7 +70,7 @@ export default async function RegistrationHome({
   });
 
   return (
-    <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
+    <main className="gd-dark-scope min-h-screen text-white">
       <header className="border-b border-blue-100 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-3 py-2.5 sm:px-5">
           <Link className="text-lg font-black" href="/">
