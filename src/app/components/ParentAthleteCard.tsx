@@ -73,15 +73,15 @@ export default function ParentAthleteCard({
 
   return (
     <details className="gd-card-light gd-card-interactive group overflow-hidden rounded-lg">
-      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 transition hover:bg-blue-50 [&::-webkit-details-marker]:hidden">
+      <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-2 px-2.5 py-2 transition hover:bg-blue-50 [&::-webkit-details-marker]:hidden">
         <span className="min-w-0">
-          <span className="block truncate text-base font-black">
+          <span className="block truncate text-sm font-black">
             {athleteName}
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-2">
           <span
-            className={`inline-flex max-w-32 items-center gap-1.5 truncate rounded-md px-2.5 py-1.5 text-[11px] font-black ${getStatusLightClass(
+            className={`inline-flex max-w-28 items-center gap-1.5 truncate rounded-md px-2 py-1 text-[10px] font-black ${getStatusLightClass(
               status.tone,
             )}`}
             title={status.description}
@@ -94,13 +94,13 @@ export default function ParentAthleteCard({
             />
             {status.label}
           </span>
-          <span className="text-base font-black text-blue-700 transition group-open:rotate-90">
+          <span className="text-sm font-black text-blue-700 transition group-open:rotate-90">
             &gt;
           </span>
         </span>
       </summary>
 
-      <div className="border-t border-slate-200 px-3 pb-3 pt-2.5">
+      <div className="border-t border-slate-200 px-2.5 pb-2.5 pt-2">
         {hasAccountAlert && (
           <div className="mb-2.5 rounded-md border border-red-200 bg-red-50 p-2.5">
             <p className="text-sm font-black text-red-800">
@@ -166,7 +166,7 @@ export default function ParentAthleteCard({
         </div>
 
         <Link
-          className="mt-2.5 flex min-h-9 items-center justify-center rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-50"
+          className="mt-2 flex min-h-8 items-center justify-center rounded-md border border-blue-100 bg-white/80 px-2.5 py-1.5 text-[11px] font-black text-slate-700 hover:bg-blue-50"
           href={`/athletes/${athleteId}`}
         >
           Player options

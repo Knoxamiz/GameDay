@@ -259,48 +259,63 @@ export default async function CoachHome() {
 
               {source !== "error" && coachTeamCards.length === 0 && (
                 <div className="gd-card-light rounded-lg p-3 text-sm text-slate-600">
-                  <p className="text-base font-black text-slate-950">
+                  <p className="text-sm font-black text-slate-950">
                     No team assigned yet.
                   </p>
-                  <p className="mt-2">
-                    Create your own team workspace, or have an organization add
-                    this coach account to one of their teams.
+                  <p className="mt-1 text-xs font-semibold">
+                    Open only the path you need.
                   </p>
 
-                  <div className="mt-3">
-                    <CoachTeamWorkspaceCreateForm />
-                  </div>
+                  <div className="mt-2 grid gap-1.5">
+                    <details className="group rounded-md border border-blue-100 bg-white/70">
+                      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-2.5 py-2 [&::-webkit-details-marker]:hidden">
+                        <span>
+                          <span className="block text-sm font-black text-slate-950">
+                            Create independent team
+                          </span>
+                          <span className="block text-[11px] font-semibold text-slate-500">
+                            Free single-team workspace.
+                          </span>
+                        </span>
+                        <span className="text-sm font-black text-blue-600 transition group-open:rotate-90">
+                          &rsaquo;
+                        </span>
+                      </summary>
+                      <div className="border-t border-blue-100 p-2">
+                        <CoachTeamWorkspaceCreateForm />
+                      </div>
+                    </details>
 
-                  <details className="group mt-3 rounded-md border border-slate-200 bg-slate-50">
-                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
-                      <span>
-                        <span className="block font-black text-slate-950">
-                          Already part of an organization?
+                    <details className="group rounded-md border border-blue-100 bg-white/70">
+                      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-2.5 py-2 [&::-webkit-details-marker]:hidden">
+                        <span>
+                          <span className="block text-sm font-black text-slate-950">
+                            Already part of an organization?
+                          </span>
+                          <span className="block text-[11px] font-semibold text-slate-500">
+                            Give this email to the org admin.
+                          </span>
                         </span>
-                        <span className="mt-1 block text-xs font-semibold text-slate-500">
-                          Use this when another admin owns the workspace.
+                        <span className="text-sm font-black text-blue-600 transition group-open:rotate-90">
+                          &rsaquo;
                         </span>
-                      </span>
-                      <span className="text-lg font-black text-blue-600 transition group-open:rotate-90">
-                        &rsaquo;
-                      </span>
-                    </summary>
-                    <div className="border-t border-slate-200 p-3">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Coach login email
-                      </p>
-                      <p className="mt-2 break-words font-bold text-slate-950">
-                        {currentCoach.email ||
-                          session.user.email ||
-                          "Not available"}
-                      </p>
-                      <p className="mt-3 text-xs leading-5 text-slate-500">
-                        Admin path: open the organization, choose a team, then
-                        use Players & Coaches &gt; Coaches &gt; Add coach with
-                        that exact login email.
-                      </p>
-                    </div>
-                  </details>
+                      </summary>
+                      <div className="border-t border-blue-100 p-2.5">
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                          Coach login email
+                        </p>
+                        <p className="mt-1 break-words text-sm font-black text-slate-950">
+                          {currentCoach.email ||
+                            session.user.email ||
+                            "Not available"}
+                        </p>
+                        <p className="mt-2 text-xs leading-5 text-slate-500">
+                          The admin adds this email from the team&apos;s
+                          Players & Coaches screen.
+                        </p>
+                      </div>
+                    </details>
+                  </div>
                 </div>
               )}
 

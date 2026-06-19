@@ -61,46 +61,46 @@ export default async function AccountPage() {
           )}
         </div>
 
-        <section className="gd-card-light mt-3 rounded-lg p-3">
-          <div className="flex items-center justify-between gap-3">
+        <section className="gd-card-light mt-3 rounded-lg p-2.5">
+          <div className="flex items-center justify-between gap-3 px-1">
             <div>
-              <h2 className="text-base font-black">Open GameDay</h2>
-              <p className="mt-0.5 text-xs font-semibold text-slate-500">
+              <h2 className="text-sm font-black">Open GameDay</h2>
+              <p className="mt-0.5 text-[11px] font-semibold text-slate-500">
                 {accountAccess.hasEstablishedContext
                   ? "Your current account access."
                   : "Start by creating a team or finding one."}
               </p>
             </div>
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">
+            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-black text-blue-700">
               {accountAccess.options.length}
             </span>
           </div>
 
-          <div className="mt-2 grid gap-2">
+          <div className="mt-2 grid gap-1.5">
             {accountAccess.options.map((option) => (
               <Link
-                className="gd-card-light gd-card-interactive group flex items-center justify-between gap-3 rounded-lg px-3 py-2.5"
+                className="group flex items-center justify-between gap-3 rounded-md border border-blue-100/70 bg-white/70 px-2.5 py-2 transition hover:border-blue-300 hover:bg-blue-50"
                 href={option.href}
                 key={option.id}
               >
                 <span className="min-w-0">
                   <span className="flex items-center gap-2">
-                    <span className="truncate text-base font-black">
+                    <span className="truncate text-sm font-black">
                       {option.title}
                     </span>
                     <span
-                      className={`rounded-full border px-2 py-0.5 text-[11px] font-black ${getOptionTone(
+                      className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] font-black ${getOptionTone(
                         option.kind,
                       )}`}
                     >
                       {option.badge}
                     </span>
                   </span>
-                  <span className="mt-0.5 block truncate text-xs font-semibold text-slate-500">
+                  <span className="mt-0.5 block truncate text-[11px] font-semibold text-slate-500">
                     {option.description}
                   </span>
                 </span>
-                <span className="text-base font-black text-blue-600 transition group-hover:translate-x-0.5">
+                <span className="text-sm font-black text-blue-600 transition group-hover:translate-x-0.5">
                   &rsaquo;
                 </span>
               </Link>

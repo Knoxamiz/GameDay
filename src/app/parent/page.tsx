@@ -300,12 +300,12 @@ export default async function ParentHome() {
 
         <section className="mt-3">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-lg font-black">Players</h2>
+            <h2 className="text-base font-black">Players</h2>
             <p className="text-sm font-bold text-slate-500">
               {athleteRows.length}
             </p>
           </div>
-          <div className="mt-2 space-y-2">
+          <div className="mt-2 space-y-1.5">
             {athleteRows.length === 0 ? (
               <p className="gd-card-light rounded-lg border-dashed p-3 text-sm font-semibold text-slate-500">
                 No players registered yet.
