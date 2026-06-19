@@ -37,39 +37,35 @@ export default async function AccountPage() {
 
   return (
     <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <Link className="text-xl font-black" href="/account">
+      <header className="border-b border-blue-100 bg-white/90 backdrop-blur">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-3 py-2.5 sm:px-5">
+          <Link className="text-lg font-black" href="/account">
             GameDay
           </Link>
           <SessionControls compact role="account" surface="light" />
         </div>
       </header>
 
-      <section className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-black uppercase text-blue-700">
-            Account Home
+      <section className="mx-auto max-w-3xl px-3 py-4 sm:px-5">
+        <div className="flex flex-col gap-1">
+          <p className="text-xs font-black uppercase tracking-wide text-blue-700">
+            Account
           </p>
-          <h1 className="mt-1 text-2xl font-black tracking-tight">
+          <h1 className="text-xl font-black tracking-tight">
             Hi, {accountAccess.displayName}
           </h1>
-          <p className="mt-2 max-w-xl text-sm font-semibold text-slate-600">
-            Choose what you need to open. GameDay only shows access tied to this
-            signed-in account.
-          </p>
           {accountAccess.email && (
-            <p className="mt-3 text-xs font-bold text-slate-500">
+            <p className="text-xs font-bold text-slate-500">
               {accountAccess.email}
             </p>
           )}
         </div>
 
-        <section className="mt-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <section className="gd-card-light mt-3 rounded-lg p-3">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-xl font-black">Open GameDay</h2>
-              <p className="mt-1 text-sm font-semibold text-slate-500">
+              <h2 className="text-base font-black">Open GameDay</h2>
+              <p className="mt-0.5 text-xs font-semibold text-slate-500">
                 {accountAccess.hasEstablishedContext
                   ? "Your current account access."
                   : "Start by creating a team or finding one."}
@@ -80,29 +76,33 @@ export default async function AccountPage() {
             </span>
           </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="mt-2 grid gap-2">
             {accountAccess.options.map((option) => (
               <Link
-                className="group rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-300 hover:shadow-md"
+                className="gd-card-light gd-card-interactive group flex items-center justify-between gap-3 rounded-lg px-3 py-2.5"
                 href={option.href}
                 key={option.id}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <span
-                    className={`rounded-full border px-3 py-1 text-xs font-black ${getOptionTone(
-                      option.kind,
-                    )}`}
-                  >
-                    {option.badge}
+                <span className="min-w-0">
+                  <span className="flex items-center gap-2">
+                    <span className="truncate text-base font-black">
+                      {option.title}
+                    </span>
+                    <span
+                      className={`rounded-full border px-2 py-0.5 text-[11px] font-black ${getOptionTone(
+                        option.kind,
+                      )}`}
+                    >
+                      {option.badge}
+                    </span>
                   </span>
-                  <span className="text-xl font-black text-blue-600 transition group-hover:translate-x-0.5">
-                    &rsaquo;
+                  <span className="mt-0.5 block truncate text-xs font-semibold text-slate-500">
+                    {option.description}
                   </span>
-                </div>
-                <h3 className="mt-4 text-lg font-black">{option.title}</h3>
-                <p className="mt-2 text-sm font-semibold leading-5 text-slate-600">
-                  {option.description}
-                </p>
+                </span>
+                <span className="text-base font-black text-blue-600 transition group-hover:translate-x-0.5">
+                  &rsaquo;
+                </span>
               </Link>
             ))}
           </div>

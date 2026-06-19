@@ -81,18 +81,18 @@ export default function AdminTeamCreateForm({
 
   return (
     <section
-      className="scroll-mt-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+      className="gd-card-dark scroll-mt-4 rounded-lg p-3 backdrop-blur"
       id="create-team"
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-2xl font-black">Create New Team</h2>
-          <p className="mt-1 text-sm font-semibold text-slate-500">
+          <h2 className="text-base font-black text-white">Create New Team</h2>
+          <p className="mt-1 text-xs font-semibold text-slate-400">
             Add one team workspace inside this organization.
           </p>
         </div>
         <button
-          className="rounded-md bg-blue-600 px-3 py-2 text-sm font-black text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-black text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={Boolean(disabledReason)}
           onClick={() => setIsOpen((currentValue) => !currentValue)}
           type="button"
@@ -102,52 +102,52 @@ export default function AdminTeamCreateForm({
       </div>
 
       {disabledReason && (
-        <p className="mt-4 rounded-md border border-orange-200 bg-orange-50 p-3 text-sm font-bold text-orange-700">
+        <p className="mt-3 rounded-md border border-orange-300/30 bg-orange-500/10 p-2.5 text-xs font-bold text-orange-100">
           {disabledReason}
         </p>
       )}
 
       {isOpen && !disabledReason && (
-        <div className="mt-4 border-t border-slate-200 pt-4">
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_16rem]">
+        <div className="mt-3 border-t border-white/10 pt-3">
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_14rem]">
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block sm:col-span-2">
-                <span className="text-sm font-black text-slate-700">
+                <span className="text-xs font-black uppercase text-slate-400">
                   Team Name
                 </span>
                 <input
-                  className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="mt-1.5 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                   onChange={(event) => setName(event.target.value)}
                   placeholder="Pineboys 10U"
                   value={name}
                 />
               </label>
               <label className="block">
-                <span className="text-sm font-black text-slate-700">
+                <span className="text-xs font-black uppercase text-slate-400">
                   Age Group / Division
                 </span>
                 <input
-                  className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="mt-1.5 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                   onChange={(event) => setDivision(event.target.value)}
                   placeholder="10U, 12U, High School"
                   value={division}
                 />
               </label>
               <label className="block">
-                <span className="text-sm font-black text-slate-700">
+                <span className="text-xs font-black uppercase text-slate-400">
                   Season
                 </span>
                 <input
-                  className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="mt-1.5 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                   onChange={(event) => setSeason(event.target.value)}
                   value={season}
                 />
               </label>
             </div>
 
-            <div className="rounded-md bg-slate-50 p-4 text-sm">
-              <p className="font-black text-slate-950">What happens next</p>
-              <p className="mt-2 font-semibold text-slate-600">
+            <div className="rounded-md bg-white/[0.06] p-3 text-xs">
+              <p className="font-black text-white">What happens next</p>
+              <p className="mt-1 font-semibold text-slate-400">
                 The team is created as active so you can add registration,
                 coaches, events, and rostered players right away.
               </p>
@@ -155,19 +155,19 @@ export default function AdminTeamCreateForm({
           </div>
 
           {message && (
-            <p className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm font-bold text-emerald-700">
+            <p className="mt-3 rounded-md border border-emerald-300/30 bg-emerald-500/10 p-2.5 text-xs font-bold text-emerald-100">
               {message}
             </p>
           )}
           {error && (
-            <p className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-700">
+            <p className="mt-3 rounded-md border border-red-300/30 bg-red-500/10 p-2.5 text-xs font-bold text-red-100">
               {error}
             </p>
           )}
 
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
             <button
-              className="rounded-md border border-slate-200 px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50"
+              className="rounded-md border border-white/15 px-3 py-1.5 text-xs font-black text-slate-200 hover:bg-white/10"
               disabled={isSaving}
               onClick={() => setIsOpen(false)}
               type="button"
@@ -175,7 +175,7 @@ export default function AdminTeamCreateForm({
               Cancel
             </button>
             <button
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-black text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-md bg-blue-600 px-4 py-1.5 text-xs font-black text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={isSaving}
               onClick={() => void createTeam()}
               type="button"

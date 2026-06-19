@@ -96,7 +96,7 @@ export default function TransportationStatusPicker({
   return (
     <>
       <div
-        className={`mt-4 rounded-2xl border p-4 text-sm ${
+        className={`mt-3 rounded-lg border p-3 text-sm ${
           isReady
             ? surface === "light"
               ? "border-emerald-200 bg-emerald-50 text-emerald-700"
@@ -110,29 +110,49 @@ export default function TransportationStatusPicker({
           {isReady ? "Ready for next event" : "Action needed before event"}
         </p>
         {!hasTransportationReady && (
-          <p className="mt-2">Choose a transportation status.</p>
+          <p className="mt-1">Choose a transportation status.</p>
         )}
         {missingRequirementLabels.length > 0 && (
-          <p className="mt-2">Missing: {missingRequirementLabels.join(", ")}</p>
+          <p className="mt-1">Missing: {missingRequirementLabels.join(", ")}</p>
         )}
         {openDocumentLabels.length > 0 && (
-          <p className="mt-2">Documents: {openDocumentLabels.join(", ")}</p>
+          <p className="mt-1">Documents: {openDocumentLabels.join(", ")}</p>
         )}
         {openPaymentLabels.length > 0 && (
-          <p className="mt-2">Payments: {openPaymentLabels.join(", ")}</p>
+          <p className="mt-1">Payments: {openPaymentLabels.join(", ")}</p>
         )}
       </div>
 
-      <div
-        className={`mt-4 rounded-2xl border p-5 ${
+      <details
+        className={`mt-3 rounded-lg border ${
           surface === "light"
             ? "border-slate-200 bg-white"
-            : "border-slate-800 bg-slate-900"
+            : "border-blue-300/20 bg-slate-950/70"
         }`}
       >
-        <h2 className="text-lg font-bold">Transportation</h2>
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
+          <h2 className="text-sm font-black">Transportation</h2>
+          <span
+            className={`rounded-full px-2.5 py-1 text-xs font-black ${
+              hasTransportationReady
+                ? surface === "light"
+                  ? "bg-emerald-50 text-emerald-700"
+                  : "bg-blue-500/20 text-blue-200"
+                : surface === "light"
+                  ? "bg-orange-50 text-orange-700"
+                  : "bg-red-500/20 text-red-200"
+            }`}
+          >
+            {selectedStatus}
+          </span>
+        </summary>
+        <div
+          className={`border-t px-3 pb-3 pt-2 ${
+            surface === "light" ? "border-slate-200" : "border-white/10"
+          }`}
+        >
         <p
-          className={`mt-3 text-sm font-semibold ${
+          className={`text-sm font-semibold ${
             hasTransportationReady
               ? surface === "light"
                 ? "text-emerald-700"
@@ -144,7 +164,7 @@ export default function TransportationStatusPicker({
         >
           Current: {selectedStatus}
         </p>
-        <div className="mt-4 grid gap-3">
+        <div className="mt-2 grid gap-1.5">
           {options.map((option) => {
             const isSelected = option === selectedStatus;
 
@@ -154,7 +174,7 @@ export default function TransportationStatusPicker({
                 type="button"
                 disabled={isPending}
                 onClick={() => updateTransportation(option)}
-                className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm font-semibold ${
+                className={`flex items-center gap-2 rounded-md border px-3 py-2 text-left text-sm font-black ${
                   isSelected
                     ? surface === "light"
                       ? "border-blue-600 bg-blue-50 text-blue-700"
@@ -179,7 +199,8 @@ export default function TransportationStatusPicker({
         {error && (
           <p className="mt-3 text-sm font-semibold text-red-700">{error}</p>
         )}
-      </div>
+        </div>
+      </details>
     </>
   );
 }

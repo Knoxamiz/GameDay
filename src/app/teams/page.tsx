@@ -212,9 +212,9 @@ export default async function TeamsHome({
   );
 
   const teamList = (
-    <div className="mt-6 grid gap-4 lg:grid-cols-2">
+    <div className="mt-3 space-y-2">
           {visibleTeams.length === 0 && (
-            <p className="rounded-lg border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300 lg:col-span-2">
+            <p className="gd-card-dark rounded-lg border-dashed p-3 text-xs font-semibold text-slate-300">
               {activeContext?.requiresSelection
                 ? "Choose an organization to view its teams."
                 : "No teams are available for your current organization and role scope."}
@@ -246,17 +246,17 @@ export default async function TeamsHome({
             return (
               <article
                 key={team.id}
-                className="rounded-lg border border-slate-800 bg-slate-900 p-5 shadow-lg"
+                className="gd-card-dark gd-card-interactive rounded-lg px-3 py-2.5"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    <p className="text-xs font-black uppercase tracking-wide text-slate-400">
                       {team.label} - {getTeamStatusLabel(team)}
                     </p>
-                    <h2 className="mt-2 text-xl font-bold">{team.name}</h2>
+                    <h2 className="mt-1 text-base font-black">{team.name}</h2>
                   </div>
                   <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    className={`rounded-full px-2.5 py-1 text-xs font-black ${
                       needsCoach || needsRideHelp
                         ? "bg-red-500/20 text-red-300"
                         : "bg-blue-500/20 text-blue-300"
@@ -270,14 +270,14 @@ export default async function TeamsHome({
                   </span>
                 </div>
 
-                <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                  <div className="rounded-xl bg-slate-800 p-3">
+                <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+                  <div className="rounded-md bg-white/[0.06] p-2.5">
                     <p className="text-slate-400">Rostered</p>
                     <p className="mt-1 font-semibold text-white">
                       {rosteredCount}
                     </p>
                   </div>
-                  <div className="rounded-xl bg-slate-800 p-3">
+                  <div className="rounded-md bg-white/[0.06] p-2.5">
                     <p className="text-slate-400">Coaches</p>
                     <p
                       className={`mt-1 font-semibold ${
@@ -290,23 +290,23 @@ export default async function TeamsHome({
                 </div>
 
                 {nextEvent ? (
-                  <div className="mt-4 rounded-xl bg-slate-800 p-4 text-sm text-slate-300">
+                  <div className="mt-2 rounded-md bg-white/[0.06] p-2.5 text-xs text-slate-300">
                     <p className="font-semibold text-white">Next Event</p>
-                    <p className="mt-2">
+                    <p className="mt-1">
                       {getEventShortDateLabel(nextEvent)} {nextEvent.type}
                     </p>
                     <p className="mt-1">{getEventTimeLabel(nextEvent)}</p>
                   </div>
                 ) : (
-                  <p className="mt-4 rounded-xl bg-slate-800 p-4 text-sm text-slate-300">
+                  <p className="mt-2 rounded-md bg-white/[0.06] p-2.5 text-xs text-slate-300">
                     No upcoming event.
                   </p>
                 )}
                 {role === "admin" ? (
-                  <div className="mt-4 flex flex-wrap gap-2 text-sm font-semibold">
+                  <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold">
                     {needsCoach && (
                       <Link
-                        className="rounded-md bg-blue-500 px-3 py-2 text-white"
+                        className="rounded-md bg-blue-600 px-2.5 py-1.5 text-white"
                         href={withActiveOrganization(
                           "/admin/setup#coach-assignments",
                           activeOrganizationId,
@@ -317,13 +317,13 @@ export default async function TeamsHome({
                     )}
                     {openInvite ? (
                       <AdminJoinLinkButton
-                        className="rounded-md border border-slate-700 px-3 py-2 text-slate-200"
+                        className="rounded-md border border-white/15 px-2.5 py-1.5 text-slate-200"
                         joinPath={`/join/${openInvite.inviteCode}`}
                         label={inviteActionLabel}
                       />
                     ) : (
                       <Link
-                        className="rounded-md border border-slate-700 px-3 py-2 text-slate-200"
+                        className="rounded-md border border-white/15 px-2.5 py-1.5 text-slate-200"
                         href={withActiveOrganization(
                           "/admin/registrations",
                           activeOrganizationId,
@@ -333,7 +333,7 @@ export default async function TeamsHome({
                       </Link>
                     )}
                     <Link
-                      className="rounded-md border border-slate-700 px-3 py-2 text-slate-200"
+                      className="rounded-md border border-white/15 px-2.5 py-1.5 text-slate-200"
                       href={withActiveOrganization(
                         "/admin/registrations#roster",
                         activeOrganizationId,
@@ -343,7 +343,7 @@ export default async function TeamsHome({
                     </Link>
                     {!nextEvent && rosteredCount > 0 && (
                       <Link
-                        className="rounded-md border border-slate-700 px-3 py-2 text-slate-200"
+                        className="rounded-md border border-white/15 px-2.5 py-1.5 text-slate-200"
                         href={withActiveOrganization(
                           `${scheduleIndexHref}?action=create-event#create-event`,
                           activeOrganizationId,
@@ -353,7 +353,7 @@ export default async function TeamsHome({
                       </Link>
                     )}
                     <Link
-                      className="rounded-md border border-slate-700 px-3 py-2 text-slate-200"
+                      className="rounded-md border border-white/15 px-2.5 py-1.5 text-slate-200"
                       href={withActiveOrganization(
                         `${teamDetailsBaseHref}/${team.id}`,
                         activeOrganizationId,
@@ -364,7 +364,7 @@ export default async function TeamsHome({
                   </div>
                 ) : (
                   <Link
-                    className="mt-4 block rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
+                    className="mt-2 block rounded-md bg-blue-600 py-2 text-center text-xs font-black text-white"
                     href={withActiveOrganization(
                       `${teamDetailsBaseHref}/${team.id}`,
                       activeOrganizationId,
@@ -401,12 +401,12 @@ export default async function TeamsHome({
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <section className="mx-auto max-w-md px-5 py-6">
+    <main className="min-h-screen bg-[#020817] text-white">
+      <section className="mx-auto max-w-3xl px-3 py-4 sm:px-5">
         <MvpNav organizationContext={organizationContext} />
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-          <h1 className="text-3xl font-bold">Teams</h1>
-          <p className="mt-3 text-sm text-slate-300">
+        <div className="gd-card-dark rounded-lg p-3">
+          <h1 className="text-xl font-black">Teams</h1>
+          <p className="mt-1 text-xs font-semibold text-slate-300">
             Roster, schedule, and readiness by team.
           </p>
         </div>

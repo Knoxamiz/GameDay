@@ -90,18 +90,18 @@ export default async function MvpNav({
     : "/";
 
   return (
-    <nav className="mb-4 space-y-2 text-sm font-semibold">
-      <div className="flex items-start justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900 px-4 py-3">
-        <Link className="text-base font-bold text-white" href={homeHref}>
+    <nav className="mb-3 space-y-2 text-xs font-bold">
+      <div className="gd-card-dark flex items-center justify-between gap-3 rounded-lg px-3 py-2">
+        <Link className="text-sm font-black text-white" href={homeHref}>
           GameDay
         </Link>
         <div className="text-right">
-          <p className="text-blue-300">{getRoleLabel(role)} Account</p>
+          <p className="font-black text-blue-200">{getRoleLabel(role)}</p>
           {organizationContext && (
-            <p className="mt-1 text-xs font-medium text-slate-400">
+            <p className="mt-0.5 max-w-44 truncate text-[11px] font-semibold text-slate-400">
               {organizationContext.count === 1
-                ? `Current organization: ${organizationContext.label}`
-                : `Organization access: ${organizationContext.label}`}
+                ? organizationContext.label
+                : `Access: ${organizationContext.label}`}
             </p>
           )}
         </div>
@@ -115,7 +115,7 @@ export default async function MvpNav({
                 ? withActiveOrganization(item.href, activeOrganizationId)
                 : item.href
             }
-            className="min-h-11 shrink-0 rounded-full bg-slate-900 px-4 py-3 text-slate-300"
+            className="shrink-0 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-slate-300 hover:bg-white/10 hover:text-white"
           >
             {item.label}
           </Link>

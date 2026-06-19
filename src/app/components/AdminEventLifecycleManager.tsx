@@ -120,17 +120,17 @@ function EventLifecycleEditor({
   }
 
   return (
-    <details className="rounded-lg border border-slate-200 bg-white">
-      <summary className="cursor-pointer list-none p-4 [&::-webkit-details-marker]:hidden">
+    <details className="gd-card-dark group rounded-lg">
+      <summary className="cursor-pointer list-none p-3 [&::-webkit-details-marker]:hidden">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
-            <p className="truncate text-base font-black text-slate-950">
+            <p className="truncate text-base font-black text-white">
               {event.title}
             </p>
-            <p className="mt-1 text-sm font-semibold text-slate-500">
+            <p className="mt-1 text-xs font-semibold text-slate-400">
               {getEventDateLabel(event)} · {getEventTimeLabel(event)}
             </p>
-            <p className="mt-1 truncate text-sm text-slate-500">
+            <p className="mt-1 truncate text-xs text-slate-400">
               {eventTeamNames || "Organization"} ·{" "}
               {getEventLocationLabel(event)}
             </p>
@@ -145,9 +145,11 @@ function EventLifecycleEditor({
         </div>
       </summary>
 
-      <div className="space-y-4 border-t border-slate-200 p-4">
+      <div className="space-y-3 border-t border-white/10 p-3">
         <fieldset>
-          <legend className="text-sm font-black text-slate-700">Teams</legend>
+          <legend className="text-xs font-black uppercase text-slate-400">
+            Teams
+          </legend>
           <div className="mt-2 flex flex-wrap gap-2">
             {teams.map((team) => {
               const isSelected = selectedTeamIds.includes(team.id);
@@ -155,12 +157,12 @@ function EventLifecycleEditor({
 
               return (
                 <label
-                  className={`inline-flex cursor-pointer items-center rounded-full border px-3 py-2 text-sm font-black ${
+                  className={`inline-flex cursor-pointer items-center rounded-md border px-2.5 py-1.5 text-xs font-black ${
                     isSelected
-                      ? "border-blue-600 bg-blue-50 text-blue-700"
+                      ? "border-blue-400 bg-blue-500/15 text-blue-100"
                       : canSelect
-                        ? "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                        : "border-slate-200 bg-slate-50 text-slate-400"
+                        ? "border-white/15 bg-white/5 text-slate-200 hover:bg-white/10"
+                        : "border-white/10 bg-white/[0.03] text-slate-500"
                   }`}
                   key={team.id}
                 >
@@ -182,9 +184,11 @@ function EventLifecycleEditor({
         </fieldset>
 
         <label className="block">
-          <span className="text-sm font-black text-slate-700">Title</span>
+          <span className="text-xs font-black uppercase text-slate-400">
+            Title
+          </span>
           <input
-            className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            className="mt-1.5 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
             onChange={(changeEvent) => setTitle(changeEvent.target.value)}
             value={title}
           />
@@ -192,9 +196,11 @@ function EventLifecycleEditor({
 
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block">
-            <span className="text-sm font-black text-slate-700">Type</span>
+            <span className="text-xs font-black uppercase text-slate-400">
+              Type
+            </span>
             <select
-              className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              className="mt-1.5 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
               onChange={(changeEvent) =>
                 setType(changeEvent.target.value as GameDayEventType)
               }
@@ -208,9 +214,11 @@ function EventLifecycleEditor({
             </select>
           </label>
           <label className="block">
-            <span className="text-sm font-black text-slate-700">Status</span>
+            <span className="text-xs font-black uppercase text-slate-400">
+              Status
+            </span>
             <select
-              className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              className="mt-1.5 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
               onChange={(changeEvent) =>
                 setStatus(changeEvent.target.value as GameDayEventStatus)
               }
@@ -227,18 +235,22 @@ function EventLifecycleEditor({
 
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block">
-            <span className="text-sm font-black text-slate-700">Starts</span>
+            <span className="text-xs font-black uppercase text-slate-400">
+              Starts
+            </span>
             <input
-              className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              className="mt-1.5 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
               onChange={(changeEvent) => setStartsAt(changeEvent.target.value)}
               type="datetime-local"
               value={startsAt}
             />
           </label>
           <label className="block">
-            <span className="text-sm font-black text-slate-700">Ends</span>
+            <span className="text-xs font-black uppercase text-slate-400">
+              Ends
+            </span>
             <input
-              className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              className="mt-1.5 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
               onChange={(changeEvent) => setEndsAt(changeEvent.target.value)}
               type="datetime-local"
               value={endsAt}
@@ -247,9 +259,11 @@ function EventLifecycleEditor({
         </div>
 
         <label className="block">
-          <span className="text-sm font-black text-slate-700">Location</span>
+          <span className="text-xs font-black uppercase text-slate-400">
+            Location
+          </span>
           <input
-            className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            className="mt-1.5 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
             onChange={(changeEvent) =>
               setLocationName(changeEvent.target.value)
             }
@@ -257,27 +271,27 @@ function EventLifecycleEditor({
           />
         </label>
 
-        <details className="rounded-md border border-slate-200 bg-slate-50 p-3">
-          <summary className="cursor-pointer text-sm font-black text-slate-700">
+        <details className="rounded-md border border-white/10 bg-white/[0.04] p-3">
+          <summary className="cursor-pointer text-xs font-black text-slate-200">
             More details
           </summary>
           <div className="mt-3 space-y-3">
             <label className="block">
-              <span className="text-xs font-bold uppercase text-slate-500">
+              <span className="text-xs font-bold uppercase text-slate-400">
                 Address
               </span>
               <input
-                className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                className="mt-1.5 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                 onChange={(changeEvent) => setAddress(changeEvent.target.value)}
                 value={address}
               />
             </label>
             <label className="block">
-              <span className="text-xs font-bold uppercase text-slate-500">
+              <span className="text-xs font-bold uppercase text-slate-400">
                 Notes
               </span>
               <textarea
-                className="mt-2 min-h-20 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                className="mt-1.5 min-h-20 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                 onChange={(changeEvent) => setNotes(changeEvent.target.value)}
                 value={notes}
               />
@@ -286,14 +300,14 @@ function EventLifecycleEditor({
         </details>
 
         {(status === "canceled" || status === "archived") && (
-          <p className="rounded-md border border-orange-200 bg-orange-50 p-3 text-xs font-semibold text-orange-700">
+          <p className="rounded-md border border-orange-300/30 bg-orange-500/10 p-2.5 text-xs font-semibold text-orange-100">
             Existing attendance and transportation responses remain stored for
             history. This event will not be used as a team&apos;s next event.
           </p>
         )}
 
         <button
-          className="w-full rounded-md bg-blue-600 py-3 text-sm font-black text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-md bg-blue-600 py-2 text-xs font-black text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={isSaving}
           onClick={() =>
             void onSave(event.id, {
@@ -370,15 +384,15 @@ export default function AdminEventLifecycleManager({
   }
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="gd-card-dark rounded-lg p-3 backdrop-blur">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-2xl font-black">Existing Events</h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <h2 className="text-base font-black text-white">Existing Events</h2>
+          <p className="mt-1 text-xs font-semibold text-slate-400">
             Open an event only when you need to change details or status.
           </p>
         </div>
-        <label className="flex w-fit shrink-0 items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm font-bold text-slate-600">
+        <label className="flex w-fit shrink-0 items-center gap-2 rounded-md border border-white/15 px-3 py-1.5 text-xs font-bold text-slate-300">
           <input
             checked={showArchived}
             onChange={(changeEvent) =>
@@ -391,19 +405,19 @@ export default function AdminEventLifecycleManager({
       </div>
 
       {message && (
-        <p className="mt-4 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm font-bold text-blue-700">
+        <p className="mt-3 rounded-md border border-blue-300/30 bg-blue-500/10 p-2.5 text-xs font-bold text-blue-100">
           {message}
         </p>
       )}
       {error && (
-        <p className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-700">
+        <p className="mt-3 rounded-md border border-red-300/30 bg-red-500/10 p-2.5 text-xs font-bold text-red-100">
           {error}
         </p>
       )}
 
-      <div className="mt-5 space-y-3">
+      <div className="mt-3 space-y-2">
         {visibleEvents.length === 0 ? (
-          <p className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-4 text-sm font-semibold text-slate-500">
+          <p className="rounded-md border border-dashed border-white/15 bg-white/[0.04] p-3 text-xs font-semibold text-slate-400">
             No events in this view.
           </p>
         ) : (

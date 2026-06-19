@@ -67,12 +67,12 @@ export default function AdminAppShell({
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
-      <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-6">
-        <header className="border-b border-slate-800 pb-4">
+      <div className="mx-auto max-w-6xl px-3 py-3 sm:px-5">
+        <header className="border-b border-white/10 pb-3">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <Link
-                className="text-xl font-bold text-white"
+                className="text-lg font-black text-white"
                 href={withActiveOrganization("/admin", activeOrganizationId)}
               >
                 GameDay
@@ -87,14 +87,14 @@ export default function AdminAppShell({
             <SessionControls compact role="admin" />
           </div>
 
-          <nav className="mt-4 flex gap-1 overflow-x-auto border-b border-slate-800 pb-2 text-sm font-semibold">
+          <nav className="mt-3 flex gap-1 overflow-x-auto border-b border-white/10 pb-2 text-sm font-semibold">
             {adminNavigation.map((item) => {
               const isCurrent = item.section === currentSection;
 
               return (
                 <Link
                   aria-current={isCurrent ? "page" : undefined}
-                  className={`min-h-10 shrink-0 rounded-md px-3 py-2.5 ${
+                  className={`min-h-8 shrink-0 rounded-md px-2.5 py-1.5 ${
                     isCurrent
                       ? "bg-blue-500 text-white"
                       : "text-slate-300 hover:bg-slate-900"
@@ -108,7 +108,7 @@ export default function AdminAppShell({
             })}
           </nav>
 
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase text-slate-500">
                 Current workspace
@@ -124,10 +124,10 @@ export default function AdminAppShell({
           </div>
         </header>
 
-        <div className="py-6">
-          <div className="border-b border-slate-800 pb-5">
-            <h1 className="text-3xl font-bold">{title}</h1>
-            <p className="mt-2 max-w-2xl text-sm text-slate-300">
+        <div className="py-4">
+          <div className="border-b border-white/10 pb-3">
+            <h1 className="text-xl font-black">{title}</h1>
+            <p className="mt-1 max-w-2xl text-sm text-slate-300">
               {description}
             </p>
           </div>

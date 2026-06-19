@@ -83,11 +83,11 @@ export default function EventReadinessSummary({
   });
 
   return (
-    <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+    <div className="gd-card-dark mt-3 rounded-lg p-3">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold">{title}</h2>
-          <p className="mt-2 text-sm text-slate-300">
+          <h2 className="text-base font-black">{title}</h2>
+          <p className="mt-1 text-xs text-slate-300">
             {getSummaryLine(readiness)}
           </p>
         </div>
@@ -95,7 +95,7 @@ export default function EventReadinessSummary({
       </div>
 
       {readiness.concerns.length > 0 && (
-        <div className="mt-4 space-y-2 text-sm text-slate-300">
+        <div className="mt-3 space-y-2 text-xs text-slate-300">
           {readiness.concerns.slice(0, 6).map((concern) => (
             <p key={`${concern.source}-${concern.label}`}>
               <span className="text-slate-400">{concern.source}:</span>{" "}

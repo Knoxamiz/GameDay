@@ -190,7 +190,7 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
                   {nextEvent.title}
                 </p>
                 <p className="mt-0.5 text-xs font-semibold text-slate-600">
-                  {getEventDateLabel(nextEvent)} · {getEventTimeLabel(nextEvent)}
+                  {getEventDateLabel(nextEvent)} - {getEventTimeLabel(nextEvent)}
                 </p>
                 <p className="mt-0.5 truncate text-xs text-slate-500">
                   {getEventLocationLabel(nextEvent)}

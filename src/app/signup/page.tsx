@@ -41,12 +41,12 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
       </div>
 
       <header className="relative z-10 border-b border-white/10">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <Link className="text-xl font-black tracking-wide text-white" href="/">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-3 py-2.5 sm:px-5">
+          <Link className="text-lg font-black tracking-wide text-white" href="/">
             GAMEDAY
           </Link>
           <Link
-            className="rounded-lg border border-white/20 px-4 py-2.5 text-sm font-black text-white hover:bg-white/10"
+            className="rounded-md border border-white/20 px-3 py-1.5 text-xs font-black text-white hover:bg-white/10"
             href={session ? "/account" : "/login"}
           >
             {session ? "Account" : "Log in"}
@@ -54,15 +54,15 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
         </div>
       </header>
 
-      <section className="relative z-10 mx-auto max-w-5xl px-4 py-6 sm:px-6">
+      <section className="relative z-10 mx-auto max-w-5xl px-3 py-4 sm:px-5">
         <div className="max-w-3xl">
-          <p className="text-sm font-black uppercase tracking-wide text-blue-300">
+          <p className="text-xs font-black uppercase tracking-wide text-blue-300">
             Signup
           </p>
-          <h1 className="mt-2 text-2xl font-black tracking-tight text-white sm:text-3xl">
+          <h1 className="mt-1 text-xl font-black tracking-tight text-white sm:text-2xl">
             Start with the role that creates the work.
           </h1>
-          <p className="mt-3 text-sm font-semibold leading-6 text-slate-300">
+          <p className="mt-2 text-xs font-semibold leading-5 text-slate-300">
             Admins create paid organization workspaces. Coaches can create one
             free team. Parents are free and attach to a real team through
             registration.
@@ -74,7 +74,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           )}
         </div>
 
-        <div className="mt-5">
+        <div className="mt-3">
           <SignupStartOptions
             initialIntent={intent}
             isSignedIn={Boolean(session)}

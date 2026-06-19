@@ -53,15 +53,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
-      <section className="mx-auto max-w-md px-5 py-8">
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="mx-auto max-w-md px-3 py-4 sm:px-5">
+        <div className="gd-card-light rounded-lg p-3">
           <p className="text-xs font-black uppercase text-blue-700">
             GameDay Account
           </p>
-          <h1 className="mt-1 text-3xl font-black tracking-tight">Sign in</h1>
-          <p className="mt-3 text-sm font-semibold leading-5 text-slate-600">
-            Use one GameDay account. After sign-in, we open the parent, coach,
-            or admin workspace tied to this account.
+          <h1 className="mt-0.5 text-xl font-black tracking-tight">Sign in</h1>
+          <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">
+            One account opens the parent, coach, or admin workspace tied to it.
           </p>
         </div>
 

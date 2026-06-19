@@ -123,7 +123,7 @@ export default function SessionControls({
       </div>
 
       {error && (
-        <p className="mt-3 rounded-xl border border-red-500/30 bg-red-500/10 p-3 font-semibold text-red-300">
+        <p className="mt-2 rounded-md border border-red-500/30 bg-red-500/10 p-2.5 font-semibold text-red-300">
           {error}
         </p>
       )}

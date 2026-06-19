@@ -64,21 +64,21 @@ export default function RegistrationReadinessCard({
           .join(" | ");
 
   return (
-    <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-      <div className="flex items-start justify-between gap-3">
+    <details className="gd-card-dark mt-3 rounded-lg">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
         <div>
-          <h2 className="text-lg font-bold">Registration Readiness</h2>
-          <p className="mt-1 text-sm text-slate-300">
+          <h2 className="text-sm font-black text-white">Registration Readiness</h2>
+          <p className="mt-0.5 text-xs font-semibold text-slate-400">
             {isReady ? "Cleared for team activities." : details}
           </p>
         </div>
         <RegistrationStatusBadge status={currentStatus} />
-      </div>
+      </summary>
 
-      <div className="mt-4 rounded-xl bg-slate-800 p-4 text-sm">
+      <div className="border-t border-white/10 px-3 pb-3 pt-2 text-sm">
         <p className="font-semibold text-white">Requirements</p>
         <p
-          className={`mt-2 ${
+          className={`mt-1 ${
             summary.open === 0
               ? "text-blue-300"
               : summary.blocked > 0 || summary.missing > 0
@@ -89,6 +89,6 @@ export default function RegistrationReadinessCard({
           {requirementsLabel}
         </p>
       </div>
-    </div>
+    </details>
   );
 }

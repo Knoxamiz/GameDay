@@ -23,7 +23,7 @@ export default function AdminOrganizationSelector({
       className={
         compact
           ? "flex w-full items-end gap-2 sm:w-auto"
-          : "mt-4 rounded-xl border border-slate-700 bg-slate-900 p-4"
+          : "gd-card-dark mt-3 rounded-lg p-3"
       }
       method="get"
     >
@@ -32,7 +32,7 @@ export default function AdminOrganizationSelector({
           Active workspace
         </span>
         <select
-          className={`${compact ? "" : "mt-2"} w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2.5 text-white`}
+          className={`${compact ? "" : "mt-1"} w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-white`}
           defaultValue={activeOrganizationId ?? ""}
           name="organizationId"
           required
@@ -50,8 +50,8 @@ export default function AdminOrganizationSelector({
       <button
         className={
           compact
-            ? "shrink-0 rounded-md bg-blue-500 px-3 py-2.5 text-sm font-semibold text-white"
-            : "mt-3 w-full rounded-xl bg-blue-500 py-3 font-semibold text-white"
+            ? "shrink-0 rounded-md bg-blue-500 px-3 py-2 text-sm font-black text-white"
+            : "mt-3 w-full rounded-md bg-blue-500 py-2.5 text-sm font-black text-white"
         }
         type="submit"
       >

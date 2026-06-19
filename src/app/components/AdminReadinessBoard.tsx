@@ -69,18 +69,18 @@ function ReadinessWatchItem({
   title: string;
 }) {
   return (
-    <div className="rounded-xl bg-slate-800 p-4">
+    <div className="rounded-md border border-white/10 bg-white/5 p-2.5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
             {title}
           </p>
-          <p className="mt-2 font-semibold">{item?.label ?? fallback}</p>
+          <p className="mt-1 font-semibold">{item?.label ?? fallback}</p>
         </div>
         {item && <ReadinessBadge category={item.readiness.category} />}
       </div>
       {item?.readiness.concerns[0] && (
-        <p className="mt-3 text-sm text-slate-300">
+        <p className="mt-2 text-sm text-slate-300">
           {item.readiness.concerns[0].label}
         </p>
       )}
@@ -174,12 +174,23 @@ export default function AdminReadinessBoard({
   const topTeam = getTopItem(teamItems);
 
   return (
-    <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-      <h2 className="text-lg font-bold">Readiness Board</h2>
-      <p className="mt-2 text-sm text-slate-300">
+    <details className="gd-card-dark mt-3 rounded-lg">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
+        <div>
+          <h2 className="text-sm font-black text-white">Readiness Board</h2>
+          <p className="mt-0.5 text-xs font-semibold text-slate-400">
+            Highest-priority concerns.
+          </p>
+        </div>
+        <span className="rounded-full bg-blue-500/20 px-2.5 py-1 text-xs font-black text-blue-200">
+          Open
+        </span>
+      </summary>
+      <div className="border-t border-white/10 px-3 pb-3 pt-2">
+      <p className="text-sm text-slate-300">
         Highest-priority readiness concerns across schedule and teams.
       </p>
-      <div className="mt-4 space-y-3">
+      <div className="mt-2 space-y-2">
         <ReadinessWatchItem
           fallback="No event concerns"
           item={topEvent}
@@ -191,6 +202,7 @@ export default function AdminReadinessBoard({
           title="Team To Watch"
         />
       </div>
-    </div>
+      </div>
+    </details>
   );
 }

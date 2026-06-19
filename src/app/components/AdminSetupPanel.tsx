@@ -72,10 +72,10 @@ function SetupHubSection({
   status: string;
 }) {
   return (
-    <section className="rounded-lg border border-slate-800 bg-slate-900" id={id}>
+    <section className="gd-card-dark rounded-lg" id={id}>
       <button
         aria-expanded={isOpen}
-        className="flex w-full items-center justify-between gap-4 p-4 text-left"
+        className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left"
         onClick={onToggle}
         type="button"
       >
@@ -86,13 +86,13 @@ function SetupHubSection({
               {status}
             </span>
           </div>
-          <p className="mt-1 text-sm text-slate-400">{description}</p>
+          <p className="mt-0.5 text-sm text-slate-400">{description}</p>
         </div>
         <span className="shrink-0 text-sm font-semibold text-blue-300">
           {isOpen ? "Close" : "Open"}
         </span>
       </button>
-      {isOpen && <div className="border-t border-slate-800 p-4">{children}</div>}
+      {isOpen && <div className="border-t border-white/10 p-3">{children}</div>}
     </section>
   );
 }
@@ -214,26 +214,26 @@ export default function AdminSetupPanel({
     if (canCreateOrganization) {
       return (
         <div
-          className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-5"
+          className="gd-card-dark mt-4 rounded-lg p-3"
           id="organization"
         >
-          <h2 className="text-xl font-bold">Create Organization</h2>
-          <p className="mt-2 text-sm text-slate-300">
+          <h2 className="text-base font-black">Create Organization</h2>
+          <p className="mt-1 text-sm text-slate-300">
             Create a real organization and owner membership for this account.
           </p>
-          <div className="mt-4 space-y-3">
+          <div className="mt-3 space-y-2.5">
             <label className="block">
               <span className="text-sm font-semibold text-slate-300">
                 Organization Name
               </span>
               <input
-                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
+                className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-white outline-none"
                 onChange={(event) => setNewOrganizationName(event.target.value)}
                 value={newOrganizationName}
               />
             </label>
             <button
-              className="w-full rounded-xl bg-blue-500 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-md bg-blue-500 py-2.5 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-60"
               disabled={isSaving}
               onClick={() =>
                 void saveSetup({
@@ -247,12 +247,12 @@ export default function AdminSetupPanel({
             </button>
           </div>
           {message && (
-            <p className="mt-4 rounded-xl border border-blue-500/30 bg-blue-500/10 p-3 text-sm font-semibold text-blue-200">
+            <p className="mt-3 rounded-md border border-blue-500/30 bg-blue-500/10 p-2.5 text-sm font-semibold text-blue-200">
               {message}
             </p>
           )}
           {error && (
-            <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm font-semibold text-red-300">
+            <p className="mt-3 rounded-md border border-red-500/30 bg-red-500/10 p-2.5 text-sm font-semibold text-red-300">
               {error}
             </p>
           )}
@@ -261,14 +261,14 @@ export default function AdminSetupPanel({
     }
 
     return (
-      <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300">
+      <div className="gd-card-dark mt-4 rounded-lg p-3 text-sm text-slate-300">
         Sign in as an admin with organization setup access.
       </div>
     );
   }
 
   return (
-    <div className="mt-5 space-y-3">
+    <div className="mt-4 space-y-2.5">
       {message && (
         <p className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-3 text-sm font-semibold text-blue-200">
           {message}
@@ -297,13 +297,13 @@ export default function AdminSetupPanel({
               Workspace Name
             </span>
             <input
-              className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
+            className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-white outline-none"
               onChange={(event) => setOrganizationName(event.target.value)}
               value={organizationName}
             />
           </label>
           <button
-            className="rounded-md bg-blue-500 px-4 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-md bg-blue-500 px-3 py-2 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isSaving}
             onClick={() =>
               void saveSetup({
@@ -343,7 +343,7 @@ export default function AdminSetupPanel({
             from the dedicated Org Members page.
           </p>
           <Link
-            className="mt-4 inline-flex rounded-md bg-blue-500 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-600"
+            className="mt-3 inline-flex rounded-md bg-blue-500 px-3 py-2 text-sm font-black text-white hover:bg-blue-600"
             href={withActiveOrganization("/admin/people", organizationId)}
           >
             Open Org Members
@@ -373,7 +373,7 @@ export default function AdminSetupPanel({
             live on the dedicated Teams screen.
           </p>
           <Link
-            className="mt-4 inline-flex rounded-md bg-blue-500 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-600"
+            className="mt-3 inline-flex rounded-md bg-blue-500 px-3 py-2 text-sm font-black text-white hover:bg-blue-600"
             href={withActiveOrganization("/admin/teams#create-team", organizationId)}
           >
             Open Teams
@@ -398,16 +398,16 @@ export default function AdminSetupPanel({
         {activeTeams.length === 0 ? (
           <p className="text-sm text-slate-300">Create an active team first.</p>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-3 lg:grid-cols-2">
             <div>
               <h3 className="font-bold text-white">Assign Coach</h3>
               <div className="mt-3 space-y-3">
-                <label className="block"><span className="text-sm font-semibold text-slate-300">Coach Name</span><input className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none" onChange={(event) => setCoachName(event.target.value)} value={coachName} /></label>
-                <label className="block"><span className="text-sm font-semibold text-slate-300">Coach Email</span><input className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none" onChange={(event) => setCoachEmail(event.target.value)} type="email" value={coachEmail} /></label>
-                <label className="block"><span className="text-sm font-semibold text-slate-300">Status</span><select className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-4 py-3 text-white" onChange={(event) => setCoachStatus(event.target.value === "inactive" ? "inactive" : "active")} value={coachStatus}><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
-                <fieldset className="space-y-2"><legend className="text-sm font-semibold text-slate-300">Teams</legend>{activeTeams.map((team) => (<label className="flex items-center justify-between gap-3 rounded-md bg-slate-800 p-3 text-sm font-semibold text-slate-300" key={team.id}>{team.name}<input checked={selectedCoachTeamIds.includes(team.id)} onChange={() => toggleCoachTeam(team.id)} type="checkbox" /></label>))}</fieldset>
-                <details className="rounded-md border border-slate-800 bg-slate-950 p-3"><summary className="cursor-pointer text-sm font-semibold text-slate-300">Technical account linking</summary><label className="mt-3 block"><span className="text-sm font-semibold text-slate-300">Firebase UID</span><input className="mt-2 w-full rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none" onChange={(event) => setCoachUid(event.target.value)} placeholder="Optional" value={coachUid} /></label></details>
-                <button className="rounded-md bg-blue-500 px-4 py-3 font-semibold text-white disabled:opacity-60" disabled={isSaving} onClick={() => void saveSetup({ actionType: "coach-assignment", email: coachEmail, name: coachName, organizationId, status: coachStatus, teamIds: selectedCoachTeamIds, uid: coachUid })} type="button">Save Coach Assignment</button>
+                <label className="block"><span className="text-xs font-black uppercase text-slate-400">Coach Name</span><input className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-white outline-none" onChange={(event) => setCoachName(event.target.value)} value={coachName} /></label>
+                <label className="block"><span className="text-xs font-black uppercase text-slate-400">Coach Email</span><input className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-white outline-none" onChange={(event) => setCoachEmail(event.target.value)} type="email" value={coachEmail} /></label>
+                <label className="block"><span className="text-xs font-black uppercase text-slate-400">Status</span><select className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-white" onChange={(event) => setCoachStatus(event.target.value === "inactive" ? "inactive" : "active")} value={coachStatus}><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
+                <fieldset className="space-y-1.5"><legend className="text-sm font-semibold text-slate-300">Teams</legend>{activeTeams.map((team) => (<label className="flex items-center justify-between gap-3 rounded-md border border-white/10 bg-white/5 p-2.5 text-sm font-semibold text-slate-300" key={team.id}>{team.name}<input checked={selectedCoachTeamIds.includes(team.id)} onChange={() => toggleCoachTeam(team.id)} type="checkbox" /></label>))}</fieldset>
+                <details className="rounded-md border border-white/10 bg-slate-950/75 p-2.5"><summary className="cursor-pointer text-sm font-semibold text-slate-300">Technical account linking</summary><label className="mt-3 block"><span className="text-sm font-semibold text-slate-300">Firebase UID</span><input className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-white outline-none" onChange={(event) => setCoachUid(event.target.value)} placeholder="Optional" value={coachUid} /></label></details>
+                <button className="rounded-md bg-blue-500 px-3 py-2 text-sm font-black text-white disabled:opacity-60" disabled={isSaving} onClick={() => void saveSetup({ actionType: "coach-assignment", email: coachEmail, name: coachName, organizationId, status: coachStatus, teamIds: selectedCoachTeamIds, uid: coachUid })} type="button">Save Coach Assignment</button>
               </div>
             </div>
             <div className="border-t border-slate-800 pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
@@ -441,7 +441,7 @@ export default function AdminSetupPanel({
             dedicated Registration screen.
           </p>
           <Link
-            className="mt-4 inline-flex rounded-md bg-blue-500 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-600"
+            className="mt-3 inline-flex rounded-md bg-blue-500 px-3 py-2 text-sm font-black text-white hover:bg-blue-600"
             href={withActiveOrganization("/admin/registrations", organizationId)}
           >
             Open Registration

@@ -65,23 +65,24 @@ export default function TeamReadinessSummary({
   });
 
   return (
-    <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-      <div className="flex items-start justify-between gap-3">
+    <details className="gd-card-dark mt-3 rounded-lg">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
         <div>
-          <h2 className="text-lg font-bold">Readiness Summary</h2>
-          <p className="mt-2 text-sm text-slate-300">
+          <h2 className="text-sm font-black text-white">Readiness</h2>
+          <p className="mt-0.5 text-xs font-semibold text-slate-400">
             {readiness.category === "Ready"
               ? "Team is clear for the next event."
               : `${readiness.concerns.length} item${
                   readiness.concerns.length === 1 ? "" : "s"
-                } need attention before the next event.`}
+                } need attention.`}
           </p>
         </div>
         <ReadinessBadge category={readiness.category} />
-      </div>
+      </summary>
+      <div className="border-t border-white/10 px-3 pb-3 pt-2">
 
       {readiness.concerns.length > 0 && (
-        <div className="mt-4 space-y-2 text-sm text-slate-300">
+        <div className="space-y-1.5 text-sm text-slate-300">
           {readiness.concerns.slice(0, 4).map((concern) => (
             <p key={`${concern.source}-${concern.label}`}>
               <span className="text-slate-400">{concern.source}:</span>{" "}
@@ -94,7 +95,7 @@ export default function TeamReadinessSummary({
       {actionHref && (
         <Link
           href={actionHref}
-          className="mt-4 block w-full rounded-xl border border-slate-700 bg-slate-900 py-3 text-center font-semibold text-white"
+          className="mt-3 block w-full rounded-md border border-blue-300/20 bg-white/5 py-2 text-center text-sm font-black text-white hover:bg-white/10"
         >
           Review Details
         </Link>
@@ -104,6 +105,7 @@ export default function TeamReadinessSummary({
         emptyText="Team is ready for the next event."
         limit={3}
       />
-    </div>
+      </div>
+    </details>
   );
 }

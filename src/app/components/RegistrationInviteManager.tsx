@@ -103,11 +103,11 @@ function InviteCard({
   }
 
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <article className="gd-card-dark rounded-lg px-3 py-2.5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="truncate text-lg font-black text-slate-950">
+            <h3 className="truncate text-base font-black text-white">
               {invite.title}
             </h3>
             <span
@@ -118,18 +118,18 @@ function InviteCard({
               {getStatusLabel(status)}
             </span>
           </div>
-          <p className="mt-1 text-sm font-semibold text-slate-500">
+          <p className="mt-1 text-xs font-semibold text-slate-400">
             {getTeamName(teams, invite.teamId)}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <AdminJoinLinkButton
-            className="rounded-md bg-blue-600 px-3 py-2 text-sm font-black text-white hover:bg-blue-700"
+            className="rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-black text-white hover:bg-blue-500"
             joinPath={joinPath}
             label="Copy Link"
           />
           <Link
-            className="rounded-md border border-slate-200 px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50"
+            className="rounded-md border border-white/15 px-2.5 py-1.5 text-xs font-black text-slate-200 hover:bg-white/10"
             href={joinPath}
             target="_blank"
           >
@@ -139,10 +139,10 @@ function InviteCard({
       </div>
 
       {!isArchived && (
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-2 flex flex-wrap gap-2">
           {status === "open" ? (
             <button
-              className="rounded-md border border-orange-200 px-3 py-2 text-sm font-black text-orange-700 hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-md border border-orange-300/30 px-2.5 py-1.5 text-xs font-black text-orange-200 hover:bg-orange-500/10 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={isSaving}
               onClick={() => onSave(getPayload("close"))}
               type="button"
@@ -151,7 +151,7 @@ function InviteCard({
             </button>
           ) : (
             <button
-              className="rounded-md border border-emerald-200 px-3 py-2 text-sm font-black text-emerald-700 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-md border border-emerald-300/30 px-2.5 py-1.5 text-xs font-black text-emerald-200 hover:bg-emerald-500/10 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={isSaving}
               onClick={() => onSave(getPayload("open"))}
               type="button"
@@ -160,7 +160,7 @@ function InviteCard({
             </button>
           )}
           <button
-            className="rounded-md border border-red-200 px-3 py-2 text-sm font-black text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-md border border-red-300/30 px-2.5 py-1.5 text-xs font-black text-red-200 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isSaving}
             onClick={() => onSave(getPayload("archive"))}
             type="button"
@@ -171,60 +171,60 @@ function InviteCard({
       )}
 
       {!isArchived && (
-        <details className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3">
-          <summary className="cursor-pointer text-sm font-black text-slate-700">
+        <details className="mt-3 rounded-md border border-white/10 bg-white/[0.04] p-3">
+          <summary className="cursor-pointer text-xs font-black text-slate-200">
             Edit link settings
           </summary>
           <div className="mt-3 grid gap-3">
             <label className="block">
-              <span className="text-xs font-bold uppercase text-slate-500">
+              <span className="text-xs font-bold uppercase text-slate-400">
                 Link Name
               </span>
               <input
-                className="mt-2 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                className="mt-1.5 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                 onChange={(event) => setTitle(event.target.value)}
                 value={title}
               />
             </label>
             <label className="block">
-              <span className="text-xs font-bold uppercase text-slate-500">
+              <span className="text-xs font-bold uppercase text-slate-400">
                 Parent Message
               </span>
               <textarea
-                className="mt-2 min-h-20 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                className="mt-1.5 min-h-20 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                 onChange={(event) => setDescription(event.target.value)}
                 value={description}
               />
             </label>
             <div className="grid gap-3 sm:grid-cols-3">
               <label className="block">
-                <span className="text-xs font-bold uppercase text-slate-500">
+                <span className="text-xs font-bold uppercase text-slate-400">
                   Opens
                 </span>
                 <input
-                  className="mt-2 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  className="mt-1.5 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                   onChange={(event) => setOpensAt(event.target.value)}
                   type="datetime-local"
                   value={opensAt}
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-bold uppercase text-slate-500">
+                <span className="text-xs font-bold uppercase text-slate-400">
                   Closes
                 </span>
                 <input
-                  className="mt-2 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  className="mt-1.5 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                   onChange={(event) => setClosesAt(event.target.value)}
                   type="datetime-local"
                   value={closesAt}
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-bold uppercase text-slate-500">
+                <span className="text-xs font-bold uppercase text-slate-400">
                   Player Limit
                 </span>
                 <input
-                  className="mt-2 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  className="mt-1.5 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                   min="1"
                   onChange={(event) => setMaxAthletes(event.target.value)}
                   placeholder="No limit"
@@ -234,7 +234,7 @@ function InviteCard({
               </label>
             </div>
             <button
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-md border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-black text-slate-200 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={isSaving}
               onClick={() => onSave(getPayload("update"))}
               type="button"
@@ -337,17 +337,17 @@ export default function RegistrationInviteManager({
   }
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="gd-card-dark rounded-lg p-3 backdrop-blur">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-2xl font-black">Registration Link</h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <h2 className="text-base font-black text-white">Registration Link</h2>
+          <p className="mt-1 text-xs font-semibold text-slate-400">
             Create the real link parents use from a QR code, text, or handout.
           </p>
         </div>
         {hasVisibleInvites && (
           <button
-            className="rounded-md bg-blue-600 px-3 py-2 text-sm font-black text-white hover:bg-blue-700"
+            className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-black text-white hover:bg-blue-500"
             onClick={() => setShowCreateForm((currentValue) => !currentValue)}
             type="button"
           >
@@ -357,36 +357,36 @@ export default function RegistrationInviteManager({
       </div>
 
       {message && (
-        <p className="mt-4 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm font-bold text-blue-700">
+        <p className="mt-3 rounded-md border border-blue-300/30 bg-blue-500/10 p-2.5 text-xs font-bold text-blue-100">
           {message}
         </p>
       )}
       {error && (
-        <p className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-700">
+        <p className="mt-3 rounded-md border border-red-300/30 bg-red-500/10 p-2.5 text-xs font-bold text-red-100">
           {error}
         </p>
       )}
 
       {activeTeams.length === 0 ? (
-        <p className="mt-4 rounded-md border border-dashed border-slate-300 bg-slate-50 p-4 text-sm font-semibold text-slate-500">
+        <p className="mt-3 rounded-md border border-dashed border-white/15 bg-white/[0.04] p-3 text-xs font-semibold text-slate-400">
           Create an active team before opening registration.
         </p>
       ) : (
         <>
           {(!hasVisibleInvites || showCreateForm) && (
-            <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <div className="mt-3 rounded-lg border border-white/10 bg-white/[0.04] p-3">
               <div className="grid gap-3 lg:grid-cols-[1fr_1fr_auto]">
                 <label className="block">
-                  <span className="text-xs font-bold uppercase text-slate-500">
+                  <span className="text-xs font-bold uppercase text-slate-400">
                     Team
                   </span>
                   {isSingleTeamWorkspace && activeTeams.length === 1 ? (
-                    <p className="mt-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-black">
+                    <p className="mt-1.5 rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-sm font-black text-white">
                       {activeTeams[0].name}
                     </p>
                   ) : (
                     <select
-                      className="mt-2 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                      className="mt-1.5 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                       onChange={(event) => {
                         const nextTeam = activeTeams.find(
                           (team) => team.id === event.target.value,
@@ -410,17 +410,17 @@ export default function RegistrationInviteManager({
                   )}
                 </label>
                 <label className="block">
-                  <span className="text-xs font-bold uppercase text-slate-500">
+                  <span className="text-xs font-bold uppercase text-slate-400">
                     Link Name
                   </span>
                   <input
-                    className="mt-2 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    className="mt-1.5 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                     onChange={(event) => setTitle(event.target.value)}
                     value={title}
                   />
                 </label>
                 <button
-                  className="self-end rounded-md bg-blue-600 px-4 py-2 text-sm font-black text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="self-end rounded-md bg-blue-600 px-4 py-2 text-xs font-black text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={isSaving || !selectedTeam}
                   onClick={() => void createOpenInvite()}
                   type="button"
@@ -429,11 +429,11 @@ export default function RegistrationInviteManager({
                 </button>
               </div>
               <details className="mt-3">
-                <summary className="cursor-pointer text-sm font-black text-slate-600">
+                <summary className="cursor-pointer text-xs font-black text-slate-300">
                   Parent message
                 </summary>
                 <textarea
-                  className="mt-2 min-h-20 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  className="mt-1.5 min-h-20 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
                   onChange={(event) => setDescription(event.target.value)}
                   value={description}
                 />
@@ -441,9 +441,9 @@ export default function RegistrationInviteManager({
             </div>
           )}
 
-          <div className="mt-5 flex items-center justify-between gap-3">
-            <h3 className="text-lg font-black">Current Links</h3>
-            <label className="flex items-center gap-2 text-xs font-bold text-slate-500">
+          <div className="mt-4 flex items-center justify-between gap-3">
+            <h3 className="text-sm font-black text-white">Current Links</h3>
+            <label className="flex items-center gap-2 text-xs font-bold text-slate-400">
               <input
                 checked={showArchived}
                 onChange={(event) => setShowArchived(event.target.checked)}
@@ -464,7 +464,7 @@ export default function RegistrationInviteManager({
                 />
               ))
             ) : (
-              <p className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-4 text-sm font-semibold text-slate-500">
+              <p className="rounded-md border border-dashed border-white/15 bg-white/[0.04] p-3 text-xs font-semibold text-slate-400">
                 No registration links yet.
               </p>
             )}

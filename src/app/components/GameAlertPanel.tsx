@@ -26,13 +26,13 @@ export default function GameAlertPanel({ gameAlert, role }: GameAlertPanelProps)
   const canManage = role === "coach" || role === "admin";
 
   return (
-    <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-      <div className="flex items-start justify-between gap-3">
+    <details className="gd-card-dark mt-3 rounded-lg">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
             Game Alert
           </p>
-          <h2 className="mt-2 text-xl font-bold">
+          <h2 className="mt-0.5 text-sm font-black text-white">
             {gameAlert.homeTeamName} vs {gameAlert.awayTeamName}
           </h2>
         </div>
@@ -43,28 +43,30 @@ export default function GameAlertPanel({ gameAlert, role }: GameAlertPanelProps)
         >
           {getStatusLabel(gameAlert.status)}
         </span>
-      </div>
+      </summary>
+      <div className="border-t border-white/10 px-3 pb-3 pt-2">
 
-      <div className="mt-5 grid grid-cols-2 gap-3">
-        <div className="rounded-xl bg-slate-800 p-4">
+      <div className="grid grid-cols-2 gap-2">
+        <div className="rounded-md border border-white/10 bg-white/5 p-2.5">
           <p className="text-sm text-slate-300">{gameAlert.homeTeamName}</p>
-          <p className="mt-2 text-4xl font-bold">{gameAlert.homeScore}</p>
+          <p className="mt-1 text-2xl font-black text-white">{gameAlert.homeScore}</p>
         </div>
-        <div className="rounded-xl bg-slate-800 p-4">
+        <div className="rounded-md border border-white/10 bg-white/5 p-2.5">
           <p className="text-sm text-slate-300">{gameAlert.awayTeamName}</p>
-          <p className="mt-2 text-4xl font-bold">{gameAlert.awayScore}</p>
+          <p className="mt-1 text-2xl font-black text-white">{gameAlert.awayScore}</p>
         </div>
       </div>
 
-      <p className="mt-4 rounded-xl bg-slate-800 p-3 text-sm text-slate-300">
+      <p className="mt-2 rounded-md border border-white/10 bg-white/5 p-2.5 text-sm text-slate-300">
         {gameAlert.latestUpdate}
       </p>
 
       {canManage && (
-        <p className="mt-4 rounded-xl border border-slate-700 bg-slate-950 p-3 text-sm text-slate-300">
+        <p className="mt-2 rounded-md border border-white/10 bg-slate-950/70 p-2.5 text-sm text-slate-300">
           Live score and alert updates are not available yet.
         </p>
       )}
-    </div>
+      </div>
+    </details>
   );
 }

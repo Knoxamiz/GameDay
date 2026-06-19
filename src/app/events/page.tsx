@@ -143,10 +143,10 @@ export default async function EventsHome({
 
   const eventContent = (
     <>
-        <div className="mt-5 flex justify-end">
+        <div className="mt-3 flex justify-end">
           <a
             href={withActiveOrganization("/calendar.ics", activeOrganizationId)}
-            className="rounded-md border border-slate-700 px-4 py-2.5 text-sm font-semibold text-slate-200"
+            className="rounded-md border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-black text-slate-100 hover:bg-white/10"
           >
             Subscribe Calendar
           </a>
@@ -164,14 +164,21 @@ export default async function EventsHome({
           </>
         )}
 
-        <section className="mt-6">
-          <h2 className="text-lg font-bold">Upcoming Events</h2>
-          <p className="mt-2 text-sm text-slate-300">
+        <section className="mt-4">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <h2 className="text-base font-black">Upcoming Events</h2>
+              <p className="mt-1 text-xs font-semibold text-slate-400">
             Published, draft, or canceled events still ahead on the schedule.
-          </p>
-        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+              </p>
+            </div>
+            <span className="rounded-full bg-blue-500/15 px-2.5 py-1 text-xs font-black text-blue-200">
+              {upcomingEvents.length} upcoming
+            </span>
+          </div>
+        <div className="mt-2 space-y-2">
           {upcomingEvents.length === 0 && (
-            <p className="rounded-lg border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300 lg:col-span-2">
+            <p className="gd-card-dark rounded-lg border-dashed p-3 text-xs font-semibold text-slate-300">
               {activeContext?.requiresSelection
                 ? "Choose an organization to view its schedule."
                 : "No events are scheduled for your current organization and team scope."}
@@ -199,17 +206,24 @@ export default async function EventsHome({
                   `${eventDetailsBaseHref}/${event.id}`,
                   activeOrganizationId,
                 )}
-                className="block rounded-lg border border-slate-800 bg-slate-900 p-5 shadow-lg"
+                className="gd-card-dark gd-card-interactive flex flex-col gap-2 rounded-lg px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <div className="min-w-0 sm:w-40 sm:shrink-0">
+                  <p className="text-sm font-black text-white">
+                    {getEventDateLabel(event)}
+                  </p>
+                  <p className="mt-0.5 text-xs font-semibold text-slate-400">
+                    {getEventTimeLabel(event)}
+                  </p>
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
                       {event.type}
                     </p>
-                    <h2 className="mt-2 text-xl font-bold">{event.title}</h2>
-                  </div>
                   <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    className={`rounded-full px-2.5 py-1 text-xs font-black ${
                       event.status === "canceled"
                         ? "bg-red-500/20 text-red-300"
                         : event.status === "draft"
@@ -225,36 +239,25 @@ export default async function EventsHome({
                         ? "Ride Help"
                         : "On Track"}
                   </span>
-                </div>
-
-                <p className="mt-3 text-sm text-slate-400">
+                  </div>
+                  <h2 className="mt-1 truncate text-base font-black">
+                    {event.title}
+                  </h2>
+                <p className="mt-0.5 truncate text-xs font-semibold text-slate-400">
                   {eventTeams.map((team) => team?.name).join(", ") ||
-                    "Organization"}
+                    "Organization"}{" "}
+                  / {getEventLocationLabel(event)}
                 </p>
-                <div className="mt-4 rounded-xl bg-slate-800 p-4 text-sm text-slate-300">
-                  <p>{getEventDateLabel(event)}</p>
-                  <p className="mt-1">{getEventTimeLabel(event)}</p>
-                  <p className="mt-3">{getEventLocationLabel(event)}</p>
                 </div>
 
-                <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                  <div className="rounded-xl bg-slate-800 p-3">
-                    <p className="text-slate-400">Attendance</p>
-                    <p className="mt-1 font-semibold text-blue-300">
-                      {attendance.attending} Attending
-                    </p>
-                  </div>
-                  <div className="rounded-xl bg-slate-800 p-3">
-                    <p className="text-slate-400">Transportation</p>
-                    <p
-                      className={`mt-1 font-semibold ${
-                        hasTransportationIssue ? "text-red-300" : "text-blue-300"
-                      }`}
-                    >
-                      {transportation.needsRide} Need Ride
-                    </p>
-                  </div>
-                </div>
+                <p className="shrink-0 text-xs font-bold text-slate-400 sm:text-right">
+                  {attendance.attending} attending -{" "}
+                  <span
+                    className={hasTransportationIssue ? "text-red-300" : ""}
+                  >
+                    {transportation.needsRide} need ride
+                  </span>
+                </p>
               </Link>
             );
           })}
@@ -292,12 +295,12 @@ export default async function EventsHome({
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <section className="mx-auto max-w-md px-5 py-6">
+    <main className="min-h-screen bg-[#020817] text-white">
+      <section className="mx-auto max-w-3xl px-3 py-4 sm:px-5">
         <MvpNav organizationContext={organizationContext} />
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-          <h1 className="text-3xl font-bold">Schedule</h1>
-          <p className="mt-3 text-sm text-slate-300">
+        <div className="gd-card-dark rounded-lg p-3">
+          <h1 className="text-xl font-black">Schedule</h1>
+          <p className="mt-1 text-xs font-semibold text-slate-300">
             Upcoming practices, tournaments, and meetings.
           </p>
         </div>

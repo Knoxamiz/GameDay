@@ -147,8 +147,8 @@ export default function RegistrationRequirementsChecklist({
         : "text-emerald-700";
   const wrapperClassName =
     surface === "inline"
-      ? "mt-4"
-      : "mt-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm";
+      ? "mt-3 rounded-lg border border-slate-200 bg-white"
+      : "mt-3 rounded-lg border border-blue-600/15 bg-white shadow-sm";
 
   async function getResponseError(response: Response, fallback: string) {
     const body = (await response.json().catch(() => null)) as {
@@ -258,11 +258,19 @@ export default function RegistrationRequirementsChecklist({
   }
 
   return (
-    <div className={wrapperClassName}>
-      <h2 className="text-lg font-black">Player Needs</h2>
-      <p className={`mt-3 text-sm font-semibold ${summaryTone}`}>
-        {summaryLabel}
-      </p>
+    <details className={wrapperClassName}>
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
+        <div className="min-w-0">
+          <h2 className="text-sm font-black">Player Needs</h2>
+          <p className="mt-0.5 text-xs font-semibold text-slate-500">
+            Documents, payments, and registration items.
+          </p>
+        </div>
+        <span className={`shrink-0 rounded-full bg-slate-50 px-2.5 py-1 text-xs font-black ${summaryTone}`}>
+          {summaryLabel}
+        </span>
+      </summary>
+      <div className="border-t border-slate-200 px-3 pb-3 pt-2">
       {actionError && (
         <p className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-700">
           {actionError}
@@ -273,20 +281,20 @@ export default function RegistrationRequirementsChecklist({
           Document and payment updates are closed for this registration.
         </p>
       )}
-      <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs font-semibold">
-        <div className="rounded-md bg-slate-50 p-3">
+      <div className="mt-2 grid grid-cols-3 gap-1.5 text-center text-xs font-semibold">
+        <div className="rounded-md bg-slate-50 p-2">
           <p className="text-slate-500">Documents</p>
           <p className="mt-1 font-black text-slate-950">
             {documentSummary.open} Open
           </p>
         </div>
-        <div className="rounded-md bg-slate-50 p-3">
+        <div className="rounded-md bg-slate-50 p-2">
           <p className="text-slate-500">Payment</p>
           <p className="mt-1 font-black text-slate-950">
             {paymentSummary.open} Open
           </p>
         </div>
-        <div className="rounded-md bg-slate-50 p-3">
+        <div className="rounded-md bg-slate-50 p-2">
           <p className="text-slate-500">Total</p>
           <p className="mt-1 font-black text-slate-950">
             {totalOpenItems} Open
@@ -294,13 +302,13 @@ export default function RegistrationRequirementsChecklist({
         </div>
       </div>
 
-      <div className="mt-4 space-y-3 text-sm text-slate-600">
+      <div className="mt-3 space-y-2 text-sm text-slate-600">
         <h3 className="text-sm font-black uppercase text-slate-500">
           Documents
         </h3>
         {documentRequirements.length > 0 ? (
           documentRequirements.map((requirement) => (
-            <div key={requirement.id} className="rounded-md bg-slate-50 p-4">
+            <div key={requirement.id} className="rounded-md bg-slate-50 p-3">
               <div className="flex items-center justify-between gap-3">
                 <span className="font-black text-slate-950">
                   {requirement.label}
@@ -331,7 +339,7 @@ export default function RegistrationRequirementsChecklist({
                 isDocumentBlocked(requirement)) && (
                 <label
                   aria-disabled={uploadingRequirementId === requirement.id}
-                  className="mt-3 block w-full cursor-pointer rounded-md border border-slate-200 bg-white py-3 text-center font-black text-slate-700 hover:bg-slate-100"
+                  className="mt-3 block w-full cursor-pointer rounded-md border border-slate-200 bg-white py-2.5 text-center font-black text-slate-700 hover:bg-slate-100"
                 >
                   <input
                     className="sr-only"
@@ -360,7 +368,7 @@ export default function RegistrationRequirementsChecklist({
             </div>
           ))
         ) : (
-          <p className="rounded-md bg-slate-50 p-4 font-semibold">
+          <p className="rounded-md bg-slate-50 p-3 font-semibold">
             No document requirements listed.
           </p>
         )}
@@ -370,7 +378,7 @@ export default function RegistrationRequirementsChecklist({
         </h3>
         {paymentRequirements.length > 0 ? (
           paymentRequirements.map((requirement) => (
-            <div key={requirement.id} className="rounded-md bg-slate-50 p-4">
+            <div key={requirement.id} className="rounded-md bg-slate-50 p-3">
               <div className="flex items-center justify-between gap-3">
                 <span className="font-black text-slate-950">
                   {requirement.label}
@@ -421,7 +429,7 @@ export default function RegistrationRequirementsChecklist({
                         ),
                       );
                   }}
-                  className="mt-3 w-full rounded-md border border-slate-200 bg-white py-3 font-black text-slate-700 hover:bg-slate-100"
+                  className="mt-3 w-full rounded-md border border-slate-200 bg-white py-2.5 font-black text-slate-700 hover:bg-slate-100"
                 >
                   {isPaymentBlocked(requirement)
                     ? "Resubmit Payment"
@@ -431,7 +439,7 @@ export default function RegistrationRequirementsChecklist({
             </div>
           ))
         ) : (
-          <p className="rounded-md bg-slate-50 p-4 font-semibold">
+          <p className="rounded-md bg-slate-50 p-3 font-semibold">
             No payment requirements listed.
           </p>
         )}
@@ -447,7 +455,7 @@ export default function RegistrationRequirementsChecklist({
           currentRequirements.map((requirement) => (
             <div
               key={requirement.label}
-              className="rounded-md bg-slate-50 p-4"
+              className="rounded-md bg-slate-50 p-3"
             >
               <div className="flex items-center justify-between gap-3">
                 <span className="font-black text-slate-950">
@@ -481,7 +489,7 @@ export default function RegistrationRequirementsChecklist({
                 isRequirementBlocked(requirement)) && (
                 <label
                   aria-disabled={uploadingRequirementId === requirement.label}
-                  className="mt-3 block w-full cursor-pointer rounded-md border border-slate-200 bg-white py-3 text-center font-black text-slate-700 hover:bg-slate-100"
+                  className="mt-3 block w-full cursor-pointer rounded-md border border-slate-200 bg-white py-2.5 text-center font-black text-slate-700 hover:bg-slate-100"
                 >
                   <input
                     className="sr-only"
@@ -512,12 +520,13 @@ export default function RegistrationRequirementsChecklist({
         ) : (
           documentRequirements.length === 0 &&
           paymentRequirements.length === 0 && (
-            <p className="rounded-md bg-slate-50 p-4 font-semibold">
+            <p className="rounded-md bg-slate-50 p-3 font-semibold">
               No registration requirements listed.
             </p>
           )
         )}
       </div>
-    </div>
+      </div>
+    </details>
   );
 }

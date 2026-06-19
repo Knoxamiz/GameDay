@@ -62,8 +62,8 @@ function AssignmentEditor({
   }
 
   return (
-    <details className="rounded-xl border border-slate-700 bg-slate-950">
-      <summary className="cursor-pointer list-none p-4 [&::-webkit-details-marker]:hidden">
+    <details className="rounded-lg border border-blue-300/20 bg-slate-950/75">
+      <summary className="cursor-pointer list-none p-3 [&::-webkit-details-marker]:hidden">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="font-semibold text-white">
@@ -77,25 +77,25 @@ function AssignmentEditor({
         </div>
       </summary>
 
-      <div className="space-y-3 border-t border-slate-800 p-4">
+      <div className="space-y-2.5 border-t border-white/10 p-3">
         <label className="block">
-          <span className="text-sm font-semibold text-slate-300">Name</span>
+          <span className="text-xs font-black uppercase text-slate-400">Name</span>
           <input
-            className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none"
+            className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-white outline-none"
             onChange={(event) => setName(event.target.value)}
             value={name}
           />
         </label>
         <label className="block">
-          <span className="text-sm font-semibold text-slate-300">Email</span>
+          <span className="text-xs font-black uppercase text-slate-400">Email</span>
           <input
-            className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none"
+            className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-white outline-none"
             onChange={(event) => setEmail(event.target.value)}
             type="email"
             value={email}
           />
         </label>
-        <details className="rounded-md border border-slate-800 bg-slate-900 p-3">
+        <details className="rounded-md border border-white/10 bg-white/5 p-2.5">
           <summary className="cursor-pointer text-sm font-semibold text-slate-300">
             Technical details
           </summary>
@@ -107,16 +107,16 @@ function AssignmentEditor({
               Firebase UID
             </span>
             <input
-              className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none"
+              className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-white outline-none"
               onChange={(event) => setUid(event.target.value)}
               value={uid}
             />
           </label>
         </details>
         <label className="block">
-          <span className="text-sm font-semibold text-slate-300">Status</span>
+          <span className="text-xs font-black uppercase text-slate-400">Status</span>
           <select
-            className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white"
+            className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-white"
             onChange={(event) =>
               setStatus(event.target.value as CoachAssignmentStatus)
             }
@@ -138,7 +138,7 @@ function AssignmentEditor({
 
             return (
               <label
-                className="flex items-center justify-between gap-3 rounded-xl bg-slate-900 p-3 text-sm font-semibold text-slate-300"
+                className="flex items-center justify-between gap-3 rounded-md border border-white/10 bg-white/5 p-2.5 text-sm font-semibold text-slate-300"
                 key={team.id}
               >
                 <span>
@@ -156,14 +156,14 @@ function AssignmentEditor({
         </fieldset>
 
         {(status === "inactive" || status === "archived") && (
-          <p className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-3 text-xs text-yellow-100">
+          <p className="rounded-md border border-yellow-500/30 bg-yellow-500/10 p-2.5 text-xs text-yellow-100">
             This coach will lose roster and event access for this organization.
             Other organizations remain unchanged.
           </p>
         )}
 
         <button
-          className="w-full rounded-xl bg-blue-500 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-md bg-blue-500 py-2.5 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-60"
           disabled={isSaving}
           onClick={() =>
             void onSave(assignment.id, {
@@ -247,13 +247,13 @@ export default function CoachAssignmentLifecycleManager({
       className={
         embedded
           ? ""
-          : "rounded-2xl border border-slate-800 bg-slate-900 p-5"
+          : "gd-card-dark rounded-lg p-3"
       }
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold">Manage Coach Assignments</h2>
-          <p className="mt-2 text-sm text-slate-300">
+          <h2 className="text-base font-black">Manage Coach Assignments</h2>
+          <p className="mt-1 text-sm text-slate-300">
             Assignment lifecycle applies only to the active organization.
           </p>
         </div>
@@ -268,19 +268,19 @@ export default function CoachAssignmentLifecycleManager({
       </div>
 
       {message && (
-        <p className="mt-4 rounded-xl border border-blue-500/30 bg-blue-500/10 p-3 text-sm font-semibold text-blue-200">
+        <p className="mt-3 rounded-md border border-blue-500/30 bg-blue-500/10 p-2.5 text-sm font-semibold text-blue-200">
           {message}
         </p>
       )}
       {error && (
-        <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm font-semibold text-red-300">
+        <p className="mt-3 rounded-md border border-red-500/30 bg-red-500/10 p-2.5 text-sm font-semibold text-red-300">
           {error}
         </p>
       )}
 
-      <div className="mt-4 space-y-3">
+      <div className="mt-3 space-y-2">
         {visibleAssignments.length === 0 ? (
-          <p className="rounded-xl bg-slate-800 p-3 text-sm text-slate-300">
+          <p className="rounded-md border border-white/10 bg-white/5 p-2.5 text-sm text-slate-300">
             No coach assignments in this view.
           </p>
         ) : (

@@ -60,10 +60,10 @@ export default function AttendanceStatusPicker({
     <div
       className={
         compact
-          ? `mt-4 border-t pt-4 ${
+          ? `mt-3 border-t pt-3 ${
               surface === "light" ? "border-slate-200" : "border-slate-700"
             }`
-          : "mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5"
+          : "mt-3 rounded-lg border border-blue-300/20 bg-slate-950/70 p-3"
       }
     >
       <div className="flex items-center justify-between gap-3">
@@ -87,14 +87,14 @@ export default function AttendanceStatusPicker({
         </span>
       </div>
 
-      <div className="mt-3 grid grid-cols-3 gap-2 text-xs font-semibold">
+      <div className="mt-2 grid grid-cols-3 gap-1.5 text-xs font-black">
         {attendanceOptions.map((option) => (
           <button
             key={option}
             type="button"
             disabled={isPending}
             onClick={() => updateAttendance(option)}
-            className={`rounded-xl border px-2 py-3 ${
+            className={`rounded-md border px-2 py-2 ${
               option === initialStatus
                 ? surface === "light"
                   ? "border-blue-600 bg-blue-50 text-blue-700"
@@ -109,7 +109,7 @@ export default function AttendanceStatusPicker({
         ))}
       </div>
       {error && (
-        <p className="mt-3 text-sm font-semibold text-red-700">{error}</p>
+        <p className="mt-2 text-sm font-semibold text-red-700">{error}</p>
       )}
     </div>
   );

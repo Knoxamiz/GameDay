@@ -118,7 +118,7 @@ function CardShell({
   return (
     <button
       aria-expanded={isActive}
-      className={`group relative flex min-h-24 w-full overflow-hidden rounded-lg border px-4 py-4 text-left shadow-[0_18px_42px_rgba(0,0,0,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_54px_rgba(37,99,235,0.18)] ${cardClass} ${
+      className={`group relative flex min-h-20 w-full overflow-hidden rounded-lg border px-3 py-3 text-left shadow-[0_18px_42px_rgba(0,0,0,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_54px_rgba(37,99,235,0.18)] ${cardClass} ${
         isActive ? "ring-2 ring-blue-400/35" : ""
       }`}
       onClick={onClick}
@@ -128,15 +128,15 @@ function CardShell({
       <span className={`absolute inset-0 ${cardClass}`} />
       <span className="relative flex w-full items-center gap-4">
       <span
-        className={`flex size-14 shrink-0 items-center justify-center rounded-lg ring-1 sm:size-16 ${iconClass}`}
+        className={`flex size-12 shrink-0 items-center justify-center rounded-lg ring-1 sm:size-14 ${iconClass}`}
       >
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-lg font-bold leading-tight text-white">
+        <span className="block text-base font-black leading-tight text-white">
           {title}
         </span>
-        <span className="mt-1.5 block max-w-md text-sm leading-snug text-slate-300">
+        <span className="mt-1 block max-w-md text-sm leading-snug text-slate-300">
           {body}
         </span>
       </span>
@@ -150,7 +150,7 @@ function CardShell({
 
 function InlineDropdown({ children }: { children: ReactNode }) {
   return (
-    <section className="rounded-lg border border-white/10 bg-slate-950/80 p-4 text-white shadow-[0_18px_42px_rgba(0,0,0,0.24)]">
+    <section className="rounded-lg border border-white/10 bg-slate-950/80 p-3 text-white shadow-[0_18px_42px_rgba(0,0,0,0.24)]">
       {children}
     </section>
   );
@@ -421,21 +421,21 @@ export default function AdminContextHome({
         </div>
       </header>
 
-      <section className="relative z-10 mx-auto max-w-[1120px] px-4 pb-10 pt-8 sm:px-6">
-        <div className="grid gap-7 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+      <section className="relative z-10 mx-auto max-w-[1120px] px-4 pb-8 pt-6 sm:px-6">
+        <div className="grid gap-4 lg:grid-cols-[0.72fr_1.28fr] lg:items-center">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.26em] text-blue-300">
               Admin workspace
             </p>
-            <h1 className="mt-4 max-w-md text-4xl font-black leading-none tracking-tight sm:text-5xl">
+            <h1 className="mt-3 max-w-md text-3xl font-black leading-none tracking-tight sm:text-4xl">
               Pick the lane,
               <span className="block text-blue-500">then run the day.</span>
             </h1>
-            <p className="mt-5 max-w-md text-base font-semibold leading-7 text-slate-300">
+            <p className="mt-4 max-w-md text-sm font-semibold leading-6 text-slate-300">
               Open an organization or a standalone team first. Creation lives
               inside the same lane so the screen stays clean.
             </p>
-            <div className="mt-6 flex flex-wrap gap-3 text-xs font-semibold text-slate-300">
+            <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-slate-300">
               <span className="rounded-full border border-blue-400/30 px-3 py-1">
                 Secure access
               </span>
@@ -448,12 +448,12 @@ export default function AdminContextHome({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-blue-300/20 bg-slate-950/56 p-4 shadow-[0_0_80px_rgba(37,99,235,0.2)] backdrop-blur">
-            <div className="grid items-start gap-4">
+          <div className="rounded-lg border border-blue-300/20 bg-slate-950/56 p-3 shadow-[0_0_80px_rgba(37,99,235,0.2)] backdrop-blur">
+            <div className="grid items-start gap-3">
               <div className="space-y-3">
                 <CardShell
                   body="Open or create a club, league, or multi-team workspace."
-                  icon={<BuildingIcon className="size-11 sm:size-12" />}
+                  icon={<BuildingIcon className="size-9 sm:size-10" />}
                   iconTone="blue"
                   isActive={activePanel === "select-organization"}
                   onClick={() => togglePanel("select-organization")}
@@ -463,7 +463,7 @@ export default function AdminContextHome({
                   <InlineDropdown>
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h2 className="text-lg font-bold">Organizations</h2>
+                        <h2 className="text-base font-black">Organizations</h2>
                         <p className="mt-1 text-sm text-slate-400">
                           Each organization is a separate workspace.
                         </p>
@@ -473,7 +473,7 @@ export default function AdminContextHome({
                       </span>
                     </div>
 
-                    <div className="mt-4 space-y-2">
+                    <div className="mt-3 space-y-2">
                       {organizations.length > 0 ? (
                         organizations.map((organization) => {
                           const isActive =
@@ -528,11 +528,11 @@ export default function AdminContextHome({
                       )}
                     </div>
 
-                    <details className="mt-4 rounded-lg border border-blue-400/20 bg-blue-500/10 p-3">
+                    <details className="mt-3 rounded-lg border border-blue-400/20 bg-blue-500/10 p-3">
                       <summary className="cursor-pointer text-sm font-bold text-blue-100">
                         Create new organization +
                       </summary>
-                      <form className="mt-4" onSubmit={createOrganization}>
+                      <form className="mt-3" onSubmit={createOrganization}>
                         <label className="block">
                           <span className="text-xs font-bold uppercase tracking-wide text-slate-300">
                             Organization name
@@ -561,7 +561,7 @@ export default function AdminContextHome({
                             : "Create organization"}
                         </button>
                         {organizationError && (
-                          <p className="mt-3 rounded-md border border-red-400/30 bg-red-500/10 p-3 text-sm font-semibold text-red-100">
+                          <p className="mt-3 rounded-md border border-red-400/30 bg-red-500/10 p-2.5 text-sm font-semibold text-red-100">
                             {organizationError}
                           </p>
                         )}
@@ -579,7 +579,7 @@ export default function AdminContextHome({
               <div className="space-y-3">
                 <CardShell
                   body="Open or create a single-team workspace outside an organization."
-                  icon={<WhistleIcon className="size-11 sm:size-12" />}
+                  icon={<WhistleIcon className="size-9 sm:size-10" />}
                   iconTone="orange"
                   isActive={activePanel === "select-team"}
                   onClick={() => togglePanel("select-team")}
@@ -589,7 +589,7 @@ export default function AdminContextHome({
                   <InlineDropdown>
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h2 className="text-lg font-bold">Single Teams</h2>
+                        <h2 className="text-base font-black">Single Teams</h2>
                         <p className="mt-1 text-sm text-slate-400">
                           Standalone teams stay separate from organizations.
                         </p>
@@ -599,7 +599,7 @@ export default function AdminContextHome({
                       </span>
                     </div>
 
-                    <div className="mt-4 space-y-2">
+                    <div className="mt-3 space-y-2">
                       {singleTeamWorkspaceTeams.length > 0 ? (
                         singleTeamWorkspaceTeams.map((team) => (
                           <Link
@@ -628,18 +628,18 @@ export default function AdminContextHome({
                     </div>
 
                     {organizationOwnedTeamCount > 0 && (
-                      <p className="mt-4 rounded-md border border-violet-400/20 bg-violet-500/10 p-3 text-sm font-semibold text-violet-100">
+                      <p className="mt-3 rounded-md border border-violet-400/20 bg-violet-500/10 p-2.5 text-sm font-semibold text-violet-100">
                         {organizationOwnedTeamCount} organization team
                         {organizationOwnedTeamCount === 1 ? "" : "s"} live
                         inside their organization workspace.
                       </p>
                     )}
 
-                    <details className="mt-4 rounded-lg border border-orange-400/20 bg-orange-500/10 p-3">
+                    <details className="mt-3 rounded-lg border border-orange-400/20 bg-orange-500/10 p-3">
                       <summary className="cursor-pointer text-sm font-bold text-orange-100">
                         Create single team +
                       </summary>
-                      <form className="mt-4" onSubmit={createTeamBuilder}>
+                      <form className="mt-3" onSubmit={createTeamBuilder}>
                         <div className="grid gap-3 sm:grid-cols-2">
                           <label className="block sm:col-span-2">
                             <span className="text-xs font-bold uppercase tracking-wide text-slate-300">
@@ -703,7 +703,7 @@ export default function AdminContextHome({
                             : "Create single team"}
                         </button>
                         {teamBuilderError && (
-                          <p className="mt-3 rounded-md border border-red-400/30 bg-red-500/10 p-3 text-sm font-semibold text-red-100">
+                          <p className="mt-3 rounded-md border border-red-400/30 bg-red-500/10 p-2.5 text-sm font-semibold text-red-100">
                             {teamBuilderError}
                           </p>
                         )}
@@ -716,7 +716,7 @@ export default function AdminContextHome({
           </div>
         </div>
 
-        <footer className="pt-8 text-center">
+        <footer className="pt-6 text-center">
           <p className="flex items-center justify-center gap-3 text-sm text-slate-400">
             <LockIcon className="size-5" />
             <span>Your access is based on your verified role and memberships.</span>

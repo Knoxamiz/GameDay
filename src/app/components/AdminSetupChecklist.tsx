@@ -50,13 +50,13 @@ export default function AdminSetupChecklist({
   const nextRequiredStep = checklist.nextRequiredStep;
 
   return (
-    <section className="mt-5 rounded-lg border border-slate-800 bg-slate-900 p-4 sm:p-5">
+    <section className="gd-card-dark mt-4 rounded-lg p-3">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
             {isSingleTeamWorkspace ? "Team Builder Setup" : "First-Run Setup"}
           </p>
-          <h2 className="mt-2 text-xl font-bold">
+          <h2 className="mt-1 text-base font-black">
             {checklist.activeOrganizationName
               ? `Setup for ${checklist.activeOrganizationName}`
               : "Create your workspace"}
@@ -67,7 +67,7 @@ export default function AdminSetupChecklist({
         </span>
       </div>
       <div
-        className={`mt-4 rounded-lg border p-4 ${
+        className={`mt-3 rounded-lg border p-3 ${
           nextRequiredStep
             ? "border-yellow-500/30 bg-yellow-500/10"
             : "border-blue-500/30 bg-blue-500/10"
@@ -76,7 +76,7 @@ export default function AdminSetupChecklist({
         <p className="text-xs font-semibold uppercase text-slate-400">
           {nextRequiredStep ? "Next required action" : "Required setup"}
         </p>
-        <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
+        <div className="mt-1.5 flex flex-wrap items-end justify-between gap-3">
           <div className="min-w-0">
             <p className="font-bold text-white">
               {nextRequiredStep?.label ?? "Registration setup is ready"}
@@ -90,7 +90,7 @@ export default function AdminSetupChecklist({
           </div>
           {nextRequiredStep?.actionHref && nextRequiredStep.actionLabel && (
             <Link
-              className="shrink-0 rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white"
+              className="shrink-0 rounded-md bg-blue-500 px-3 py-2 text-sm font-black text-white"
               href={withActiveOrganization(
                 nextRequiredStep.actionHref,
                 checklist.activeOrganizationId,
@@ -102,9 +102,9 @@ export default function AdminSetupChecklist({
         </div>
       </div>
 
-      <div className="mt-4 grid gap-2 sm:grid-cols-2">
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
         {checklist.steps.map((step) => (
-          <div className="rounded-md border border-slate-800 bg-slate-950 p-3" key={step.id}>
+          <div className="rounded-md border border-white/10 bg-slate-950/75 p-2.5" key={step.id}>
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-white">{step.label}</p>
@@ -120,7 +120,7 @@ export default function AdminSetupChecklist({
             </div>
 
             {step.joinPath && (
-              <div className="mt-3 flex flex-wrap gap-2 border-t border-slate-800 pt-3">
+              <div className="mt-2 flex flex-wrap gap-2 border-t border-white/10 pt-2">
                   <button
                     className="rounded-md bg-blue-500 px-3 py-2 text-xs font-semibold text-white"
                     onClick={async () => {

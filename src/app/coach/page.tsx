@@ -166,7 +166,7 @@ export default async function CoachHome() {
               </span>
             </Link>
           </div>
-          <nav className="space-y-1 px-2 py-5 lg:px-3">
+          <nav className="space-y-1 px-2 py-3 lg:px-3">
             {coachSidebarItems.map((item) => (
               <CoachSidebarLink
                 active={item.href === "/coach"}
@@ -180,7 +180,7 @@ export default async function CoachHome() {
         </aside>
 
         <div className="min-w-0 flex-1">
-          <header className="flex min-h-14 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 sm:px-5">
+          <header className="flex min-h-12 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 sm:px-5">
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-slate-500">
                 Coach / {organizationLabel}

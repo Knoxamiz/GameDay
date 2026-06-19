@@ -75,19 +75,21 @@ export default function ParentLoginForm({ nextPath }: ParentLoginFormProps) {
   }
 
   return (
-    <div className="mt-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-black">Account details</h2>
-      <p className="mt-2 text-sm font-semibold text-slate-600">
+    <div className="gd-card-light mt-3 rounded-lg p-3">
+      <h2 className="text-base font-black">Account details</h2>
+      <p className="mt-0.5 text-xs font-semibold text-slate-600">
         Your access comes from verified memberships, assignments, and player
         records.
       </p>
 
-      <form className="mt-5 space-y-4" onSubmit={handleLogin}>
+      <form className="mt-3 space-y-3" onSubmit={handleLogin}>
         <label className="block">
-          <span className="text-sm font-black text-slate-700">Email</span>
+          <span className="text-xs font-black uppercase text-slate-500">
+            Email
+          </span>
           <input
             autoComplete="email"
-            className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            className="mt-1.5 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             onChange={(event) => setEmail(event.target.value)}
             required
             type="email"
@@ -95,10 +97,12 @@ export default function ParentLoginForm({ nextPath }: ParentLoginFormProps) {
           />
         </label>
         <label className="block">
-          <span className="text-sm font-black text-slate-700">Password</span>
+          <span className="text-xs font-black uppercase text-slate-500">
+            Password
+          </span>
           <input
             autoComplete="current-password"
-            className="mt-2 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            className="mt-1.5 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             onChange={(event) => setPassword(event.target.value)}
             required
             type="password"
@@ -107,13 +111,13 @@ export default function ParentLoginForm({ nextPath }: ParentLoginFormProps) {
         </label>
 
         {error && (
-          <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm font-black text-red-700">
+          <p className="rounded-md border border-red-200 bg-red-50 p-2.5 text-xs font-black text-red-700">
             {error}
           </p>
         )}
 
         <button
-          className="w-full rounded-md bg-blue-600 py-3 font-black text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-md bg-blue-600 py-2 text-sm font-black text-white shadow-[0_0_24px_rgba(37,99,235,0.24)] hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={isSubmitting}
           type="submit"
         >

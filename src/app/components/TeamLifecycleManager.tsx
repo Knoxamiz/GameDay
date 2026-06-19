@@ -41,8 +41,8 @@ function TeamLifecycleEditor({
   );
 
   return (
-    <div className="rounded-xl border border-slate-700 bg-slate-950 p-4">
-      <div className="flex items-start justify-between gap-3">
+    <details className="rounded-lg border border-blue-300/20 bg-slate-950/75">
+      <summary className="flex cursor-pointer list-none items-start justify-between gap-3 p-3 [&::-webkit-details-marker]:hidden">
         <div className="min-w-0">
           <p className="font-semibold text-white">{team.name}</p>
           <p className="mt-1 text-xs text-slate-400">
@@ -52,44 +52,37 @@ function TeamLifecycleEditor({
         <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-300">
           {getTeamStatusLabel(team)}
         </span>
-      </div>
+      </summary>
 
-      <details className="mt-3 text-xs text-slate-500">
-        <summary className="cursor-pointer font-semibold">
-          Technical details
-        </summary>
-        <p className="mt-2 break-all">Internal Team ID: {team.id}</p>
-      </details>
-
-      <div className="mt-4 space-y-3">
+      <div className="space-y-2.5 border-t border-white/10 p-3">
         <label className="block">
-          <span className="text-sm font-semibold text-slate-300">Name</span>
+          <span className="text-xs font-black uppercase text-slate-400">Name</span>
           <input
-            className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none"
+            className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-white outline-none"
             onChange={(event) => setName(event.target.value)}
             value={name}
           />
         </label>
         <label className="block">
-          <span className="text-sm font-semibold text-slate-300">Division</span>
+          <span className="text-xs font-black uppercase text-slate-400">Division</span>
           <input
-            className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none"
+            className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-white outline-none"
             onChange={(event) => setDivision(event.target.value)}
             value={division}
           />
         </label>
         <label className="block">
-          <span className="text-sm font-semibold text-slate-300">Season</span>
+          <span className="text-xs font-black uppercase text-slate-400">Season</span>
           <input
-            className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none"
+            className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-white outline-none"
             onChange={(event) => setSeason(event.target.value)}
             value={season}
           />
         </label>
         <label className="block">
-          <span className="text-sm font-semibold text-slate-300">Status</span>
+          <span className="text-xs font-black uppercase text-slate-400">Status</span>
           <select
-            className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white"
+            className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/75 px-3 py-2 text-white"
             onChange={(event) =>
               setStatus(event.target.value as TeamLifecycleStatus)
             }
@@ -101,7 +94,7 @@ function TeamLifecycleEditor({
           </select>
         </label>
         <button
-          className="w-full rounded-xl bg-blue-500 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-md bg-blue-500 py-2.5 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-60"
           disabled={isSaving}
           onClick={() =>
             void onSave(team.id, {
@@ -124,8 +117,14 @@ function TeamLifecycleEditor({
             preserving registrations, events, invites, and assignments.
           </p>
         )}
+        <details className="text-xs text-slate-500">
+          <summary className="cursor-pointer font-semibold">
+            Technical details
+          </summary>
+          <p className="mt-2 break-all">Internal Team ID: {team.id}</p>
+        </details>
       </div>
-    </div>
+    </details>
   );
 }
 
@@ -180,13 +179,13 @@ export default function TeamLifecycleManager({
       className={
         embedded
           ? ""
-          : "rounded-2xl border border-slate-800 bg-slate-900 p-5"
+          : "gd-card-dark rounded-lg p-3"
       }
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold">Manage Teams</h2>
-          <p className="mt-2 text-sm text-slate-300">
+          <h2 className="text-base font-black">Manage Teams</h2>
+          <p className="mt-1 text-sm text-slate-300">
             Edit team details or lifecycle status. Technical ownership remains fixed.
           </p>
         </div>
@@ -197,19 +196,19 @@ export default function TeamLifecycleManager({
       </div>
 
       {message && (
-        <p className="mt-4 rounded-xl border border-blue-500/30 bg-blue-500/10 p-3 text-sm font-semibold text-blue-200">
+        <p className="mt-3 rounded-md border border-blue-500/30 bg-blue-500/10 p-2.5 text-sm font-semibold text-blue-200">
           {message}
         </p>
       )}
       {error && (
-        <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm font-semibold text-red-300">
+        <p className="mt-3 rounded-md border border-red-500/30 bg-red-500/10 p-2.5 text-sm font-semibold text-red-300">
           {error}
         </p>
       )}
 
-      <div className="mt-4 space-y-3">
+      <div className="mt-3 space-y-2">
         {visibleTeams.length === 0 ? (
-          <p className="rounded-xl bg-slate-800 p-3 text-sm text-slate-300">
+          <p className="rounded-md border border-white/10 bg-white/5 p-2.5 text-sm text-slate-300">
             No teams in this view.
           </p>
         ) : (

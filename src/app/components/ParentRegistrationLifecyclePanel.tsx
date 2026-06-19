@@ -51,8 +51,8 @@ export default function ParentRegistrationLifecyclePanel({
     registration.withdrawalRequest?.status === "pending";
   const wrapperClassName =
     surface === "inline"
-      ? "mt-4"
-      : "mt-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm";
+      ? "mt-3 rounded-lg border border-slate-200 bg-white"
+      : "mt-3 rounded-lg border border-blue-600/15 bg-white shadow-sm";
 
   async function save(payload: Record<string, unknown>) {
     setError(null);
@@ -104,17 +104,28 @@ export default function ParentRegistrationLifecyclePanel({
   }
 
   return (
-    <section className={wrapperClassName}>
-      <h2 className="text-lg font-black">Update Player Info</h2>
-      <p className="mt-2 text-sm font-semibold text-slate-600">
-        {directCorrectionAllowed
-          ? "These contact and player details can be corrected before review."
-          : "Review has started. Changes and withdrawal now require staff approval."}
-      </p>
-      <p className="mt-2 text-xs font-semibold text-slate-500">
-        Team placement, roster status, document approvals, and payment review
-        are handled by your organization.
-      </p>
+    <details className={wrapperClassName}>
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
+        <div className="min-w-0">
+          <h2 className="text-sm font-black">Player Info</h2>
+          <p className="mt-0.5 text-xs font-semibold text-slate-500">
+            Corrections, contact details, and withdrawal.
+          </p>
+        </div>
+        <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-black text-blue-700">
+          Open
+        </span>
+      </summary>
+      <div className="border-t border-slate-200 px-3 pb-3 pt-2">
+        <p className="text-sm font-semibold text-slate-600">
+          {directCorrectionAllowed
+            ? "These contact and player details can be corrected before review."
+            : "Review has started. Changes and withdrawal now require staff approval."}
+        </p>
+        <p className="mt-1 text-xs font-semibold text-slate-500">
+          Team placement, roster status, document approvals, and payment review
+          are handled by your organization.
+        </p>
 
       {registration.parentChangeRequest && (
         <p className="mt-3 rounded-md bg-slate-50 p-3 text-sm font-semibold text-slate-600">
@@ -138,14 +149,14 @@ export default function ParentRegistrationLifecyclePanel({
       )}
 
       {!lifecycleClosed && (
-        <form className="mt-4 space-y-3" onSubmit={submitCorrection}>
+        <form className="mt-3 space-y-2.5" onSubmit={submitCorrection}>
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
               <span className="text-xs font-black text-slate-500">
                 Player First Name
               </span>
               <input
-                className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-3 text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 onChange={(event) => setAthleteFirstName(event.target.value)}
                 required
                 value={athleteFirstName}
@@ -156,7 +167,7 @@ export default function ParentRegistrationLifecyclePanel({
                 Player Last Name
               </span>
               <input
-                className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-3 text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 onChange={(event) => setAthleteLastName(event.target.value)}
                 required
                 value={athleteLastName}
@@ -167,7 +178,7 @@ export default function ParentRegistrationLifecyclePanel({
             <label className="block">
               <span className="text-xs font-black text-slate-500">Grade</span>
               <input
-                className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-3 text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 onChange={(event) => setGrade(event.target.value)}
                 value={grade}
               />
@@ -175,7 +186,7 @@ export default function ParentRegistrationLifecyclePanel({
             <label className="block">
               <span className="text-xs font-black text-slate-500">School</span>
               <input
-                className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-3 text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 onChange={(event) => setSchool(event.target.value)}
                 value={school}
               />
@@ -186,7 +197,7 @@ export default function ParentRegistrationLifecyclePanel({
               Parent or Guardian Name
             </span>
             <input
-              className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-3 text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               onChange={(event) => setParentName(event.target.value)}
               required
               value={parentName}
@@ -196,7 +207,7 @@ export default function ParentRegistrationLifecyclePanel({
             <label className="block">
               <span className="text-xs font-black text-slate-500">Email</span>
               <input
-                className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-3 text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 onChange={(event) => setParentEmail(event.target.value)}
                 type="email"
                 value={parentEmail}
@@ -205,7 +216,7 @@ export default function ParentRegistrationLifecyclePanel({
             <label className="block">
               <span className="text-xs font-black text-slate-500">Phone</span>
               <input
-                className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-3 text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 onChange={(event) => setParentPhone(event.target.value)}
                 type="tel"
                 value={parentPhone}
@@ -213,7 +224,7 @@ export default function ParentRegistrationLifecyclePanel({
             </label>
           </div>
           <button
-            className="w-full rounded-md bg-blue-600 py-3 font-black text-white hover:bg-blue-700 disabled:opacity-60"
+            className="w-full rounded-md bg-blue-600 py-2.5 font-black text-white hover:bg-blue-700 disabled:opacity-60"
             disabled={isSaving || hasPendingChange || hasPendingWithdrawal}
             type="submit"
           >
@@ -227,7 +238,7 @@ export default function ParentRegistrationLifecyclePanel({
       )}
 
       {!lifecycleClosed && (
-        <details className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-4">
+        <details className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3">
           <summary className="cursor-pointer font-black text-slate-950">
             Withdraw Registration
           </summary>
@@ -241,13 +252,13 @@ export default function ParentRegistrationLifecyclePanel({
               Reason (optional)
             </span>
             <textarea
-              className="mt-1 min-h-24 w-full rounded-md border border-slate-200 bg-white px-3 py-3 text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="mt-1 min-h-16 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               onChange={(event) => setWithdrawalReason(event.target.value)}
               value={withdrawalReason}
             />
           </label>
           <button
-            className="mt-3 w-full rounded-md border border-red-200 bg-white py-3 font-black text-red-700 hover:bg-red-50 disabled:opacity-60"
+            className="mt-3 w-full rounded-md border border-red-200 bg-white py-2.5 font-black text-red-700 hover:bg-red-50 disabled:opacity-60"
             disabled={isSaving || hasPendingChange || hasPendingWithdrawal}
             onClick={() =>
               void save({
@@ -270,6 +281,7 @@ export default function ParentRegistrationLifecyclePanel({
           history remains available to the organization.
         </p>
       )}
-    </section>
+      </div>
+    </details>
   );
 }

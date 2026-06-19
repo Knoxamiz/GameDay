@@ -330,8 +330,8 @@ export default async function TeamDetails({
 
     return (
       <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
-        <section className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
-          <header className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <section className="mx-auto max-w-5xl px-3 py-4 sm:px-5">
+          <header className="gd-card-light flex flex-col gap-3 rounded-lg p-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
               <Link
                 href="/coach"
@@ -339,7 +339,7 @@ export default async function TeamDetails({
               >
                 &larr; Coach Home
               </Link>
-              <h1 className="mt-3 truncate text-3xl font-black">
+              <h1 className="mt-2 truncate text-xl font-black">
                 {teamDetails.name}
               </h1>
               <p className="mt-1 truncate text-sm font-semibold text-slate-500">
@@ -362,7 +362,7 @@ export default async function TeamDetails({
           </header>
 
           <div
-            className={`mt-4 rounded-lg border p-4 shadow-sm ${getCoachActionToneClasses(
+            className={`mt-3 rounded-lg border p-3 shadow-sm ${getCoachActionToneClasses(
               nextAction.tone,
             )}`}
           >
@@ -371,15 +371,15 @@ export default async function TeamDetails({
             </p>
             <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-xl font-black">{nextAction.label}</p>
-                <p className="mt-1 text-sm font-semibold opacity-90">
+                <p className="text-base font-black">{nextAction.label}</p>
+                <p className="mt-1 text-xs font-semibold opacity-90">
                   {nextAction.description}
                 </p>
               </div>
               {nextAction.href && nextAction.href !== teamHref && (
                 <Link
                   href={nextAction.href}
-                  className="rounded-md bg-blue-600 px-4 py-3 text-center text-sm font-black text-white hover:bg-blue-700"
+                  className="rounded-md bg-blue-600 px-3 py-2 text-center text-xs font-black text-white hover:bg-blue-700"
                 >
                   Open
                 </Link>
@@ -417,21 +417,21 @@ export default async function TeamDetails({
             </div>
           </div>
 
-          <div className="mt-4 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-            <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="mt-3 grid gap-3 lg:grid-cols-[1.1fr_0.9fr]">
+            <section className="gd-card-light rounded-lg p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h2 className="text-lg font-black">Next Event</h2>
+                  <h2 className="text-base font-black">Next Event</h2>
                   {nextEvent ? (
                     <>
-                      <p className="mt-3 truncate font-black">
+                      <p className="mt-2 truncate font-black">
                         {nextEvent.title}
                       </p>
-                      <p className="mt-1 text-sm font-semibold text-slate-600">
+                      <p className="mt-1 text-xs font-semibold text-slate-600">
                         {getEventDateLabel(nextEvent)} ·{" "}
                         {getEventTimeLabel(nextEvent)}
                       </p>
-                      <p className="mt-1 truncate text-sm text-slate-500">
+                      <p className="mt-1 truncate text-xs text-slate-500">
                         {getEventLocationLabel(nextEvent)}
                       </p>
                     </>
@@ -454,15 +454,15 @@ export default async function TeamDetails({
 
               {nextEvent && (
                 <>
-                  <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-                    <div className="rounded-md bg-slate-50 p-3">
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                    <div className="rounded-md bg-white/70 p-2.5">
                       <p className="font-semibold text-slate-500">Attendance</p>
                       <p className="mt-1 font-black text-slate-950">
                         {responseSummary.attendanceSubmitted} of{" "}
                         {teamRegistrations.length}
                       </p>
                     </div>
-                    <div className="rounded-md bg-slate-50 p-3">
+                    <div className="rounded-md bg-white/70 p-2.5">
                       <p className="font-semibold text-slate-500">
                         Transportation
                       </p>
@@ -474,7 +474,7 @@ export default async function TeamDetails({
                   </div>
                   <Link
                     href={eventHref ?? "/events"}
-                    className="mt-3 block rounded-md bg-blue-600 py-3 text-center text-sm font-black text-white hover:bg-blue-700"
+                    className="mt-3 block rounded-md bg-blue-600 py-2 text-center text-xs font-black text-white hover:bg-blue-700"
                   >
                     Event Details
                   </Link>
@@ -483,20 +483,20 @@ export default async function TeamDetails({
             </section>
 
             <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
                 <span>
-                  <span className="block text-lg font-black">
+                  <span className="block text-base font-black">
                     Roster & Parents
                   </span>
-                  <span className="mt-1 block text-sm font-semibold text-slate-500">
+                  <span className="mt-1 block text-xs font-semibold text-slate-500">
                     Contact and response details.
                   </span>
                 </span>
-                <span className="text-2xl font-black text-blue-600 transition group-open:rotate-90">
+                <span className="text-lg font-black text-blue-600 transition group-open:rotate-90">
                   &rsaquo;
                 </span>
               </summary>
-              <div className="space-y-2 border-t border-slate-200 p-4 text-sm">
+              <div className="space-y-2 border-t border-slate-200 p-3 text-sm">
                 {rosterRows.length > 0 ? (
                   rosterRows.map((player) => (
                     <div
@@ -563,8 +563,8 @@ export default async function TeamDetails({
             </details>
           </div>
 
-          <section className="mt-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <h2 className="text-lg font-black">Upcoming Events</h2>
+          <section className="gd-card-light mt-3 rounded-lg p-3">
+            <h2 className="text-base font-black">Upcoming Events</h2>
             <div className="mt-3 space-y-2 text-sm">
               {upcomingEvents.length > 0 ? (
                 upcomingEvents.map((event) => (
@@ -648,28 +648,28 @@ export default async function TeamDetails({
       : [getTeamStatusLabel(teamDetails)];
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <section className="mx-auto max-w-md px-5 py-6">
+    <main className="min-h-screen bg-[#020817] text-white">
+      <section className="mx-auto max-w-3xl px-3 py-4 sm:px-5">
         <MvpNav
           activeOrganizationId={activeOrganizationId}
           organizationContext={organizationContext}
         />
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
+        <div className="gd-card-dark rounded-lg p-3">
           <Link
             href={withActiveOrganization(teamBaseHref, activeOrganizationId)}
-            className="text-2xl font-bold"
+            className="text-base font-black"
           >
             &larr; {teamDetails.name}
           </Link>
         </div>
 
-        <div className="mt-5 rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg">
-          <h1 className="text-3xl font-bold">{teamDetails.name}</h1>
-          <p className="mt-3 text-sm text-slate-300">
+        <div className="gd-card-dark mt-3 rounded-lg p-3">
+          <h1 className="text-xl font-black">{teamDetails.name}</h1>
+          <p className="mt-1 text-xs text-slate-300">
             {roster.length} Rostered Athlete{roster.length === 1 ? "" : "s"}
           </p>
-          <div className="mt-4 space-y-2 text-sm text-slate-300">
+          <div className="mt-2 space-y-1.5 text-xs text-slate-300">
             {teamCoaches.length > 0 ? (
               teamCoaches.map((coach) => <p key={coach.id}>{coach.name}</p>)
             ) : (
@@ -678,13 +678,13 @@ export default async function TeamDetails({
           </div>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+        <div className="gd-card-dark mt-3 rounded-lg p-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
             Next Event
           </h2>
           {nextEvent ? (
             <>
-              <div className="mt-4 rounded-xl bg-slate-800 p-4">
+              <div className="mt-2 rounded-md bg-white/[0.06] p-3">
                 <p className="font-semibold">{nextEvent.type}</p>
                 <p className="mt-3 text-sm text-slate-300">
                   {getEventDateLabel(nextEvent)}
@@ -703,7 +703,7 @@ export default async function TeamDetails({
                   `${eventBaseHref}/${nextEvent.id}`,
                   activeOrganizationId,
                 )}
-                className="mt-4 block w-full rounded-xl bg-blue-500 py-3 text-center font-semibold text-white"
+                className="mt-3 block w-full rounded-md bg-blue-600 py-2 text-center text-xs font-black text-white"
               >
                 View Event
               </Link>
@@ -734,12 +734,12 @@ export default async function TeamDetails({
             entries={attendanceEntries}
           />
         ) : (
-          <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-            <h2 className="text-lg font-bold">Roster</h2>
-            <p className="mt-3 text-sm text-slate-300">
+          <div className="gd-card-dark mt-3 rounded-lg p-3">
+            <h2 className="text-base font-black">Roster</h2>
+            <p className="mt-2 text-xs text-slate-300">
               {roster.length} Rostered Athlete{roster.length === 1 ? "" : "s"}
             </p>
-            <div className="mt-4 space-y-2 text-sm text-slate-300">
+            <div className="mt-2 space-y-1.5 text-xs text-slate-300">
               {rosterPreview.map((player) => (
                 <p key={player.id}>{player.name}</p>
               ))}
@@ -777,9 +777,14 @@ export default async function TeamDetails({
           />
         )}
 
-        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <h2 className="text-lg font-bold">Team Announcements</h2>
-          <div className="mt-3 space-y-3 text-sm text-slate-300">
+        <details className="gd-card-dark group mt-3 overflow-hidden rounded-lg">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
+            <h2 className="text-base font-black">Team Announcements</h2>
+            <span className="text-lg font-black text-blue-300 transition group-open:rotate-90">
+              &rsaquo;
+            </span>
+          </summary>
+          <div className="space-y-2 border-t border-white/10 p-3 text-xs text-slate-300">
             {teamAnnouncements.length > 0 ? (
               teamAnnouncements.map((announcement) => (
                 <p key={announcement.id}>{announcement.content}</p>
@@ -788,20 +793,30 @@ export default async function TeamDetails({
               <p>No team announcements yet.</p>
             )}
           </div>
-        </div>
+        </details>
 
-        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <h2 className="text-lg font-bold">Team Status</h2>
-          <div className="mt-3 space-y-3 text-sm text-slate-300">
+        <details className="gd-card-dark group mt-3 overflow-hidden rounded-lg">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
+            <h2 className="text-base font-black">Team Status</h2>
+            <span className="text-lg font-black text-blue-300 transition group-open:rotate-90">
+              &rsaquo;
+            </span>
+          </summary>
+          <div className="space-y-2 border-t border-white/10 p-3 text-xs text-slate-300">
           {teamStatusItems.map((status) => (
             <p key={status}>{status}</p>
           ))}
           </div>
-        </div>
+        </details>
 
-        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <h2 className="text-lg font-bold">Upcoming Events</h2>
-          <div className="mt-3 space-y-3 text-sm text-slate-300">
+        <details className="gd-card-dark group mt-3 overflow-hidden rounded-lg">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
+            <h2 className="text-base font-black">Upcoming Events</h2>
+            <span className="text-lg font-black text-blue-300 transition group-open:rotate-90">
+              &rsaquo;
+            </span>
+          </summary>
+          <div className="space-y-2 border-t border-white/10 p-3 text-xs text-slate-300">
             {upcomingEvents.map((event) => (
               <Link
                 key={event.id}
@@ -809,13 +824,13 @@ export default async function TeamDetails({
                   `${eventBaseHref}/${event.id}`,
                   activeOrganizationId,
                 )}
-                className="block rounded-xl bg-slate-800 p-4"
+                className="block rounded-md bg-white/[0.06] p-2.5"
               >
                 {getEventShortDateLabel(event)} {event.type}
               </Link>
             ))}
           </div>
-        </div>
+        </details>
 
       </section>
     </main>
