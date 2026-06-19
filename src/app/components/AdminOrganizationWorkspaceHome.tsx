@@ -577,9 +577,9 @@ export default function AdminOrganizationWorkspaceHome({
             </div>
 
             {currentSection === "overview" && (
-              <div className="mt-3 grid gap-3 lg:grid-cols-2">
-                <section className="gd-card-dark rounded-lg p-3 backdrop-blur lg:col-span-2">
-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="mt-3 grid gap-2 lg:grid-cols-2">
+                <section className="gd-card-dark overflow-hidden rounded-lg backdrop-blur lg:col-span-2">
+                  <div className="flex flex-col gap-2 border-b border-white/10 px-3 py-2.5 lg:flex-row lg:items-center lg:justify-between">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <h2 className="text-base font-black">
@@ -589,15 +589,13 @@ export default function AdminOrganizationWorkspaceHome({
                           {organizationHealthLabel}
                         </StatusPill>
                       </div>
-                      <p className="mt-1 text-sm font-semibold text-slate-300">
-                        {organization.name} is in {operatingModel.stageLabel}.
-                      </p>
-                      <p className="mt-0.5 text-xs text-slate-400">
+                      <p className="mt-1 text-xs font-semibold text-slate-400">
+                        {operatingModel.stageLabel}:{" "}
                         {operatingModel.stageDescription}
                       </p>
                     </div>
                     <Link
-                      className="inline-flex shrink-0 items-center justify-center rounded-md bg-blue-600 px-3 py-2 text-xs font-black text-white hover:bg-blue-500"
+                      className="inline-flex shrink-0 items-center justify-center rounded-md bg-blue-600 px-3 py-1.5 text-xs font-black text-white hover:bg-blue-500"
                       href={withActiveOrganization(
                         operatingModel.nextAction.href,
                         activeOrganizationId,
@@ -607,75 +605,57 @@ export default function AdminOrganizationWorkspaceHome({
                     </Link>
                   </div>
 
-                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+                  <div className="flex flex-wrap gap-1.5 border-b border-white/10 px-3 py-2">
                     {pulseItems.map((item) => (
-                      <div
-                        className="rounded-md border border-blue-300/10 bg-white/[0.045] px-2.5 py-2"
+                      <span
+                        className="inline-flex items-center gap-1.5 rounded-full border border-blue-300/10 bg-white/[0.04] px-2 py-1 text-[11px] font-bold text-slate-300"
                         key={item.label}
                       >
-                        <p className="text-lg font-black leading-none text-white">
-                          {item.value}
-                        </p>
-                        <div className="mt-1 flex items-center gap-1.5">
-                          <span
-                            className={`size-1.5 rounded-full ${
-                              item.tone === "green"
-                                ? "bg-emerald-300"
-                                : item.tone === "orange"
-                                  ? "bg-orange-300"
-                                  : item.tone === "blue"
-                                    ? "bg-blue-300"
-                                    : "bg-slate-400"
-                            }`}
-                          />
-                          <p className="truncate text-[11px] font-bold text-slate-400">
-                            {item.label}
-                          </p>
-                        </div>
-                      </div>
+                        <span
+                          className={`size-1.5 rounded-full ${
+                            item.tone === "green"
+                              ? "bg-emerald-300"
+                              : item.tone === "orange"
+                                ? "bg-orange-300"
+                                : item.tone === "blue"
+                                  ? "bg-blue-300"
+                                  : "bg-slate-400"
+                          }`}
+                        />
+                        <span className="text-white">{item.value}</span>
+                        <span>{item.label}</span>
+                      </span>
                     ))}
                   </div>
-                </section>
-
-                <section className="gd-card-dark rounded-lg p-3 backdrop-blur lg:col-span-2">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0">
-                      <h2 className="text-base font-black">
-                        Needs President Attention
-                      </h2>
-                      <p className="mt-1 text-sm text-slate-400">
-                        The first thing to handle from this workspace.
-                      </p>
-                    </div>
-                    <StatusPill
-                      tone={presidentAttentionItem ? "orange" : "green"}
+                  {presidentAttentionItem ? (
+                    <Link
+                      className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm font-bold text-orange-100 hover:bg-orange-500/10"
+                      href={withActiveOrganization(
+                        presidentAttentionItem.href,
+                        activeOrganizationId,
+                      )}
                     >
-                      {presidentAttentionItem ? "Open" : "Clear"}
-                    </StatusPill>
-                  </div>
-                  <div className="mt-2">
-                    {presidentAttentionItem ? (
-                      <Link
-                        className="flex items-center justify-between gap-3 rounded-md border border-orange-300/20 bg-orange-500/10 px-3 py-2 text-sm font-bold text-orange-100 hover:bg-orange-500/15"
-                        href={withActiveOrganization(
-                          presidentAttentionItem.href,
-                          activeOrganizationId,
-                        )}
-                      >
+                      <span className="min-w-0">
+                        <span className="mr-2 rounded-full bg-orange-500/15 px-2 py-0.5 text-[11px] uppercase text-orange-200">
+                          President attention
+                        </span>
                         <span className="truncate">
                           {presidentAttentionItem.label}
                         </span>
-                        <span className="shrink-0">Open</span>
-                      </Link>
-                    ) : (
-                      <p className="rounded-md border border-emerald-300/15 bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-100">
-                        Nothing needs president attention right now.
-                      </p>
-                    )}
-                  </div>
+                      </span>
+                      <span className="shrink-0 text-xs text-orange-200">
+                        Open
+                      </span>
+                    </Link>
+                  ) : (
+                    <div className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm font-bold text-emerald-100">
+                      <span>President attention is clear.</span>
+                      <StatusPill tone="green">Clear</StatusPill>
+                    </div>
+                  )}
                 </section>
 
-                <section className="gd-card-dark rounded-lg p-3 backdrop-blur">
+                <section className="gd-card-dark rounded-lg px-3 py-2 backdrop-blur">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <h2 className="text-base font-black">Messages</h2>
@@ -716,7 +696,7 @@ export default function AdminOrganizationWorkspaceHome({
                   </div>
                 </section>
 
-                <section className="gd-card-dark rounded-lg p-3 backdrop-blur">
+                <section className="hidden">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h2 className="text-base font-black">Alerts</h2>
@@ -754,7 +734,7 @@ export default function AdminOrganizationWorkspaceHome({
                   </div>
                 </section>
 
-                <section className="gd-card-dark rounded-lg p-3 backdrop-blur lg:col-span-2">
+                <section className="gd-card-dark rounded-lg px-3 py-2 backdrop-blur lg:col-span-2">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h2 className="text-base font-black">Current Teams</h2>
@@ -772,9 +752,9 @@ export default function AdminOrganizationWorkspaceHome({
                       View all &gt;
                     </Link>
                   </div>
-                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <div className="mt-1.5 divide-y divide-white/10">
                     {visibleTeams.length === 0 ? (
-                      <p className="rounded-md border border-dashed border-white/15 bg-white/[0.04] p-3 text-sm font-semibold text-slate-400 sm:col-span-2">
+                      <p className="py-2 text-sm font-semibold text-slate-400">
                         No teams in this organization yet.
                       </p>
                     ) : (
@@ -786,7 +766,7 @@ export default function AdminOrganizationWorkspaceHome({
 
                         return (
                           <Link
-                            className="flex items-center justify-between gap-3 rounded-md border border-blue-300/10 bg-white/[0.045] px-3 py-2 hover:border-blue-300/30 hover:bg-blue-500/10"
+                            className="flex items-center justify-between gap-3 py-2 hover:text-blue-200"
                             href={withActiveOrganization(
                               `/admin/teams/${team.id}`,
                               activeOrganizationId,
