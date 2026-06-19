@@ -491,6 +491,7 @@ export default function AdminOrganizationWorkspaceHome({
     tone: "blue" | "green" | "orange" | "slate";
     value: number;
   }[];
+  const isFirstRunOrganization = activeTeams.length === 0;
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#020817] text-white">
@@ -578,6 +579,54 @@ export default function AdminOrganizationWorkspaceHome({
 
             {currentSection === "overview" && (
               <div className="mt-3 grid gap-2 lg:grid-cols-2">
+                {isFirstRunOrganization ? (
+                  <section className="gd-card-dark overflow-hidden rounded-lg backdrop-blur lg:col-span-2">
+                    <div className="flex items-center justify-between gap-3 border-b border-white/10 px-3 py-2">
+                      <div className="min-w-0">
+                        <p className="text-xs font-black uppercase text-blue-200">
+                          First step
+                        </p>
+                        <h2 className="mt-0.5 truncate text-lg font-black">
+                          Create Team
+                        </h2>
+                      </div>
+                      <Link
+                        aria-label="Messages"
+                        className={`relative flex size-9 shrink-0 items-center justify-center rounded-md border border-white/15 bg-white/5 text-blue-100 hover:bg-white/10 ${
+                          recentCommunications.length > 0
+                            ? "shadow-[0_0_18px_rgba(59,130,246,0.32)]"
+                            : ""
+                        }`}
+                        href={withActiveOrganization(
+                          "/admin/announcements",
+                          activeOrganizationId,
+                        )}
+                        title="Messages"
+                      >
+                        <WorkspaceIcon className="size-4" name="message" />
+                        {recentCommunications.length > 0 && (
+                          <span className="absolute -right-1 -top-1 size-2.5 rounded-full bg-blue-300 ring-2 ring-slate-950" />
+                        )}
+                      </Link>
+                    </div>
+                    <div className="flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="max-w-xl text-sm font-semibold text-slate-300">
+                        Create the first active team. Registration, schedule,
+                        roster, and coach tools open after that team exists.
+                      </p>
+                      <Link
+                        className="inline-flex shrink-0 items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-black text-white hover:bg-blue-500"
+                        href={withActiveOrganization(
+                          "/admin/teams#create-team",
+                          activeOrganizationId,
+                        )}
+                      >
+                        Create team
+                      </Link>
+                    </div>
+                  </section>
+                ) : (
+                  <>
                 <section className="gd-card-dark overflow-hidden rounded-lg backdrop-blur lg:col-span-2">
                   <div className="flex flex-col gap-2 border-b border-white/10 px-3 py-2.5 lg:flex-row lg:items-center lg:justify-between">
                     <div className="min-w-0">
@@ -594,15 +643,35 @@ export default function AdminOrganizationWorkspaceHome({
                         {operatingModel.stageDescription}
                       </p>
                     </div>
-                    <Link
-                      className="inline-flex shrink-0 items-center justify-center rounded-md bg-blue-600 px-3 py-1.5 text-xs font-black text-white hover:bg-blue-500"
-                      href={withActiveOrganization(
-                        operatingModel.nextAction.href,
-                        activeOrganizationId,
-                      )}
-                    >
-                      {operatingModel.nextAction.label}
-                    </Link>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Link
+                        aria-label="Messages"
+                        className={`relative flex size-8 items-center justify-center rounded-md border border-white/15 bg-white/5 text-blue-100 hover:bg-white/10 ${
+                          recentCommunications.length > 0
+                            ? "shadow-[0_0_18px_rgba(59,130,246,0.32)]"
+                            : ""
+                        }`}
+                        href={withActiveOrganization(
+                          "/admin/announcements",
+                          activeOrganizationId,
+                        )}
+                        title="Messages"
+                      >
+                        <WorkspaceIcon className="size-4" name="message" />
+                        {recentCommunications.length > 0 && (
+                          <span className="absolute -right-1 -top-1 size-2.5 rounded-full bg-blue-300 ring-2 ring-slate-950" />
+                        )}
+                      </Link>
+                      <Link
+                        className="inline-flex items-center justify-center rounded-md bg-blue-600 px-3 py-1.5 text-xs font-black text-white hover:bg-blue-500"
+                        href={withActiveOrganization(
+                          operatingModel.nextAction.href,
+                          activeOrganizationId,
+                        )}
+                      >
+                        {operatingModel.nextAction.label}
+                      </Link>
+                    </div>
                   </div>
 
                   <div className="flex flex-wrap gap-1.5 border-b border-white/10 px-3 py-2">
@@ -655,7 +724,7 @@ export default function AdminOrganizationWorkspaceHome({
                   )}
                 </section>
 
-                <section className="gd-card-dark rounded-lg px-3 py-2 backdrop-blur">
+                <section className="hidden">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <h2 className="text-base font-black">Messages</h2>
@@ -734,24 +803,18 @@ export default function AdminOrganizationWorkspaceHome({
                   </div>
                 </section>
 
-                <section className="gd-card-dark rounded-lg px-3 py-2 backdrop-blur lg:col-span-2">
-                  <div className="flex items-start justify-between gap-3">
+                <details className="gd-card-dark group rounded-lg px-3 py-2 backdrop-blur lg:col-span-2">
+                  <summary className="flex cursor-pointer list-none items-start justify-between gap-3 [&::-webkit-details-marker]:hidden">
                     <div>
-                      <h2 className="text-base font-black">Current Teams</h2>
+                      <h2 className="text-base font-black">Teams</h2>
                       <p className="mt-1 text-sm text-slate-400">
-                        Team workspaces in this organization.
+                        Select one team workspace.
                       </p>
                     </div>
-                    <Link
-                      className="text-sm font-bold text-blue-300"
-                      href={withActiveOrganization(
-                        "/admin/teams",
-                        activeOrganizationId,
-                      )}
-                    >
-                      View all &gt;
-                    </Link>
-                  </div>
+                    <span className="text-sm font-bold text-blue-300 transition group-open:rotate-90">
+                      {visibleTeams.length} &gt;
+                    </span>
+                  </summary>
                   <div className="mt-1.5 divide-y divide-white/10">
                     {visibleTeams.length === 0 ? (
                       <p className="py-2 text-sm font-semibold text-slate-400">
@@ -795,11 +858,13 @@ export default function AdminOrganizationWorkspaceHome({
                       })
                     )}
                   </div>
-                </section>
+                </details>
+                  </>
+                )}
               </div>
             )}
 
-            {currentSection === "alerts" ? (
+            {currentSection === "overview" ? null : currentSection === "alerts" ? (
               <section className="gd-card-dark mt-3 rounded-lg p-4 backdrop-blur">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
