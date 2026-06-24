@@ -295,9 +295,9 @@ export default async function ParentHome() {
     currentParent.firstName || currentParent.name || "Parent";
   return (
     <main className="gd-dark-scope min-h-screen text-white">
-      <header className="border-b border-slate-200 bg-white">
+      <header className="border-b border-white/10 bg-slate-950/70 backdrop-blur">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-3 py-2.5 sm:px-5">
-          <Link className="text-lg font-black" href="/parent">
+          <Link className="text-lg font-black text-white" href="/parent">
             GameDay
           </Link>
           <div className="flex items-center gap-3">
@@ -305,11 +305,11 @@ export default async function ParentHome() {
               <span className="block text-sm font-black">
                 {parentDisplayName}
               </span>
-              <span className="block text-xs font-semibold text-slate-500">
+              <span className="block text-xs font-semibold text-slate-400">
                 Parent
               </span>
             </span>
-            <SessionControls compact role="parent" surface="light" />
+            <SessionControls compact role="parent" surface="dark" />
           </div>
         </div>
       </header>
@@ -317,7 +317,7 @@ export default async function ParentHome() {
       <section className="mx-auto max-w-2xl px-3 py-3 pb-20 sm:px-5">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-black uppercase text-blue-700">
+            <p className="text-xs font-black uppercase text-blue-300">
               Parent Home
             </p>
             <h1 className="truncate text-xl font-black tracking-tight">
@@ -326,7 +326,7 @@ export default async function ParentHome() {
           </div>
           {!hasRegistrations && (
             <Link
-              className="shrink-0 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-black text-slate-700 shadow-sm hover:bg-slate-50"
+              className="shrink-0 rounded-md border border-blue-300/25 bg-blue-500/10 px-2.5 py-1.5 text-xs font-black text-blue-100 shadow-sm hover:bg-blue-500/20"
               href="/registration"
             >
               Find Team
@@ -484,7 +484,7 @@ export default async function ParentHome() {
         </section>
 
         <BottomNav
-          surface="light"
+          surface="dark"
           items={
             hasRegistrations
               ? [

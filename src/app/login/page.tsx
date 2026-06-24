@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import ParentLoginForm from "../components/ParentLoginForm";
+import PublicReleaseFooter from "../components/PublicReleaseFooter";
 import { getCurrentAuthSession } from "../data/currentUser.server";
 import { getLandingRouteForSession } from "../data/sessionAccess.server";
 
@@ -66,6 +67,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
         <ParentLoginForm nextPath={nextPath} />
       </section>
+      <PublicReleaseFooter />
     </main>
   );
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import PublicReleaseFooter from "../components/PublicReleaseFooter";
 import SessionControls from "../components/SessionControls";
 import { getAccountAccessReadModel } from "../data/accountAccess.server";
 import { getCurrentAuthSession } from "../data/currentUser.server";
@@ -37,25 +38,25 @@ export default async function AccountPage() {
 
   return (
     <main className="gd-dark-scope min-h-screen text-white">
-      <header className="border-b border-blue-100 bg-white/90 backdrop-blur">
+      <header className="border-b border-white/10 bg-slate-950/70 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-3 py-2.5 sm:px-5">
-          <Link className="text-lg font-black" href="/account">
+          <Link className="text-lg font-black text-white" href="/account">
             GameDay
           </Link>
-          <SessionControls compact role="account" surface="light" />
+          <SessionControls compact role="account" surface="dark" />
         </div>
       </header>
 
       <section className="mx-auto max-w-3xl px-3 py-4 sm:px-5">
         <div className="flex flex-col gap-1">
-          <p className="text-xs font-black uppercase tracking-wide text-blue-700">
+          <p className="text-xs font-black uppercase tracking-wide text-blue-300">
             Account
           </p>
           <h1 className="text-xl font-black tracking-tight">
             Hi, {accountAccess.displayName}
           </h1>
           {accountAccess.email && (
-            <p className="text-xs font-bold text-slate-500">
+            <p className="text-xs font-bold text-slate-400">
               {accountAccess.email}
             </p>
           )}
@@ -108,6 +109,7 @@ export default async function AccountPage() {
           </div>
         </section>
       </section>
+      <PublicReleaseFooter />
     </main>
   );
 }

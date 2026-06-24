@@ -150,8 +150,8 @@ export default async function CoachHome() {
   return (
     <main className="gd-dark-scope min-h-screen text-white">
       <div className="flex min-h-screen">
-        <aside className="block w-14 shrink-0 border-r border-slate-200 bg-white lg:w-60">
-          <div className="flex h-16 items-center justify-center gap-2 border-b border-slate-200 px-2 lg:justify-start lg:px-5">
+        <aside className="block w-14 shrink-0 border-r border-white/10 bg-slate-950/70 lg:w-60">
+          <div className="flex h-16 items-center justify-center gap-2 border-b border-white/10 px-2 lg:justify-start lg:px-5">
             <Link
               aria-label="Back to Coach home"
               className="flex items-center gap-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -161,7 +161,7 @@ export default async function CoachHome() {
               <span className="flex size-8 items-center justify-center rounded-md bg-blue-600 text-sm font-black text-white">
                 G
               </span>
-              <span className="hidden font-black text-slate-950 lg:inline">
+              <span className="hidden font-black text-white lg:inline">
                 GameDay
               </span>
             </Link>
@@ -180,23 +180,23 @@ export default async function CoachHome() {
         </aside>
 
         <div className="min-w-0 flex-1">
-          <header className="flex min-h-12 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 sm:px-5">
+          <header className="flex min-h-12 items-center justify-between gap-3 border-b border-white/10 bg-slate-950/70 px-3 backdrop-blur sm:px-5">
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-slate-500">
+              <p className="truncate text-sm font-semibold text-slate-400">
                 Coach / {organizationLabel}
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <SessionControls compact role="coach" surface="light" />
+              <SessionControls compact role="coach" surface="dark" />
               <div className="hidden items-center gap-3 sm:flex">
-                <span className="flex size-8 items-center justify-center rounded-full bg-blue-100 text-xs font-black text-blue-700">
+                <span className="flex size-8 items-center justify-center rounded-full border border-blue-300/30 bg-blue-500/15 text-xs font-black text-blue-100">
                   {getInitial(displayName)}
                 </span>
                 <span className="min-w-0">
-                  <span className="block truncate text-sm font-bold">
+                  <span className="block truncate text-sm font-bold text-white">
                     {displayName}
                   </span>
-                  <span className="block text-xs text-slate-500">Coach</span>
+                  <span className="block text-xs text-slate-400">Coach</span>
                 </span>
               </div>
             </div>

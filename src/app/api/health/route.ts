@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { accessRoles, authReadiness } from "../../data/accessControl";
 import { athletes } from "../../data/athletes";
 import {
@@ -18,7 +18,27 @@ import { getFirebaseWiringStatus } from "../../infrastructure/firebaseReadiness"
 
 export const runtime = "nodejs";
 
-export async function GET() {
+function isDetailedHealthRequest(request: NextRequest) {
+  if (process.env.NODE_ENV !== "production") {
+    return true;
+  }
+
+  const token = process.env.HEALTH_DIAGNOSTIC_TOKEN?.trim();
+
+  return Boolean(
+    token && request.headers.get("x-gameday-health-token") === token,
+  );
+}
+
+export async function GET(request: NextRequest) {
+  if (!isDetailedHealthRequest(request)) {
+    return NextResponse.json({
+      app: "GameDay",
+      diagnostics: "restricted",
+      status: "ok",
+    });
+  }
+
   return NextResponse.json({
     app: "GameDay",
     auth: {

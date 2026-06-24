@@ -15,6 +15,7 @@ export type BackendCollection =
   | "rideShareMatches"
   | "messages"
   | "gameAlerts"
+  | "accountDeletionRequests"
   | "registrationInvites";
 
 export type BackendRelationship = {
@@ -48,6 +49,7 @@ export const backendCollections: BackendCollection[] = [
   "rideShareMatches",
   "messages",
   "gameAlerts",
+  "accountDeletionRequests",
   "registrationInvites",
 ];
 
@@ -357,6 +359,13 @@ export const backendCollectionSpecs: Record<
     indexes: [["eventId"], ["status"]],
     primaryKey: "eventId",
     scopeKeys: ["eventId"],
+    serverWritesRequired: true,
+  },
+  accountDeletionRequests: {
+    collection: "accountDeletionRequests",
+    indexes: [["uid"], ["email"], ["status"], ["requestedAt"]],
+    primaryKey: "id",
+    scopeKeys: ["uid", "email", "status"],
     serverWritesRequired: true,
   },
   registrationInvites: {

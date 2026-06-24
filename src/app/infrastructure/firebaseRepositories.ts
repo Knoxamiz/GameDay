@@ -132,7 +132,7 @@ async function loadFirestoreModule() {
   }
 }
 
-async function getFirestoreDatabase() {
+export async function getFirestoreDatabase() {
   const app = await getFirebaseAdminApp();
   const firestore = await loadFirestoreModule();
 

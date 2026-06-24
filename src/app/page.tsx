@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import PublicReleaseFooter from "./components/PublicReleaseFooter";
 import { getCurrentAuthSession } from "./data/currentUser.server";
 import { getLandingRouteForSession } from "./data/sessionAccess.server";
 
@@ -588,6 +589,8 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      <PublicReleaseFooter />
     </main>
   );
 }

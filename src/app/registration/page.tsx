@@ -1,4 +1,5 @@
 import Link from "next/link";
+import PublicReleaseFooter from "../components/PublicReleaseFooter";
 import {
   lookupPublicRegistrationInviteReadModels,
   type PublicRegistrationInviteLookup,
@@ -208,6 +209,8 @@ export default async function RegistrationHome({
           )}
         </div>
       </section>
+
+      <PublicReleaseFooter />
     </main>
   );
 }

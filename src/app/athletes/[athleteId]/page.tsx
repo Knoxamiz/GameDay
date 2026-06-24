@@ -309,13 +309,13 @@ export default async function AthleteDetailsPage({
 
   return (
     <main className="gd-dark-scope min-h-screen text-white">
-      <header className="border-b border-blue-100 bg-white/90 backdrop-blur">
+      <header className="border-b border-white/10 bg-slate-950/70 backdrop-blur">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-3 py-2.5 sm:px-5">
-          <Link className="text-lg font-black" href="/parent">
+          <Link className="text-lg font-black text-white" href="/parent">
             GameDay
           </Link>
           <Link
-            className="rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-black text-slate-700 hover:bg-slate-50"
+            className="rounded-md border border-blue-300/25 bg-blue-500/10 px-2.5 py-1.5 text-xs font-black text-blue-100 hover:bg-blue-500/20"
             href="/parent"
           >
             Parent Home
@@ -326,13 +326,13 @@ export default async function AthleteDetailsPage({
       <section className="mx-auto max-w-2xl px-3 py-4 sm:px-5">
         <Link
           href="/parent"
-          className="inline-flex rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-black text-slate-700 shadow-sm hover:bg-slate-50"
+          className="inline-flex rounded-md border border-blue-300/25 bg-blue-500/10 px-2.5 py-1.5 text-xs font-black text-blue-100 shadow-sm hover:bg-blue-500/20"
         >
           &larr; Parent Home
         </Link>
 
         <div className="gd-card-light mt-3 rounded-lg p-3">
-          <p className="text-xs font-black uppercase text-blue-700">
+          <p className="text-xs font-black uppercase text-blue-300">
             Player Home
           </p>
           <h1 className="mt-1 text-xl font-black tracking-tight">
@@ -430,7 +430,7 @@ export default async function AthleteDetailsPage({
                       eventId={nextEvent.id}
                       initialStatus={attendanceStatus}
                       compact
-                      surface="light"
+                      surface="dark"
                     />
                     <TransportationStatusPicker
                       athleteId={athlete.id}
@@ -441,7 +441,7 @@ export default async function AthleteDetailsPage({
                       paymentRequirements={paymentRequirements}
                       registrationId={registrationId}
                       registrationRequirements={registrationRequirements}
-                      surface="light"
+                      surface="dark"
                     />
                   </>
                 )}

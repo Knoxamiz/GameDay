@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import type { CoachAssignment } from "../data/coachAssignmentRecords";
 import type { Coach } from "../data/coaches";
 import type { Registration } from "../data/registrations";
+import AdminJoinLinkButton from "./AdminJoinLinkButton";
 
 type AdminTeamMembersManagerProps = {
   activeOrganizationId: string;
@@ -918,16 +919,25 @@ export default function AdminTeamMembersManager({
                         {assignment.email}
                       </span>
                     </span>
-                    <button
-                      className="rounded-md border border-red-200 px-2.5 py-1.5 text-xs font-black text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                      disabled={Boolean(savingKey)}
-                      onClick={() => void removeCoach(assignment)}
-                      type="button"
-                    >
-                      {savingKey === `coach-remove-${assignment.id}`
-                        ? "Removing..."
-                        : "Remove"}
-                    </button>
+                    <div className="flex shrink-0 items-start gap-2">
+                      <AdminJoinLinkButton
+                        className="rounded-md border border-blue-200 px-2.5 py-1.5 text-xs font-black text-blue-700 hover:bg-blue-50"
+                        errorMessage="Could not copy the coach access link."
+                        joinPath="/signup?intent=invite"
+                        label="Copy access"
+                        successMessage="Coach access link copied."
+                      />
+                      <button
+                        className="rounded-md border border-red-200 px-2.5 py-1.5 text-xs font-black text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        disabled={Boolean(savingKey)}
+                        onClick={() => void removeCoach(assignment)}
+                        type="button"
+                      >
+                        {savingKey === `coach-remove-${assignment.id}`
+                          ? "Removing..."
+                          : "Remove"}
+                      </button>
+                    </div>
                   </div>
                 ))
               )}

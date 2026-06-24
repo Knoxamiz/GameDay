@@ -1,4 +1,5 @@
 import Link from "next/link";
+import PublicReleaseFooter from "../components/PublicReleaseFooter";
 import SignupStartOptions, {
   type SignupIntent,
 } from "../components/SignupStartOptions";
@@ -88,6 +89,8 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           />
         </div>
       </section>
+
+      <PublicReleaseFooter />
     </main>
   );
 }

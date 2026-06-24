@@ -40,38 +40,50 @@ npm run check
 ## Current Foundation
 
 - Next.js app router.
-- Shared mock data in `src/app/data`.
+- Firebase Auth-backed login/session flow for parent, coach, and admin accounts.
+- Firestore-backed organizations, memberships, teams, invites, registrations,
+  rosters, events, attendance, transportation, and messages.
+- Firebase Storage-backed document upload path for registration requirements.
+- Server-verified production mutations for protected workflows.
 - Parent, coach, admin, event, team, registration, and athlete detail routes.
-- Parent, coach, and admin readiness flows using shared mock data.
-- Local mock state for attendance, transportation, ride share, registration, documents, payments, and Game Alert.
-- QR/team invite path at `/join/black-diamonds-12u`.
+- Parent, coach, and admin readiness flows using scoped live records.
+- QR/team invite paths at `/join/{inviteCode}`.
 - Health endpoint at `/api/health`.
 - Installable mobile metadata through `/manifest.webmanifest`.
+- Mock/demo fallback exists only for buildability and non-configured local
+  development; live production paths should not silently fall back.
 
 ## Public Beta Readiness
 
-The app is close to deployable as a public mobile preview, but it is not ready
-for real families yet.
+The app is no longer a disposable demo. It is the foundation of the production
+GameDay app, but app-store release still requires the roadmap in
+`docs/release-roadmap.md`.
 
 Safe to deploy as:
 
-- A demo/mobile beta preview.
-- A role-based product walkthrough.
-- A QR registration flow prototype using mock/local state.
+- A controlled production beta for real organizations using Firebase-backed
+  live paths.
+- A role-based product walkthrough using real account scope.
+- A QR registration and roster workflow with visible errors on live failures.
 
 Not safe to deploy as:
 
-- A real registration system.
-- A real document collection system.
-- A real payment system.
-- A private family/team portal.
+- A public app-store release without privacy, support, account deletion, and
+  app-review packaging work.
+- A real payment collection system until payment compliance and provider wiring
+  are complete.
+- An open public chat product until moderation/reporting workflows are added.
 
 ## Environment
 
-Optional public URL for metadata, robots, and sitemap:
+Optional public metadata and support settings:
 
 ```bash
 NEXT_PUBLIC_APP_URL=https://your-domain.example
+NEXT_PUBLIC_SUPPORT_EMAIL=support@your-domain.example
+
+HEALTH_DIAGNOSTIC_TOKEN=
+SUPPORT_OPERATIONS_TOKEN=
 ```
 
 Production provider wiring uses these environment variables:
@@ -118,26 +130,30 @@ FIREBASE_CLIENT_EMAIL=
 FIREBASE_PRIVATE_KEY=
 ```
 
-Required Firebase Auth custom claims for GameDay sessions:
+Bootstrap Firebase Auth custom claims for GameDay sessions:
 
 ```json
 {
-  "role": "parent",
-  "organizationIds": ["black-diamonds"],
-  "teamIds": ["black-diamonds-12u"],
-  "athleteIds": ["emma-smith"],
-  "parentId": "jennifer-smith"
+  "role": "admin",
+  "organizationIds": ["organization-id"]
 }
 ```
 
 For coaches, use `role: "coach"` with `coachId` and scoped `teamIds`. For
-admins, use `role: "admin"` with scoped `organizationIds`.
+admins, use `role: "admin"` with scoped `organizationIds`. Firestore
+organization memberships and coach assignments are now the long-term source of
+organization/team scope after bootstrap.
 
 After environment values are present, check `/api/health`. It should report:
 
 - `firebase.clientConfigured: true`
 - `firebase.adminConfigured: true`
 - `infrastructure.mode: configured` once Firebase and payment envs are all set
+
+In production, detailed `/api/health` diagnostics are restricted unless the
+request includes `x-gameday-health-token` matching `HEALTH_DIAGNOSTIC_TOKEN`.
+Account deletion support operations are restricted unless the request includes
+`x-gameday-support-token` matching `SUPPORT_OPERATIONS_TOKEN`.
 
 If Windows or OneDrive locks the generated `.next` output locally, use an
 alternate build output:
@@ -164,14 +180,20 @@ Production integration contracts live in `src/app/infrastructure`:
 - `firebaseAuth.ts` adapts login, logout, current user, and session claims.
 - `firebaseRepositories.ts` maps Firestore to GameDay repository interfaces.
 - `firebaseStorage.ts` adapts Firebase Storage document upload URLs.
-- `repositories.ts` defines the data access layer the mock data can migrate behind.
+- `repositories.ts` defines the data access layer shared by Firestore adapters and
+  non-configured local fallback records.
 - `storage.ts` defines document upload paths and signed upload contracts.
 - `payments.ts` defines payment checkout/webhook contracts without binding Stripe yet.
 
-Remaining real-provider work:
+Remaining release work:
 
-- Install and bind the Firebase Auth, Firestore, and Storage adapters.
-- Create Firebase project credentials and persistence rules.
-- Connect document upload storage through the storage provider contract.
-- Connect payment provider checkout and webhook handling.
-- Server-side validation for admin-only actions.
+- Keep the release roadmap in `docs/release-roadmap.md` current as blockers are
+  removed.
+- Use `docs/app-store-listing.md`, `docs/app-store-review-notes.md`,
+  `docs/app-privacy-labels.md`, and `docs/mobile-packaging.md` for the App
+  Store handoff.
+- Keep public health diagnostics restricted before public app-store submission.
+- Review privacy, terms, support, and account deletion surfaces before public
+  app-store submission.
+- Decide and implement payment provider/app-store compliance.
+- Package a mobile shell for TestFlight/App Store review.

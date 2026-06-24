@@ -15,6 +15,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/events",
     "/registration",
     "/teams",
+    "/privacy",
+    "/terms",
+    "/support",
+    "/account/delete",
   ];
   const dynamicRoutes = [
     ...athletes.map((athlete) => `/athletes/${athlete.id}`),

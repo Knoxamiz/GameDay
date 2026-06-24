@@ -112,6 +112,10 @@ function MemberCard({
   const ownerRestricted = membership.role === "owner" && authority !== "owner";
   const canEdit = Boolean(authority) && !isRemoved && !ownerRestricted;
   const canRestore = membership.status === "suspended" && Boolean(membership.uid);
+  const shouldExposeAccessLink =
+    membership.status === "invited" || membership.role === "coach";
+  const titleLooksLikeCoach =
+    membership.role !== "coach" && /coach/i.test(membership.title ?? "");
   const accessLinkLabel =
     membership.role === "coach" ? "Copy coach access link" : "Copy access link";
 
@@ -128,7 +132,10 @@ function MemberCard({
   }
 
   return (
-    <details className="gd-card-dark gd-card-interactive group overflow-hidden rounded-lg">
+    <details
+      className="gd-card-dark gd-card-interactive group overflow-hidden rounded-lg"
+      open={shouldExposeAccessLink}
+    >
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
         <span className="min-w-0">
           <span className="block truncate text-base font-black text-white">
@@ -159,10 +166,10 @@ function MemberCard({
         <p className="break-all text-xs font-semibold text-slate-400">
           {membership.email}
         </p>
-        {membership.status === "invited" && (
+        {shouldExposeAccessLink && (
           <div className="mt-2 flex flex-col gap-2 rounded-md border border-blue-300/20 bg-blue-500/10 p-2.5 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs font-semibold text-blue-100">
-              Send this to the invited person. They must use{" "}
+              Send this to the person. They must use{" "}
               <span className="font-black">{membership.email}</span>. Coach
               roster access appears after a team assignment is saved.
             </p>
@@ -174,6 +181,13 @@ function MemberCard({
               successMessage="Access link copied."
             />
           </div>
+        )}
+        {titleLooksLikeCoach && (
+          <p className="mt-2 rounded-md border border-orange-300/25 bg-orange-500/10 p-2 text-xs font-semibold text-orange-100">
+            This title says coach, but the app permission is{" "}
+            <span className="font-black">{getRoleLabel(membership.role)}</span>.
+            Change App Permission to Coach before sending coach access.
+          </p>
         )}
 
         <div className="mt-2.5 grid gap-2 lg:grid-cols-[1fr_1fr_150px]">
@@ -343,7 +357,10 @@ export default function AdminOrgMembersManager({
         </p>
       )}
 
-      <details className="gd-card-dark gd-card-interactive group overflow-hidden rounded-lg">
+      <details
+        className="gd-card-dark gd-card-interactive group overflow-hidden rounded-lg"
+        id="coach-access"
+      >
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
           <span>
             <span className="block text-base font-black text-white">
@@ -402,6 +419,9 @@ export default function AdminOrgMembersManager({
                 </option>
               ))}
             </select>
+            <span className="mt-1 block text-[11px] font-semibold text-slate-500">
+              Choose Coach when this person needs coach dashboard access.
+            </span>
           </label>
           <label className="block">
             <span className="text-xs font-bold uppercase text-slate-400">
