@@ -33,6 +33,7 @@ import AdminEventLifecycleManager from "./AdminEventLifecycleManager";
 import AdminJoinLinkButton from "./AdminJoinLinkButton";
 import AdminOrgMembersManager from "./AdminOrgMembersManager";
 import AdminTeamCreateForm from "./AdminTeamCreateForm";
+import AdminTeamCoachAccessManager from "./AdminTeamCoachAccessManager";
 import AdminTeamMembersManager from "./AdminTeamMembersManager";
 import BackButton from "./BackButton";
 import RegistrationInviteManager from "./RegistrationInviteManager";
@@ -1304,16 +1305,13 @@ export default function AdminOrganizationWorkspaceHome({
                         teamId={selectedTeam.id}
                         title="Editable roster"
                       />
+                      <AdminTeamCoachAccessManager
+                        activeOrganizationId={activeOrganizationId}
+                        coachAssignments={readModel.coachAssignments}
+                        coaches={readModel.coaches}
+                        teamId={selectedTeam.id}
+                      />
                       <div className="flex flex-wrap items-center gap-2 text-xs font-black">
-                        <Link
-                          className="rounded-md border border-white/15 px-2.5 py-1.5 text-slate-100 hover:bg-white/10"
-                          href={withActiveOrganization(
-                            "/admin/people#coach-access",
-                            activeOrganizationId,
-                          )}
-                        >
-                          Coach access
-                        </Link>
                         <Link
                           className="rounded-md border border-white/15 px-2.5 py-1.5 text-slate-100 hover:bg-white/10"
                           href={withActiveOrganization(
