@@ -206,13 +206,13 @@ export default async function CoachHome() {
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-200">
-                  Coach home
+                  Coach command
                 </p>
                 <h1 className="mt-1 text-2xl font-black tracking-tight">
                   {displayName}
                 </h1>
                 <p className="mt-1 text-sm font-semibold text-slate-500">
-                  Open the team that needs attention now.
+                  Roster, attendance, rides, and parent contact by team.
                 </p>
               </div>
               <div className="flex flex-wrap gap-1.5 text-xs font-black text-slate-300">
@@ -220,7 +220,7 @@ export default async function CoachHome() {
                   {coachTeams.length} teams
                 </span>
                 <span className="rounded-full border border-blue-300/15 bg-white/[0.045] px-2.5 py-1">
-                  {coachRosterRegistrations.length} rostered
+                  {coachRosterRegistrations.length} players
                 </span>
                 <span
                   className={`rounded-full border px-2.5 py-1 ${
@@ -229,7 +229,8 @@ export default async function CoachHome() {
                       : "border-blue-300/20 bg-blue-500/10 text-blue-100"
                   }`}
                 >
-                  {actionCount} actions
+                  {actionCount} {actionCount === 1 ? "item" : "items"} need
+                  attention
                 </span>
               </div>
             </div>
