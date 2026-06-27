@@ -335,7 +335,7 @@ export default async function ParentHome() {
         </div>
 
         {source === "error" && (
-          <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div className="mt-3 rounded-lg border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-100">
             <p className="font-black">Parent dashboard could not load.</p>
             <p className="mt-2">
               {errorMessage ??
@@ -345,13 +345,13 @@ export default async function ParentHome() {
         )}
 
         {source !== "error" && !hasRegistrations && (
-          <section className="gd-card-light mt-3 rounded-lg p-3">
-            <h2 className="text-lg font-black">Find your team</h2>
-            <p className="mt-1 text-sm font-semibold text-slate-600">
+          <section className="gd-card-dark mt-3 rounded-lg p-3">
+            <h2 className="text-lg font-black text-white">Find your team</h2>
+            <p className="mt-1 text-sm font-semibold text-slate-400">
               Search open GameDay registrations by organization and team.
             </p>
             <Link
-              className="mt-3 inline-flex rounded-md bg-blue-600 px-3 py-2 text-xs font-black text-white hover:bg-blue-700"
+              className="mt-3 inline-flex rounded-md bg-blue-600 px-3 py-2 text-xs font-black text-white hover:bg-blue-500"
               href="/registration"
             >
               Find open registration
@@ -360,36 +360,40 @@ export default async function ParentHome() {
         )}
 
         {parentTeamMessages.length > 0 && (
-          <details className="gd-card-light gd-card-interactive group mt-3 overflow-hidden rounded-lg">
+          <details className="gd-card-dark gd-card-interactive group mt-3 overflow-hidden rounded-lg">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
               <span>
-                <span className="block text-sm font-black">Messages</span>
-                <span className="mt-0.5 block text-xs font-semibold text-slate-500">
+                <span className="block text-sm font-black text-white">
+                  Messages
+                </span>
+                <span className="mt-0.5 block text-xs font-semibold text-slate-400">
                   Team updates for your players.
                 </span>
               </span>
               <span className="flex items-center gap-2">
-                <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-black text-blue-700">
+                <span className="rounded-full border border-blue-300/20 bg-blue-500/10 px-2 py-0.5 text-[11px] font-black text-blue-100">
                   {parentTeamMessages.length}
                 </span>
-                <span className="text-sm font-black text-blue-700 transition group-open:rotate-90">
+                <span className="text-sm font-black text-blue-200 transition group-open:rotate-90">
                   &gt;
                 </span>
               </span>
             </summary>
-            <div className="space-y-1.5 border-t border-slate-200 px-3 py-2.5">
+            <div className="space-y-1.5 border-t border-white/10 px-3 py-2.5">
               {parentTeamMessages.map((message) => (
                 <article
-                  className="rounded-md border border-blue-100/70 bg-white/70 p-2.5"
+                  className="rounded-md border border-white/10 bg-white/[0.04] p-2.5"
                   key={message.id}
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <h3 className="text-sm font-black">{message.subject}</h3>
-                    <span className="shrink-0 text-[11px] font-bold text-slate-500">
+                    <h3 className="text-sm font-black text-white">
+                      {message.subject}
+                    </h3>
+                    <span className="shrink-0 text-[11px] font-bold text-slate-400">
                       {teamNameById.get(message.teamId ?? "") ?? "Team"}
                     </span>
                   </div>
-                  <p className="mt-1 line-clamp-2 text-xs font-semibold text-slate-500">
+                  <p className="mt-1 line-clamp-2 text-xs font-semibold text-slate-400">
                     {message.content}
                   </p>
                 </article>
@@ -462,7 +466,7 @@ export default async function ParentHome() {
           </div>
           <div className="mt-2 space-y-1.5">
             {athleteRows.length === 0 ? (
-              <p className="gd-card-light rounded-lg border-dashed p-3 text-sm font-semibold text-slate-500">
+              <p className="gd-card-dark rounded-lg border-dashed p-3 text-sm font-semibold text-slate-400">
                 No players registered yet.
               </p>
             ) : (

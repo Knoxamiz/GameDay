@@ -79,54 +79,54 @@ function getDocumentRequirementsFromRegistration(
 
 function getActionToneClasses(tone: ParentNextActionTone) {
   if (tone === "ready") {
-    return "border-emerald-200 bg-emerald-50 text-emerald-800";
+    return "border-emerald-300/30 bg-emerald-500/10 text-emerald-100";
   }
 
   if (tone === "blocked") {
-    return "border-red-200 bg-red-50 text-red-800";
+    return "border-red-300/30 bg-red-500/10 text-red-100";
   }
 
   if (tone === "attention") {
-    return "border-orange-200 bg-orange-50 text-orange-800";
+    return "border-orange-300/30 bg-orange-500/10 text-orange-100";
   }
 
-  return "border-slate-200 bg-slate-50 text-slate-700";
+  return "border-white/10 bg-white/[0.04] text-slate-300";
 }
 
 function getRegistrationTone(status: RegistrationStatus) {
   if (status === "Approved") {
-    return "text-emerald-700";
+    return "text-emerald-200";
   }
 
   if (status === "Rejected" || status === "Withdrawn" || status === "Inactive") {
-    return "text-red-700";
+    return "text-red-200";
   }
 
-  return "text-orange-700";
+  return "text-orange-200";
 }
 
 function getRosterTone(status: RosterStatus) {
   if (status === "rostered") {
-    return "text-emerald-700";
+    return "text-emerald-200";
   }
 
   if (status === "inactive") {
-    return "text-red-700";
+    return "text-red-200";
   }
 
-  return "text-orange-700";
+  return "text-orange-200";
 }
 
 function getRequirementTone(open: number, blocked: number, needsReview: number) {
   if (blocked > 0) {
-    return "text-red-700";
+    return "text-red-200";
   }
 
   if (open > 0 || needsReview > 0) {
-    return "text-orange-700";
+    return "text-orange-200";
   }
 
-  return "text-emerald-700";
+  return "text-emerald-200";
 }
 
 function getPaymentLabel(paymentRequirements: PaymentRequirement[]) {
@@ -153,10 +153,10 @@ function getPaymentLabel(paymentRequirements: PaymentRequirement[]) {
 
 function getEventTone(status: string) {
   if (status === "canceled") {
-    return "bg-red-50 text-red-700";
+    return "border border-red-300/30 bg-red-500/10 text-red-100";
   }
 
-  return "bg-blue-50 text-blue-700";
+  return "border border-blue-300/20 bg-blue-500/10 text-blue-100";
 }
 
 function getEventUnavailableMessage(
@@ -331,14 +331,14 @@ export default async function AthleteDetailsPage({
           &larr; Parent Home
         </Link>
 
-        <div className="gd-card-light mt-3 rounded-lg p-3">
+        <div className="gd-card-dark mt-3 rounded-lg p-3">
           <p className="text-xs font-black uppercase text-blue-300">
             Player Home
           </p>
           <h1 className="mt-1 text-xl font-black tracking-tight">
             {athlete.name}
           </h1>
-          <p className="mt-1 text-xs font-semibold text-slate-600">
+          <p className="mt-1 text-xs font-semibold text-slate-400">
             {organizationName} / {teamName}
           </p>
           {teamDetail && (
@@ -367,58 +367,58 @@ export default async function AthleteDetailsPage({
                 Open
               </Link>
             ) : (
-              <p className="mt-2 rounded-md border border-current/20 bg-white/60 p-2.5 text-xs font-semibold">
+              <p className="mt-2 rounded-md border border-current/20 bg-white/[0.05] p-2.5 text-xs font-semibold">
                 Choose the matching option below.
               </p>
             )}
           </div>
         )}
 
-        <div className="gd-card-light mt-3 rounded-lg p-3">
+        <div className="gd-card-dark mt-3 rounded-lg p-3">
           <div className="px-1">
-            <h2 className="text-base font-black">Options</h2>
-            <p className="mt-1 text-xs font-semibold text-slate-600">
+            <h2 className="text-base font-black text-white">Options</h2>
+            <p className="mt-1 text-xs font-semibold text-slate-400">
               Pick what you need for {athlete.firstName || athlete.name}.
             </p>
           </div>
 
           <div className="mt-2 space-y-2">
-            <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white">
+            <details className="group overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
                 <span>
-                  <span className="block font-black text-slate-950">
+                  <span className="block font-black text-white">
                     Attendance & ride
                   </span>
-                  <span className="mt-0.5 block text-xs font-semibold text-slate-600">
+                  <span className="mt-0.5 block text-xs font-semibold text-slate-400">
                     {eventPlanLabel}
                   </span>
                 </span>
                 <span className="flex shrink-0 items-center gap-2">
                   {nextEvent && (
-                    <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">
+                    <span className="rounded-full border border-blue-300/20 bg-blue-500/10 px-3 py-1 text-xs font-black text-blue-100">
                       {eventUpdatesAllowed ? "Set plan" : "Locked"}
                     </span>
                   )}
-                  <span className="text-lg font-black text-blue-600 transition group-open:rotate-90">
+                  <span className="text-lg font-black text-blue-200 transition group-open:rotate-90">
                     &rsaquo;
                   </span>
                 </span>
               </summary>
-              <div className="border-t border-slate-200 p-3">
+              <div className="border-t border-white/10 p-3">
                 {nextEvent ? (
-                  <div className="rounded-md bg-white/70 p-3">
-                    <p className="font-black text-slate-950">
+                  <div className="rounded-md border border-white/10 bg-white/[0.04] p-3">
+                    <p className="font-black text-white">
                       {nextEvent.title}
                     </p>
-                    <p className="mt-1 text-xs font-semibold text-slate-600">
+                    <p className="mt-1 text-xs font-semibold text-slate-400">
                       {nextEventLabel}
                     </p>
-                    <p className="mt-1 text-xs font-semibold text-slate-600">
+                    <p className="mt-1 text-xs font-semibold text-slate-400">
                       {getEventLocationLabel(nextEvent)}
                     </p>
                   </div>
                 ) : (
-                  <p className="rounded-md border border-slate-200 bg-white/70 p-3 text-xs font-semibold text-slate-600">
+                  <p className="rounded-md border border-white/10 bg-white/[0.04] p-3 text-xs font-semibold text-slate-400">
                     {nextEventLabel}
                   </p>
                 )}
@@ -447,7 +447,7 @@ export default async function AthleteDetailsPage({
                 )}
 
                 {nextEvent && !eventUpdatesAllowed && (
-                  <p className="mt-3 rounded-md border border-slate-200 bg-white/70 p-2.5 text-xs font-semibold text-slate-600">
+                  <p className="mt-3 rounded-md border border-white/10 bg-white/[0.04] p-2.5 text-xs font-semibold text-slate-400">
                     {nextEvent.status === "canceled"
                       ? "Attendance and transportation updates are closed for this canceled event."
                       : "Attendance and transportation controls are available after this player is approved and rostered."}
@@ -456,26 +456,26 @@ export default async function AthleteDetailsPage({
               </div>
             </details>
 
-            <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white">
+            <details className="group overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
                 <span>
-                  <span className="block font-black text-slate-950">
+                  <span className="block font-black text-white">
                     Schedule
                   </span>
-                  <span className="mt-0.5 block text-xs font-semibold text-slate-600">
+                  <span className="mt-0.5 block text-xs font-semibold text-slate-400">
                     {nextEvent ? nextEventLabel : "No upcoming event"}
                   </span>
                 </span>
-                <span className="text-lg font-black text-blue-600 transition group-open:rotate-90">
+                <span className="text-lg font-black text-blue-200 transition group-open:rotate-90">
                   &rsaquo;
                 </span>
               </summary>
-              <div className="border-t border-slate-200 p-3">
+              <div className="border-t border-white/10 p-3">
                 {nextEvent ? (
                   <>
-                    <div className="rounded-md bg-white/70 p-3">
+                    <div className="rounded-md border border-white/10 bg-white/[0.04] p-3">
                       <div className="flex items-start justify-between gap-3">
-                        <p className="font-black text-slate-950">
+                        <p className="font-black text-white">
                           {nextEvent.title}
                         </p>
                         <span
@@ -486,10 +486,10 @@ export default async function AthleteDetailsPage({
                           {getEventStatusLabel(nextEvent)}
                         </span>
                       </div>
-                      <p className="mt-1 text-xs font-semibold text-slate-600">
+                      <p className="mt-1 text-xs font-semibold text-slate-400">
                         {nextEventLabel}
                       </p>
-                      <p className="mt-1 text-xs font-semibold text-slate-600">
+                      <p className="mt-1 text-xs font-semibold text-slate-400">
                         {getEventLocationLabel(nextEvent)}
                       </p>
                     </div>
@@ -501,7 +501,7 @@ export default async function AthleteDetailsPage({
                     </Link>
                   </>
                 ) : (
-                  <p className="rounded-md border border-slate-200 bg-white/70 p-3 text-xs font-semibold text-slate-600">
+                    <p className="rounded-md border border-white/10 bg-white/[0.04] p-3 text-xs font-semibold text-slate-400">
                     {nextEventLabel}
                   </p>
                 )}
@@ -509,10 +509,10 @@ export default async function AthleteDetailsPage({
             </details>
 
             {hasPlayerNeeds && (
-              <details className="group overflow-hidden rounded-lg border border-orange-200 bg-white">
+              <details className="group overflow-hidden rounded-lg border border-orange-300/25 bg-orange-500/10">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
                   <span>
-                    <span className="block font-black text-slate-950">
+                    <span className="block font-black text-white">
                       Player needs
                     </span>
                     <span
@@ -521,11 +521,11 @@ export default async function AthleteDetailsPage({
                       {playerNeedsLabel}
                     </span>
                   </span>
-                  <span className="text-lg font-black text-orange-600 transition group-open:rotate-90">
+                  <span className="text-lg font-black text-orange-200 transition group-open:rotate-90">
                     &rsaquo;
                   </span>
                 </summary>
-                <div className="border-t border-orange-100 p-3">
+                <div className="border-t border-orange-300/20 p-3">
                   <RegistrationRequirementsChecklist
                     athleteId={athlete.id}
                     documentRequirements={documentRequirements}
@@ -545,25 +545,25 @@ export default async function AthleteDetailsPage({
               </details>
             )}
 
-            <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white">
+            <details className="group overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
                 <span>
-                  <span className="block font-black text-slate-950">
+                  <span className="block font-black text-white">
                     Registration status
                   </span>
-                  <span className="mt-0.5 block text-xs font-semibold text-slate-600">
+                  <span className="mt-0.5 block text-xs font-semibold text-slate-400">
                     {getParentRegistrationStatusLabel(registrationStatus)} /
                     {" "}
                     {getParentRosterStatusLabel(rosterStatus)}
                   </span>
                 </span>
-                <span className="text-lg font-black text-blue-600 transition group-open:rotate-90">
+                <span className="text-lg font-black text-blue-200 transition group-open:rotate-90">
                   &rsaquo;
                 </span>
               </summary>
-              <div className="grid gap-2 border-t border-slate-200 p-3 text-xs sm:grid-cols-2">
-                <div className="rounded-md bg-white/70 p-2.5">
-                  <p className="font-semibold text-slate-500">Registration</p>
+              <div className="grid gap-2 border-t border-white/10 p-3 text-xs sm:grid-cols-2">
+                <div className="rounded-md border border-white/10 bg-white/[0.04] p-2.5">
+                  <p className="font-semibold text-slate-400">Registration</p>
                   <p
                     className={`mt-1 font-black ${getRegistrationTone(
                       registrationStatus,
@@ -572,23 +572,23 @@ export default async function AthleteDetailsPage({
                     {getParentRegistrationStatusLabel(registrationStatus)}
                   </p>
                 </div>
-                <div className="rounded-md bg-white/70 p-2.5">
-                  <p className="font-semibold text-slate-500">Roster</p>
+                <div className="rounded-md border border-white/10 bg-white/[0.04] p-2.5">
+                  <p className="font-semibold text-slate-400">Roster</p>
                   <p className={`mt-1 font-black ${getRosterTone(rosterStatus)}`}>
                     {getParentRosterStatusLabel(rosterStatus)}
                   </p>
                 </div>
-                <div className="rounded-md bg-white/70 p-2.5">
-                  <p className="font-semibold text-slate-500">Readiness</p>
+                <div className="rounded-md border border-white/10 bg-white/[0.04] p-2.5">
+                  <p className="font-semibold text-slate-400">Readiness</p>
                   <p className={`mt-1 font-black ${requirementTone}`}>
                     {requirementSummary.label}
                   </p>
-                  <p className="mt-1 text-xs font-semibold text-slate-500">
+                  <p className="mt-1 text-xs font-semibold text-slate-400">
                     {getParentRequirementCountLabel(requirementSummary)}
                   </p>
                 </div>
-                <div className="rounded-md bg-white/70 p-2.5">
-                  <p className="font-semibold text-slate-500">Payment</p>
+                <div className="rounded-md border border-white/10 bg-white/[0.04] p-2.5">
+                  <p className="font-semibold text-slate-400">Payment</p>
                   <p
                     className={`mt-1 font-black ${getRequirementTone(
                       paymentSummary.open,
@@ -603,36 +603,36 @@ export default async function AthleteDetailsPage({
             </details>
 
             {registration && (
-              <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white">
+              <details className="group overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
                   <span>
-                    <span className="block font-black text-slate-950">
+                    <span className="block font-black text-white">
                       Player info
                     </span>
-                    <span className="mt-0.5 block text-xs font-semibold text-slate-600">
+                    <span className="mt-0.5 block text-xs font-semibold text-slate-400">
                       View details or request a correction.
                     </span>
                   </span>
-                  <span className="text-lg font-black text-blue-600 transition group-open:rotate-90">
+                  <span className="text-lg font-black text-blue-200 transition group-open:rotate-90">
                     &rsaquo;
                   </span>
                 </summary>
-                <div className="border-t border-slate-200 p-3">
+                <div className="border-t border-white/10 p-3">
                   <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="rounded-md bg-white/70 p-2.5">
-                      <p className="font-semibold text-slate-500">Grade</p>
-                      <p className="mt-1 font-black text-slate-950">
+                    <div className="rounded-md border border-white/10 bg-white/[0.04] p-2.5">
+                      <p className="font-semibold text-slate-400">Grade</p>
+                      <p className="mt-1 font-black text-white">
                         {athlete.grade || "Not listed"}
                       </p>
                     </div>
-                    <div className="rounded-md bg-white/70 p-2.5">
-                      <p className="font-semibold text-slate-500">Jersey</p>
-                      <p className="mt-1 font-black text-slate-950">
+                    <div className="rounded-md border border-white/10 bg-white/[0.04] p-2.5">
+                      <p className="font-semibold text-slate-400">Jersey</p>
+                      <p className="mt-1 font-black text-white">
                         {athlete.jerseySize || "Not listed"}
                       </p>
                     </div>
                   </div>
-                  <p className="mt-2 rounded-md bg-white/70 p-2.5 text-xs font-semibold text-slate-600">
+                  <p className="mt-2 rounded-md border border-white/10 bg-white/[0.04] p-2.5 text-xs font-semibold text-slate-400">
                     {athlete.school || "School not listed"}
                   </p>
                   <ParentRegistrationLifecyclePanel

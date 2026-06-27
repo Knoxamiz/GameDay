@@ -32,23 +32,23 @@ type ParentAthleteCardProps = {
 
 function getStatusLightClass(tone: ParentPlayerStatusTone) {
   if (tone === "green") {
-    return "bg-emerald-600 text-white shadow-sm shadow-emerald-200 ring-1 ring-emerald-700/10";
+    return "border-emerald-300/40 bg-emerald-400/15 text-emerald-100 shadow-[0_0_18px_rgba(16,185,129,0.22)]";
   }
 
   if (tone === "red") {
-    return "bg-red-50 text-red-700";
+    return "border-red-300/35 bg-red-500/15 text-red-100";
   }
 
   if (tone === "yellow") {
-    return "bg-orange-50 text-orange-700";
+    return "border-orange-300/35 bg-orange-500/15 text-orange-100";
   }
 
-  return "bg-slate-100 text-slate-600";
+  return "border-white/10 bg-white/[0.055] text-slate-300";
 }
 
 function getStatusDotClass(tone: ParentPlayerStatusTone) {
   if (tone === "green") {
-    return "bg-white";
+    return "bg-emerald-300";
   }
 
   if (tone === "red") {
@@ -74,21 +74,21 @@ export default function ParentAthleteCard({
   const actionHref = nextAction.href ?? `/athletes/${athleteId}`;
 
   return (
-    <details className="gd-card-light gd-card-interactive group overflow-hidden rounded-lg">
-      <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-2 px-2.5 py-2 transition hover:bg-blue-50 [&::-webkit-details-marker]:hidden">
+    <details className="gd-card-dark gd-card-interactive group overflow-hidden rounded-lg">
+      <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-2 px-2.5 py-2 transition hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
         <span className="min-w-0">
-          <span className="block truncate text-sm font-black">
+          <span className="block truncate text-sm font-black text-white">
             {athleteName}
           </span>
           {teamLabel && (
-            <span className="mt-0.5 block truncate text-[11px] font-semibold text-slate-500">
+            <span className="mt-0.5 block truncate text-[11px] font-semibold text-slate-400">
               {teamLabel}
             </span>
           )}
         </span>
         <span className="flex shrink-0 items-center gap-2">
           <span
-            className={`inline-flex max-w-28 items-center gap-1.5 truncate rounded-md px-2 py-1 text-[10px] font-black ${getStatusLightClass(
+            className={`inline-flex max-w-28 items-center gap-1.5 truncate rounded-md border px-2 py-1 text-[10px] font-black ${getStatusLightClass(
               status.tone,
             )}`}
             title={status.description}
@@ -101,23 +101,23 @@ export default function ParentAthleteCard({
             />
             {status.label}
           </span>
-          <span className="text-sm font-black text-blue-700 transition group-open:rotate-90">
+          <span className="text-sm font-black text-blue-200 transition group-open:rotate-90">
             &gt;
           </span>
         </span>
       </summary>
 
-      <div className="border-t border-slate-200 px-2.5 pb-2.5 pt-2">
+      <div className="border-t border-white/10 px-2.5 pb-2.5 pt-2">
         {hasAccountAlert && (
-          <div className="mb-2.5 rounded-md border border-red-200 bg-red-50 p-2.5">
-            <p className="text-sm font-black text-red-800">
+          <div className="mb-2.5 rounded-md border border-red-300/30 bg-red-500/10 p-2.5">
+            <p className="text-sm font-black text-red-100">
               {nextAction.label}
             </p>
-            <p className="mt-1 text-xs font-semibold text-red-700">
+            <p className="mt-1 text-xs font-semibold text-red-200">
               {nextAction.description}
             </p>
             <Link
-              className="mt-2 inline-flex rounded-md bg-red-600 px-2.5 py-1.5 text-xs font-black text-white hover:bg-red-700"
+              className="mt-2 inline-flex rounded-md bg-red-600 px-2.5 py-1.5 text-xs font-black text-white hover:bg-red-500"
               href={actionHref}
             >
               Open alert
@@ -126,31 +126,31 @@ export default function ParentAthleteCard({
         )}
 
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-sm font-black">Schedule</h3>
-          <Link className="text-xs font-black text-blue-700" href="/events">
+          <h3 className="text-sm font-black text-white">Schedule</h3>
+          <Link className="text-xs font-black text-blue-200" href="/events">
             View all
           </Link>
         </div>
 
         <div className="mt-2 space-y-1.5">
           {scheduleItems.length === 0 ? (
-            <p className="rounded-md border border-dashed border-blue-200/70 bg-white/70 p-2.5 text-xs font-semibold text-slate-500">
+            <p className="rounded-md border border-dashed border-white/15 bg-white/[0.03] p-2.5 text-xs font-semibold text-slate-400">
               No upcoming schedule for this player.
             </p>
           ) : (
             scheduleItems.map((event) => (
               <Link
-                className={`flex items-center justify-between gap-2 rounded-md border px-2.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] transition hover:border-blue-300 hover:bg-blue-50 ${
+                className={`flex items-center justify-between gap-2 rounded-md border px-2.5 py-2 transition hover:border-blue-300/40 hover:bg-blue-500/10 ${
                   event.isToday
-                    ? "border-emerald-300 bg-emerald-50 ring-1 ring-emerald-200"
-                    : "border-slate-200 bg-white"
+                    ? "border-emerald-300/35 bg-emerald-500/10 ring-1 ring-emerald-300/20"
+                    : "border-white/10 bg-white/[0.04]"
                 }`}
                 href={event.href}
                 key={event.id}
               >
                 <span className="min-w-0">
                   <span className="flex min-w-0 items-center gap-2">
-                    <span className="truncate text-xs font-black">
+                    <span className="truncate text-xs font-black text-white">
                       {event.title}
                     </span>
                     {event.isToday && (
@@ -159,13 +159,15 @@ export default function ParentAthleteCard({
                       </span>
                     )}
                   </span>
-                  <span className="mt-0.5 block truncate text-[11px] font-semibold text-slate-500">
+                  <span className="mt-0.5 block truncate text-[11px] font-semibold text-slate-400">
                     {event.locationLabel}
                   </span>
                 </span>
-                <span className="shrink-0 text-right text-[11px] font-black text-slate-700">
+                <span className="shrink-0 text-right text-[11px] font-black text-slate-200">
                   {event.dateLabel}
-                  <span className="block font-semibold">{event.timeLabel}</span>
+                  <span className="block font-semibold text-slate-400">
+                    {event.timeLabel}
+                  </span>
                 </span>
               </Link>
             ))
@@ -173,7 +175,7 @@ export default function ParentAthleteCard({
         </div>
 
         <Link
-          className="mt-2 flex min-h-8 items-center justify-center rounded-md border border-blue-100 bg-white/80 px-2.5 py-1.5 text-[11px] font-black text-slate-700 hover:bg-blue-50"
+          className="mt-2 flex min-h-8 items-center justify-center rounded-md border border-blue-300/20 bg-blue-500/10 px-2.5 py-1.5 text-[11px] font-black text-blue-100 hover:bg-blue-500/20"
           href={`/athletes/${athleteId}`}
         >
           Player options

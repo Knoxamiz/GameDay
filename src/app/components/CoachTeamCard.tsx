@@ -20,14 +20,14 @@ type CoachTeamCardProps = {
 
 function getActionToneClasses(tone: CoachNextActionTone) {
   if (tone === "ready") {
-    return "border-blue-200 bg-blue-50 text-blue-900";
+    return "border-blue-300/25 bg-blue-500/10 text-blue-100";
   }
 
   if (tone === "attention") {
-    return "border-orange-200 bg-orange-50 text-orange-900";
+    return "border-orange-300/30 bg-orange-500/10 text-orange-100";
   }
 
-  return "border-slate-200 bg-slate-50 text-slate-700";
+  return "border-white/10 bg-white/[0.035] text-slate-200";
 }
 
 function getActionButtonClass(tone: CoachNextActionTone) {
@@ -40,22 +40,22 @@ function getActionButtonClass(tone: CoachNextActionTone) {
 
 function getEventTone(status: string) {
   if (status === "canceled") {
-    return "bg-red-50 text-red-700";
+    return "border-red-300/30 bg-red-500/15 text-red-100";
   }
 
-  return "bg-emerald-50 text-emerald-700";
+  return "border-emerald-300/30 bg-emerald-500/15 text-emerald-100";
 }
 
 function getResponseTone(status: string) {
   if (status === "Attending" || status === "Driving Self") {
-    return "bg-emerald-50 text-emerald-700";
+    return "border-emerald-300/30 bg-emerald-500/15 text-emerald-100";
   }
 
   if (status === "Not Attending" || status === "Needs Ride") {
-    return "bg-yellow-50 text-yellow-700";
+    return "border-yellow-300/30 bg-yellow-500/15 text-yellow-100";
   }
 
-  return "bg-slate-100 text-slate-600";
+  return "border-white/10 bg-white/[0.05] text-slate-300";
 }
 
 function getMessageAudienceLabel(audience: string[]) {
@@ -64,6 +64,72 @@ function getMessageAudienceLabel(audience: string[]) {
   );
 
   return labels.join(" + ");
+}
+
+function getEventStartValue(event: NonNullable<CoachTeamHomeCard["nextEvent"]>) {
+  return event.startsAt || event.startDateTime || event.date || "";
+}
+
+function getDayKey(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "America/New_York",
+    year: "numeric",
+  }).format(date);
+}
+
+function isTodayEvent(event: NonNullable<CoachTeamHomeCard["nextEvent"]>) {
+  const eventStartValue = getEventStartValue(event);
+
+  if (!eventStartValue) {
+    return false;
+  }
+
+  return getDayKey(eventStartValue) === getDayKey(new Date().toISOString());
+}
+
+function getSignal({
+  nextActionTone,
+  nextEvent,
+}: {
+  nextActionTone: CoachNextActionTone;
+  nextEvent?: CoachTeamHomeCard["nextEvent"];
+}) {
+  if (nextEvent && isTodayEvent(nextEvent) && nextEvent.status !== "canceled") {
+    return {
+      label: "Today",
+      className:
+        "border-emerald-300/40 bg-emerald-400/15 text-emerald-100 shadow-[0_0_22px_rgba(16,185,129,0.2)]",
+    };
+  }
+
+  if (nextActionTone === "attention") {
+    return {
+      label: "Needs responses",
+      className:
+        "border-orange-300/40 bg-orange-500/15 text-orange-100 shadow-[0_0_20px_rgba(249,115,22,0.14)]",
+    };
+  }
+
+  if (nextActionTone === "ready") {
+    return {
+      label: "Ready",
+      className:
+        "border-blue-300/35 bg-blue-500/15 text-blue-100 shadow-[0_0_20px_rgba(59,130,246,0.14)]",
+    };
+  }
+
+  return {
+    label: "Waiting",
+    className: "border-white/10 bg-white/[0.055] text-slate-300",
+  };
 }
 
 export default function CoachTeamCard({ card }: CoachTeamCardProps) {
@@ -86,6 +152,10 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
     responseSummary,
     rosteredAthletes: registrations.length,
     teamHref,
+  });
+  const signal = getSignal({
+    nextActionTone: nextAction.tone,
+    nextEvent,
   });
   const rosterPreview = card.rosterPlayers.slice(0, 6).map((rosterPlayer) => {
     const attendanceStatus =
@@ -110,180 +180,159 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
   });
 
   return (
-    <article className="gd-card-light rounded-lg p-3">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+    <article className="gd-card-dark rounded-lg p-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h2 className="truncate text-lg font-black text-slate-950">
+          <h2 className="truncate text-lg font-black text-white">
             {team.name}
           </h2>
-          <p className="mt-0.5 truncate text-xs font-semibold text-slate-500">
+          <p className="mt-0.5 truncate text-xs font-semibold text-slate-400">
             {card.organization?.name ?? "Organization unavailable"}
           </p>
           {[team.division, team.season].filter(Boolean).length > 0 && (
-            <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
               {[team.division, team.season].filter(Boolean).join(" / ")}
             </p>
           )}
         </div>
-        <span className="w-fit rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-black text-blue-700">
-          {registrations.length} rostered
-        </span>
+        <div className="flex shrink-0 items-center gap-2">
+          <span
+            className={`rounded-full border px-2.5 py-1 text-xs font-black ${signal.className}`}
+          >
+            {signal.label}
+          </span>
+          <Link
+            className="rounded-md border border-blue-300/25 bg-blue-500/10 px-3 py-1.5 text-xs font-black text-blue-100 hover:bg-blue-500/20"
+            href={teamHref}
+          >
+            Open
+          </Link>
+        </div>
       </div>
 
       <div
-        className={`mt-3 rounded-lg border p-3 ${getActionToneClasses(
+        className={`mt-3 rounded-md border px-3 py-2 ${getActionToneClasses(
           nextAction.tone,
         )}`}
       >
-        <p className="text-xs font-black uppercase tracking-wide opacity-80">
-          Main target
-        </p>
-        <div className="mt-1.5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-base font-black">{nextAction.label}</p>
-            <p className="mt-0.5 text-xs font-semibold opacity-90">
-              {nextAction.description}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-black uppercase tracking-wide opacity-75">
+              Coach target
             </p>
+            {nextEvent ? (
+              <>
+                <p className="mt-0.5 truncate text-sm font-black">
+                  {nextEvent.title}
+                </p>
+                <p className="mt-0.5 text-xs font-semibold opacity-85">
+                  {getEventDateLabel(nextEvent)} - {getEventTimeLabel(nextEvent)}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="mt-0.5 text-sm font-black">{nextAction.label}</p>
+                <p className="mt-0.5 text-xs font-semibold opacity-85">
+                  {nextAction.description}
+                </p>
+              </>
+            )}
           </div>
           {nextAction.href && (
             <Link
               href={nextAction.href}
-              className={`rounded-md px-3 py-2 text-center text-xs font-black ${getActionButtonClass(
+              className={`shrink-0 rounded-md px-3 py-2 text-center text-xs font-black ${getActionButtonClass(
                 nextAction.tone,
               )}`}
             >
-              Open
+              {nextAction.label}
             </Link>
           )}
         </div>
       </div>
 
-      <div className="mt-2.5 grid grid-cols-3 gap-2 text-center text-xs font-bold">
-        <div className="rounded-md border border-blue-100/70 bg-white/65 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
-          <p className="text-slate-500">Roster</p>
-          <p className="mt-0.5 text-base text-slate-950">
-            {registrations.length}
-          </p>
-        </div>
-        <div className="rounded-md border border-blue-100/70 bg-white/65 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
-          <p className="text-slate-500">Ready</p>
-          <p
-            className={`mt-0.5 text-base ${
-              readiness.openItems > 0 ? "text-orange-600" : "text-blue-600"
-            }`}
-          >
-            {readiness.readyAthletes}
-          </p>
-        </div>
-        <div className="rounded-md border border-blue-100/70 bg-white/65 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
-          <p className="text-slate-500">Open</p>
-          <p
-            className={`mt-0.5 text-base ${
-              readiness.openItems > 0 ? "text-orange-600" : "text-blue-600"
-            }`}
-          >
-            {readiness.openItems}
-          </p>
-        </div>
-      </div>
-
-      <section className="gd-card-light mt-2.5 rounded-lg p-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-xs font-black uppercase tracking-wide text-slate-500">
-              Next event
-            </p>
-            {nextEvent ? (
-              <>
-                <p className="mt-1 truncate text-sm font-black text-slate-950">
-                  {nextEvent.title}
-                </p>
-                <p className="mt-0.5 text-xs font-semibold text-slate-600">
-                  {getEventDateLabel(nextEvent)} - {getEventTimeLabel(nextEvent)}
-                </p>
-                <p className="mt-0.5 truncate text-xs text-slate-500">
-                  {getEventLocationLabel(nextEvent)}
-                </p>
-              </>
-            ) : (
-              <p className="mt-1 text-xs font-semibold text-slate-500">
-                No upcoming events scheduled for this team.
-              </p>
-            )}
-          </div>
-          {nextEvent && (
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-bold text-slate-300">
+        <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">
+          {registrations.length} rostered
+        </span>
+        <span
+          className={`rounded-full border px-2.5 py-1 ${
+            readiness.openItems > 0
+              ? "border-orange-300/30 bg-orange-500/10 text-orange-100"
+              : "border-blue-300/25 bg-blue-500/10 text-blue-100"
+          }`}
+        >
+          {readiness.openItems > 0
+            ? `${readiness.openItems} open player items`
+            : readiness.label}
+        </span>
+        {nextEvent && (
+          <>
             <span
-              className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-black ${getEventTone(
+              className={`rounded-full border px-2.5 py-1 text-xs font-black ${getEventTone(
                 nextEvent.status,
               )}`}
             >
               {getEventStatusLabel(nextEvent)}
             </span>
-          )}
-        </div>
-
-        {nextEvent && (
-          <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-            <div className="rounded-md border border-blue-100/70 bg-white/65 p-2.5">
-              <p className="font-semibold text-slate-500">Attendance</p>
-              <p className="mt-0.5 font-black text-slate-950">
-                {responseSummary.attendanceSubmitted} of {registrations.length}
-              </p>
-            </div>
-            <div className="rounded-md border border-blue-100/70 bg-white/65 p-2.5">
-              <p className="font-semibold text-slate-500">Transportation</p>
-              <p className="mt-0.5 font-black text-slate-950">
-                {responseSummary.transportationSubmitted} of{" "}
-                {registrations.length}
-              </p>
-            </div>
-          </div>
+            <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">
+              Attendance {responseSummary.attendanceSubmitted}/
+              {registrations.length}
+            </span>
+            <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">
+              Rides {responseSummary.transportationSubmitted}/
+              {registrations.length}
+            </span>
+            <span className="min-w-0 truncate rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">
+              {getEventLocationLabel(nextEvent)}
+            </span>
+          </>
         )}
-      </section>
+      </div>
 
-      <details className="gd-card-light gd-card-interactive group mt-2.5 overflow-hidden rounded-lg">
+      <details className="group mt-2 overflow-hidden rounded-md border border-white/10 bg-white/[0.04]">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3">
           <span>
-            <span className="block font-black text-slate-950">
-              Team messages
+            <span className="block text-sm font-black text-white">
+              Messages
             </span>
-            <span className="mt-0.5 block text-xs font-semibold text-slate-500">
-              Send updates to parents or coaches.
+            <span className="mt-0.5 block text-xs font-semibold text-slate-400">
+              Send parent or coach updates when needed.
             </span>
           </span>
           <span className="flex items-center gap-2">
-            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-black text-blue-700">
+            <span className="rounded-full border border-blue-300/20 bg-blue-500/10 px-2 py-0.5 text-[11px] font-black text-blue-100">
               {card.teamMessages.length}
             </span>
-            <span className="text-lg font-black text-blue-600 transition group-open:rotate-90">
+            <span className="text-lg font-black text-blue-200 transition group-open:rotate-90">
               &rsaquo;
             </span>
           </span>
         </summary>
-        <div className="space-y-2 border-t border-slate-200 p-3 text-sm">
+        <div className="space-y-2 border-t border-white/10 p-3 text-sm">
           <CoachTeamMessageForm teamId={team.id} />
           <div className="space-y-1.5">
             {card.teamMessages.length > 0 ? (
               card.teamMessages.map((message) => (
                 <article
-                  className="rounded-md border border-blue-100/70 bg-white/70 p-2.5"
+                  className="rounded-md border border-white/10 bg-white/[0.04] p-2.5"
                   key={message.id}
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <h3 className="text-sm font-black text-slate-950">
+                    <h3 className="text-sm font-black text-white">
                       {message.subject}
                     </h3>
-                    <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-black text-blue-700">
+                    <span className="shrink-0 rounded-full border border-blue-300/20 bg-blue-500/10 px-2 py-0.5 text-[10px] font-black text-blue-100">
                       {getMessageAudienceLabel(message.audience)}
                     </span>
                   </div>
-                  <p className="mt-1 line-clamp-2 text-xs font-semibold text-slate-500">
+                  <p className="mt-1 line-clamp-2 text-xs font-semibold text-slate-400">
                     {message.content}
                   </p>
                 </article>
               ))
             ) : (
-              <p className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-3 text-slate-500">
+              <p className="rounded-md border border-dashed border-white/15 bg-white/[0.03] p-3 text-slate-400">
                 No team messages yet.
               </p>
             )}
@@ -291,40 +340,45 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
         </div>
       </details>
 
-      <details className="gd-card-light gd-card-interactive group mt-2.5 overflow-hidden rounded-lg">
+      <details className="group mt-2 overflow-hidden rounded-md border border-white/10 bg-white/[0.04]">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3">
           <span>
-            <span className="block font-black text-slate-950">
-              Roster & parent contact
+            <span className="block text-sm font-black text-white">
+              Roster
             </span>
-            <span className="mt-0.5 block text-xs font-semibold text-slate-500">
-              Open only when you need player contact or response details.
+            <span className="mt-0.5 block text-xs font-semibold text-slate-400">
+              Parent contact and response status.
             </span>
           </span>
-          <span className="text-lg font-black text-blue-600 transition group-open:rotate-90">
-            &rsaquo;
+          <span className="flex items-center gap-2">
+            <span className="rounded-full border border-white/10 bg-white/[0.05] px-2 py-0.5 text-[11px] font-black text-slate-200">
+              {registrations.length}
+            </span>
+            <span className="text-lg font-black text-blue-200 transition group-open:rotate-90">
+              &rsaquo;
+            </span>
           </span>
         </summary>
-        <div className="space-y-2 border-t border-slate-200 p-3 text-sm">
+        <div className="space-y-2 border-t border-white/10 p-3 text-sm">
           {rosterPreview.length > 0 ? (
             rosterPreview.map((player) => (
               <div
-                className="rounded-md border border-blue-100/70 bg-white/70 p-2.5"
+                className="rounded-md border border-white/10 bg-white/[0.04] p-2.5"
                 key={player.registration.id}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="truncate font-black text-slate-950">
+                    <p className="truncate font-black text-white">
                       {player.registration.athleteName ?? "Rostered athlete"}
                     </p>
-                    <p className="mt-1 truncate text-xs font-semibold text-slate-500">
+                    <p className="mt-1 truncate text-xs font-semibold text-slate-400">
                       {player.parent?.name ||
                         player.registration.parentName ||
                         "Parent"}
                     </p>
                   </div>
                   <span
-                    className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-black ${getResponseTone(
+                    className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-black ${getResponseTone(
                       player.attendanceStatus,
                     )}`}
                   >
@@ -333,7 +387,7 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-black ${getResponseTone(
+                    className={`rounded-full border px-2.5 py-1 text-xs font-black ${getResponseTone(
                       player.transportationStatus,
                     )}`}
                   >
@@ -341,7 +395,7 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
                   </span>
                   {player.parent?.email && (
                     <a
-                      className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-black text-slate-700 hover:bg-slate-100"
+                      className="rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 text-xs font-black text-slate-200 hover:bg-white/10"
                       href={`mailto:${player.parent.email}`}
                     >
                       Email parent
@@ -349,14 +403,14 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
                   )}
                   {player.parent?.phone && (
                     <a
-                      className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-black text-slate-700 hover:bg-slate-100"
+                      className="rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 text-xs font-black text-slate-200 hover:bg-white/10"
                       href={`tel:${player.parent.phone}`}
                     >
                       Call
                     </a>
                   )}
                   {!player.parent?.email && !player.parent?.phone && (
-                    <span className="text-xs font-semibold text-slate-500">
+                    <span className="text-xs font-semibold text-slate-400">
                       No parent contact listed
                     </span>
                   )}
@@ -364,12 +418,12 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
               </div>
             ))
           ) : (
-            <p className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-3 text-slate-500">
+            <p className="rounded-md border border-dashed border-white/15 bg-white/[0.03] p-3 text-slate-400">
               No rostered athletes yet.
             </p>
           )}
           {registrations.length > rosterPreview.length && (
-            <p className="rounded-md border border-slate-200 bg-white p-3 text-center text-xs font-black text-slate-500">
+            <p className="rounded-md border border-white/10 bg-white/[0.04] p-3 text-center text-xs font-black text-slate-400">
               {registrations.length - rosterPreview.length} more on the full
               team page
             </p>
@@ -377,20 +431,20 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
         </div>
       </details>
 
-      <div className={`mt-2.5 grid gap-2 ${nextEvent ? "grid-cols-2" : ""}`}>
+      <div className={`mt-2 grid gap-2 ${nextEvent ? "grid-cols-2" : ""}`}>
         {nextEvent && (
           <Link
             href={`/events/${nextEvent.id}`}
-            className="block rounded-md bg-blue-600 py-2 text-center text-xs font-black text-white hover:bg-blue-700"
+            className="block rounded-md bg-blue-600 py-2 text-center text-xs font-black text-white hover:bg-blue-500"
           >
-            Event Details
+            Event
           </Link>
         )}
         <Link
           href={teamHref}
-          className="block rounded-md border border-slate-200 bg-white py-2 text-center text-xs font-black text-slate-700 hover:bg-slate-50"
+          className="block rounded-md border border-white/10 bg-white/[0.05] py-2 text-center text-xs font-black text-slate-200 hover:bg-white/10"
         >
-          Team Details
+          Team
         </Link>
       </div>
     </article>

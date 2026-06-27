@@ -91,8 +91,8 @@ function CoachSidebarLink({
       aria-current={active ? "page" : undefined}
       className={`flex items-center justify-center gap-0 rounded-md px-3 py-2.5 text-sm font-semibold lg:justify-start lg:gap-3 ${
         active
-          ? "bg-blue-50 text-blue-700"
-          : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+          ? "bg-blue-600 text-white shadow-[0_0_24px_rgba(37,99,235,0.22)]"
+          : "text-slate-400 hover:bg-white/10 hover:text-white"
       }`}
       href={href}
     >
@@ -205,41 +205,37 @@ export default async function CoachHome() {
           <section className="mx-auto max-w-5xl px-3 py-4 sm:px-5">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <h1 className="text-2xl font-black tracking-tight">
-                  Coach Home
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-200">
+                  Coach home
+                </p>
+                <h1 className="mt-1 text-2xl font-black tracking-tight">
+                  {displayName}
                 </h1>
                 <p className="mt-1 text-sm font-semibold text-slate-500">
-                  Start with the team that needs you now.
+                  Open the team that needs attention now.
                 </p>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-center text-xs font-bold lg:w-80">
-                <div className="gd-card-light rounded-lg p-2.5">
-                  <p className="text-slate-500">Teams</p>
-                  <p className="mt-0.5 text-lg text-slate-950">
-                    {coachTeams.length}
-                  </p>
-                </div>
-                <div className="gd-card-light rounded-lg p-2.5">
-                  <p className="text-slate-500">Rostered</p>
-                  <p className="mt-0.5 text-lg text-slate-950">
-                    {coachRosterRegistrations.length}
-                  </p>
-                </div>
-                <div className="gd-card-light rounded-lg p-2.5">
-                  <p className="text-slate-500">Actions</p>
-                  <p
-                    className={`mt-0.5 text-lg ${
-                      actionCount > 0 ? "text-orange-600" : "text-blue-600"
-                    }`}
-                  >
-                    {actionCount}
-                  </p>
-                </div>
+              <div className="flex flex-wrap gap-1.5 text-xs font-black text-slate-300">
+                <span className="rounded-full border border-blue-300/15 bg-white/[0.045] px-2.5 py-1">
+                  {coachTeams.length} teams
+                </span>
+                <span className="rounded-full border border-blue-300/15 bg-white/[0.045] px-2.5 py-1">
+                  {coachRosterRegistrations.length} rostered
+                </span>
+                <span
+                  className={`rounded-full border px-2.5 py-1 ${
+                    actionCount > 0
+                      ? "border-orange-300/30 bg-orange-500/10 text-orange-100"
+                      : "border-blue-300/20 bg-blue-500/10 text-blue-100"
+                  }`}
+                >
+                  {actionCount} actions
+                </span>
               </div>
             </div>
 
             {upcomingEventCount > 0 && (
-              <p className="gd-card-light mt-3 rounded-lg p-2.5 text-xs font-semibold text-blue-800">
+              <p className="mt-3 rounded-md border border-blue-300/20 bg-blue-500/10 p-2.5 text-xs font-semibold text-blue-100">
                 {upcomingEventCount} assigned team
                 {upcomingEventCount === 1 ? " has" : "s have"} an upcoming
                 visible event.
@@ -248,7 +244,7 @@ export default async function CoachHome() {
 
             <div className="mt-3 space-y-3">
               {source === "error" && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 shadow-sm">
+                <div className="rounded-lg border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-100 shadow-sm">
                   <p className="font-black">Coach dashboard could not load.</p>
                   <p className="mt-2">
                     {errorMessage ??
@@ -258,8 +254,8 @@ export default async function CoachHome() {
               )}
 
               {source !== "error" && coachTeamCards.length === 0 && (
-                <div className="gd-card-light rounded-lg p-3 text-sm text-slate-600">
-                  <p className="text-sm font-black text-slate-950">
+                <div className="gd-card-dark rounded-lg p-3 text-sm text-slate-300">
+                  <p className="text-sm font-black text-white">
                     No team assigned yet.
                   </p>
                   <p className="mt-1 text-xs font-semibold">
@@ -267,49 +263,49 @@ export default async function CoachHome() {
                   </p>
 
                   <div className="mt-2 grid gap-1.5">
-                    <details className="group rounded-md border border-blue-100 bg-white/70">
+                    <details className="group rounded-md border border-blue-300/20 bg-blue-500/10">
                       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-2.5 py-2 [&::-webkit-details-marker]:hidden">
                         <span>
-                          <span className="block text-sm font-black text-slate-950">
+                          <span className="block text-sm font-black text-white">
                             Create independent team
                           </span>
-                          <span className="block text-[11px] font-semibold text-slate-500">
+                          <span className="block text-[11px] font-semibold text-slate-400">
                             Free single-team workspace.
                           </span>
                         </span>
-                        <span className="text-sm font-black text-blue-600 transition group-open:rotate-90">
+                        <span className="text-sm font-black text-blue-200 transition group-open:rotate-90">
                           &rsaquo;
                         </span>
                       </summary>
-                      <div className="border-t border-blue-100 p-2">
+                      <div className="border-t border-blue-300/20 p-2">
                         <CoachTeamWorkspaceCreateForm />
                       </div>
                     </details>
 
-                    <details className="group rounded-md border border-blue-100 bg-white/70">
+                    <details className="group rounded-md border border-white/10 bg-white/[0.04]">
                       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-2.5 py-2 [&::-webkit-details-marker]:hidden">
                         <span>
-                          <span className="block text-sm font-black text-slate-950">
+                          <span className="block text-sm font-black text-white">
                             Already part of an organization?
                           </span>
-                          <span className="block text-[11px] font-semibold text-slate-500">
+                          <span className="block text-[11px] font-semibold text-slate-400">
                             Give this email to the org admin.
                           </span>
                         </span>
-                        <span className="text-sm font-black text-blue-600 transition group-open:rotate-90">
+                        <span className="text-sm font-black text-blue-200 transition group-open:rotate-90">
                           &rsaquo;
                         </span>
                       </summary>
-                      <div className="border-t border-blue-100 p-2.5">
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      <div className="border-t border-white/10 p-2.5">
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                           Coach login email
                         </p>
-                        <p className="mt-1 break-words text-sm font-black text-slate-950">
+                        <p className="mt-1 break-words text-sm font-black text-white">
                           {currentCoach.email ||
                             session.user.email ||
                             "Not available"}
                         </p>
-                        <p className="mt-2 text-xs leading-5 text-slate-500">
+                        <p className="mt-2 text-xs leading-5 text-slate-400">
                           The admin adds this email from the team&apos;s
                           Players & Coaches screen.
                         </p>
