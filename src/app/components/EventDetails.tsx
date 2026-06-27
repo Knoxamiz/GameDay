@@ -82,26 +82,26 @@ function getParentEventPlanLabel(
 
 function getParentEventPlanClass(label: string) {
   if (label === "Plan set") {
-    return "bg-emerald-50 text-emerald-700";
+    return "border border-emerald-300/30 bg-emerald-500/15 text-emerald-100";
   }
 
   if (label === "Needs ride" || label === "Set event plan") {
-    return "bg-orange-50 text-orange-700";
+    return "border border-orange-300/30 bg-orange-500/15 text-orange-100";
   }
 
-  return "bg-slate-100 text-slate-600";
+  return "border border-white/10 bg-white/[0.055] text-slate-300";
 }
 
 function getParentEventStatusClass(status: string) {
   if (status === "canceled") {
-    return "bg-red-50 text-red-700";
+    return "border border-red-300/30 bg-red-500/15 text-red-100";
   }
 
   if (status === "published") {
-    return "bg-emerald-50 text-emerald-700";
+    return "border border-emerald-300/30 bg-emerald-500/15 text-emerald-100";
   }
 
-  return "bg-slate-100 text-slate-600";
+  return "border border-white/10 bg-white/[0.055] text-slate-300";
 }
 
 export default async function EventDetails({
@@ -301,14 +301,14 @@ export default async function EventDetails({
     });
 
     return (
-      <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
-        <header className="border-b border-blue-100 bg-white/90 backdrop-blur">
+      <main className="gd-dark-scope min-h-screen text-white">
+        <header className="border-b border-white/10 bg-slate-950/70 backdrop-blur">
           <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-3 py-2.5 sm:px-5">
-            <Link className="text-lg font-black" href="/parent">
+            <Link className="text-lg font-black text-white" href="/parent">
               GameDay
             </Link>
             <Link
-              className="rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-black text-slate-700 shadow-sm hover:bg-slate-50"
+              className="rounded-md border border-blue-300/25 bg-blue-500/10 px-2.5 py-1.5 text-xs font-black text-blue-100 shadow-sm hover:bg-blue-500/20"
               href={eventBackHref}
             >
               Parent Home
@@ -318,32 +318,32 @@ export default async function EventDetails({
 
         <section className="mx-auto max-w-2xl px-3 py-4 pb-24 sm:px-5">
           <Link
-            className="inline-flex rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-black text-slate-700 shadow-sm hover:bg-slate-50"
+            className="inline-flex rounded-md border border-blue-300/25 bg-blue-500/10 px-2.5 py-1.5 text-xs font-black text-blue-100 shadow-sm hover:bg-blue-500/20"
             href={eventBackHref}
           >
             &larr; Back
           </Link>
 
-          <section className="gd-card-light mt-3 rounded-lg p-3">
+          <section className="gd-card-dark mt-3 rounded-lg p-3">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-xs font-black uppercase text-blue-700">
+                <p className="text-xs font-black uppercase text-blue-200">
                   {eventDetails.type}
                 </p>
                 <h1 className="mt-1 truncate text-xl font-black tracking-tight">
                   {eventDetails.title}
                 </h1>
-                <p className="mt-1 text-xs font-semibold text-slate-600">
+                <p className="mt-1 text-xs font-semibold text-slate-400">
                   {getEventDateLabel(eventDetails)} /{" "}
                   {getEventTimeLabel(eventDetails)}
                 </p>
-                <p className="mt-1 text-xs font-semibold text-slate-600">
+                <p className="mt-1 text-xs font-semibold text-slate-400">
                   {getEventLocationLabel(eventDetails)}
                 </p>
               </div>
               <span className="flex shrink-0 flex-col items-end gap-2">
                 {eventIsToday && (
-                  <span className="rounded-md bg-emerald-600 px-2.5 py-1.5 text-xs font-black text-white shadow-sm shadow-emerald-200">
+                  <span className="rounded-md border border-emerald-300/40 bg-emerald-400/15 px-2.5 py-1.5 text-xs font-black text-emerald-100 shadow-[0_0_18px_rgba(16,185,129,0.22)]">
                     Today
                   </span>
                 )}
@@ -358,31 +358,31 @@ export default async function EventDetails({
             </div>
 
             {eventDetails.address && (
-              <p className="mt-3 rounded-md bg-white/70 p-2.5 text-xs font-semibold text-slate-600">
+              <p className="mt-3 rounded-md border border-white/10 bg-white/[0.04] p-2.5 text-xs font-semibold text-slate-400">
                 {eventDetails.address}
               </p>
             )}
           </section>
 
           {eventUpdatesClosed && (
-            <p className="mt-3 rounded-lg border border-orange-200 bg-orange-50 p-2.5 text-xs font-semibold text-orange-800">
+            <p className="mt-3 rounded-lg border border-orange-300/30 bg-orange-500/10 p-2.5 text-xs font-semibold text-orange-100">
               Attendance and ride updates are closed for this event.
             </p>
           )}
 
           {gameAlert && (
-            <section className="gd-card-light mt-3 rounded-lg p-3">
+            <section className="gd-card-dark mt-3 rounded-lg p-3">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-base font-black">Game alert</h2>
-                <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">
+                <span className="rounded-full border border-blue-300/20 bg-blue-500/10 px-3 py-1 text-xs font-black text-blue-100">
                   {gameAlert.status}
                 </span>
               </div>
-              <p className="mt-2 text-xs font-semibold text-slate-600">
+              <p className="mt-2 text-xs font-semibold text-slate-400">
                 {gameAlert.homeTeamName} {gameAlert.homeScore} /{" "}
                 {gameAlert.awayTeamName} {gameAlert.awayScore}
               </p>
-              <p className="mt-1 text-xs font-semibold text-slate-600">
+              <p className="mt-1 text-xs font-semibold text-slate-400">
                 {gameAlert.latestUpdate}
               </p>
             </section>
@@ -391,14 +391,14 @@ export default async function EventDetails({
           <section className="mt-3">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-lg font-black">Your players</h2>
-              <p className="text-sm font-bold text-slate-500">
+              <p className="text-sm font-bold text-slate-400">
                 {parentEventRows.length}
               </p>
             </div>
 
             <div className="mt-2 space-y-2">
               {parentEventRows.length === 0 ? (
-                <p className="gd-card-light rounded-lg border-dashed p-3 text-sm font-semibold text-slate-500">
+                <p className="gd-card-dark rounded-lg border-dashed p-3 text-sm font-semibold text-slate-400">
                   No player from your account is tied to this event.
                 </p>
               ) : (
@@ -410,7 +410,7 @@ export default async function EventDetails({
                     transportationStatus,
                   }) => (
                     <Link
-                      className="gd-card-light gd-card-interactive flex min-h-11 items-center justify-between gap-3 rounded-lg px-3 py-2.5"
+                      className="gd-card-dark gd-card-interactive flex min-h-11 items-center justify-between gap-3 rounded-lg px-3 py-2.5"
                       href={`/athletes/${registration.athleteId}`}
                       key={registration.id}
                     >
@@ -418,7 +418,7 @@ export default async function EventDetails({
                         <span className="block truncate text-base font-black">
                           {registration.athleteName ?? "Player"}
                         </span>
-                        <span className="mt-0.5 block truncate text-xs font-semibold text-slate-500">
+                        <span className="mt-0.5 block truncate text-xs font-semibold text-slate-400">
                           {attendanceStatus} / {transportationStatus}
                         </span>
                       </span>
@@ -439,14 +439,14 @@ export default async function EventDetails({
           {(eventAnnouncements.length > 0 || eventNotes.length > 0) && (
             <section className="mt-4 space-y-2">
               {eventAnnouncements.length > 0 && (
-                <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                <details className="gd-card-dark group overflow-hidden rounded-lg">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3 [&::-webkit-details-marker]:hidden">
                     <span className="font-black">Announcements</span>
-                    <span className="text-lg font-black text-blue-700 transition group-open:rotate-90">
+                    <span className="text-lg font-black text-blue-200 transition group-open:rotate-90">
                       &gt;
                     </span>
                   </summary>
-                  <div className="space-y-2 border-t border-slate-200 p-3 text-xs font-semibold text-slate-600">
+                  <div className="space-y-2 border-t border-white/10 p-3 text-xs font-semibold text-slate-400">
                     {eventAnnouncements.map((announcement) => (
                       <p key={announcement}>{announcement}</p>
                     ))}
@@ -455,14 +455,14 @@ export default async function EventDetails({
               )}
 
               {eventNotes.length > 0 && (
-                <details className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                <details className="gd-card-dark group overflow-hidden rounded-lg">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3 [&::-webkit-details-marker]:hidden">
                     <span className="font-black">Event notes</span>
-                    <span className="text-lg font-black text-blue-700 transition group-open:rotate-90">
+                    <span className="text-lg font-black text-blue-200 transition group-open:rotate-90">
                       &gt;
                     </span>
                   </summary>
-                  <div className="space-y-2 border-t border-slate-200 p-3 text-xs font-semibold text-slate-600">
+                  <div className="space-y-2 border-t border-white/10 p-3 text-xs font-semibold text-slate-400">
                     {eventNotes.map((note) => (
                       <p key={note}>{note}</p>
                     ))}

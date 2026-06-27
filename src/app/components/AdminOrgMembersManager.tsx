@@ -72,6 +72,17 @@ function getPrimaryName(membership: OrganizationMembership) {
   return membership.displayName || membership.email;
 }
 
+function getInviteSignupPath(email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const params = new URLSearchParams({ intent: "invite" });
+
+  if (normalizedEmail) {
+    params.set("email", normalizedEmail);
+  }
+
+  return `/signup?${params.toString()}`;
+}
+
 function compareMemberships(
   first: OrganizationMembership,
   second: OrganizationMembership,
@@ -118,6 +129,7 @@ function MemberCard({
     membership.role !== "coach" && /coach/i.test(membership.title ?? "");
   const accessLinkLabel =
     membership.role === "coach" ? "Copy coach access link" : "Copy access link";
+  const accessSignupPath = getInviteSignupPath(membership.email);
 
   function save(operation: "activate" | "remove" | "suspend" | "update") {
     return onSave(membership.id, {
@@ -176,7 +188,7 @@ function MemberCard({
             <AdminJoinLinkButton
               className="shrink-0 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-black text-white hover:bg-blue-500"
               errorMessage="Could not copy the access link."
-              joinPath="/signup?intent=invite"
+              joinPath={accessSignupPath}
               label={accessLinkLabel}
               successMessage="Access link copied."
             />
@@ -435,6 +447,12 @@ export default function AdminOrgMembersManager({
             />
           </label>
         </div>
+        {role === "coach" && (
+          <p className="mx-3 mb-2 rounded-md border border-blue-300/20 bg-blue-500/10 p-2 text-xs font-semibold text-blue-100">
+            Save this invite, then copy the coach access link from the member
+            row below. The link opens signup with this email prefilled.
+          </p>
+        )}
         <button
           className="mx-3 mb-3 rounded-md bg-blue-600 px-3 py-2 text-xs font-black text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={savingId !== null || !authority}

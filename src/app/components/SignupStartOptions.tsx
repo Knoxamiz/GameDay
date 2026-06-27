@@ -7,6 +7,7 @@ import { createFirebaseUserWithEmailPassword } from "../infrastructure/firebaseC
 export type SignupIntent = "invite" | "organization" | "parent" | "team";
 
 type SignupStartOptionsProps = {
+  initialEmail?: string;
   initialIntent?: SignupIntent;
   isSignedIn: boolean;
 };
@@ -161,6 +162,7 @@ function AccountFields({
 }
 
 export default function SignupStartOptions({
+  initialEmail = "",
   initialIntent = "organization",
   isSignedIn,
 }: SignupStartOptionsProps) {
@@ -168,7 +170,7 @@ export default function SignupStartOptions({
     useState<SignupIntent>(initialIntent);
   const [accountName, setAccountName] = useState("");
   const [division, setDivision] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(initialEmail);
   const [error, setError] = useState<string | null>(null);
   const [hasCreatedSession, setHasCreatedSession] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -485,6 +487,11 @@ export default function SignupStartOptions({
             Use the exact email your organization invited. After sign-in,
             GameDay connects the matching membership to this account.
           </p>
+          {initialEmail && (
+            <p className="mt-2 rounded-md border border-blue-300/20 bg-blue-500/10 p-2 text-xs font-black text-blue-100">
+              Invite email: {initialEmail}
+            </p>
+          )}
           {needsAccount ? (
             <AccountFields
               accountName={accountName}

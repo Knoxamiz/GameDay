@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 
 type SignupPageProps = {
   searchParams?: Promise<{
+    email?: string | string[];
     intent?: string | string[];
   }>;
 };
@@ -28,12 +29,17 @@ function getIntent(value?: string | string[]): SignupIntent {
   return "organization";
 }
 
+function getStringParam(value?: string | string[]) {
+  return Array.isArray(value) ? (value[0] ?? "") : (value ?? "");
+}
+
 export default async function SignupPage({ searchParams }: SignupPageProps) {
   const [session, resolvedSearchParams] = await Promise.all([
     getCurrentAuthSession(),
     searchParams,
   ]);
   const intent = getIntent(resolvedSearchParams?.intent);
+  const initialEmail = getStringParam(resolvedSearchParams?.email);
   const heading =
     intent === "invite"
       ? "Open your invited GameDay access."
@@ -84,6 +90,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
 
         <div className="mt-3">
           <SignupStartOptions
+            initialEmail={initialEmail}
             initialIntent={intent}
             isSignedIn={Boolean(session)}
           />

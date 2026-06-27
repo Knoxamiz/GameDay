@@ -588,7 +588,7 @@ export default function AdminOrganizationWorkspaceHome({
             </div>
 
             {currentSection === "overview" && (
-              <div className="mt-3 grid gap-2 lg:grid-cols-2">
+              <div className="mt-3 space-y-2">
                 {isFirstRunOrganization ? (
                   <section className="gd-card-dark overflow-hidden rounded-lg backdrop-blur lg:col-span-2">
                     <div className="flex items-center justify-between gap-3 border-b border-white/10 px-3 py-2">
@@ -638,7 +638,7 @@ export default function AdminOrganizationWorkspaceHome({
                 ) : (
                   <>
                 <Link
-                  className="gd-card-dark flex flex-wrap items-center gap-1.5 rounded-lg px-3 py-2 backdrop-blur lg:col-span-2"
+                  className="gd-card-dark flex flex-wrap items-center gap-1.5 rounded-lg px-3 py-2 backdrop-blur"
                   href={withActiveOrganization(
                     presidentAttentionItem?.href ?? "/admin/alerts",
                     activeOrganizationId,
@@ -675,91 +675,12 @@ export default function AdminOrganizationWorkspaceHome({
                   </span>
                 </Link>
 
-                <section className="hidden">
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <h2 className="text-base font-black">Messages</h2>
-                      <p className="mt-1 text-sm text-slate-400">
-                        Team and organization updates.
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <StatusPill tone="slate">
-                        {`${recentCommunications.length} recent`}
-                      </StatusPill>
-                      <Link
-                        className="rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-black text-white hover:bg-blue-500"
-                        href={withActiveOrganization(
-                          "/admin/announcements?action=create#create-announcement",
-                          activeOrganizationId,
-                        )}
-                      >
-                        Create Message +
-                      </Link>
-                    </div>
-                  </div>
-                  <div className="mt-2">
-                    {recentCommunications[0] ? (
-                      <div>
-                        <p className="truncate text-sm font-black">
-                          {recentCommunications[0].subject}
-                        </p>
-                        <p className="mt-1 line-clamp-2 text-sm text-slate-400">
-                          {recentCommunications[0].content}
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-slate-400">
-                        No messages have been created for this organization.
-                      </p>
-                    )}
-                  </div>
-                </section>
-
-                <section className="hidden">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h2 className="text-base font-black">Alerts</h2>
-                      <p className="mt-1 text-sm text-slate-400">
-                        Items that need attention.
-                      </p>
-                    </div>
-                    <Link
-                      className="text-sm font-bold text-blue-300"
-                      href={withActiveOrganization(
-                        "/admin/alerts",
-                        activeOrganizationId,
-                      )}
-                    >
-                      View all ›
-                    </Link>
-                  </div>
-                  <div className="mt-2">
-                    {alertItems[0] ? (
-                      <Link
-                        className="flex items-center justify-between gap-3 rounded-md border border-orange-300/20 bg-orange-500/10 px-3 py-2 text-xs font-bold text-orange-100"
-                        href={withActiveOrganization(
-                          alertItems[0].href,
-                          activeOrganizationId,
-                        )}
-                      >
-                        <span className="truncate">{alertItems[0].label}</span>
-                        <span>Open</span>
-                      </Link>
-                    ) : (
-                      <p className="text-sm text-slate-400">
-                        No active alerts for this organization.
-                      </p>
-                    )}
-                  </div>
-                </section>
-
-                <section className="gd-card-dark rounded-lg p-3 backdrop-blur lg:col-span-2">
+                <section className="gd-card-dark rounded-lg p-3 backdrop-blur">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <h2 className="text-lg font-black">Teams</h2>
                       <p className="mt-0.5 text-sm text-slate-400">
-                        Open one team workspace.
+                        Open the team you are working on.
                       </p>
                     </div>
                     <Link
@@ -775,7 +696,7 @@ export default function AdminOrganizationWorkspaceHome({
                   <div className="mt-2 divide-y divide-white/10">
                     {visibleTeams.length === 0 ? (
                       <p className="py-2 text-sm font-semibold text-slate-400">
-                        No teams in this organization yet.
+                        No active teams yet.
                       </p>
                     ) : (
                       visibleTeams.map((team) => (
@@ -1198,29 +1119,35 @@ export default function AdminOrganizationWorkspaceHome({
                     <section className="gd-card-dark rounded-lg p-3 backdrop-blur">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
-                          <h2 className="text-2xl font-black">
+                          <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-200">
+                            Team launch
+                          </p>
+                          <h2 className="mt-1 text-2xl font-black">
                             {selectedTeam.name}
                           </h2>
                           <p className="mt-0.5 text-sm font-semibold text-slate-400">
                             {getTeamLabel(selectedTeam) || "Team workspace"}
                           </p>
                         </div>
-                        <StatusPill
-                          tone={
-                            selectedTeamCoachCount > 0 ? "green" : "orange"
-                          }
+                        <Link
+                          className="rounded-md border border-white/15 px-3 py-1.5 text-xs font-black text-blue-200 hover:bg-white/10"
+                          href={withActiveOrganization(
+                            "/admin/teams",
+                            activeOrganizationId,
+                          )}
                         >
-                          {selectedTeamCoachCount > 0
-                            ? getTeamStatusLabel(selectedTeam)
-                            : "Needs coach"}
-                        </StatusPill>
+                          All teams
+                        </Link>
                       </div>
 
                       <div className="mt-3 flex flex-col gap-2 border-t border-white/10 pt-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                          <h3 className="text-base font-black">Invite</h3>
+                          <h3 className="text-base font-black">
+                            Invite / QR team link
+                          </h3>
                           <p className="mt-0.5 text-xs font-semibold text-slate-400">
-                            QR team link parents scan or open directly.
+                            Use this link for QR codes, texts, and handouts
+                            parents can scan or open at the field.
                           </p>
                         </div>
                         <Link
@@ -1235,50 +1162,52 @@ export default function AdminOrganizationWorkspaceHome({
                       </div>
 
                       {selectedTeamPrimaryInvite && selectedTeamJoinPath ? (
-                        <div className="mt-2 grid gap-2 lg:grid-cols-[1fr_auto]">
-                          <div className="rounded-md border border-blue-300/10 bg-white/[0.045] px-3 py-2">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="text-sm font-black">
-                                {selectedTeamPrimaryInvite.title}
-                              </span>
-                              <StatusPill
-                                tone={
-                                  getRegistrationInviteStatus(
+                        <div className="mt-2 rounded-md border border-blue-300/15 bg-blue-500/10 p-2">
+                          <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-sm font-black">
+                                  {selectedTeamPrimaryInvite.title}
+                                </span>
+                                <StatusPill
+                                  tone={
+                                    getRegistrationInviteStatus(
+                                      selectedTeamPrimaryInvite,
+                                    ) === "open"
+                                      ? "green"
+                                      : "orange"
+                                  }
+                                >
+                                  {getRegistrationInviteStatus(
                                     selectedTeamPrimaryInvite,
-                                  ) === "open"
-                                    ? "green"
-                                    : "orange"
-                                }
-                              >
-                                {getRegistrationInviteStatus(
-                                  selectedTeamPrimaryInvite,
-                                )}
-                              </StatusPill>
+                                  )}
+                                </StatusPill>
+                              </div>
+                              <p className="mt-1 truncate rounded-md bg-slate-950/55 px-2 py-1.5 text-xs font-bold text-blue-100">
+                                {selectedTeamJoinPath}
+                              </p>
                             </div>
-                            <p className="mt-2 truncate rounded-md bg-slate-950/55 px-2 py-1.5 text-xs font-bold text-blue-100">
-                              {selectedTeamJoinPath}
-                            </p>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <AdminJoinLinkButton
-                              className="rounded-md bg-blue-600 px-3 py-2 text-xs font-black text-white hover:bg-blue-500"
-                              joinPath={selectedTeamJoinPath}
-                              label="Copy QR team link"
-                            />
-                            <Link
-                              className="rounded-md border border-white/15 px-3 py-2 text-xs font-black text-slate-100 hover:bg-white/10"
-                              href={selectedTeamJoinPath}
-                              target="_blank"
-                            >
-                              Open link
-                            </Link>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <AdminJoinLinkButton
+                                className="rounded-md bg-blue-600 px-3 py-2 text-xs font-black text-white hover:bg-blue-500"
+                                joinPath={selectedTeamJoinPath}
+                                label="Copy QR team link"
+                              />
+                              <Link
+                                className="rounded-md border border-white/15 px-3 py-2 text-xs font-black text-slate-100 hover:bg-white/10"
+                                href={selectedTeamJoinPath}
+                                target="_blank"
+                              >
+                                Open
+                              </Link>
+                            </div>
                           </div>
                         </div>
                       ) : (
                         <div className="mt-2 flex flex-col gap-2 rounded-md border border-dashed border-blue-300/25 bg-white/[0.035] px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
                           <p className="text-sm font-semibold text-slate-300">
-                            No invite link yet. Create the link parents use from
-                            QR codes, texts, and handouts.
+                            No invite link yet. Create the QR team link parents
+                            use from codes, texts, and handouts.
                           </p>
                           <Link
                             className="inline-flex shrink-0 items-center justify-center rounded-md bg-blue-600 px-3 py-2 text-xs font-black text-white hover:bg-blue-500"
@@ -1293,50 +1222,78 @@ export default function AdminOrganizationWorkspaceHome({
                       )}
                     </section>
 
-                    <div className="space-y-3">
-                      <AdminTeamMembersManager
-                        activeOrganizationId={activeOrganizationId}
-                        coachAssignments={readModel.coachAssignments}
-                        coaches={readModel.coaches}
-                        defaultOpen
-                        playersDefaultOpen
-                        rosteredRegistrations={selectedTeamRosteredRegistrations}
-                        showCoaches={false}
-                        teamId={selectedTeam.id}
-                        title="Editable roster"
-                      />
-                      <AdminTeamCoachAccessManager
-                        activeOrganizationId={activeOrganizationId}
-                        coachAssignments={readModel.coachAssignments}
-                        coaches={readModel.coaches}
-                        teamId={selectedTeam.id}
-                      />
-                      <div className="flex flex-wrap items-center gap-2 text-xs font-black">
-                        <Link
-                          className="rounded-md border border-white/15 px-2.5 py-1.5 text-slate-100 hover:bg-white/10"
-                          href={withActiveOrganization(
-                            "/admin/schedule",
-                            activeOrganizationId,
-                          )}
-                        >
-                          Schedule
-                        </Link>
-                        <AdminArchiveButton
-                          buttonLabel="Remove team"
-                          confirmMessage={`Remove ${selectedTeam.name}? This archives the team and preserves registrations, events, invites, and assignments.`}
-                          payload={{
-                            activeOrganizationId,
-                            actionType: "team-archive",
-                            organizationId: activeOrganizationId,
-                            teamId: selectedTeam.id,
-                          }}
-                          redirectHref={withActiveOrganization(
-                            "/admin/teams",
-                            activeOrganizationId,
-                          )}
+                    <AdminTeamMembersManager
+                      activeOrganizationId={activeOrganizationId}
+                      coachAssignments={readModel.coachAssignments}
+                      coaches={readModel.coaches}
+                      defaultOpen
+                      playersDefaultOpen
+                      rosteredRegistrations={selectedTeamRosteredRegistrations}
+                      showCoaches={false}
+                      teamId={selectedTeam.id}
+                      title="Editable roster"
+                    />
+
+                    <details className="gd-card-dark group rounded-lg backdrop-blur">
+                      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 [&::-webkit-details-marker]:hidden">
+                        <span>
+                          <span className="block text-base font-black">
+                            Team toolbelt
+                          </span>
+                          <span className="mt-0.5 block text-xs font-semibold text-slate-400">
+                            Coaches, schedule, and archive controls.
+                          </span>
+                        </span>
+                        <span className="flex items-center gap-2">
+                          <StatusPill
+                            tone={
+                              selectedTeamCoachCount > 0 ? "green" : "orange"
+                            }
+                          >
+                            {selectedTeamCoachCount > 0
+                              ? getTeamStatusLabel(selectedTeam)
+                              : "Needs coach"}
+                          </StatusPill>
+                          <span className="text-lg font-black text-blue-200 transition group-open:rotate-90">
+                            &rsaquo;
+                          </span>
+                        </span>
+                      </summary>
+
+                      <div className="space-y-3 border-t border-white/10 p-3">
+                        <AdminTeamCoachAccessManager
+                          activeOrganizationId={activeOrganizationId}
+                          coachAssignments={readModel.coachAssignments}
+                          coaches={readModel.coaches}
+                          teamId={selectedTeam.id}
                         />
+                        <div className="flex flex-wrap items-center gap-2 text-xs font-black">
+                          <Link
+                            className="rounded-md border border-white/15 px-2.5 py-1.5 text-slate-100 hover:bg-white/10"
+                            href={withActiveOrganization(
+                              "/admin/schedule",
+                              activeOrganizationId,
+                            )}
+                          >
+                            Schedule
+                          </Link>
+                          <AdminArchiveButton
+                            buttonLabel="Remove team"
+                            confirmMessage={`Remove ${selectedTeam.name}? This archives the team and preserves registrations, events, invites, and assignments.`}
+                            payload={{
+                              activeOrganizationId,
+                              actionType: "team-archive",
+                              organizationId: activeOrganizationId,
+                              teamId: selectedTeam.id,
+                            }}
+                            redirectHref={withActiveOrganization(
+                              "/admin/teams",
+                              activeOrganizationId,
+                            )}
+                          />
+                        </div>
                       </div>
-                    </div>
+                    </details>
                   </div>
                 )}
               </section>
@@ -1357,7 +1314,7 @@ export default function AdminOrganizationWorkspaceHome({
                       activeOrganizationId,
                     )}
                   >
-                    View all teams ›
+                    View all teams &gt;
                   </Link>
                 </div>
                 <div className="mt-3 grid gap-3 lg:grid-cols-2">
@@ -1378,7 +1335,7 @@ export default function AdminOrganizationWorkspaceHome({
                             {team.name}
                           </span>
                           <span className="mt-1 block truncate text-xs text-slate-400">
-                            {getTeamLabel(team) || "Team workspace"} ·{" "}
+                            {getTeamLabel(team) || "Team workspace"} -{" "}
                             {team.playerCount} members
                           </span>
                         </span>

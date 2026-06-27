@@ -60,7 +60,7 @@ export default function SessionControls({
 
   if (compact) {
     return (
-      <div className="text-right text-xs">
+      <div className="relative z-[180] text-right text-xs">
         <button
           className={`rounded-md border px-2.5 py-1.5 font-semibold disabled:cursor-not-allowed disabled:opacity-60 ${
             surface === "light"
@@ -84,7 +84,7 @@ export default function SessionControls({
 
   return (
     <div
-      className={`mt-3 rounded-lg border p-3 text-sm shadow-lg ${
+      className={`relative z-[180] mt-3 rounded-lg border p-3 text-sm shadow-lg ${
         surface === "light"
           ? "border-slate-200 bg-white"
           : "border-slate-800 bg-slate-900"
