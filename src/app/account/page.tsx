@@ -62,7 +62,7 @@ export default async function AccountPage() {
           )}
         </div>
 
-        <section className="gd-card-light mt-3 rounded-lg p-2.5">
+        <section className="gd-card-dark mt-3 rounded-lg p-2.5">
           <div className="flex items-center justify-between gap-3 px-1">
             <div>
               <h2 className="text-sm font-black">Open GameDay</h2>
@@ -80,13 +80,13 @@ export default async function AccountPage() {
           <div className="mt-2 grid gap-1.5">
             {accountAccess.options.map((option) => (
               <Link
-                className="group flex items-center justify-between gap-3 rounded-md border border-blue-100/70 bg-white/70 px-2.5 py-2 transition hover:border-blue-300 hover:bg-blue-50"
+                className="group flex items-center justify-between gap-3 rounded-md border border-blue-300/20 bg-white/[0.04] px-2.5 py-2 transition hover:border-blue-300/45 hover:bg-blue-500/10"
                 href={option.href}
                 key={option.id}
               >
                 <span className="min-w-0">
                   <span className="flex items-center gap-2">
-                    <span className="truncate text-sm font-black">
+                    <span className="truncate text-sm font-black text-white">
                       {option.title}
                     </span>
                     <span
@@ -97,11 +97,11 @@ export default async function AccountPage() {
                       {option.badge}
                     </span>
                   </span>
-                  <span className="mt-0.5 block truncate text-[11px] font-semibold text-slate-500">
+                  <span className="mt-0.5 block truncate text-[11px] font-semibold text-slate-300">
                     {option.description}
                   </span>
                 </span>
-                <span className="text-sm font-black text-blue-600 transition group-hover:translate-x-0.5">
+                <span className="text-sm font-black text-blue-200 transition group-hover:translate-x-0.5">
                   &rsaquo;
                 </span>
               </Link>

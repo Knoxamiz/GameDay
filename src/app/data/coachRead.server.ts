@@ -46,6 +46,7 @@ export type CoachRosterPlayer = {
 export type CoachHomeReadModel = {
   attendanceEntries: AttendanceEntry[];
   coach: Coach;
+  coachMessages: GameDayMessage[];
   coachTeamCards: CoachTeamHomeCard[];
   coachRosterRegistrations: Registration[];
   coachTeam?: Team;
@@ -98,6 +99,7 @@ function getEmptyCoachHomeReadModel(
   return {
     attendanceEntries: [],
     coach,
+    coachMessages: [],
     coachTeamCards: [],
     coachRosterRegistrations: [],
     coachTeamRegistrations: [],
@@ -224,6 +226,24 @@ export async function getCoachHomeReadModel(): Promise<CoachHomeReadModel> {
         organization ? [[organization.id, organization]] : [],
       ),
     );
+    const coachMessages = (
+      await Promise.all(
+        organizationIds.map((organizationId) =>
+          repositories.messages.listByAudience({ organizationId }),
+        ),
+      )
+    )
+      .flat()
+      .filter(
+        (message) =>
+          !message.teamId &&
+          message.audience.includes("coach") &&
+          organizationIds.includes(message.organizationId),
+      )
+      .sort((first, second) =>
+        second.timestamp.localeCompare(first.timestamp),
+      )
+      .slice(0, 5);
     const coachTeamCards = await Promise.all(
       coachTeams.map(async (team) => {
         const teamEvents = getCoachTeamEvents(coachEvents, team);
@@ -323,6 +343,7 @@ export async function getCoachHomeReadModel(): Promise<CoachHomeReadModel> {
     return {
       attendanceEntries,
       coach,
+      coachMessages,
       coachTeamCards,
       coachRosterRegistrations,
       coachTeam,

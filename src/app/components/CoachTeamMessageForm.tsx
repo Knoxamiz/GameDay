@@ -13,6 +13,26 @@ type CoachTeamMessageResponse = {
   message?: string;
 };
 
+type CoachMessageTarget = "both" | "coaches" | "parents";
+
+const coachMessageTargets: {
+  audience: MessageAudience[];
+  label: string;
+  value: CoachMessageTarget;
+}[] = [
+  { audience: ["parent"], label: "Parents", value: "parents" },
+  { audience: ["coach"], label: "Coaches", value: "coaches" },
+  { audience: ["parent", "coach"], label: "Both", value: "both" },
+];
+
+function getAudienceForTarget(target: CoachMessageTarget) {
+  return (
+    coachMessageTargets.find((item) => item.value === target)?.audience ?? [
+      "parent",
+    ]
+  );
+}
+
 export default function CoachTeamMessageForm({
   teamId,
 }: CoachTeamMessageFormProps) {
@@ -20,20 +40,10 @@ export default function CoachTeamMessageForm({
   const [content, setContent] = useState("");
   const [priority, setPriority] =
     useState<MessagePriority>("Informational");
-  const [selectedAudience, setSelectedAudience] = useState<MessageAudience[]>([
-    "parent",
-  ]);
+  const [target, setTarget] = useState<CoachMessageTarget>("parents");
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  function toggleAudience(audience: MessageAudience) {
-    setSelectedAudience((currentAudience) =>
-      currentAudience.includes(audience)
-        ? currentAudience.filter((item) => item !== audience)
-        : [...currentAudience, audience],
-    );
-  }
 
   async function sendMessage() {
     setError(null);
@@ -43,7 +53,7 @@ export default function CoachTeamMessageForm({
     try {
       const response = await fetch("/api/coach/messages", {
         body: JSON.stringify({
-          audience: selectedAudience,
+          audience: getAudienceForTarget(target),
           content,
           priority,
           subject,
@@ -63,6 +73,7 @@ export default function CoachTeamMessageForm({
 
       setSubject("");
       setContent("");
+      setTarget("parents");
       setMessage(body?.message ?? "Message sent.");
       window.location.reload();
     } catch (sendError) {
@@ -78,30 +89,28 @@ export default function CoachTeamMessageForm({
 
   return (
     <div className="rounded-md border border-white/10 bg-slate-950/40 p-2.5">
-      <div className="grid gap-2 sm:grid-cols-2">
-        <label className="block">
-          <span className="text-[11px] font-bold uppercase text-slate-400">
-            Audience
-          </span>
-          <div className="mt-1 flex flex-wrap gap-2">
-            {(["parent", "coach"] satisfies MessageAudience[]).map(
-              (audience) => (
-                <label
-                  className="inline-flex items-center gap-2 rounded-md border border-white/15 bg-slate-950/50 px-2.5 py-1.5 text-xs font-black text-slate-200"
-                  key={audience}
-                >
-                  <input
-                    checked={selectedAudience.includes(audience)}
-                    className="size-3"
-                    onChange={() => toggleAudience(audience)}
-                    type="checkbox"
-                  />
-                  {audience === "parent" ? "Parents" : "Coaches"}
-                </label>
-              ),
-            )}
+      <div className="grid gap-2 sm:grid-cols-[1fr_10rem]">
+        <div>
+          <p className="text-[11px] font-bold uppercase text-slate-400">
+            Send to
+          </p>
+          <div className="mt-1 grid grid-cols-3 gap-1">
+            {coachMessageTargets.map((option) => (
+              <button
+                className={`rounded-md border px-2 py-2 text-xs font-black transition ${
+                  target === option.value
+                    ? "border-blue-300/40 bg-blue-500/20 text-white"
+                    : "border-white/10 bg-slate-950/50 text-slate-300 hover:bg-white/10"
+                }`}
+                key={option.value}
+                onClick={() => setTarget(option.value)}
+                type="button"
+              >
+                {option.label}
+              </button>
+            ))}
           </div>
-        </label>
+        </div>
 
         <label className="block">
           <span className="text-[11px] font-bold uppercase text-slate-400">
@@ -114,9 +123,9 @@ export default function CoachTeamMessageForm({
             }
             value={priority}
           >
-            <option value="Informational">Informational</option>
+            <option value="Informational">Normal</option>
             <option value="Important">Important</option>
-            <option value="Critical">Critical</option>
+            <option value="Critical">Urgent</option>
           </select>
         </label>
       </div>
@@ -128,6 +137,7 @@ export default function CoachTeamMessageForm({
         <input
           className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-2.5 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
           onChange={(event) => setSubject(event.target.value)}
+          placeholder="Practice update"
           value={subject}
         />
       </label>
@@ -139,6 +149,7 @@ export default function CoachTeamMessageForm({
         <textarea
           className="mt-1 min-h-16 w-full rounded-md border border-white/15 bg-slate-950/70 px-2.5 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
           onChange={(event) => setContent(event.target.value)}
+          placeholder="What should this team know?"
           value={content}
         />
       </label>
@@ -154,14 +165,19 @@ export default function CoachTeamMessageForm({
         </p>
       )}
 
-      <button
-        className="mt-2 rounded-md bg-blue-600 px-3 py-2 text-xs font-black text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
-        disabled={isSaving}
-        onClick={() => void sendMessage()}
-        type="button"
-      >
-        {isSaving ? "Sending..." : "Send message"}
-      </button>
+      <div className="mt-2 flex items-center justify-between gap-3">
+        <p className="text-[11px] font-semibold text-slate-400">
+          Team message
+        </p>
+        <button
+          className="rounded-md bg-blue-600 px-3 py-2 text-xs font-black text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={isSaving}
+          onClick={() => void sendMessage()}
+          type="button"
+        >
+          {isSaving ? "Sending..." : "Send"}
+        </button>
+      </div>
     </div>
   );
 }

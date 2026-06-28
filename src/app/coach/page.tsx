@@ -7,6 +7,7 @@ import {
   getCoachTeamNextAction,
   getCoachTeamResponseSummary,
 } from "../data/coachDashboard";
+import type { GameDayMessage } from "../data/messages";
 import { getCoachHomeReadModel } from "../data/coachRead.server";
 import { getCurrentAuthSession } from "../data/currentUser.server";
 import { getOrganizationContext } from "../data/organizationContext.server";
@@ -102,6 +103,18 @@ function CoachSidebarLink({
   );
 }
 
+function getCoachMessageToneClass(priority: GameDayMessage["priority"]) {
+  if (priority === "Critical") {
+    return "border-red-300/35 bg-red-500/15 text-red-100";
+  }
+
+  if (priority === "Important") {
+    return "border-orange-300/35 bg-orange-500/15 text-orange-100";
+  }
+
+  return "border-blue-300/25 bg-blue-500/10 text-blue-100";
+}
+
 export default async function CoachHome() {
   const session = await getCurrentAuthSession();
 
@@ -111,6 +124,7 @@ export default async function CoachHome() {
 
   const {
     coach: currentCoach,
+    coachMessages,
     coachRosterRegistrations,
     coachTeamCards,
     coachTeams,
@@ -187,6 +201,40 @@ export default async function CoachHome() {
               </p>
             </div>
             <div className="flex items-center gap-3">
+              {coachMessages.length > 0 && (
+                <details className="group relative">
+                  <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-md border border-blue-300/25 bg-blue-500/10 px-2.5 py-1.5 text-xs font-black text-blue-100 shadow-sm hover:bg-blue-500/20 [&::-webkit-details-marker]:hidden">
+                    Updates
+                    <span className="rounded-full bg-blue-400/20 px-1.5 py-0.5 text-[10px]">
+                      {coachMessages.length}
+                    </span>
+                  </summary>
+                  <div className="absolute right-0 z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] space-y-1.5 rounded-lg border border-blue-300/25 bg-slate-950/95 p-2 shadow-2xl shadow-blue-950/50 ring-1 ring-white/10 backdrop-blur">
+                    {coachMessages.map((message) => (
+                      <article
+                        className="rounded-md border border-white/10 bg-white/[0.04] p-2.5"
+                        key={message.id}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <h2 className="line-clamp-1 text-xs font-black text-white">
+                            {message.subject}
+                          </h2>
+                          <span
+                            className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] font-black ${getCoachMessageToneClass(
+                              message.priority,
+                            )}`}
+                          >
+                            {message.priority}
+                          </span>
+                        </div>
+                        <p className="mt-1 line-clamp-2 text-[11px] font-semibold text-slate-400">
+                          {message.content}
+                        </p>
+                      </article>
+                    ))}
+                  </div>
+                </details>
+              )}
               <SessionControls compact role="coach" surface="dark" />
               <div className="hidden items-center gap-3 sm:flex">
                 <span className="flex size-8 items-center justify-center rounded-full border border-blue-300/30 bg-blue-500/15 text-xs font-black text-blue-100">

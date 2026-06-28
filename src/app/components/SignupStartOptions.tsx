@@ -70,9 +70,9 @@ function IntentCard({
 }) {
   return (
     <button
-      className={`rounded-lg border p-3 text-left shadow-[0_16px_42px_rgba(2,6,23,0.22)] backdrop-blur transition hover:-translate-y-0.5 ${
+      className={`flex min-h-16 items-center justify-between gap-3 rounded-md border px-3 py-2 text-left shadow-[0_14px_34px_rgba(2,6,23,0.22)] backdrop-blur transition hover:-translate-y-0.5 ${
         active
-          ? "border-blue-400 bg-blue-600/15"
+          ? "border-blue-300/60 bg-blue-600/18"
           : "border-white/10 bg-white/[0.04] hover:border-blue-400/40"
       }`}
       onClick={() => onSelect(card.intent)}
@@ -86,18 +86,20 @@ function IntentCard({
 function CardContent({ card }: { card: (typeof intentCards)[number] }) {
   return (
     <>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="rounded-md border border-blue-400/30 bg-blue-500/10 px-2 py-1 text-[10px] font-black uppercase text-blue-300">
-          {card.label}
+      <span className="min-w-0">
+        <span className="flex flex-wrap items-center gap-2">
+          <span className="truncate text-base font-black text-white">
+            {card.title}
+          </span>
+          <span className="rounded-full border border-blue-400/30 bg-blue-500/10 px-2 py-0.5 text-[10px] font-black uppercase text-blue-200">
+            {card.plan}
+          </span>
         </span>
-        <span className="rounded-md bg-white/10 px-2 py-1 text-[10px] font-black text-slate-200">
-          {card.plan}
+        <span className="mt-0.5 block truncate text-xs font-semibold text-slate-300">
+          {card.description}
         </span>
-      </div>
-      <h2 className="mt-2 text-base font-black text-white">{card.title}</h2>
-      <p className="mt-1 text-xs font-semibold leading-5 text-slate-300">
-        {card.description}
-      </p>
+      </span>
+      <span className="shrink-0 text-sm font-black text-blue-200">&gt;</span>
     </>
   );
 }
@@ -118,14 +120,14 @@ function AccountFields({
   password: string;
 }) {
   return (
-    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+    <div className="mt-3 grid gap-2 sm:grid-cols-2">
       <label className="block sm:col-span-2">
         <span className="text-xs font-black uppercase text-slate-300">
           Your name
         </span>
         <input
           autoComplete="name"
-          className="mt-1.5 w-full rounded-md border border-white/15 bg-slate-950/80 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
+          className="mt-1.5 w-full rounded-md border border-white/15 bg-slate-950/80 px-3 py-1.5 text-sm font-semibold text-white outline-none focus:border-blue-400"
           onChange={(event) => onAccountNameChange(event.target.value)}
           placeholder="Coach Taylor"
           required
@@ -136,7 +138,7 @@ function AccountFields({
         <span className="text-xs font-black uppercase text-slate-300">Email</span>
         <input
           autoComplete="email"
-          className="mt-1.5 w-full rounded-md border border-white/15 bg-slate-950/80 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
+          className="mt-1.5 w-full rounded-md border border-white/15 bg-slate-950/80 px-3 py-1.5 text-sm font-semibold text-white outline-none focus:border-blue-400"
           onChange={(event) => onEmailChange(event.target.value)}
           required
           type="email"
@@ -149,7 +151,7 @@ function AccountFields({
         </span>
         <input
           autoComplete="new-password"
-          className="mt-1.5 w-full rounded-md border border-white/15 bg-slate-950/80 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
+          className="mt-1.5 w-full rounded-md border border-white/15 bg-slate-950/80 px-3 py-1.5 text-sm font-semibold text-white outline-none focus:border-blue-400"
           minLength={6}
           onChange={(event) => onPasswordChange(event.target.value)}
           required

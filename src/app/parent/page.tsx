@@ -29,6 +29,7 @@ import {
   getParentNextAction,
   type ParentNextAction,
 } from "../data/parentDashboard";
+import type { GameDayMessage } from "../data/messages";
 import { getParentRegistrationInviteReadModels } from "../data/registrationInviteRead.server";
 import {
   getRegistrationRosterStatus,
@@ -127,6 +128,18 @@ function toPlayerScheduleItems(
   }));
 }
 
+function getMessageToneClass(priority: GameDayMessage["priority"]) {
+  if (priority === "Critical") {
+    return "border-red-300/35 bg-red-500/15 text-red-100";
+  }
+
+  if (priority === "Important") {
+    return "border-orange-300/35 bg-orange-500/15 text-orange-100";
+  }
+
+  return "border-blue-300/25 bg-blue-500/10 text-blue-100";
+}
+
 export default async function ParentHome() {
   const session = await getCurrentAuthSession();
 
@@ -180,14 +193,27 @@ export default async function ParentHome() {
       ].filter(Boolean),
     ),
   ];
+  const parentOrganizationIds = [
+    ...new Set(
+      [
+        ...parentAthletes.map((athlete) => athlete.organizationId),
+        ...registrations.map((registration) => registration.organizationId),
+      ].filter(Boolean),
+    ),
+  ];
   const parentAthleteIdSet = new Set(
     parentAthletes.map((athlete) => athlete.id),
   );
   const teamNameById = new Map(
     schedule.teams.map((team) => [team.id, team.name]),
   );
-  const [attendanceEntries, transportationEntries, teamMessageLists, inviteModels] =
-    await Promise.all([
+  const [
+    attendanceEntries,
+    transportationEntries,
+    teamMessageLists,
+    organizationMessageLists,
+    inviteModels,
+  ] = await Promise.all([
       Promise.all(
         parentAthletes.map((athlete) =>
           repositories.attendance.listByAthleteId(athlete.id),
@@ -201,6 +227,11 @@ export default async function ParentHome() {
       Promise.all(
         parentTeamIds.map((teamId) =>
           repositories.messages.listByTeamId(teamId),
+        ),
+      ),
+      Promise.all(
+        parentOrganizationIds.map((organizationId) =>
+          repositories.messages.listByAudience({ organizationId }),
         ),
       ),
       getParentRegistrationInviteReadModels(),
@@ -222,14 +253,15 @@ export default async function ParentHome() {
       ]),
     ).values(),
   ];
-  const parentTeamMessages = [
+  const parentMessages = [
     ...new Map(
-      teamMessageLists
+      [...teamMessageLists.flat(), ...organizationMessageLists.flat()]
         .flat()
         .filter(
           (message) =>
-            message.type === "Team Announcement" &&
             message.audience.includes("parent") &&
+            parentOrganizationIds.includes(message.organizationId) &&
+            (!message.teamId || parentTeamIds.includes(message.teamId)) &&
             (!message.recipientParentId ||
               message.recipientParentId === currentUser.parentId) &&
             (!message.recipientAthleteId ||
@@ -324,14 +356,55 @@ export default async function ParentHome() {
               Hi, {parentDisplayName}
             </h1>
           </div>
-          {!hasRegistrations && (
-            <Link
-              className="shrink-0 rounded-md border border-blue-300/25 bg-blue-500/10 px-2.5 py-1.5 text-xs font-black text-blue-100 shadow-sm hover:bg-blue-500/20"
-              href="/registration"
-            >
-              Find Team
-            </Link>
-          )}
+          <div className="flex shrink-0 items-center gap-2">
+            {parentMessages.length > 0 && (
+              <details className="group relative">
+                <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-md border border-blue-300/25 bg-blue-500/10 px-2.5 py-1.5 text-xs font-black text-blue-100 shadow-sm hover:bg-blue-500/20 [&::-webkit-details-marker]:hidden">
+                  Updates
+                  <span className="rounded-full bg-blue-400/20 px-1.5 py-0.5 text-[10px]">
+                    {parentMessages.length}
+                  </span>
+                </summary>
+                <div className="absolute right-0 z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] space-y-1.5 rounded-lg border border-blue-300/25 bg-slate-950/95 p-2 shadow-2xl shadow-blue-950/50 ring-1 ring-white/10 backdrop-blur">
+                  {parentMessages.map((message) => (
+                    <article
+                      className="rounded-md border border-white/10 bg-white/[0.04] p-2.5"
+                      key={message.id}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <h2 className="line-clamp-1 text-xs font-black text-white">
+                          {message.subject}
+                        </h2>
+                        <span
+                          className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] font-black ${getMessageToneClass(
+                            message.priority,
+                          )}`}
+                        >
+                          {message.priority}
+                        </span>
+                      </div>
+                      <p className="mt-1 line-clamp-2 text-[11px] font-semibold text-slate-400">
+                        {message.content}
+                      </p>
+                      <p className="mt-1 text-[10px] font-black uppercase tracking-wide text-slate-500">
+                        {message.teamId
+                          ? (teamNameById.get(message.teamId) ?? "Team")
+                          : "Organization"}
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              </details>
+            )}
+            {!hasRegistrations && (
+              <Link
+                className="rounded-md border border-blue-300/25 bg-blue-500/10 px-2.5 py-1.5 text-xs font-black text-blue-100 shadow-sm hover:bg-blue-500/20"
+                href="/registration"
+              >
+                Find Team
+              </Link>
+            )}
+          </div>
         </div>
 
         {source === "error" && (
@@ -359,49 +432,6 @@ export default async function ParentHome() {
           </section>
         )}
 
-        {parentTeamMessages.length > 0 && (
-          <details className="gd-card-dark gd-card-interactive group mt-3 overflow-hidden rounded-lg">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
-              <span>
-                <span className="block text-sm font-black text-white">
-                  Messages
-                </span>
-                <span className="mt-0.5 block text-xs font-semibold text-slate-400">
-                  Team updates for your players.
-                </span>
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="rounded-full border border-blue-300/20 bg-blue-500/10 px-2 py-0.5 text-[11px] font-black text-blue-100">
-                  {parentTeamMessages.length}
-                </span>
-                <span className="text-sm font-black text-blue-200 transition group-open:rotate-90">
-                  &gt;
-                </span>
-              </span>
-            </summary>
-            <div className="space-y-1.5 border-t border-white/10 px-3 py-2.5">
-              {parentTeamMessages.map((message) => (
-                <article
-                  className="rounded-md border border-white/10 bg-white/[0.04] p-2.5"
-                  key={message.id}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className="text-sm font-black text-white">
-                      {message.subject}
-                    </h3>
-                    <span className="shrink-0 text-[11px] font-bold text-slate-400">
-                      {teamNameById.get(message.teamId ?? "") ?? "Team"}
-                    </span>
-                  </div>
-                  <p className="mt-1 line-clamp-2 text-xs font-semibold text-slate-400">
-                    {message.content}
-                  </p>
-                </article>
-              ))}
-            </div>
-          </details>
-        )}
-
         <section className="mt-3">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-base font-black">Players</h2>
@@ -411,8 +441,8 @@ export default async function ParentHome() {
               </p>
               {source !== "error" && hasRegistrations && (
                 <details className="group relative" id="add-player">
-                  <summary className="cursor-pointer list-none rounded-md border border-white/15 bg-white/10 px-2.5 py-1 text-[11px] font-black text-white/80 shadow-sm hover:bg-white/15 [&::-webkit-details-marker]:hidden">
-                    Add player
+                  <summary className="cursor-pointer list-none rounded-full border border-blue-300/20 bg-blue-500/10 px-2.5 py-1 text-[11px] font-black text-blue-100 shadow-sm hover:bg-blue-500/20 [&::-webkit-details-marker]:hidden">
+                    + Player
                   </summary>
                   <div className="absolute right-0 z-20 mt-2 w-72 max-w-[calc(100vw-2rem)] space-y-1.5 rounded-lg border border-blue-300/25 bg-slate-950/95 p-2 text-white shadow-2xl shadow-blue-950/50 ring-1 ring-white/10 backdrop-blur">
                     <p className="px-1 text-[11px] font-bold text-slate-300">

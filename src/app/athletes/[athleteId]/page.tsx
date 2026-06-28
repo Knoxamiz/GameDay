@@ -13,6 +13,7 @@ import {
   getEventLocationLabel,
   getEventStatusLabel,
   getEventTimeLabel,
+  type GameDayEvent,
   isEventVisibleToNonAdmin,
   isUpcomingEvent,
 } from "../../data/events";
@@ -178,6 +179,44 @@ function getEventUnavailableMessage(
   return "No upcoming scoped events are scheduled for this athlete.";
 }
 
+function isTodayEvent(event: GameDayEvent | undefined, now: Date) {
+  if (!event) {
+    return false;
+  }
+
+  const startsAt = event.startsAt || event.startDateTime || event.date || "";
+  const eventDate = new Date(startsAt);
+
+  if (Number.isNaN(eventDate.getTime())) {
+    return false;
+  }
+
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "America/New_York",
+    year: "numeric",
+  });
+
+  return formatter.format(eventDate) === formatter.format(now);
+}
+
+function getPlayerSignalClasses(tone: "gray" | "green" | "red" | "yellow") {
+  if (tone === "green") {
+    return "border-emerald-300/40 bg-emerald-400/15 text-emerald-100 shadow-[0_0_22px_rgba(16,185,129,0.22)]";
+  }
+
+  if (tone === "red") {
+    return "border-red-300/35 bg-red-500/15 text-red-100";
+  }
+
+  if (tone === "yellow") {
+    return "border-orange-300/35 bg-orange-500/15 text-orange-100";
+  }
+
+  return "border-white/10 bg-white/[0.055] text-slate-300";
+}
+
 export default async function AthleteDetailsPage({
   params,
 }: AthleteDetailsPageProps) {
@@ -306,6 +345,26 @@ export default async function AthleteDetailsPage({
   const eventPlanLabel = nextEvent
     ? `${attendanceStatus} attendance / ${transportationStatus} ride`
     : "No next event";
+  const hasFixablePlayerNeeds = needsBlocked > 0 || requirementSummary.open > 0;
+  const hasAccountAlert =
+    hasFixablePlayerNeeds ||
+    nextAction.tone === "blocked" ||
+    (nextAction.tone === "attention" && nextAction.href === athleteHref);
+  const eventIsToday = isTodayEvent(nextEvent, now);
+  const playerSignalTone = hasAccountAlert
+    ? "red"
+    : eventIsToday
+      ? "green"
+      : nextEvent
+        ? "yellow"
+        : "gray";
+  const playerSignalLabel = hasAccountAlert
+    ? "Account alert"
+    : eventIsToday
+      ? "Today"
+      : nextEvent
+        ? "Upcoming"
+        : "No schedule";
 
   return (
     <main className="gd-dark-scope min-h-screen text-white">
@@ -323,7 +382,7 @@ export default async function AthleteDetailsPage({
         </div>
       </header>
 
-      <section className="mx-auto max-w-2xl px-3 py-4 sm:px-5">
+      <section className="mx-auto max-w-2xl px-3 py-3 pb-20 sm:px-5">
         <Link
           href="/parent"
           className="inline-flex rounded-md border border-blue-300/25 bg-blue-500/10 px-2.5 py-1.5 text-xs font-black text-blue-100 shadow-sm hover:bg-blue-500/20"
@@ -332,59 +391,64 @@ export default async function AthleteDetailsPage({
         </Link>
 
         <div className="gd-card-dark mt-3 rounded-lg p-3">
-          <p className="text-xs font-black uppercase text-blue-300">
-            Player Home
-          </p>
-          <h1 className="mt-1 text-xl font-black tracking-tight">
-            {athlete.name}
-          </h1>
-          <p className="mt-1 text-xs font-semibold text-slate-400">
-            {organizationName} / {teamName}
-          </p>
-          {teamDetail && (
-            <p className="mt-1 text-xs font-black uppercase text-slate-500">
-              {teamDetail}
-            </p>
-          )}
-        </div>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-blue-300">
+                Player
+              </p>
+              <h1 className="mt-0.5 truncate text-xl font-black tracking-tight">
+                {athlete.name}
+              </h1>
+              <p className="mt-1 truncate text-xs font-semibold text-slate-400">
+                {organizationName} / {teamName}
+              </p>
+              {teamDetail && (
+                <p className="mt-1 truncate text-[11px] font-black uppercase text-slate-500">
+                  {teamDetail}
+                </p>
+              )}
+            </div>
+            <span
+              className={`shrink-0 rounded-md border px-2.5 py-1 text-[11px] font-black ${getPlayerSignalClasses(
+                playerSignalTone,
+              )}`}
+            >
+              {playerSignalLabel}
+            </span>
+          </div>
 
-        {nextAction.tone !== "ready" && (
           <div
-            className={`mt-3 rounded-lg border p-3 shadow-sm ${getActionToneClasses(
+            className={`mt-3 rounded-md border px-3 py-2 ${getActionToneClasses(
               nextAction.tone,
             )}`}
           >
-            <p className="text-xs font-black uppercase">Needs attention</p>
-            <p className="mt-1 text-base font-black">{nextAction.label}</p>
-            <p className="mt-1 text-xs font-semibold">
-              {nextAction.description}
-            </p>
-            {nextAction.href && nextAction.href !== athleteHref ? (
-              <Link
-                href={nextAction.href}
-                className="mt-2 block rounded-md bg-blue-600 py-2 text-center text-xs font-black text-white hover:bg-blue-700"
-              >
-                Open
-              </Link>
-            ) : (
-              <p className="mt-2 rounded-md border border-current/20 bg-white/[0.05] p-2.5 text-xs font-semibold">
-                Choose the matching option below.
-              </p>
-            )}
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-wide opacity-70">
+                  Next step
+                </p>
+                <p className="mt-0.5 truncate text-sm font-black">
+                  {nextAction.label}
+                </p>
+                <p className="mt-0.5 line-clamp-2 text-xs font-semibold opacity-80">
+                  {nextAction.description}
+                </p>
+              </div>
+              {nextAction.href && nextAction.href !== athleteHref && (
+                <Link
+                  href={nextAction.href}
+                  className="shrink-0 rounded-md bg-blue-600 px-3 py-2 text-xs font-black text-white hover:bg-blue-700"
+                >
+                  Open
+                </Link>
+              )}
+            </div>
           </div>
-        )}
+        </div>
 
-        <div className="gd-card-dark mt-3 rounded-lg p-3">
-          <div className="px-1">
-            <h2 className="text-base font-black text-white">Options</h2>
-            <p className="mt-1 text-xs font-semibold text-slate-400">
-              Pick what you need for {athlete.firstName || athlete.name}.
-            </p>
-          </div>
-
-          <div className="mt-2 space-y-2">
+        <div className="mt-3 space-y-1.5">
             <details className="group overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-2.5">
                 <span>
                   <span className="block font-black text-white">
                     Attendance & ride
@@ -404,7 +468,7 @@ export default async function AthleteDetailsPage({
                   </span>
                 </span>
               </summary>
-              <div className="border-t border-white/10 p-3">
+              <div className="border-t border-white/10 p-2.5">
                 {nextEvent ? (
                   <div className="rounded-md border border-white/10 bg-white/[0.04] p-3">
                     <p className="font-black text-white">
@@ -457,7 +521,7 @@ export default async function AthleteDetailsPage({
             </details>
 
             <details className="group overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-2.5">
                 <span>
                   <span className="block font-black text-white">
                     Schedule
@@ -470,7 +534,7 @@ export default async function AthleteDetailsPage({
                   &rsaquo;
                 </span>
               </summary>
-              <div className="border-t border-white/10 p-3">
+              <div className="border-t border-white/10 p-2.5">
                 {nextEvent ? (
                   <>
                     <div className="rounded-md border border-white/10 bg-white/[0.04] p-3">
@@ -501,7 +565,7 @@ export default async function AthleteDetailsPage({
                     </Link>
                   </>
                 ) : (
-                    <p className="rounded-md border border-white/10 bg-white/[0.04] p-3 text-xs font-semibold text-slate-400">
+                  <p className="rounded-md border border-white/10 bg-white/[0.04] p-3 text-xs font-semibold text-slate-400">
                     {nextEventLabel}
                   </p>
                 )}
@@ -510,7 +574,7 @@ export default async function AthleteDetailsPage({
 
             {hasPlayerNeeds && (
               <details className="group overflow-hidden rounded-lg border border-orange-300/25 bg-orange-500/10">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-2.5">
                   <span>
                     <span className="block font-black text-white">
                       Player needs
@@ -525,7 +589,7 @@ export default async function AthleteDetailsPage({
                     &rsaquo;
                   </span>
                 </summary>
-                <div className="border-t border-orange-300/20 p-3">
+                <div className="border-t border-orange-300/20 p-2.5">
                   <RegistrationRequirementsChecklist
                     athleteId={athlete.id}
                     documentRequirements={documentRequirements}
@@ -546,7 +610,7 @@ export default async function AthleteDetailsPage({
             )}
 
             <details className="group overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-2.5">
                 <span>
                   <span className="block font-black text-white">
                     Registration status
@@ -561,7 +625,7 @@ export default async function AthleteDetailsPage({
                   &rsaquo;
                 </span>
               </summary>
-              <div className="grid gap-2 border-t border-white/10 p-3 text-xs sm:grid-cols-2">
+              <div className="grid gap-2 border-t border-white/10 p-2.5 text-xs sm:grid-cols-2">
                 <div className="rounded-md border border-white/10 bg-white/[0.04] p-2.5">
                   <p className="font-semibold text-slate-400">Registration</p>
                   <p
@@ -604,7 +668,7 @@ export default async function AthleteDetailsPage({
 
             {registration && (
               <details className="group overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-2.5">
                   <span>
                     <span className="block font-black text-white">
                       Player info
@@ -617,7 +681,7 @@ export default async function AthleteDetailsPage({
                     &rsaquo;
                   </span>
                 </summary>
-                <div className="border-t border-white/10 p-3">
+                <div className="border-t border-white/10 p-2.5">
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div className="rounded-md border border-white/10 bg-white/[0.04] p-2.5">
                       <p className="font-semibold text-slate-400">Grade</p>
@@ -644,7 +708,6 @@ export default async function AthleteDetailsPage({
                 </div>
               </details>
             )}
-          </div>
         </div>
       </section>
     </main>

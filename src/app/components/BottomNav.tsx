@@ -22,10 +22,10 @@ export default function BottomNav({ items, surface = "dark" }: BottomNavProps) {
         <Link
           key={`${item.href}-${item.label}`}
           href={item.href}
-          className={`min-h-8 rounded-md px-2.5 py-1.5 ${
+          className={`min-h-7 rounded-md px-2.5 py-1.5 ${
             surface === "light"
               ? "border border-blue-100 bg-white/80 shadow-sm hover:border-blue-300 hover:bg-blue-50"
-              : "bg-slate-900"
+              : "border border-blue-300/15 bg-white/[0.045] text-slate-300 hover:border-blue-300/35 hover:bg-blue-500/10 hover:text-white"
           }`}
         >
           {item.label}

@@ -18,6 +18,7 @@ import {
   getRegistrationInviteStatus,
   type RegistrationInvite,
 } from "../data/invites";
+import type { MessageAudience } from "../data/messages";
 import {
   getOrganizationWorkspaceType,
   getOrganizationWorkspaceTypeLabel,
@@ -111,6 +112,26 @@ function getTeamLabel(team: Team) {
 
 function getInviteJoinPath(invite: RegistrationInvite) {
   return invite.inviteUrl || `/join/${invite.inviteCode}`;
+}
+
+function getCommunicationAudienceLabel(audience: MessageAudience[]) {
+  if (audience.length === 0) {
+    return "No audience";
+  }
+
+  return audience
+    .map((item) =>
+      item === "parent" ? "Parents" : item === "coach" ? "Coaches" : "Admins",
+    )
+    .join(" + ");
+}
+
+function getCommunicationTargetLabel(teamId: string | undefined, teams: Team[]) {
+  if (!teamId) {
+    return "Whole organization";
+  }
+
+  return teams.find((team) => team.id === teamId)?.name ?? "Team";
 }
 
 function WorkspaceIcon({
@@ -790,46 +811,51 @@ export default function AdminOrganizationWorkspaceHome({
                   teams={readModel.teams}
                 />
 
-                <section className="gd-card-dark rounded-lg p-4 backdrop-blur">
-                  <div>
-                    <h2 className="text-xl font-black">Messages</h2>
-                    <p className="mt-1 text-sm text-slate-400">
-                      Recent organization and team updates.
-                    </p>
+                <section className="gd-card-dark rounded-lg p-3 backdrop-blur">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <h2 className="text-base font-black">Sent messages</h2>
+                      <p className="mt-0.5 text-xs font-semibold text-slate-400">
+                        Recent org and team communication.
+                      </p>
+                    </div>
+                    <StatusPill tone="blue">
+                      {`${recentCommunications.length} recent`}
+                    </StatusPill>
                   </div>
 
-                  <div className="mt-4 space-y-3">
+                  <div className="mt-3 divide-y divide-white/10 overflow-hidden rounded-md border border-white/10 bg-white/[0.035]">
                     {recentCommunications.length > 0 ? (
                       recentCommunications.map((announcement) => (
                         <article
-                          className="rounded-md border border-blue-300/10 bg-white/[0.045] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
+                          className="grid gap-2 px-3 py-2.5 sm:grid-cols-[1fr_auto] sm:items-center"
                           key={announcement.id}
                         >
-                          <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-                            <div>
-                              <h3 className="text-sm font-black">
-                                {announcement.subject}
-                              </h3>
-                              <p className="mt-1 text-xs font-semibold text-blue-200">
-                                {announcement.teamId
-                                  ? `Team: ${
-                                      readModel.teams.find(
-                                        (team) =>
-                                          team.id === announcement.teamId,
-                                      )?.name ?? announcement.teamId
-                                    }`
-                                  : "Whole organization"}
-                              </p>
-                            </div>
-                            <time className="text-xs font-semibold text-slate-400">
+                          <div className="min-w-0">
+                            <h3 className="truncate text-sm font-black">
+                              {announcement.subject}
+                            </h3>
+                            <p className="mt-0.5 truncate text-xs font-semibold text-slate-400">
+                              {getCommunicationTargetLabel(
+                                announcement.teamId,
+                                readModel.teams,
+                              )}{" "}
+                              /{" "}
+                              {getCommunicationAudienceLabel(
+                                announcement.audience,
+                              )}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 sm:justify-end">
+                            <span className="rounded-full border border-white/10 bg-white/[0.045] px-2 py-0.5 text-[11px] font-black text-slate-300">
+                              {announcement.priority}
+                            </span>
+                            <time className="text-xs font-semibold text-slate-500">
                               {new Date(
                                 announcement.timestamp,
                               ).toLocaleDateString()}
                             </time>
                           </div>
-                          <p className="mt-2 text-sm text-slate-300">
-                            {announcement.content}
-                          </p>
                         </article>
                       ))
                     ) : (

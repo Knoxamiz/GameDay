@@ -81,9 +81,9 @@ export default function ParentLoginForm({ nextPath }: ParentLoginFormProps) {
   }
 
   return (
-    <div className="gd-card-light mt-3 rounded-lg p-3">
-      <h2 className="text-base font-black">Account details</h2>
-      <p className="mt-0.5 text-xs font-semibold text-slate-600">
+    <div className="gd-card-dark rounded-lg p-3">
+      <h2 className="text-base font-black text-white">Account details</h2>
+      <p className="mt-0.5 text-xs font-semibold text-slate-300">
         Your access comes from verified memberships, assignments, and player
         records.
       </p>
@@ -95,7 +95,7 @@ export default function ParentLoginForm({ nextPath }: ParentLoginFormProps) {
           </span>
           <input
             autoComplete="email"
-            className="mt-1.5 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            className="mt-1.5 w-full rounded-md border border-blue-300/25 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20"
             onChange={(event) => setEmail(event.target.value)}
             type="email"
             value={email}
@@ -107,7 +107,7 @@ export default function ParentLoginForm({ nextPath }: ParentLoginFormProps) {
           </span>
           <input
             autoComplete="current-password"
-            className="mt-1.5 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            className="mt-1.5 w-full rounded-md border border-blue-300/25 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20"
             onChange={(event) => setPassword(event.target.value)}
             type="password"
             value={password}
@@ -115,7 +115,7 @@ export default function ParentLoginForm({ nextPath }: ParentLoginFormProps) {
         </label>
 
         {error && (
-          <p className="rounded-md border border-red-200 bg-red-50 p-2.5 text-xs font-black text-red-700">
+          <p className="rounded-md border border-red-400/30 bg-red-500/10 p-2.5 text-xs font-black text-red-100">
             {error}
           </p>
         )}
