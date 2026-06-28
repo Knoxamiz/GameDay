@@ -30,10 +30,6 @@ import {
   type ParentNextActionTone,
 } from "../../data/parentDashboard";
 import {
-  summarizePaymentRequirements,
-  type PaymentRequirement,
-} from "../../data/payments";
-import {
   getRegistrationRosterStatus,
   hasPendingParentLifecycleRequest,
   isParentEventEligibleRegistration,
@@ -128,28 +124,6 @@ function getRequirementTone(open: number, blocked: number, needsReview: number) 
   }
 
   return "text-emerald-200";
-}
-
-function getPaymentLabel(paymentRequirements: PaymentRequirement[]) {
-  const summary = summarizePaymentRequirements(paymentRequirements);
-
-  if (paymentRequirements.length === 0) {
-    return "No payment due";
-  }
-
-  if (summary.blocked > 0) {
-    return "Needs fix";
-  }
-
-  if (summary.missing > 0) {
-    return "Payment pending";
-  }
-
-  if (summary.needsReview > 0) {
-    return "Waiting review";
-  }
-
-  return "Ready";
 }
 
 function getEventTone(status: string) {
@@ -311,7 +285,6 @@ export default async function AthleteDetailsPage({
     rosterStatus,
     Boolean(nextEvent),
   );
-  const paymentSummary = summarizePaymentRequirements(paymentRequirements);
   const requirementTone = getRequirementTone(
     requirementSummary.open,
     requirementSummary.documentsBlocked + requirementSummary.paymentsBlocked,
@@ -333,18 +306,9 @@ export default async function AthleteDetailsPage({
     requirementSummary.documentsNeedsReview + requirementSummary.paymentsNeedsReview;
   const hasPlayerNeeds =
     requirementSummary.open > 0 || needsBlocked > 0 || needsReview > 0;
-  const playerNeedsLabel =
-    needsBlocked > 0
-      ? `${needsBlocked} needs fix`
-      : requirementSummary.open > 0
-        ? `${requirementSummary.open} open`
-        : `${needsReview} waiting review`;
   const nextEventLabel = nextEvent
     ? `${getEventDateLabel(nextEvent)} - ${getEventTimeLabel(nextEvent)}`
     : getEventUnavailableMessage(registrationStatus, rosterStatus);
-  const eventPlanLabel = nextEvent
-    ? `${attendanceStatus} attendance / ${transportationStatus} ride`
-    : "No next event";
   const hasFixablePlayerNeeds = needsBlocked > 0 || requirementSummary.open > 0;
   const hasAccountAlert =
     hasFixablePlayerNeeds ||
@@ -446,23 +410,80 @@ export default async function AthleteDetailsPage({
           </div>
         </div>
 
-        <div className="mt-3 space-y-1.5">
-            <details className="group overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-2.5">
-                <span>
-                  <span className="block font-black text-white">
-                    Attendance & ride
-                  </span>
-                  <span className="mt-0.5 block text-xs font-semibold text-slate-400">
-                    {eventPlanLabel}
+        <div className="mt-3">
+          <div className="flex items-center justify-between gap-3 px-1">
+            <h2 className="text-sm font-black uppercase tracking-[0.14em] text-blue-200">
+              Open what you need
+            </h2>
+            <span className="truncate text-[11px] font-black text-slate-400">
+              {getParentRegistrationStatusLabel(registrationStatus)} /{" "}
+              {getParentRosterStatusLabel(rosterStatus)}
+            </span>
+          </div>
+
+          <div className="mt-2 grid grid-cols-2 gap-1.5 text-[11px] sm:grid-cols-3">
+            <div className="rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-2">
+              <p className="font-semibold text-slate-400">Registration</p>
+              <p
+                className={`mt-0.5 truncate font-black ${getRegistrationTone(
+                  registrationStatus,
+                )}`}
+              >
+                {getParentRegistrationStatusLabel(registrationStatus)}
+              </p>
+            </div>
+            <div className="rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-2">
+              <p className="font-semibold text-slate-400">Roster</p>
+              <p className={`mt-0.5 truncate font-black ${getRosterTone(rosterStatus)}`}>
+                {getParentRosterStatusLabel(rosterStatus)}
+              </p>
+            </div>
+            <div className="col-span-2 rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-2 sm:col-span-1">
+              <p className="font-semibold text-slate-400">Needs</p>
+              <p className={`mt-0.5 truncate font-black ${requirementTone}`}>
+                {getParentRequirementCountLabel(requirementSummary)}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-2 space-y-1.5">
+            <details
+              className={`group overflow-hidden rounded-lg border bg-white/[0.04] ${
+                eventIsToday
+                  ? "border-emerald-300/35 shadow-[0_0_26px_rgba(16,185,129,0.14)]"
+                  : "border-white/10"
+              }`}
+            >
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-2.5 [&::-webkit-details-marker]:hidden">
+                <span className="flex min-w-0 items-center gap-2.5">
+                  <span
+                    className={`h-2.5 w-2.5 shrink-0 rounded-full ${
+                      playerSignalTone === "green"
+                        ? "bg-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.72)]"
+                        : playerSignalTone === "red"
+                          ? "bg-red-400"
+                          : playerSignalTone === "yellow"
+                            ? "bg-orange-400"
+                            : "bg-slate-500"
+                    }`}
+                  />
+                  <span className="min-w-0">
+                    <span className="block truncate font-black text-white">
+                      {eventUpdatesAllowed ? "Attendance & ride" : "Next event"}
+                    </span>
+                    <span className="mt-0.5 block truncate text-xs font-semibold text-slate-400">
+                      {nextEventLabel}
+                    </span>
                   </span>
                 </span>
                 <span className="flex shrink-0 items-center gap-2">
-                  {nextEvent && (
-                    <span className="rounded-full border border-blue-300/20 bg-blue-500/10 px-3 py-1 text-xs font-black text-blue-100">
-                      {eventUpdatesAllowed ? "Set plan" : "Locked"}
-                    </span>
-                  )}
+                  <span
+                    className={`rounded-full border px-2.5 py-1 text-[11px] font-black ${getPlayerSignalClasses(
+                      playerSignalTone,
+                    )}`}
+                  >
+                    {playerSignalLabel}
+                  </span>
                   <span className="text-lg font-black text-blue-200 transition group-open:rotate-90">
                     &rsaquo;
                   </span>
@@ -471,15 +492,26 @@ export default async function AthleteDetailsPage({
               <div className="border-t border-white/10 p-2.5">
                 {nextEvent ? (
                   <div className="rounded-md border border-white/10 bg-white/[0.04] p-3">
-                    <p className="font-black text-white">
-                      {nextEvent.title}
-                    </p>
-                    <p className="mt-1 text-xs font-semibold text-slate-400">
-                      {nextEventLabel}
-                    </p>
-                    <p className="mt-1 text-xs font-semibold text-slate-400">
-                      {getEventLocationLabel(nextEvent)}
-                    </p>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate font-black text-white">
+                          {nextEvent.title}
+                        </p>
+                        <p className="mt-1 text-xs font-semibold text-slate-400">
+                          {nextEventLabel}
+                        </p>
+                        <p className="mt-1 text-xs font-semibold text-slate-400">
+                          {getEventLocationLabel(nextEvent)}
+                        </p>
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${getEventTone(
+                          nextEvent.status,
+                        )}`}
+                      >
+                        {getEventStatusLabel(nextEvent)}
+                      </span>
+                    </div>
                   </div>
                 ) : (
                   <p className="rounded-md border border-white/10 bg-white/[0.04] p-3 text-xs font-semibold text-slate-400">
@@ -514,200 +546,48 @@ export default async function AthleteDetailsPage({
                   <p className="mt-3 rounded-md border border-white/10 bg-white/[0.04] p-2.5 text-xs font-semibold text-slate-400">
                     {nextEvent.status === "canceled"
                       ? "Attendance and transportation updates are closed for this canceled event."
-                      : "Attendance and transportation controls are available after this player is approved and rostered."}
+                      : "Attendance and transportation controls open after this player is approved and rostered."}
                   </p>
                 )}
-              </div>
-            </details>
 
-            <details className="group overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-2.5">
-                <span>
-                  <span className="block font-black text-white">
-                    Schedule
-                  </span>
-                  <span className="mt-0.5 block text-xs font-semibold text-slate-400">
-                    {nextEvent ? nextEventLabel : "No upcoming event"}
-                  </span>
-                </span>
-                <span className="text-lg font-black text-blue-200 transition group-open:rotate-90">
-                  &rsaquo;
-                </span>
-              </summary>
-              <div className="border-t border-white/10 p-2.5">
-                {nextEvent ? (
-                  <>
-                    <div className="rounded-md border border-white/10 bg-white/[0.04] p-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <p className="font-black text-white">
-                          {nextEvent.title}
-                        </p>
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${getEventTone(
-                            nextEvent.status,
-                          )}`}
-                        >
-                          {getEventStatusLabel(nextEvent)}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-xs font-semibold text-slate-400">
-                        {nextEventLabel}
-                      </p>
-                      <p className="mt-1 text-xs font-semibold text-slate-400">
-                        {getEventLocationLabel(nextEvent)}
-                      </p>
-                    </div>
-                    <Link
-                      href={`/events/${nextEvent.id}`}
-                      className="mt-3 block rounded-md bg-blue-600 py-2 text-center text-xs font-black text-white hover:bg-blue-700"
-                    >
-                      Event Details
-                    </Link>
-                  </>
-                ) : (
-                  <p className="rounded-md border border-white/10 bg-white/[0.04] p-3 text-xs font-semibold text-slate-400">
-                    {nextEventLabel}
-                  </p>
+                {nextEvent && (
+                  <Link
+                    href={`/events/${nextEvent.id}`}
+                    className="mt-2 block rounded-md border border-blue-300/20 bg-blue-500/10 py-2 text-center text-xs font-black text-blue-100 hover:bg-blue-500/20"
+                  >
+                    Event details
+                  </Link>
                 )}
               </div>
             </details>
 
             {hasPlayerNeeds && (
-              <details className="group overflow-hidden rounded-lg border border-orange-300/25 bg-orange-500/10">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-2.5">
-                  <span>
-                    <span className="block font-black text-white">
-                      Player needs
-                    </span>
-                    <span
-                      className={`mt-0.5 block text-xs font-semibold ${requirementTone}`}
-                    >
-                      {playerNeedsLabel}
-                    </span>
-                  </span>
-                  <span className="text-lg font-black text-orange-200 transition group-open:rotate-90">
-                    &rsaquo;
-                  </span>
-                </summary>
-                <div className="border-t border-orange-300/20 p-2.5">
-                  <RegistrationRequirementsChecklist
-                    athleteId={athlete.id}
-                    documentRequirements={documentRequirements}
-                    organizationId={organizationId}
-                    parentId={currentUser.parentId}
-                    paymentRequirements={paymentRequirements}
-                    registrationId={registrationId}
-                    requirements={registrationRequirements}
-                    surface="inline"
-                    updatesAllowed={
-                      registration
-                        ? !isRegistrationTerminal(registration.status)
-                        : false
-                    }
-                  />
-                </div>
-              </details>
+              <RegistrationRequirementsChecklist
+                athleteId={athlete.id}
+                documentRequirements={documentRequirements}
+                organizationId={organizationId}
+                parentId={currentUser.parentId}
+                paymentRequirements={paymentRequirements}
+                registrationId={registrationId}
+                requirements={registrationRequirements}
+                surface="inline"
+                updatesAllowed={
+                  registration
+                    ? !isRegistrationTerminal(registration.status)
+                    : false
+                }
+              />
             )}
-
-            <details className="group overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-2.5">
-                <span>
-                  <span className="block font-black text-white">
-                    Registration status
-                  </span>
-                  <span className="mt-0.5 block text-xs font-semibold text-slate-400">
-                    {getParentRegistrationStatusLabel(registrationStatus)} /
-                    {" "}
-                    {getParentRosterStatusLabel(rosterStatus)}
-                  </span>
-                </span>
-                <span className="text-lg font-black text-blue-200 transition group-open:rotate-90">
-                  &rsaquo;
-                </span>
-              </summary>
-              <div className="grid gap-2 border-t border-white/10 p-2.5 text-xs sm:grid-cols-2">
-                <div className="rounded-md border border-white/10 bg-white/[0.04] p-2.5">
-                  <p className="font-semibold text-slate-400">Registration</p>
-                  <p
-                    className={`mt-1 font-black ${getRegistrationTone(
-                      registrationStatus,
-                    )}`}
-                  >
-                    {getParentRegistrationStatusLabel(registrationStatus)}
-                  </p>
-                </div>
-                <div className="rounded-md border border-white/10 bg-white/[0.04] p-2.5">
-                  <p className="font-semibold text-slate-400">Roster</p>
-                  <p className={`mt-1 font-black ${getRosterTone(rosterStatus)}`}>
-                    {getParentRosterStatusLabel(rosterStatus)}
-                  </p>
-                </div>
-                <div className="rounded-md border border-white/10 bg-white/[0.04] p-2.5">
-                  <p className="font-semibold text-slate-400">Readiness</p>
-                  <p className={`mt-1 font-black ${requirementTone}`}>
-                    {requirementSummary.label}
-                  </p>
-                  <p className="mt-1 text-xs font-semibold text-slate-400">
-                    {getParentRequirementCountLabel(requirementSummary)}
-                  </p>
-                </div>
-                <div className="rounded-md border border-white/10 bg-white/[0.04] p-2.5">
-                  <p className="font-semibold text-slate-400">Payment</p>
-                  <p
-                    className={`mt-1 font-black ${getRequirementTone(
-                      paymentSummary.open,
-                      paymentSummary.blocked,
-                      paymentSummary.needsReview,
-                    )}`}
-                  >
-                    {getPaymentLabel(paymentRequirements)}
-                  </p>
-                </div>
-              </div>
-            </details>
 
             {registration && (
-              <details className="group overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-2.5">
-                  <span>
-                    <span className="block font-black text-white">
-                      Player info
-                    </span>
-                    <span className="mt-0.5 block text-xs font-semibold text-slate-400">
-                      View details or request a correction.
-                    </span>
-                  </span>
-                  <span className="text-lg font-black text-blue-200 transition group-open:rotate-90">
-                    &rsaquo;
-                  </span>
-                </summary>
-                <div className="border-t border-white/10 p-2.5">
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="rounded-md border border-white/10 bg-white/[0.04] p-2.5">
-                      <p className="font-semibold text-slate-400">Grade</p>
-                      <p className="mt-1 font-black text-white">
-                        {athlete.grade || "Not listed"}
-                      </p>
-                    </div>
-                    <div className="rounded-md border border-white/10 bg-white/[0.04] p-2.5">
-                      <p className="font-semibold text-slate-400">Jersey</p>
-                      <p className="mt-1 font-black text-white">
-                        {athlete.jerseySize || "Not listed"}
-                      </p>
-                    </div>
-                  </div>
-                  <p className="mt-2 rounded-md border border-white/10 bg-white/[0.04] p-2.5 text-xs font-semibold text-slate-400">
-                    {athlete.school || "School not listed"}
-                  </p>
-                  <ParentRegistrationLifecyclePanel
-                    athlete={athlete}
-                    parent={parent}
-                    registration={registration}
-                    surface="inline"
-                  />
-                </div>
-              </details>
+              <ParentRegistrationLifecyclePanel
+                athlete={athlete}
+                parent={parent}
+                registration={registration}
+                surface="inline"
+              />
             )}
+          </div>
         </div>
       </section>
     </main>

@@ -144,10 +144,7 @@ function MemberCard({
   }
 
   return (
-    <details
-      className="gd-card-dark gd-card-interactive group overflow-hidden rounded-lg"
-      open={shouldExposeAccessLink}
-    >
+    <details className="gd-card-dark gd-card-interactive group overflow-hidden rounded-lg">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
         <span className="min-w-0">
           <span className="block truncate text-base font-black text-white">
@@ -168,6 +165,15 @@ function MemberCard({
           <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-black text-slate-200">
             {getRoleLabel(membership.role)}
           </span>
+          {shouldExposeAccessLink && (
+            <AdminJoinLinkButton
+              className="hidden rounded-md border border-blue-300/25 bg-blue-500/10 px-2 py-1 text-[11px] font-black text-blue-100 hover:bg-blue-500/20 sm:inline-flex"
+              errorMessage="Could not copy the access link."
+              joinPath={accessSignupPath}
+              label={membership.role === "coach" ? "Coach link" : "Copy link"}
+              successMessage="Access link copied."
+            />
+          )}
           <span className="text-base font-black text-blue-300 transition group-open:rotate-90">
             &gt;
           </span>

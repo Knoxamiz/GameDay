@@ -203,6 +203,7 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
       transportationStatus,
     };
   });
+  const latestTeamMessage = card.teamMessages[0];
 
   return (
     <article className="gd-card-dark rounded-lg p-3 shadow-[0_0_28px_rgba(37,99,235,0.12)]">
@@ -340,6 +341,25 @@ export default function CoachTeamCard({ card }: CoachTeamCardProps) {
           </div>
         </div>
       </div>
+
+      {latestTeamMessage && (
+        <div className="mt-2 flex flex-col gap-2 rounded-md border border-blue-300/20 bg-blue-500/10 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-blue-200">
+              Latest message
+            </p>
+            <p className="mt-0.5 truncate text-sm font-black text-white">
+              {latestTeamMessage.subject}
+            </p>
+            <p className="mt-0.5 line-clamp-1 text-xs font-semibold text-slate-400">
+              {latestTeamMessage.content}
+            </p>
+          </div>
+          <span className="shrink-0 rounded-full border border-blue-300/20 bg-blue-500/10 px-2 py-0.5 text-[10px] font-black text-blue-100">
+            {getMessageAudienceLabel(latestTeamMessage.audience)}
+          </span>
+        </div>
+      )}
 
       <details className="group mt-2 overflow-hidden rounded-md border border-white/10 bg-white/[0.04]">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3">

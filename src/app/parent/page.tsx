@@ -327,7 +327,7 @@ export default async function ParentHome() {
     currentParent.firstName || currentParent.name || "Parent";
   return (
     <main className="gd-dark-scope min-h-screen text-white">
-      <header className="border-b border-white/10 bg-slate-950/70 backdrop-blur">
+      <header className="relative z-[500] border-b border-white/10 bg-slate-950/70 backdrop-blur">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-3 py-2.5 sm:px-5">
           <Link className="text-lg font-black text-white" href="/parent">
             GameDay
@@ -365,7 +365,7 @@ export default async function ParentHome() {
                     {parentMessages.length}
                   </span>
                 </summary>
-                <div className="absolute right-0 z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] space-y-1.5 rounded-lg border border-blue-300/25 bg-slate-950/95 p-2 shadow-2xl shadow-blue-950/50 ring-1 ring-white/10 backdrop-blur">
+                <div className="absolute right-0 z-[540] mt-2 w-80 max-w-[calc(100vw-2rem)] space-y-1.5 rounded-lg border border-blue-300/25 bg-slate-950/95 p-2 shadow-2xl shadow-blue-950/50 ring-1 ring-white/10 backdrop-blur">
                   {parentMessages.map((message) => (
                     <article
                       className="rounded-md border border-white/10 bg-white/[0.04] p-2.5"
@@ -444,7 +444,7 @@ export default async function ParentHome() {
                   <summary className="cursor-pointer list-none rounded-full border border-blue-300/20 bg-blue-500/10 px-2.5 py-1 text-[11px] font-black text-blue-100 shadow-sm hover:bg-blue-500/20 [&::-webkit-details-marker]:hidden">
                     + Player
                   </summary>
-                  <div className="absolute right-0 z-20 mt-2 w-72 max-w-[calc(100vw-2rem)] space-y-1.5 rounded-lg border border-blue-300/25 bg-slate-950/95 p-2 text-white shadow-2xl shadow-blue-950/50 ring-1 ring-white/10 backdrop-blur">
+                  <div className="absolute right-0 z-[540] mt-2 w-72 max-w-[calc(100vw-2rem)] space-y-1.5 rounded-lg border border-blue-300/25 bg-slate-950/95 p-2 text-white shadow-2xl shadow-blue-950/50 ring-1 ring-white/10 backdrop-blur">
                     <p className="px-1 text-[11px] font-bold text-slate-300">
                       Add to an existing team, or find a new one.
                     </p>

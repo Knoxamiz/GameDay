@@ -365,7 +365,7 @@ export default function AdminContextHome({
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(37,99,235,0.34),transparent_34%),linear-gradient(115deg,#020817_0%,#061431_56%,#0b2447_100%)]" />
       <div className="pointer-events-none absolute inset-x-0 top-16 h-px bg-white/10" />
 
-      <header className="relative z-[120] border-b border-white/10 bg-slate-950/70 backdrop-blur">
+      <header className="relative z-[500] border-b border-white/10 bg-slate-950/70 backdrop-blur">
         <div className="mx-auto flex min-h-16 max-w-[1120px] items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-4">
             <Link className="flex items-center gap-3" href="/admin">
@@ -381,7 +381,7 @@ export default function AdminContextHome({
             </span>
           </div>
 
-          <div className="relative z-[140]">
+          <div className="relative z-[520]">
             <button
               className="flex items-center gap-3 rounded-lg px-2 py-1.5 text-left hover:bg-white/10"
               onClick={() => setIsProfileOpen((currentValue) => !currentValue)}
@@ -401,7 +401,7 @@ export default function AdminContextHome({
               <ChevronDownIcon className="size-5 text-slate-300" />
             </button>
             {isProfileOpen && (
-              <div className="absolute right-0 top-full z-[160] mt-2 w-64 rounded-lg border border-blue-300/20 bg-slate-950 p-2 shadow-[0_18px_48px_rgba(0,0,0,0.5)]">
+              <div className="absolute right-0 top-full z-[540] mt-2 w-64 rounded-lg border border-blue-300/20 bg-slate-950 p-2 shadow-[0_18px_48px_rgba(0,0,0,0.5)]">
                 {accountLabel && (
                   <p className="break-all px-3 py-2 text-sm text-slate-400">
                     {accountLabel}

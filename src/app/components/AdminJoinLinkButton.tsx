@@ -23,7 +23,9 @@ export default function AdminJoinLinkButton({
     <div>
       <button
         className={className}
-        onClick={async () => {
+        onClick={async (event) => {
+          event.stopPropagation();
+
           try {
             await navigator.clipboard.writeText(
               `${window.location.origin}${joinPath}`,

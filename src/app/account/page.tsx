@@ -38,7 +38,7 @@ export default async function AccountPage() {
 
   return (
     <main className="gd-dark-scope min-h-screen text-white">
-      <header className="border-b border-white/10 bg-slate-950/70 backdrop-blur">
+      <header className="relative z-[500] border-b border-white/10 bg-slate-950/70 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-3 py-2.5 sm:px-5">
           <Link className="text-lg font-black text-white" href="/account">
             GameDay

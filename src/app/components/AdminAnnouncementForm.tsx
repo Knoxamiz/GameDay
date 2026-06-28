@@ -6,6 +6,11 @@ import type { Team } from "../data/teams";
 
 type AdminAnnouncementFormProps = {
   activeOrganizationId: string;
+  defaultTarget?: MessageTarget;
+  defaultTeamId?: string;
+  lockTarget?: boolean;
+  summarySubtitle?: string;
+  summaryTitle?: string;
   teams?: Team[];
 };
 
@@ -75,20 +80,25 @@ function getTargetLabel(target: MessageTarget, teamId: string, teams: Team[]) {
 
 export default function AdminAnnouncementForm({
   activeOrganizationId,
+  defaultTarget = "org-parents",
+  defaultTeamId = "",
+  lockTarget = false,
+  summarySubtitle,
+  summaryTitle = "New message",
   teams = [],
 }: AdminAnnouncementFormProps) {
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
   const [priority, setPriority] =
     useState<MessagePriority>("Informational");
-  const [target, setTarget] = useState<MessageTarget>("org-parents");
+  const [target, setTarget] = useState<MessageTarget>(defaultTarget);
   const [selectedTeamAudience, setSelectedTeamAudience] = useState<
     MessageAudience[]
   >([
     "coach",
     "parent",
   ]);
-  const [teamId, setTeamId] = useState("");
+  const [teamId, setTeamId] = useState(defaultTeamId);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -138,8 +148,8 @@ export default function AdminAnnouncementForm({
 
       setSubject("");
       setContent("");
-      setTeamId("");
-      setTarget("org-parents");
+      setTeamId(defaultTeamId);
+      setTarget(defaultTarget);
       setMessage(body?.message ?? "Announcement created.");
       window.location.reload();
     } catch (announcementError) {
@@ -161,14 +171,14 @@ export default function AdminAnnouncementForm({
       id="create-announcement"
     >
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
-        <span>
-          <span className="block text-sm font-black text-white">
-            New message
+          <span>
+            <span className="block text-sm font-black text-white">
+              {summaryTitle}
+            </span>
+            <span className="mt-0.5 block text-xs font-semibold text-slate-400">
+              {summarySubtitle ?? `Target: ${targetLabel}`}
+            </span>
           </span>
-          <span className="mt-0.5 block text-xs font-semibold text-slate-400">
-            Target: {targetLabel}
-          </span>
-        </span>
         <span className="rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-black text-white transition group-open:hidden">
           Create +
         </span>
@@ -189,50 +199,69 @@ export default function AdminAnnouncementForm({
       )}
 
       <div className="space-y-2.5 border-t border-white/10 px-3 pb-3 pt-2.5">
-        <div>
-          <p className="text-[11px] font-bold uppercase text-slate-400">
-            Target
-          </p>
-          <div className="mt-1 grid gap-1.5 sm:grid-cols-4">
-            {messageTargets.map((option) => (
-              <button
-                className={`rounded-md border px-2.5 py-2 text-left transition ${
-                  target === option.value
-                    ? "border-blue-300/40 bg-blue-500/20 text-white shadow-[0_0_22px_rgba(37,99,235,0.16)]"
-                    : "border-white/10 bg-slate-950/45 text-slate-300 hover:bg-white/10"
-                }`}
-                key={option.value}
-                onClick={() => setTarget(option.value)}
-                type="button"
-              >
-                <span className="block text-xs font-black">{option.label}</span>
-                <span className="mt-0.5 block text-[10px] font-semibold opacity-70">
-                  {option.description}
-                </span>
-              </button>
-            ))}
+        {lockTarget ? (
+          <div className="rounded-md border border-blue-300/15 bg-blue-500/10 px-2.5 py-2">
+            <p className="text-[11px] font-black uppercase text-blue-200">
+              Target
+            </p>
+            <p className="mt-0.5 text-sm font-black text-white">
+              {targetLabel}
+            </p>
           </div>
-        </div>
+        ) : (
+          <div>
+            <p className="text-[11px] font-bold uppercase text-slate-400">
+              Target
+            </p>
+            <div className="mt-1 grid gap-1.5 sm:grid-cols-4">
+              {messageTargets.map((option) => (
+                <button
+                  className={`rounded-md border px-2.5 py-2 text-left transition ${
+                    target === option.value
+                      ? "border-blue-300/40 bg-blue-500/20 text-white shadow-[0_0_22px_rgba(37,99,235,0.16)]"
+                      : "border-white/10 bg-slate-950/45 text-slate-300 hover:bg-white/10"
+                  }`}
+                  key={option.value}
+                  onClick={() => setTarget(option.value)}
+                  type="button"
+                >
+                  <span className="block text-xs font-black">
+                    {option.label}
+                  </span>
+                  <span className="mt-0.5 block text-[10px] font-semibold opacity-70">
+                    {option.description}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {target === "team" && (
-          <div className="grid gap-2 rounded-md border border-blue-300/15 bg-blue-500/10 p-2 sm:grid-cols-[1fr_auto]">
-            <label className="block">
-              <span className="text-[11px] font-bold uppercase text-slate-400">
-                Team
-              </span>
-              <select
-                className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
-                onChange={(event) => setTeamId(event.target.value)}
-                value={teamId}
-              >
-                <option value="">Choose team</option>
-                {teams.map((team) => (
-                  <option key={team.id} value={team.id}>
-                    {team.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+          <div
+            className={`grid gap-2 rounded-md border border-blue-300/15 bg-blue-500/10 p-2 ${
+              lockTarget ? "" : "sm:grid-cols-[1fr_auto]"
+            }`}
+          >
+            {!lockTarget && (
+              <label className="block">
+                <span className="text-[11px] font-bold uppercase text-slate-400">
+                  Team
+                </span>
+                <select
+                  className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-blue-400"
+                  onChange={(event) => setTeamId(event.target.value)}
+                  value={teamId}
+                >
+                  <option value="">Choose team</option>
+                  {teams.map((team) => (
+                    <option key={team.id} value={team.id}>
+                      {team.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
 
             <fieldset>
               <legend className="text-[11px] font-bold uppercase text-slate-400">

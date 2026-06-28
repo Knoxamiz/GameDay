@@ -194,7 +194,7 @@ export default async function CoachHome() {
         </aside>
 
         <div className="min-w-0 flex-1">
-          <header className="flex min-h-12 items-center justify-between gap-3 border-b border-white/10 bg-slate-950/70 px-3 backdrop-blur sm:px-5">
+          <header className="relative z-[500] flex min-h-12 items-center justify-between gap-3 border-b border-white/10 bg-slate-950/70 px-3 backdrop-blur sm:px-5">
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-slate-400">
                 Coach / {organizationLabel}
@@ -209,7 +209,7 @@ export default async function CoachHome() {
                       {coachMessages.length}
                     </span>
                   </summary>
-                  <div className="absolute right-0 z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] space-y-1.5 rounded-lg border border-blue-300/25 bg-slate-950/95 p-2 shadow-2xl shadow-blue-950/50 ring-1 ring-white/10 backdrop-blur">
+                  <div className="absolute right-0 z-[540] mt-2 w-80 max-w-[calc(100vw-2rem)] space-y-1.5 rounded-lg border border-blue-300/25 bg-slate-950/95 p-2 shadow-2xl shadow-blue-950/50 ring-1 ring-white/10 backdrop-blur">
                     {coachMessages.map((message) => (
                       <article
                         className="rounded-md border border-white/10 bg-white/[0.04] p-2.5"

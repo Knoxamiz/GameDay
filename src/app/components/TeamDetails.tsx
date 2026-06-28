@@ -329,7 +329,7 @@ export default async function TeamDetails({
     }));
 
     return (
-      <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
+      <main className="gd-dark-scope min-h-screen text-white">
         <section className="mx-auto max-w-5xl px-3 py-4 sm:px-5">
           <header className="gd-card-light flex flex-col gap-3 rounded-lg p-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">

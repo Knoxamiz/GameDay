@@ -160,6 +160,15 @@ export default function AdminTeamMembersManager({
       draftRosterRows.filter((row) => normalizeText(row.athleteFirstName)),
     [draftRosterRows],
   );
+  const rosterRowsNeedingDetails = useMemo(
+    () =>
+      readyRosterRows.filter(
+        (row) =>
+          !normalizeText(row.athleteLastName) ||
+          (!normalizeText(row.parentEmail) && !normalizeText(row.parentPhone)),
+      ),
+    [readyRosterRows],
+  );
 
   function updateDraftRosterRow(
     rowId: string,
@@ -471,11 +480,17 @@ export default function AdminTeamMembersManager({
                 {rosteredRegistrations.length} rostered
               </span>
               <span className="rounded-full bg-emerald-400/15 px-2 py-1 text-[11px] font-black text-emerald-100">
-                {readyRosterRows.length} ready
+                {readyRosterRows.length} ready to save
               </span>
+              {rosterRowsNeedingDetails.length > 0 && (
+                <span className="rounded-full bg-orange-400/15 px-2 py-1 text-[11px] font-black text-orange-100">
+                  {rosterRowsNeedingDetails.length} can finish later
+                </span>
+              )}
             </div>
             <p className="mt-1 text-xs font-semibold text-slate-400">
-              Add players quickly, then review each row before saving.
+              Add names fast. Parent contact and missing details can be added
+              when you have them.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -525,7 +540,16 @@ export default function AdminTeamMembersManager({
             <span />
           </div>
           {draftRosterRows.map((row, index) => {
-            const isReady = Boolean(normalizeText(row.athleteFirstName));
+            const hasFirstName = Boolean(normalizeText(row.athleteFirstName));
+            const hasLastName = Boolean(normalizeText(row.athleteLastName));
+            const hasContact = Boolean(
+              normalizeText(row.parentEmail) || normalizeText(row.parentPhone),
+            );
+            const statusLabel = !hasFirstName
+              ? "Draft"
+              : hasLastName && hasContact
+                ? "Complete"
+                : "Name saved";
 
             return (
               <div
@@ -605,12 +629,14 @@ export default function AdminTeamMembersManager({
                 </label>
                 <span
                   className={`self-end rounded-full px-2 py-1 text-center text-[11px] font-black ${
-                    isReady
+                    hasLastName && hasContact
                       ? "bg-emerald-400/20 text-emerald-100"
-                      : "bg-white/10 text-slate-300"
+                      : hasFirstName
+                        ? "bg-blue-400/15 text-blue-100"
+                        : "bg-white/10 text-slate-300"
                   }`}
                 >
-                  {isReady ? "Ready" : "Draft"}
+                  {statusLabel}
                 </span>
                 <button
                   aria-label="Remove row"
@@ -630,9 +656,9 @@ export default function AdminTeamMembersManager({
             <span className="mb-1 block text-[10px] font-black uppercase text-slate-500">
               Bulk add
             </span>
-              Paste names one per line, or use: Ryan Smith,
-              parent@email.com
-            </p>
+            Paste one player per line. Full names are best, but first names
+            work when you are building the roster quickly.
+          </p>
             <textarea
               ref={pasteRosterTextareaRef}
               className="min-h-16 rounded-md border border-blue-300/20 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none placeholder:text-slate-500 focus:border-blue-300"
@@ -661,7 +687,8 @@ export default function AdminTeamMembersManager({
           {savingKey === "players-bulk-add" ? "Saving..." : "Save roster"}
         </button>
         <p className="mt-2 text-center text-[11px] font-semibold text-slate-500">
-          No changes are saved until you click Save roster.
+          No changes are saved until you click Save roster. Name-only rows can
+          be finished later.
         </p>
 
         <div className="mt-3 divide-y divide-white/10 rounded-md border border-blue-300/10 bg-white/[0.035]">
