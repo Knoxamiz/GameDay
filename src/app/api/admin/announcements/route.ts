@@ -39,6 +39,7 @@ function getAnnouncementPayload(body: Record<string, unknown> | null) {
   return {
     audience: getAudience(body.audience) as AdminAnnouncementPayload["audience"],
     content: getText(body.content),
+    eventId: getText(body.eventId),
     organizationId: getText(body.organizationId),
     priority: getPriority(body.priority),
     subject: getText(body.subject),

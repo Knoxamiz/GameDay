@@ -8,6 +8,10 @@ import {
   verifyAdminAccessSession,
 } from "./adminOrganizationScope.server";
 import { createLiveRecordId } from "./liveIdentity";
+import {
+  getEventTeamIds,
+  type GameDayEvent,
+} from "./events";
 import type {
   GameDayMessage,
   MessageAudience,
@@ -19,6 +23,7 @@ import type { Team } from "./teams";
 export type AdminAnnouncementPayload = {
   audience?: MessageAudience[];
   content: string;
+  eventId?: string;
   organizationId: string;
   priority?: MessagePriority;
   subject: string;
@@ -139,6 +144,7 @@ export async function createAdminAnnouncement(
   const scope = await requireAdminAnnouncementSession(options.sessionSource);
   const organizationId = normalizeText(payload.organizationId);
   const activeOrganizationId = normalizeText(options.activeOrganizationId);
+  const eventId = normalizeText(payload.eventId);
   const teamId = normalizeText(payload.teamId);
   const subject = normalizeText(payload.subject);
   const content = normalizeText(payload.content);
@@ -190,33 +196,27 @@ export async function createAdminAnnouncement(
       ? audience
       : (["admin", "coach", "parent"] satisfies MessageAudience[]);
   const now = new Date().toISOString();
-  const announcement: GameDayMessage = {
-    audience: finalAudience,
-    content,
-    id: createLiveRecordId(teamId ? "team-message" : "announcement", [
-      organizationId,
-      teamId,
-      subject,
-    ]),
-    organizationId,
-    priority,
-    senderId: scope.session.user.id,
-    subject,
-    teamId: teamId || undefined,
-    timestamp: now,
-    type: teamId ? "Team Announcement" : "Organization Announcement",
-  };
-
-  await runFirestoreTransaction(async (transaction) => {
-    const [organization, team] = await Promise.all([
+  const announcement = await runFirestoreTransaction(async (transaction) => {
+    const [organization, team, event] = await Promise.all([
       transaction.get<Organization>("organizations", organizationId),
       teamId ? transaction.get<Team>("teams", teamId) : Promise.resolve(null),
+      eventId
+        ? transaction.get<GameDayEvent>("events", eventId)
+        : Promise.resolve(null),
     ]);
 
     if (!organization) {
       createAdminAnnouncementError(
         "organization-not-found",
         "Create the organization before creating announcements.",
+        404,
+      );
+    }
+
+    if (eventId && (!event || event.organizationId !== organizationId)) {
+      createAdminAnnouncementError(
+        "event-not-found",
+        "Choose an event from this organization before sending an event update.",
         404,
       );
     }
@@ -229,15 +229,50 @@ export async function createAdminAnnouncement(
       );
     }
 
-    transaction.create("messages", announcement.id, announcement);
+    if (event && teamId && !getEventTeamIds(event).includes(teamId)) {
+      createAdminAnnouncementError(
+        "event-team-mismatch",
+        "Choose a team that belongs to this event before sending an event update.",
+        403,
+      );
+    }
+
+    const eventTeamId =
+      event && !teamId ? getEventTeamIds(event)[0] ?? "" : "";
+    const finalTeamId = teamId || eventTeamId;
+    const nextAnnouncement: GameDayMessage = {
+      audience: finalAudience,
+      content,
+      eventId: eventId || undefined,
+      id: createLiveRecordId(
+        eventId ? "event-message" : finalTeamId ? "team-message" : "announcement",
+        [organizationId, eventId, finalTeamId, subject],
+      ),
+      organizationId,
+      priority,
+      senderId: scope.session.user.id,
+      subject,
+      teamId: finalTeamId || undefined,
+      timestamp: now,
+      type: eventId
+        ? "Event Announcement"
+        : finalTeamId
+          ? "Team Announcement"
+          : "Organization Announcement",
+    };
+
+    transaction.create("messages", nextAnnouncement.id, nextAnnouncement);
+
+    return nextAnnouncement;
   });
 
   console.info("Admin announcement created.", {
     announcementId: announcement.id,
     audience: announcement.audience,
+    eventId: announcement.eventId,
     organizationId,
     senderUid: scope.session.user.id,
-    teamId: teamId || undefined,
+    teamId: announcement.teamId,
   });
 
   return {

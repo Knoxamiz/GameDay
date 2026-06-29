@@ -3,6 +3,10 @@ import { getFirebaseAdminConfig } from "../infrastructure/firebase";
 import { FirebaseAdminAuthProvider } from "../infrastructure/firebaseAuth";
 import { runFirestoreTransaction } from "../infrastructure/firebaseRepositories";
 import { resolveCoachAssignmentScope } from "./coachAssignments.server";
+import {
+  eventHasTeamId,
+  type GameDayEvent,
+} from "./events";
 import { createLiveRecordId } from "./liveIdentity";
 import type {
   GameDayMessage,
@@ -14,6 +18,7 @@ import { isActiveTeam, type Team } from "./teams";
 export type CoachTeamMessagePayload = {
   audience?: MessageAudience[];
   content: string;
+  eventId?: string;
   priority?: MessagePriority;
   subject: string;
   teamId: string;
@@ -122,6 +127,7 @@ export async function createCoachTeamMessage(
     options.sessionSource,
   );
   const teamId = normalizeText(payload.teamId);
+  const eventId = normalizeText(payload.eventId);
   const subject = normalizeText(payload.subject);
   const content = normalizeText(payload.content);
   const audience = normalizeAudienceList(payload.audience);
@@ -167,7 +173,12 @@ export async function createCoachTeamMessage(
 
   const { teamMessage, teamName } = await runFirestoreTransaction(
     async (transaction) => {
-      const team = await transaction.get<Team>("teams", teamId);
+      const [team, event] = await Promise.all([
+        transaction.get<Team>("teams", teamId),
+        eventId
+          ? transaction.get<GameDayEvent>("events", eventId)
+          : Promise.resolve(null),
+      ]);
 
       if (
         !team ||
@@ -181,17 +192,34 @@ export async function createCoachTeamMessage(
         );
       }
 
+      if (
+        eventId &&
+        (!event ||
+          event.organizationId !== team.organizationId ||
+          !eventHasTeamId(event, team.id))
+      ) {
+        createCoachTeamMessageError(
+          "event-not-found",
+          "Choose an event for this team before sending an event update.",
+          404,
+        );
+      }
+
       const nextTeamMessage: GameDayMessage = {
         audience: finalAudience,
         content,
-        id: createLiveRecordId("coach-team-message", [team.id, subject]),
+        eventId: eventId || undefined,
+        id: createLiveRecordId(
+          eventId ? "coach-event-message" : "coach-team-message",
+          [team.id, eventId, subject],
+        ),
         organizationId: team.organizationId,
         priority,
         senderId: session.user.id,
         subject,
         teamId: team.id,
         timestamp: now,
-        type: "Team Announcement",
+        type: eventId ? "Event Announcement" : "Team Announcement",
       };
 
       transaction.create("messages", nextTeamMessage.id, nextTeamMessage);
@@ -205,6 +233,7 @@ export async function createCoachTeamMessage(
 
   console.info("Coach team message created.", {
     audience: teamMessage.audience,
+    eventId: teamMessage.eventId,
     messageId: teamMessage.id,
     senderUid: session.user.id,
     teamId,

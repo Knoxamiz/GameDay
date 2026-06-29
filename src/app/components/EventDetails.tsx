@@ -19,6 +19,8 @@ import { getOrganizationContext } from "../data/organizationContext.server";
 import { isParentEventEligibleRegistration } from "../data/registrations";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
 import AttendanceSummaryCard from "./AttendanceSummaryCard";
+import AdminAnnouncementForm from "./AdminAnnouncementForm";
+import CoachTeamMessageForm from "./CoachTeamMessageForm";
 import EventReadinessSummary from "./EventReadinessSummary";
 import GameAlertPanel from "./GameAlertPanel";
 import MvpNav from "./MvpNav";
@@ -126,12 +128,13 @@ export default async function EventDetails({
   const organizationContext = await getOrganizationContext(
     eventReadModel.organizationIds,
   );
-  const eventTeams = getEventTeamIds(eventDetails)
+  const eventTeamIds = getEventTeamIds(eventDetails);
+  const eventTeams = eventTeamIds
     .map((teamId) => eventReadModel.teams.find((team) => team.id === teamId))
     .filter(Boolean);
+  const eventPrimaryTeamId = eventTeamIds[0] ?? "";
   const eventIsToday = isParentEventToday(eventDetails, new Date());
   const team = eventTeams[0];
-  const eventTeamIds = getEventTeamIds(eventDetails);
   const parentUser = role === "parent" ? await getCurrentParentUser() : null;
 
   if (role === "parent" && parentUser?.source !== "firebase-session") {
@@ -206,9 +209,9 @@ export default async function EventDetails({
           (!message.recipientAthleteId ||
             visibleAthleteIdSet.has(message.recipientAthleteId))
         : !message.recipientParentId && !message.recipientAthleteId),
+  ).sort((first, second) =>
+    second.timestamp.localeCompare(first.timestamp),
   );
-  const eventAnnouncements = eventMessages.map((message) => message.content);
-  const eventChat = eventMessages.map((message) => message.subject);
   const eventNotes = getEventNotes(eventDetails);
   const eventBaseHref = role === "admin" ? "/admin/schedule" : "/events";
   const teamBaseHref = role === "admin" ? "/admin/teams" : "/teams";
@@ -436,19 +439,34 @@ export default async function EventDetails({
             </div>
           </section>
 
-          {(eventAnnouncements.length > 0 || eventNotes.length > 0) && (
+          {(eventMessages.length > 0 || eventNotes.length > 0) && (
             <section className="mt-4 space-y-2">
-              {eventAnnouncements.length > 0 && (
+              {eventMessages.length > 0 && (
                 <details className="gd-card-dark group overflow-hidden rounded-lg">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3 [&::-webkit-details-marker]:hidden">
-                    <span className="font-black">Announcements</span>
+                    <span className="font-black">Event updates</span>
                     <span className="text-lg font-black text-blue-200 transition group-open:rotate-90">
                       &gt;
                     </span>
                   </summary>
-                  <div className="space-y-2 border-t border-white/10 p-3 text-xs font-semibold text-slate-400">
-                    {eventAnnouncements.map((announcement) => (
-                      <p key={announcement}>{announcement}</p>
+                  <div className="space-y-2 border-t border-white/10 p-3">
+                    {eventMessages.map((message) => (
+                      <article
+                        className="rounded-md border border-white/10 bg-white/[0.04] p-2.5"
+                        key={message.id}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="text-sm font-black text-white">
+                            {message.subject}
+                          </h3>
+                          <span className="shrink-0 rounded-full border border-blue-300/20 bg-blue-500/10 px-2 py-0.5 text-[10px] font-black text-blue-100">
+                            {message.priority}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs font-semibold text-slate-400">
+                          {message.content}
+                        </p>
+                      </article>
                     ))}
                   </div>
                 </details>
@@ -528,6 +546,45 @@ export default async function EventDetails({
 
         {gameAlert && <GameAlertPanel gameAlert={gameAlert} role={role} />}
 
+        {role === "admin" && activeOrganizationId && (
+          <div className="mt-3">
+            <AdminAnnouncementForm
+              activeOrganizationId={activeOrganizationId}
+              defaultTarget={eventPrimaryTeamId ? "team" : "org-all"}
+              defaultTeamId={eventPrimaryTeamId}
+              eventId={eventDetails.id}
+              lockTarget={Boolean(eventPrimaryTeamId)}
+              summarySubtitle="Send one update tied to this event."
+              summaryTitle="Send event update"
+              teams={eventReadModel.teams}
+            />
+          </div>
+        )}
+
+        {role === "coach" && eventPrimaryTeamId && (
+          <details className="gd-card-dark group mt-3 overflow-hidden rounded-lg">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3 [&::-webkit-details-marker]:hidden">
+              <span>
+                <span className="block text-base font-black">
+                  Send event update
+                </span>
+                <span className="mt-0.5 block text-xs font-semibold text-slate-400">
+                  Message parents or coaches for this event.
+                </span>
+              </span>
+              <span className="text-lg font-black text-blue-300 transition group-open:rotate-90">
+                &rsaquo;
+              </span>
+            </summary>
+            <div className="border-t border-white/10 p-3">
+              <CoachTeamMessageForm
+                eventId={eventDetails.id}
+                teamId={eventPrimaryTeamId}
+              />
+            </div>
+          </details>
+        )}
+
         <details className="gd-card-dark group mt-3 overflow-hidden rounded-lg">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
             <h2 className="text-base font-black">Status</h2>
@@ -568,20 +625,37 @@ export default async function EventDetails({
 
         <details className="gd-card-dark group mt-3 overflow-hidden rounded-lg">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
-            <h2 className="text-base font-black">Announcements</h2>
+            <h2 className="text-base font-black">Event updates</h2>
             <span className="text-lg font-black text-blue-300 transition group-open:rotate-90">
               &rsaquo;
             </span>
           </summary>
-          <ul className="space-y-2 border-t border-white/10 p-3 text-xs text-slate-300">
-            {eventAnnouncements.length > 0 ? (
-              eventAnnouncements.map((announcement) => (
-                <li key={announcement}>{announcement}</li>
+          <div className="space-y-2 border-t border-white/10 p-3">
+            {eventMessages.length > 0 ? (
+              eventMessages.map((message) => (
+                <article
+                  className="rounded-md border border-white/10 bg-white/[0.04] p-2.5"
+                  key={message.id}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-sm font-black text-white">
+                      {message.subject}
+                    </h3>
+                    <span className="shrink-0 rounded-full border border-blue-300/20 bg-blue-500/10 px-2 py-0.5 text-[10px] font-black text-blue-100">
+                      {message.priority}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs font-semibold text-slate-400">
+                    {message.content}
+                  </p>
+                </article>
               ))
             ) : (
-              <li>No announcements yet.</li>
+              <p className="text-xs font-semibold text-slate-400">
+                No event updates yet.
+              </p>
             )}
-          </ul>
+          </div>
         </details>
 
         <EventReadinessSummary
@@ -624,22 +698,6 @@ export default async function EventDetails({
               <li>No event notes yet.</li>
             )}
           </ul>
-        </details>
-
-        <details className="gd-card-dark group mt-3 overflow-hidden rounded-lg">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3">
-            <h2 className="text-base font-black">Event Chat</h2>
-            <span className="text-lg font-black text-blue-300 transition group-open:rotate-90">
-              &rsaquo;
-            </span>
-          </summary>
-          <div className="space-y-2 border-t border-white/10 p-3 text-xs text-slate-300">
-            {eventChat.length > 0 ? (
-              eventChat.map((chatItem) => <p key={chatItem}>{chatItem}</p>)
-            ) : (
-              <p>No event messages yet.</p>
-            )}
-          </div>
         </details>
       </section>
     </main>

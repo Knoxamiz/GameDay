@@ -549,7 +549,7 @@ export default function AdminTeamMembersManager({
               ? "Draft"
               : hasLastName && hasContact
                 ? "Complete"
-                : "Name saved";
+                : "Ready";
 
             return (
               <div

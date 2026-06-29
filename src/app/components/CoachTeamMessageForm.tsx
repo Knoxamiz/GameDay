@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { MessageAudience, MessagePriority } from "../data/messages";
 
 type CoachTeamMessageFormProps = {
+  eventId?: string;
   teamId: string;
 };
 
@@ -34,6 +35,7 @@ function getAudienceForTarget(target: CoachMessageTarget) {
 }
 
 export default function CoachTeamMessageForm({
+  eventId,
   teamId,
 }: CoachTeamMessageFormProps) {
   const [subject, setSubject] = useState("");
@@ -55,6 +57,7 @@ export default function CoachTeamMessageForm({
         body: JSON.stringify({
           audience: getAudienceForTarget(target),
           content,
+          eventId,
           priority,
           subject,
           teamId,
@@ -167,7 +170,7 @@ export default function CoachTeamMessageForm({
 
       <div className="mt-2 flex items-center justify-between gap-3">
         <p className="text-[11px] font-semibold text-slate-400">
-          Team message
+          {eventId ? "Event update" : "Team message"}
         </p>
         <button
           className="rounded-md bg-blue-600 px-3 py-2 text-xs font-black text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"

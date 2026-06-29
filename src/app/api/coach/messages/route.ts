@@ -39,6 +39,7 @@ function getTeamMessagePayload(body: Record<string, unknown> | null) {
   return {
     audience: getAudience(body.audience) as CoachTeamMessagePayload["audience"],
     content: getText(body.content),
+    eventId: getText(body.eventId),
     priority: getPriority(body.priority),
     subject: getText(body.subject),
     teamId: getText(body.teamId),

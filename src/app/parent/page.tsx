@@ -366,33 +366,51 @@ export default async function ParentHome() {
                   </span>
                 </summary>
                 <div className="absolute right-0 z-[540] mt-2 w-80 max-w-[calc(100vw-2rem)] space-y-1.5 rounded-lg border border-blue-300/25 bg-slate-950/95 p-2 shadow-2xl shadow-blue-950/50 ring-1 ring-white/10 backdrop-blur">
-                  {parentMessages.map((message) => (
-                    <article
-                      className="rounded-md border border-white/10 bg-white/[0.04] p-2.5"
-                      key={message.id}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <h2 className="line-clamp-1 text-xs font-black text-white">
-                          {message.subject}
-                        </h2>
-                        <span
-                          className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] font-black ${getMessageToneClass(
-                            message.priority,
-                          )}`}
-                        >
-                          {message.priority}
-                        </span>
-                      </div>
-                      <p className="mt-1 line-clamp-2 text-[11px] font-semibold text-slate-400">
-                        {message.content}
-                      </p>
-                      <p className="mt-1 text-[10px] font-black uppercase tracking-wide text-slate-500">
-                        {message.teamId
-                          ? (teamNameById.get(message.teamId) ?? "Team")
-                          : "Organization"}
-                      </p>
-                    </article>
-                  ))}
+                  {parentMessages.map((message) => {
+                    const messageBody = (
+                      <>
+                        <div className="flex items-start justify-between gap-2">
+                          <h2 className="line-clamp-1 text-xs font-black text-white">
+                            {message.subject}
+                          </h2>
+                          <span
+                            className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] font-black ${getMessageToneClass(
+                              message.priority,
+                            )}`}
+                          >
+                            {message.priority}
+                          </span>
+                        </div>
+                        <p className="mt-1 line-clamp-2 text-[11px] font-semibold text-slate-400">
+                          {message.content}
+                        </p>
+                        <p className="mt-1 text-[10px] font-black uppercase tracking-wide text-slate-500">
+                          {message.eventId
+                            ? "Open event"
+                            : message.teamId
+                              ? (teamNameById.get(message.teamId) ?? "Team")
+                              : "Organization"}
+                        </p>
+                      </>
+                    );
+
+                    return message.eventId ? (
+                      <Link
+                        className="block rounded-md border border-white/10 bg-white/[0.04] p-2.5 transition hover:border-blue-300/35 hover:bg-blue-500/10"
+                        href={`/events/${message.eventId}`}
+                        key={message.id}
+                      >
+                        {messageBody}
+                      </Link>
+                    ) : (
+                      <article
+                        className="rounded-md border border-white/10 bg-white/[0.04] p-2.5"
+                        key={message.id}
+                      >
+                        {messageBody}
+                      </article>
+                    );
+                  })}
                 </div>
               </details>
             )}

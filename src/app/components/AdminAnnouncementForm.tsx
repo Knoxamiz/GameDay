@@ -8,6 +8,7 @@ type AdminAnnouncementFormProps = {
   activeOrganizationId: string;
   defaultTarget?: MessageTarget;
   defaultTeamId?: string;
+  eventId?: string;
   lockTarget?: boolean;
   summarySubtitle?: string;
   summaryTitle?: string;
@@ -82,6 +83,7 @@ export default function AdminAnnouncementForm({
   activeOrganizationId,
   defaultTarget = "org-parents",
   defaultTeamId = "",
+  eventId,
   lockTarget = false,
   summarySubtitle,
   summaryTitle = "New message",
@@ -127,6 +129,7 @@ export default function AdminAnnouncementForm({
           activeOrganizationId,
           audience,
           content,
+          eventId,
           organizationId: activeOrganizationId,
           priority,
           subject,
