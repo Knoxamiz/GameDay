@@ -345,9 +345,9 @@ export async function createCoachSingleTeamWorkspace(
       email,
       id: membershipId,
       organizationId,
-      role: "coach",
+      role: "owner",
       status: "active",
-      title: "Team Owner",
+      title: "Team Owner / Coach",
       uid: session.user.id,
       updatedAt: now,
     };

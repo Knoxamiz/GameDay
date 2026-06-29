@@ -1,5 +1,6 @@
 import type { AuthSession } from "../infrastructure/auth";
 import { createFirestoreRepositories } from "../infrastructure/firebaseRepositories";
+import { withActiveOrganization } from "./activeOrganization";
 import {
   canAccessAdmin,
   resolveAdminOrganizationScope,
@@ -9,7 +10,11 @@ import {
   resolveCoachAssignmentScope,
 } from "./coachAssignments.server";
 import { getLiveParentId, getLiveParentUid } from "./liveIdentity";
-import { isArchivedOrganization, type Organization } from "./organizations";
+import {
+  getOrganizationWorkspaceType,
+  isArchivedOrganization,
+  type Organization,
+} from "./organizations";
 import type { Registration } from "./registrations";
 
 export type AccountAccessOptionKind =
@@ -108,38 +113,82 @@ export async function getAccountAccessReadModel(
       Boolean(organization),
     )
     .filter((organization) => !isArchivedOrganization(organization));
+  const singleTeamAdminOrganizations = activeAdminOrganizations.filter(
+    (organization): organization is Organization =>
+      getOrganizationWorkspaceType(organization) === "single_team",
+  );
+  const singleTeamAdminOrganizationIds = new Set(
+    singleTeamAdminOrganizations.map((organization) => organization.id),
+  );
+  const coachTeamsForOwnedSingleTeamWorkspaces = coachTeams.filter((team) =>
+    singleTeamAdminOrganizationIds.has(team.organizationId),
+  );
+  const coachTeamsForCoachOption = coachTeams.filter(
+    (team) => !singleTeamAdminOrganizationIds.has(team.organizationId),
+  );
+  const onlySingleTeamAdminWorkspace =
+    activeAdminOrganizations.length === 1 &&
+    getOrganizationWorkspaceType(activeAdminOrganizations[0]) === "single_team";
+  const singleTeamAdminOrganization = onlySingleTeamAdminWorkspace
+    ? activeAdminOrganizations[0]
+    : undefined;
+  const singleTeamLaunchTeam = singleTeamAdminOrganization
+    ? coachTeamsForOwnedSingleTeamWorkspaces.find(
+        (team) => team.organizationId === singleTeamAdminOrganization.id,
+      )
+    : undefined;
   const options: AccountAccessOption[] = [];
 
   if (adminCanOpen) {
+    const adminHref =
+      singleTeamAdminOrganization && singleTeamLaunchTeam
+        ? withActiveOrganization(
+            `/admin/teams/${encodeURIComponent(singleTeamLaunchTeam.id)}`,
+            singleTeamAdminOrganization.id,
+          )
+        : singleTeamAdminOrganization
+          ? withActiveOrganization("/admin", singleTeamAdminOrganization.id)
+          : "/admin";
+
     options.push({
       badge:
-        activeAdminOrganizations.length > 0
+        singleTeamAdminOrganization
+          ? "Team Builder"
+          : activeAdminOrganizations.length > 0
           ? `${activeAdminOrganizations.length} workspace${
               activeAdminOrganizations.length === 1 ? "" : "s"
             }`
           : "Setup",
       description:
-        activeAdminOrganizations.length > 0
+        singleTeamAdminOrganization
+          ? "Open invite link, roster builder, schedule, and team controls."
+          : activeAdminOrganizations.length > 0
           ? "Open organization and team management."
           : "Create or finish an organization workspace.",
-      href: "/admin",
+      href: adminHref,
       id: "admin",
       kind: "admin",
       title:
-        activeAdminOrganizations.length === 1
+        singleTeamLaunchTeam?.name ??
+        (activeAdminOrganizations.length === 1
           ? (activeAdminOrganizations[0]?.name ?? "Admin workspace")
-          : "Admin workspaces",
+          : "Admin workspaces"),
     });
   }
 
-  if (coachTeams.length > 0) {
+  if (coachTeamsForCoachOption.length > 0) {
     options.push({
-      badge: `${coachTeams.length} team${coachTeams.length === 1 ? "" : "s"}`,
+      badge: `${coachTeamsForCoachOption.length} team${
+        coachTeamsForCoachOption.length === 1 ? "" : "s"
+      }`,
       description: "Open roster, schedule, attendance, and parent context.",
       href: "/coach",
       id: "coach",
       kind: "coach",
-      title: coachTeams.length === 1 ? coachTeams[0].name : "Coach teams",
+      title:
+        coachTeamsForCoachOption.length === 1
+          ? coachTeamsForCoachOption[0].name
+          : "Coach teams",
     });
   }
 

@@ -29,6 +29,17 @@ function uniqueStringList(values: string[]) {
   return [...new Set(values.map(normalizeText).filter(Boolean))];
 }
 
+function getCoachSignupPath(email: string) {
+  const params = new URLSearchParams({ intent: "invite" });
+  const normalizedEmail = normalizeEmail(email);
+
+  if (normalizedEmail) {
+    params.set("email", normalizedEmail);
+  }
+
+  return `/signup?${params.toString()}`;
+}
+
 function getCoachName(
   assignment: CoachAssignment,
   coaches: Coach[],
@@ -204,16 +215,9 @@ export default function AdminTeamCoachAccessManager({
             </span>
           </div>
           <p className="mt-1 text-xs font-semibold text-slate-400">
-            Send this link after adding the coach email for this team.
+            Add the coach email, then copy their sign-in link from the row.
           </p>
         </div>
-        <AdminJoinLinkButton
-          className="shrink-0 rounded-md border border-blue-300/25 px-2.5 py-1.5 text-xs font-black text-blue-100 hover:bg-blue-500/10"
-          errorMessage="Could not copy the coach access link."
-          joinPath="/signup?intent=invite"
-          label="Copy coach link"
-          successMessage="Coach access link copied."
-        />
       </div>
 
       {message && (
@@ -250,8 +254,8 @@ export default function AdminTeamCoachAccessManager({
                 <AdminJoinLinkButton
                   className="rounded-md border border-blue-300/25 px-2.5 py-1.5 text-xs font-black text-blue-100 hover:bg-blue-500/10"
                   errorMessage="Could not copy the coach access link."
-                  joinPath="/signup?intent=invite"
-                  label="Copy link"
+                  joinPath={getCoachSignupPath(assignment.email)}
+                  label="Copy coach link"
                   successMessage="Coach access link copied."
                 />
                 <button

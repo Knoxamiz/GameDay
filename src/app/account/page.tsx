@@ -9,18 +9,18 @@ export const dynamic = "force-dynamic";
 
 function getOptionTone(kind: string) {
   if (kind === "admin") {
-    return "border-blue-200 bg-blue-50 text-blue-700";
+    return "border-blue-300/25 bg-blue-500/10 text-blue-100";
   }
 
   if (kind === "coach" || kind === "start") {
-    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+    return "border-emerald-300/25 bg-emerald-500/10 text-emerald-100";
   }
 
   if (kind === "parent" || kind === "join") {
-    return "border-orange-200 bg-orange-50 text-orange-700";
+    return "border-orange-300/25 bg-orange-500/10 text-orange-100";
   }
 
-  return "border-slate-200 bg-slate-50 text-slate-700";
+  return "border-white/15 bg-white/10 text-slate-100";
 }
 
 export default async function AccountPage() {
@@ -66,13 +66,13 @@ export default async function AccountPage() {
           <div className="flex items-center justify-between gap-3 px-1">
             <div>
               <h2 className="text-sm font-black">Open GameDay</h2>
-              <p className="mt-0.5 text-[11px] font-semibold text-slate-500">
+              <p className="mt-0.5 text-[11px] font-semibold text-slate-400">
                 {accountAccess.hasEstablishedContext
                   ? "Your current account access."
                   : "Start by creating a team or finding one."}
               </p>
             </div>
-            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-black text-blue-700">
+            <span className="rounded-full border border-blue-300/25 bg-blue-500/10 px-2 py-0.5 text-[11px] font-black text-blue-100">
               {accountAccess.options.length}
             </span>
           </div>

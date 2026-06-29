@@ -25,7 +25,7 @@ export default async function JoinInvitePage({ params }: JoinInvitePageProps) {
           </Link>
           <Link
             className="rounded-md border border-white/15 bg-white/5 px-2.5 py-1.5 text-xs font-black text-white hover:bg-white/10"
-            href="/login?role=parent"
+            href="/login"
           >
             Parent Sign In
           </Link>

@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { withActiveOrganization } from "../data/activeOrganization";
 
 type CoachWorkspaceCreateResponse = {
   error?: string;
   message?: string;
+  organizationId?: string;
+  teamId?: string;
 };
 
 async function readResponseError(response: Response, fallback: string) {
@@ -13,6 +16,21 @@ async function readResponseError(response: Response, fallback: string) {
     | null;
 
   return typeof body?.error === "string" ? body.error : fallback;
+}
+
+function getTeamLaunchHref(body: CoachWorkspaceCreateResponse | null) {
+  if (body?.organizationId && body.teamId) {
+    return withActiveOrganization(
+      `/admin/teams/${encodeURIComponent(body.teamId)}`,
+      body.organizationId,
+    );
+  }
+
+  if (body?.organizationId) {
+    return withActiveOrganization("/admin", body.organizationId);
+  }
+
+  return "/account";
 }
 
 export default function CoachTeamWorkspaceCreateForm() {
@@ -54,7 +72,7 @@ export default function CoachTeamWorkspaceCreateForm() {
       }
 
       setMessage(body?.message ?? "Team workspace created.");
-      window.setTimeout(() => window.location.assign("/coach"), 700);
+      window.setTimeout(() => window.location.assign(getTeamLaunchHref(body)), 500);
     } catch (createError) {
       setError(
         createError instanceof Error
@@ -66,42 +84,42 @@ export default function CoachTeamWorkspaceCreateForm() {
   }
 
   return (
-    <section className="rounded-md border border-blue-100 bg-blue-50/70 p-2.5">
+    <section className="rounded-md border border-emerald-300/20 bg-emerald-500/10 p-2.5 shadow-[0_16px_38px_rgba(0,0,0,0.24)]">
       <div>
-        <p className="text-xs font-black uppercase tracking-wide text-blue-700">
+        <p className="text-[11px] font-black uppercase tracking-wide text-emerald-200">
           Start here
         </p>
-        <h2 className="mt-0.5 text-base font-black text-slate-950">
+        <h2 className="mt-0.5 text-base font-black text-white">
           Create your team
         </h2>
-        <p className="mt-0.5 text-xs font-semibold text-slate-600">
-          This creates one team workspace with you as the assigned coach.
+        <p className="mt-0.5 text-xs font-semibold text-slate-300">
+          Creates one team workspace, then opens invite and roster tools.
         </p>
       </div>
 
       <div className="mt-2 grid gap-2 sm:grid-cols-3">
         <label className="block sm:col-span-3">
-          <span className="text-xs font-black text-slate-700">Team name</span>
+          <span className="text-xs font-black text-slate-300">Team name</span>
           <input
-            className="mt-1 w-full rounded-md border border-blue-200 bg-white px-2.5 py-2 text-sm font-semibold text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/80 px-2.5 py-2 text-sm font-semibold text-white outline-none focus:border-emerald-300"
             onChange={(event) => setTeamName(event.target.value)}
             placeholder="Pineboys Tackle"
             value={teamName}
           />
         </label>
         <label className="block sm:col-span-1">
-          <span className="text-xs font-black text-slate-700">Division</span>
+          <span className="text-xs font-black text-slate-300">Division</span>
           <input
-            className="mt-1 w-full rounded-md border border-blue-200 bg-white px-2.5 py-2 text-sm font-semibold text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/80 px-2.5 py-2 text-sm font-semibold text-white outline-none focus:border-emerald-300"
             onChange={(event) => setDivision(event.target.value)}
             placeholder="10U"
             value={division}
           />
         </label>
         <label className="block sm:col-span-2">
-          <span className="text-xs font-black text-slate-700">Season</span>
+          <span className="text-xs font-black text-slate-300">Season</span>
           <input
-            className="mt-1 w-full rounded-md border border-blue-200 bg-white px-2.5 py-2 text-sm font-semibold text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            className="mt-1 w-full rounded-md border border-white/15 bg-slate-950/80 px-2.5 py-2 text-sm font-semibold text-white outline-none focus:border-emerald-300"
             onChange={(event) => setSeason(event.target.value)}
             placeholder="2026 Season"
             value={season}
@@ -110,18 +128,18 @@ export default function CoachTeamWorkspaceCreateForm() {
       </div>
 
       {message && (
-        <p className="mt-2 rounded-md border border-emerald-200 bg-white p-2 text-xs font-black text-emerald-700">
+        <p className="mt-2 rounded-md border border-emerald-300/25 bg-emerald-500/10 p-2 text-xs font-black text-emerald-100">
           {message}
         </p>
       )}
       {error && (
-        <p className="mt-2 rounded-md border border-red-200 bg-white p-2 text-xs font-black text-red-700">
+        <p className="mt-2 rounded-md border border-red-300/30 bg-red-500/10 p-2 text-xs font-black text-red-100">
           {error}
         </p>
       )}
 
       <button
-        className="mt-2 w-full rounded-md bg-blue-600 px-3 py-2 text-xs font-black text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-2 w-full rounded-md bg-emerald-600 px-3 py-2 text-xs font-black text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
         disabled={isSaving}
         onClick={() => void createTeamWorkspace()}
         type="button"

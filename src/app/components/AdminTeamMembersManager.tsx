@@ -43,6 +43,17 @@ function uniqueStringList(values: string[]) {
   return [...new Set(values.map(normalizeText).filter(Boolean))];
 }
 
+function getInviteSignupPath(email: string) {
+  const params = new URLSearchParams({ intent: "invite" });
+  const normalizedEmail = normalizeEmail(email);
+
+  if (normalizedEmail) {
+    params.set("email", normalizedEmail);
+  }
+
+  return `/signup?${params.toString()}`;
+}
+
 async function readResponseError(response: Response, fallback: string) {
   const body = (await response.json().catch(() => null)) as ApiResponse | null;
 
@@ -489,17 +500,25 @@ export default function AdminTeamMembersManager({
               )}
             </div>
             <p className="mt-1 text-xs font-semibold text-slate-400">
-              Add names fast. Parent contact and missing details can be added
-              when you have them.
+              Add names fast. Save once. Parent contact can be added when you
+              have it.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <button
-              className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-black text-white hover:bg-blue-500"
+              className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-black text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={Boolean(savingKey) || readyRosterRows.length === 0}
+              onClick={() => void addBulkPlayers()}
+              type="button"
+            >
+              {savingKey === "players-bulk-add" ? "Saving..." : "Save roster"}
+            </button>
+            <button
+              className="rounded-md border border-white/15 px-3 py-1.5 text-xs font-black text-slate-100 hover:bg-white/10"
               onClick={addDraftRosterRow}
               type="button"
             >
-              + Add player
+              + Row
             </button>
             <button
               className="rounded-md border border-white/15 px-3 py-1.5 text-xs font-black text-slate-100 hover:bg-white/10"
@@ -530,8 +549,8 @@ export default function AdminTeamMembersManager({
         )}
 
         <div className="mt-3 overflow-hidden rounded-lg border border-blue-300/15 bg-slate-950/25">
-          <div className="hidden grid-cols-[1.2rem_1fr_1fr_1.25fr_1fr_4.5rem_2.25rem] gap-2 border-b border-white/10 px-3 py-2 text-[10px] font-black uppercase tracking-wide text-slate-400 lg:grid">
-            <span />
+          <div className="hidden grid-cols-[4.5rem_1fr_1fr_1.25fr_1fr_5.75rem_2.25rem] gap-2 border-b border-white/10 px-3 py-2 text-[10px] font-black uppercase tracking-wide text-slate-400 lg:grid">
+            <span>Row</span>
             <span>First name</span>
             <span>Last name</span>
             <span>Parent email</span>
@@ -549,15 +568,15 @@ export default function AdminTeamMembersManager({
               ? "Draft"
               : hasLastName && hasContact
                 ? "Complete"
-                : "Ready";
+                : "Needs details";
 
             return (
               <div
-                className="grid gap-2 border-b border-white/10 p-2 last:border-b-0 lg:grid-cols-[1.2rem_1fr_1fr_1.25fr_1fr_4.5rem_2.25rem] lg:items-end"
+                className="grid gap-2 border-b border-white/10 p-2 last:border-b-0 lg:grid-cols-[4.5rem_1fr_1fr_1.25fr_1fr_5.75rem_2.25rem] lg:items-end"
                 key={row.id}
               >
-                <span className="hidden items-center pb-1.5 text-sm font-black text-slate-500 lg:flex">
-                  {index + 1}
+                <span className="hidden items-center pb-1.5 text-xs font-black text-slate-400 lg:flex">
+                  Player {index + 1}
                 </span>
                 <label className="block">
                   <span className="text-[10px] font-black uppercase text-slate-400 lg:hidden">
@@ -654,38 +673,30 @@ export default function AdminTeamMembersManager({
         <div className="mt-3 grid gap-2 rounded-lg border border-dashed border-blue-300/20 bg-white/[0.025] p-2 lg:grid-cols-[11rem_1fr_auto]">
           <p className="text-xs font-bold text-slate-300">
             <span className="mb-1 block text-[10px] font-black uppercase text-slate-500">
-              Bulk add
+              Paste many
             </span>
-            Paste one player per line. Full names are best, but first names
-            work when you are building the roster quickly.
+            One player per line. Add parent email or phone after the name if you
+            have it.
           </p>
-            <textarea
-              ref={pasteRosterTextareaRef}
-              className="min-h-16 rounded-md border border-blue-300/20 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none placeholder:text-slate-500 focus:border-blue-300"
-              onChange={(event) => {
-                setBulkRosterText(event.target.value);
-                setError(null);
-              }}
-              placeholder="Paste or type to add multiple players..."
-              value={bulkRosterText}
-            />
-            <button
-              className="rounded-md border border-white/15 px-3 py-2 text-xs font-black text-slate-100 hover:bg-white/10"
-              onClick={pasteRosterRows}
-              type="button"
-            >
-              Add from paste
-            </button>
+          <textarea
+            ref={pasteRosterTextareaRef}
+            className="min-h-16 rounded-md border border-blue-300/20 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-white outline-none placeholder:text-slate-500 focus:border-blue-300"
+            onChange={(event) => {
+              setBulkRosterText(event.target.value);
+              setError(null);
+            }}
+            placeholder="Ryan Smith, parent@email.com"
+            value={bulkRosterText}
+          />
+          <button
+            className="rounded-md border border-white/15 px-3 py-2 text-xs font-black text-slate-100 hover:bg-white/10"
+            onClick={pasteRosterRows}
+            type="button"
+          >
+            Add rows
+          </button>
         </div>
 
-        <button
-          className="mt-3 w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-black text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={Boolean(savingKey) || readyRosterRows.length === 0}
-          onClick={() => void addBulkPlayers()}
-          type="button"
-        >
-          {savingKey === "players-bulk-add" ? "Saving..." : "Save roster"}
-        </button>
         <p className="mt-2 text-center text-[11px] font-semibold text-slate-500">
           No changes are saved until you click Save roster. Name-only rows can
           be finished later.
@@ -950,7 +961,7 @@ export default function AdminTeamMembersManager({
                       <AdminJoinLinkButton
                         className="rounded-md border border-blue-200 px-2.5 py-1.5 text-xs font-black text-blue-700 hover:bg-blue-50"
                         errorMessage="Could not copy the coach access link."
-                        joinPath="/signup?intent=invite"
+                        joinPath={getInviteSignupPath(assignment.email)}
                         label="Copy access"
                         successMessage="Coach access link copied."
                       />

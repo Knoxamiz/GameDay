@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+import { withActiveOrganization } from "../data/activeOrganization";
 import { createFirebaseUserWithEmailPassword } from "../infrastructure/firebaseClientAuth";
 
 export type SignupIntent = "invite" | "organization" | "parent" | "team";
@@ -57,6 +58,21 @@ async function getResponseBody(response: Response) {
   return (await response.json().catch(() => null)) as
     | WorkspaceCreateResponse
     | null;
+}
+
+function getTeamLaunchHref(body: WorkspaceCreateResponse | null) {
+  if (body?.organizationId && body.teamId) {
+    return withActiveOrganization(
+      `/admin/teams/${encodeURIComponent(body.teamId)}`,
+      body.organizationId,
+    );
+  }
+
+  if (body?.organizationId) {
+    return withActiveOrganization("/admin", body.organizationId);
+  }
+
+  return "/account";
 }
 
 function IntentCard({
@@ -272,7 +288,7 @@ export default function SignupStartOptions({
         throw new Error(body?.error ?? "Could not create team.");
       }
 
-      window.location.assign("/coach");
+      window.location.assign(getTeamLaunchHref(body));
     } catch (createError) {
       setError(
         createError instanceof Error

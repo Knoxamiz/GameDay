@@ -54,18 +54,18 @@ function getRoleLabel(role: OrganizationMembershipRole) {
 
 function getStatusTone(status: OrganizationMembership["status"]) {
   if (status === "active") {
-    return "bg-emerald-50 text-emerald-700";
+    return "border border-emerald-300/30 bg-emerald-500/15 text-emerald-100";
   }
 
   if (status === "invited") {
-    return "bg-blue-50 text-blue-700";
+    return "border border-blue-300/30 bg-blue-500/15 text-blue-100";
   }
 
   if (status === "suspended") {
-    return "bg-orange-50 text-orange-700";
+    return "border border-orange-300/30 bg-orange-500/15 text-orange-100";
   }
 
-  return "bg-slate-100 text-slate-600";
+  return "border border-white/10 bg-white/[0.055] text-slate-300";
 }
 
 function getPrimaryName(membership: OrganizationMembership) {
@@ -365,12 +365,12 @@ export default function AdminOrgMembersManager({
   return (
     <div className="space-y-3">
       {message && (
-        <p className="rounded-lg border border-blue-200 bg-blue-50 p-2.5 text-xs font-bold text-blue-700">
+        <p className="rounded-lg border border-blue-300/25 bg-blue-500/10 p-2.5 text-xs font-bold text-blue-100">
           {message}
         </p>
       )}
       {error && (
-        <p className="rounded-lg border border-red-200 bg-red-50 p-2.5 text-xs font-bold text-red-700">
+        <p className="rounded-lg border border-red-300/30 bg-red-500/10 p-2.5 text-xs font-bold text-red-100">
           {error}
         </p>
       )}
